@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -274,7 +276,7 @@ extern void __eval_tran_1bit(register struct net_t *, register int32);
 extern int32 __match_push_targ_to_ref(word32, struct gref_t *);
 extern void __assign_qcaf(struct dcevnt_t *);
 extern void __pvc_call_misctf(struct dcevnt_t *);
-extern void __cbvc_callback(struct cbrec_t *, struct h_t *);
+extern void __cbvc_callback(struct dcevnt_t *, struct cbrec_t *, struct h_t *);
 extern void __exec_vpi_gateoutcbs(int32);
 extern void __add_ev_to_front(register i_tev_ndx);
 extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
@@ -1098,7 +1100,8 @@ got_match:
        for (bi = np->nwid - 1; bi >= 0; bi--)
         {
          mipdp = &(npp->elnpp.emipdbits[bi]);
-         if (mipdp->no_mipd) break;
+         /* SJM 07/24/05 - must process all bits even if middle no mipd */
+         if (mipdp->no_mipd) continue;
          __sched_mipd_nchg(np, bi, mipdp);
         }
       }
@@ -1107,7 +1110,8 @@ got_match:
        for (bi = chgi1; bi >= chgi2; bi--)
         {
          mipdp = &(npp->elnpp.emipdbits[bi]);
-         if (mipdp->no_mipd) break;
+         /* SJM 07/24/05 - must process all bits even if middle no mipd */
+         if (mipdp->no_mipd) continue;
          __sched_mipd_nchg(np, bi, mipdp);
         }
       }
@@ -2493,6 +2497,8 @@ extern void __add_select_nchglst_el(register struct net_t *np, register int32 i1
  nchglp->nchg_itp = __inst_ptr;
  nchglp->bi1 = i1;
  nchglp->bi2 = i2;
+ /* AIV 04/30/07 - was not init the delay_mipd flag */
+ nchglp->delayed_mipd = FALSE;
 
  /* here since range not marked as all changed so will match ranges */
 
@@ -3921,7 +3927,7 @@ byte __epair_tab[] =
 extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
  register int32 npi2)
 {
- register struct dcevnt_t *dcep;
+ register struct dcevnt_t *dcep, *dcep2;
  register word32 *wp;
  int32 nd_itpop, oneinst, tevpi, i1;
  word32 oval, nval;
@@ -3931,15 +3937,18 @@ extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
  struct fmselst_t *fmsep;
  struct dce_expr_t *dcexp;
 
- for (dcep = np->dcelst; dcep != NULL; dcep = dcep->dcenxt)
+ for (dcep = np->dcelst; dcep != NULL; )
   {
    /* --- DBG remove ---
    if (__inst_ptr == NULL) __misc_terr(__FILE__, __LINE__);
    --- */
 
    /* filter one instance forms before case */
-   if (dcep->dce_1inst && dcep->dce_matchitp != __inst_ptr) continue;
+   if (dcep->dce_1inst && dcep->dce_matchitp != __inst_ptr) 
+    { dcep = dcep->dcenxt; continue; } 
 
+   /* SJM 10/06/06 - for vpi vc call back, may free the dcep so must save */
+   dcep2 = dcep->dcenxt; 
    switch ((byte) dcep->dce_typ) {
     case DCE_RNG_INST:
      /* SJM 11/25/02 - notice can't be turned off/on */
@@ -3953,14 +3962,14 @@ extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
        wp = &(__contab[dcep->dci2.xvi]);
        i1 = (int32) wp[2*__inum];
        /* change must be inside range to match */
-       if (i1 > npi1 || i1 < npi2) continue;
+       if (i1 > npi1 || i1 < npi2) break;
       }
      else
       {
        /* SJM 06/26/04 - FIXME ??? ### isn't else needed here ??? */
        /* eliminate if changed bit do not overlap range */
        /* if low chged above high or high chged below low, eliminate */
-       if (npi2 > dcep->dci1 || npi1 < dcep->dci2.i) continue;
+       if (npi2 > dcep->dci1 || npi1 < dcep->dci2.i) break;
       }
      goto do_event_ctrl;
     case DCE_INST:
@@ -4019,7 +4028,7 @@ do_event_ctrl:
       {
        /* SJM 04/17/03 - if not right instance do not process */
        if (!__match_push_targ_to_ref(dcep->dce_xmrtyp, dcep->dceu.dcegrp))
-        continue;
+         break;
        nd_itpop = TRUE;
       }
 
@@ -4082,18 +4091,18 @@ do_event_ctrl:
 
 dce_done:
      if (nd_itpop) __pop_itstk();
-     continue;
+     break;
     case DCE_RNG_MONIT:
      /* no -2 IS form since 1 active monit from 1 itree place only */
      /* if enire wire changed, always match */
-     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) continue;
+     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) break;
      /*FALLTHRU */
     case DCE_MONIT:
      /* SJM 11/25/02 - only check off for ones that can be off */
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
 
      /* notice these work by storing old and new values */
-     if (dcep->dce_matchitp != __inst_ptr) continue;
+     if (dcep->dce_matchitp != __inst_ptr) break;
      /* fmon nil for the one monitor in design */
      if (dcep->dceu2.dce_fmon == NULL) __slotend_action |= SE_MONIT_TRIGGER;
      else
@@ -4122,33 +4131,33 @@ dce_done:
          __slotend_action |= SE_FMONIT_TRIGGER;
         }
       }
-     continue;
+     break;
     case DCE_RNG_QCAF:
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
      /* no -2 IS form since 1 active from 1 itree place only */
      /* if enire wire changed, always match */
-     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) continue;
+     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) break;
      /*FALLTHRU */
     case DCE_QCAF:
-     if (dcep->dce_off) continue;
-     if (dcep->dce_matchitp != __inst_ptr) continue;
+     if (dcep->dce_off) break;
+     if (dcep->dce_matchitp != __inst_ptr) break;
      /* do not care which rhs wire changed must eval and assign all */
      __assign_qcaf(dcep);
-     continue;
+     break;
     case DCE_RNG_PVC:
      /* SJM 07/24/00 - must turn off PLI 1.0 PV dces from inside self */
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
 
      /* no -2 IS form since 1 active from 1 itree place only */
      /* if enire wire changed, always match */
-     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) continue;
+     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) break;
      /*FALLTHRU */
     case DCE_PVC:
      /* SJM 07/24/00 - must turn off PLI 1.0 PV dces from inside self */
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
 
      /* notice tf PV change always per instance */
-     if (dcep->dce_matchitp != __inst_ptr) continue;
+     if (dcep->dce_matchitp != __inst_ptr) break;
 
      /* must check to make sure psel assign changed bits in actual range */
      oval = nval = 3;
@@ -4157,27 +4166,27 @@ dce_done:
      if (dcep->prevval.wp != NULL)
       {
        if (np->n_stren)
-        { if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
+        { if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) break; }
        else
-        { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
+        { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) break; }
       }
      /* do not care which rhs wire changed must eval and assign all */
      __pvc_call_misctf(dcep);
-     continue;
+     break;
     case DCE_RNG_CBVC:
      /* SJM 07/24/00 - must turn off PLI 1.0 PV dces from inside self */
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
 
      /* callback value change but dce contents differ */
      /* no -2 IS form since 1 active from 1 itree place only */
      /* if enire wire changed, always match */
-     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) continue;
+     if (npi1 != -1 && (npi1 < dcep->dci2.i || npi2 > dcep->dci1)) break;
      /*FALLTHRU */
     case DCE_CBVC:
      /* SJM 07/24/00 - must turn off PLI 1.0 PV dces from inside self */
-     if (dcep->dce_off) continue;
+     if (dcep->dce_off) break;
 
-     if (dcep->dce_matchitp != __inst_ptr) continue;
+     if (dcep->dce_matchitp != __inst_ptr) break;
      /* DBG remove ---
      if (__debug_flg && np->n_stren)
       {
@@ -4236,32 +4245,32 @@ dce_done:
           {
            /* SJM 06/29/04 - simplified - always use stren version for scal */
            if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, TRUE))
-            continue;
+            break;
           }
          else
           {
            /* need strength changes too */
             if (!vccb_scal_standval_filter(np, dcep, &oval, &nval, TRUE))
-             continue;
+             break;
           }
         }
        else
         {
          if (!np->n_stren)
-          { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
+          { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) break; }
          else
           {
            /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */
            /* user passed non stren val request to vpi_ cb call back */
            if (dcep->dce_nomonstren)
             {
-             if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue;
+             if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) break;
             }
            else
             {
              /* need strength changes too */
              if (!vccb_vec_standval_filter(np, dcep, &oval, &nval, TRUE))
-              continue;
+              break;
             }
           }
         }
@@ -4273,19 +4282,20 @@ dce_done:
      /* for regs must be immediate */
      /* notice will never get here unless dce on */
      dcep->dce_off = TRUE;
+     /* SJM 10/06/06 - must pass the dce since dce cbp has list of dces */ 
+     __cbvc_callback(dcep, dcep->dceu.dce_cbp, dcep->dceu.dce_cbp->cb_hp);
 
-     __cbvc_callback(dcep->dceu.dce_cbp, dcep->dceu.dce_cbp->cb_hp);
-
-     /* SJM 07/24/00 - unless user turned off with vpi control turn back on */
-     /* user may turn off in value change call back routine */
-     if (!dcep->dceu.dce_cbp->cb_user_off) dcep->dce_off = FALSE;
-     continue;
+     /* SJM 10/06/06 - dcep may be free in the user call back so cbvc */
+     /* call back processing code handles turning back on if user did */
+     /* not turn off in the cb routine - also loop must handle freed case */
+     break;
 
     /* these are used only in vpi_ for force/release call backs */
     case DCE_CBF: case DCE_RNG_CBF: case DCE_CBR: case DCE_RNG_CBR:
-     continue;
+     break;
     default: __case_terr(__FILE__, __LINE__);
    }
+   dcep = dcep2;
   }
 }
 

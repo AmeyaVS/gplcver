@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -80,7 +82,7 @@ static int32 rd_contassign(void);
 static struct conta_t *add_conta(struct expr_t *, struct expr_t *, int32,
  int32);
 static int32 rd_eventdecl(int32);
-static int32 rd_paramdecl(int32);
+static int32 rd_paramdecl(int32, int32);
 static int32 rd_dfparam_stmt(void);
 static struct dfparam_t *alloc_dfpval(void);
 static int32 rd_task(void);
@@ -201,7 +203,8 @@ extern int32 __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **,
 extern int32 __chk_paramexpr(struct expr_t *, int32);
 extern void __eval_param_rhs_tonum(struct expr_t *);
 extern int32 __nd_ndxnum(struct expr_t *, char *, int32);
-extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *);
+extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *,
+ int32);
 extern void __init_stmt(struct st_t *, int32);
 
 extern int32 __expr_has_glb(struct expr_t *);
@@ -403,7 +406,8 @@ no_read:
  __inst_mod->msymtab->sypofsyt = syp;
 
  /* set list ends for elements that must be kept in order */
- __end_cp = NULL; __end_tbp = NULL; __end_paramnp = NULL;
+ __end_cp = NULL; __end_tbp = NULL; 
+ __end_paramnp = __end_loc_paramnp = NULL;
  __end_ca = NULL; __end_ialst = NULL; __end_dfp = NULL;
  __end_impparamnp = NULL;
  __end_mod_varinitlst = NULL; 
@@ -608,7 +612,9 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mnnum = 0;
  mdp->mtotvarnum = 0;
  mdp->mprms = NULL;
+ mdp->mlocprms = NULL;
  mdp->mprmnum = 0;
+ mdp->mlocprmnum = 0;
  mdp->moditps = NULL;
  mdp->mnxt = NULL;
 
@@ -1015,7 +1021,8 @@ static int32 rd_hdrpnd_parmdecls(void)
      if (__toktyp == RPAR || __toktyp == SEMI) return(TRUE);
     }
 
-   if (!rd_paramdecl(TRUE)) return(FALSE);
+   /* AIV 09/27/06 - can never be a local param here */
+   if (!rd_paramdecl(TRUE, FALSE)) return(FALSE);
   }
 }
 
@@ -1460,7 +1467,10 @@ moditem_stmt:
      if (!rd_contassign()) goto moditem_resync;
      continue;
     case PARAMETER:
-     if (!rd_paramdecl(FALSE)) goto moditem_resync;
+     if (!rd_paramdecl(FALSE, FALSE)) goto moditem_resync;
+     continue;
+    case LOCALPARAM:
+     if (!rd_paramdecl(FALSE, TRUE)) goto moditem_resync;
      continue;
     case DEFPARAM:
      if (!rd_dfparam_stmt()) goto moditem_resync;
@@ -2713,7 +2723,7 @@ static int32 is_tokstren(int32 ttyp)
  * for modules parameter declarations and unlike header list of ports both
  * types can be combined 
  */
-static int32 rd_paramdecl(int32 is_hdr_form)
+static int32 rd_paramdecl(int32 is_hdr_form, int32 is_local_param)
 {
  int32 ptyp_decl, prng_decl, pwtyp, pwid, r1, r2, wlen;
  int32 psign_decl; 
@@ -2723,7 +2733,8 @@ static int32 rd_paramdecl(int32 is_hdr_form)
  struct xstk_t *xsp;
  char paramnam[IDLEN], ptnam[RECLEN];
 
- strcpy(ptnam, "parameter");
+ if (is_local_param) strcpy(ptnam, "localparam");
+ else strcpy(ptnam, "parameter");
 
  dx1 = dx2 = x1 = x2 = ax1 = ax2 = NULL;
  ptyp_decl = FALSE; 
@@ -2924,7 +2935,10 @@ bad_end:
    /* when rhs expr. evaluated, if real will change */
    /* LOOKATME - problem with all params in list sharing range xprs? */ 
    /* SJM 01/24/00 - works since for globalparam runs in virt glb param mod */
-   if ((np = __add_param(paramnam, x1, x2)) == NULL) return(FALSE);
+   if ((np = __add_param(paramnam, x1, x2, is_local_param)) == NULL) 
+    {
+     return(FALSE);
+    }
 
    /* require that at this point all param rhs expressions are numbers */
    /* know possible and needed for copying and later defparam assign */
@@ -3368,7 +3382,7 @@ static struct net_t *chkadd_array_param(char *paramnam, int32 pwtyp, int32 pwid,
  if (initerr) return(NULL);
 
  /* know all cells in aval xtab filled - add param - must be declared */
- if ((np = __add_param(paramnam, x1, x2)) == NULL) return(NULL); 
+ if ((np = __add_param(paramnam, x1, x2, TRUE)) == NULL) return(NULL); 
 
  np->nu.ct->ax1 = ax1; 
  np->nu.ct->ax2 = ax2; 
@@ -3725,7 +3739,7 @@ extern void __eval_param_rhs_tonum(struct expr_t *ndp)
  * code that reads parameter arrays calls this then sets fields it
  */
 extern struct net_t *__add_param(char *nam, struct expr_t *x1,
- struct expr_t *x2)
+ struct expr_t *x2, int32 is_local_param)
 {
  int32 is_spec;
  struct tnode_t *tnp;
@@ -3738,7 +3752,8 @@ extern struct net_t *__add_param(char *nam, struct expr_t *x1,
  else
   {
    is_spec = FALSE;
-   strcpy(ptypnam, "parameter");
+   if (is_local_param) strcpy(ptypnam, "localparam");
+   else strcpy(ptypnam, "parameter");
   }
  /* just look in local scope here since parameter decl. must be local */
  tnp = __vtfind(nam, __venviron[__top_sti]);
@@ -3787,6 +3802,7 @@ extern struct net_t *__add_param(char *nam, struct expr_t *x1,
  /* io type for parameter unused instead used for wire type */
  np->iotyp = NON_IO;
  np->n_isaparam = TRUE;
+ np->nu.ct->p_locparam = is_local_param;
  if (is_spec) np->nu.ct->p_specparam = TRUE;
  
  /* if has range know is vector */ 
@@ -3796,26 +3812,47 @@ extern struct net_t *__add_param(char *nam, struct expr_t *x1,
 
  /* notice already linked into wire list - must also link into param list */
  /* link on end to preserve order */
- if (__cur_declobj == MODULE)
+ /* link the LOCAL parameters on a seperate list than the regular params */
+ if (is_local_param)
   {
-   /* module parameter declaration */
-   if (__end_paramnp == NULL) __inst_mod->mprms = np;
-   else __end_paramnp->nu2.nnxt = np;
-   __end_paramnp = np;
+   if (__cur_declobj == MODULE)
+    {
+     if (__end_loc_paramnp == NULL) __inst_mod->mlocprms = np;
+     else __end_loc_paramnp->nu2.nnxt = np;
+     __end_loc_paramnp = np;
+    }
+   else if (__cur_declobj == TASK)
+    {
+     if (__end_tsk_loc_paramnp == NULL) __cur_tsk->tsk_locprms = np;
+     else __end_tsk_loc_paramnp->nu2.nnxt = np;
+     __end_tsk_loc_paramnp = np;
+    }
+   else __case_terr(__FILE__, __LINE__); 
   }
- else if (__cur_declobj == SPECIFY)
+ else
   {
-   if (__end_msprms == NULL) __cur_spfy->msprms = np;
-   else __end_msprms->nu2.nnxt = np;
-   __end_msprms = np;
+   /* regular parameter list */
+   if (__cur_declobj == MODULE)
+    {
+     /* module parameter declaration */
+     if (__end_paramnp == NULL) __inst_mod->mprms = np;
+     else __end_paramnp->nu2.nnxt = np;
+     __end_paramnp = np;
+    }
+   else if (__cur_declobj == SPECIFY)
+    {
+     if (__end_msprms == NULL) __cur_spfy->msprms = np;
+     else __end_msprms->nu2.nnxt = np;
+     __end_msprms = np;
+    }
+   else if (__cur_declobj == TASK)
+    {
+     if (__end_tskparamnp == NULL) __cur_tsk->tsk_prms = np;
+     else __end_tskparamnp->nu2.nnxt = np;
+     __end_tskparamnp = np;
+    }
+   else __case_terr(__FILE__, __LINE__); 
   }
- else if (__cur_declobj == TASK)
-  {
-   if (__end_tskparamnp == NULL) __cur_tsk->tsk_prms = np;
-   else __end_tskparamnp->nu2.nnxt = np;
-   __end_tskparamnp = np;
-  }
- else __case_terr(__FILE__, __LINE__); 
  return(np);
 }
 
@@ -4463,6 +4500,7 @@ extern int32 __bld_tsk(char *tnam, int32 tsktok)
  /* set list ends for elements that must be kept in order */
  __end_tpp = NULL;
  __end_tskparamnp = NULL;
+ __end_tsk_loc_paramnp = NULL;
  __venviron[++__top_sti] = __cur_tsk->tsksymtab;
 
  /* link in symbol table structure */
@@ -4526,9 +4564,11 @@ static void init_task(struct task_t *tskp)
  tskp->st_namblkin = NULL;
  tskp->tskpins = NULL;
  tskp->tsk_prms = NULL;
+ tskp->tsk_locprms = NULL;
  tskp->tprmnum = 0;
  tskp->tsk_regs = NULL;
  tskp->trnum = 0;
+ tskp->tlocprmnum = 0;
  tskp->tskst = NULL;
  tskp->tsknxt = NULL;
  tskp->tthrds = NULL;
@@ -4749,9 +4789,10 @@ extern int32 __rd_tfdecls(char *tftypnam)
      __pv_ferr(1135, "%s unexpected EOF", tftypnam);
      return(FALSE);
     case PARAMETER:
+    case LOCALPARAM:
      /* this add to symbol table and list */
      /* notice for these, if error but synced to ;, still returns T */
-     if (!rd_paramdecl(FALSE)) 
+     if (!rd_paramdecl(FALSE, (__toktyp == LOCALPARAM))) 
       {
 tfdecl_sync:
        switch ((byte) __syncto_class) {

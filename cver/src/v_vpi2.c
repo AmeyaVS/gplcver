@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -159,7 +161,6 @@ extern int32 __bld_xl_drvld_vtxtab(struct net_t *, int32, struct itree_t *, int3
 extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_arrwrd_iterator(struct h_t *);
-extern vpiHandle __bld_paramwrd_iterator(struct h_t *);
 extern vpiHandle __bld_bitof_iterator(struct h_t *);
 extern vpiHandle __bld_systf_iterator(struct h_t *);
 extern vpiHandle __bld_tfargexpr_iterator(struct h_t *);
@@ -449,9 +450,9 @@ fill_itloc:
  */
 extern vpiHandle __bld_paramassign_stmt_iter(struct h_t *hp)
 {
- register int32 pi;
+ register int32 pi, pi2;
  register struct h_t *hp2;
- register struct hrec_t *hrp2, *hrp;
+ struct hrec_t *hrp2, *hrp;
  int32 nparams; 
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -468,28 +469,48 @@ extern vpiHandle __bld_paramassign_stmt_iter(struct h_t *hp)
  hrp = hp->hrec;
  switch (hrp->htyp) {
   case vpiModule: 
-   if ((nparams = mdp->mprmnum) <= 0) return(NULL);
+   nparams = mdp->mprmnum + mdp->mlocprmnum;
+   if (nparams <= 0) return(NULL);
    iterp = __alloc_iter(nparams, &ihref);
-   for (pi = 0; pi < nparams; pi++)
+   for (pi = 0, pi2 = 0; pi < mdp->mprmnum; pi++)
     {
-     hp2 = &(iterp->scanhtab[pi]);
+     hp2 = &(iterp->scanhtab[pi2++]);
      hrp2 = hp2->hrec;
      hrp2->htyp = vpiParamAssign;
      hrp2->hu.hnp = &(mdp->mprms[pi]);
+     hp2->hin_itp = hp->hin_itp;
+    }
+   for (pi = 0; pi < mdp->mlocprmnum; pi++)
+    {
+     hp2 = &(iterp->scanhtab[pi2++]);
+     hrp2 = hp2->hrec;
+     hrp2->htyp = vpiParamAssign;
+     hrp2->hu.hnp = &(mdp->mlocprms[pi]);
      hp2->hin_itp = hp->hin_itp;
     }
    break;
   case vpiTask: case vpiFunction:
    tskp = hrp->hu.htskp;
 bld_tskiter:
+   nparams = tskp->tprmnum + tskp->tlocprmnum;
    if ((nparams = tskp->tprmnum) <= 0) return(NULL);
    iterp = __alloc_iter(nparams, &ihref);
-   for (pi = 0; pi < nparams; pi++)
+
+   for (pi = 0, pi2 = 0; pi < tskp->tprmnum; pi++)
     {
-     hp2 = &(iterp->scanhtab[pi]);
+     hp2 = &(iterp->scanhtab[pi2++]);
      hrp2 = hp2->hrec;
      hrp2->htyp = vpiParamAssign;
      hrp2->hu.hnp = &(tskp->tsk_prms[pi]);
+     hp2->hin_itp = hp->hin_itp;
+     hrp2->hin_tskp = tskp;
+    }
+   for (pi = 0; pi < tskp->tlocprmnum; pi++)
+    {
+     hp2 = &(iterp->scanhtab[pi2++]);
+     hrp2 = hp2->hrec;
+     hrp2->htyp = vpiParamAssign;
+     hrp2->hu.hnp = &(tskp->tsk_locprms[pi]);
      hp2->hin_itp = hp->hin_itp;
      hrp2->hin_tskp = tskp;
     }
@@ -701,48 +722,6 @@ extern vpiHandle __bld_arrwrd_iterator(struct h_t *hp)
    hp2 = &(iterp->scanhtab[iti]);
    hrp2 = hp2->hrec;
    hrp2->htyp = vpiMemoryWord;
-   hrp2->hu.hnp = np;
-   hrp2->hi = ai;
-   hrp2->bith_ndx = TRUE;
-   hp2->hin_itp = hp->hin_itp;
-   hrp2->hin_tskp = hp->hrec->hin_tskp;
-  }
- return(ihref);
-}
-
-/*
- * build an iterator for every word32 (cell) in parameter array
- */
-extern vpiHandle __bld_paramwrd_iterator(struct h_t *hp)
-{
- register int32 ai, iti;
- register struct hrec_t *hrp2; 
- int32 awid;
- vpiHandle ihref;
- struct net_t *np;
- struct h_t *hp2;
- struct pviter_t *iterp;
-
- if (hp == NULL) return(__nil_iter_err(vpiParamArrayWord));
- if (hp->hrec->htyp != vpiParamArray) 
-  {
-   __vpi_err(1857, vpiError,
-    "vpiParamArrayWord 1-to-many iterator from object %s illegal - must be vpiParamArray",
-    __to_vpionam(__wrks1, hp->hrec->htyp));
-   return(NULL);
-  }
- /* know hp is array (not array word32) handle */  
- np = hp->hrec->hu.hnp;
- awid = __get_arrwide(np);
- /* DBG remove --- */
- if (awid <= 0) __vpi_terr(__FILE__, __LINE__);
- /* --- */ 
- iterp = __alloc_iter(awid, &ihref);
- for (iti = 0, ai = awid - 1; ai >= 0; ai--, iti++) 
-  {
-   hp2 = &(iterp->scanhtab[iti]);
-   hrp2 = hp2->hrec;
-   hrp2->htyp = vpiParamArrayWord;
    hrp2->hu.hnp = np;
    hrp2->hi = ai;
    hrp2->bith_ndx = TRUE;
@@ -4893,7 +4872,7 @@ extern vpiHandle vpi_handle_by_index(vpiHandle object, int32 indx)
 
  ri1 = ri2 = 0;
  switch (hrp->htyp) {
-  case vpiMemory: case vpiParamArray:
+  case vpiMemory: 
    /* convert index to internal range */
    np = hrp->hu.hnp;
    if (!np->n_isarr) __vpi_terr(__FILE__, __LINE__);
@@ -4907,15 +4886,13 @@ bad_ndx:
       __to_vpionam(__wrks1, hrp->htyp), ri1, ri2);
      return(NULL);
     }
-   if (hrp->htyp == vpiMemory) ityp = vpiMemoryWord;
-   else ityp = vpiParamArrayWord;
+   ityp = vpiMemoryWord;
    href = __mk_handle(ityp, (void *) np, hp->hin_itp, NULL);
    hp2 = (struct h_t *) href;
    hrp2 = hp2->hrec;
    hrp2->hi = biti;
    hrp2->bith_ndx = TRUE;
    break;
-  /* notice can not index from vpiParamArrayWord - converted to const */
   case vpiMemoryWord:
    /* LOOKATME - should this be vpiRegBit object? */
    /* this evaluates expr. to array and bit or for bith form just get ndx */
@@ -5057,10 +5034,10 @@ extern int32 vpi_get(PLI_INT32 property, vpiHandle object)
   case vpiRealVar: case vpiVarSelect: case vpiNamedEvent:
    pval = regprop_vpiget(hp, property);
    break;
-  case vpiMemory: case vpiParamArray:
+  case vpiMemory: 
    pval = arrprop_vpiget(hp, property);
    break;
-  case vpiMemoryWord: case vpiParamArrayWord:
+  case vpiMemoryWord: 
    pval = arrwrdprop_vpiget(hp, property);
    break;
   case vpiParameter: case vpiSpecParam:
@@ -5283,11 +5260,7 @@ extern word32 __ntyp_to_vpivarhtyp(struct net_t *np)
 {
  word32 otyp;
 
- if (np->n_isaparam)
-  {
-   if (np->n_isarr) otyp = vpiParamArray;
-   else otyp = vpiParameter;
-  }
+ if (np->n_isaparam) otyp = vpiParameter;
  else if (np->ntyp < NONWIRE_ST) otyp = vpiNet;
  else if (np->n_isarr) otyp = vpiMemory;
  else otyp = to_vpi_reghtyp(np->ntyp);
@@ -5418,6 +5391,11 @@ static int32 netprop_vpiget(struct h_t *hp, int32 prop)
    return(TRUE);
   /* always false in Cver since the default */ 
   case vpiExplicitScalared: return(FALSE);
+  case vpiSigned:
+   /* SJM 09/28/06 - for 2001/5 net type objects have signed prop */ 
+   if (np->n_signed) return(TRUE);
+   return(FALSE);
+   break; 
   case vpiSize:
    if (hrp->htyp == vpiNetBit) return(1);
    return(np->nwid);
@@ -5481,6 +5459,10 @@ static int32 regprop_vpiget(struct h_t *hp, int32 prop)
   case vpiScalar:  
    if (np->n_isavec) return(FALSE);
    return(TRUE);
+  case vpiSigned:
+   /* SJM 09/28/06 - for 2001/5 net type objects have signed prop */ 
+   if (np->n_signed) return(TRUE);
+   return(FALSE);
   case vpiSize:
    if (is_bit) return(1);
    return(np->nwid);
@@ -5516,10 +5498,6 @@ static int32 arrprop_vpiget(struct h_t *hp, int32 prop)
  struct net_t *np;
 
  np = hp->hrec->hu.hnp;
- /* const type only for parameter array */
- if (hp->hrec->htyp == vpiParamArray && prop == vpiConstType)
-  return(get_param_constyp(np));
-
  switch (prop) {
   case vpiLineNo: return(np->nsym->sylin_cnt);
   case vpiSize: return(__get_arrwide(np));
@@ -5541,18 +5519,12 @@ static int32 arrwrdprop_vpiget(struct h_t *hp, int32 prop)
  if (hrp->bith_ndx) np = hrp->hu.hnp;
  else np = hrp->hu.hxp->lu.x->lu.sy->el.enp;
 
- if (hrp->htyp == vpiParamArrayWord && prop == vpiConstType)
-  return(get_param_constyp(np));
-
  switch (prop) {
   case vpiLineNo: return(np->nsym->sylin_cnt);
   case vpiSize: return(np->nwid);
   case vpiConstantSelect:
    if (hrp->bith_ndx) return(TRUE);
    /* DBG remove --- */
-   /* for param array words - variable select impossible */
-   if (hrp->htyp == vpiParamArrayWord) __vpi_terr(__FILE__, __LINE__);
-   /* --- */
    if (__expr_is_vpiconst(hrp->hu.hxp->ru.x)) 
     {
      __push_itstk(hp->hin_itp);
@@ -5584,7 +5556,17 @@ static int32 paramprop_vpiget(struct h_t *hp, int32 prop)
   case vpiConstType: return(get_param_constyp(np));
   case vpiLineNo: return(np->nsym->sylin_cnt);
   case vpiSize: return(np->nwid);
-  
+  case vpiLocalParam:
+   if (np->nu.ct->p_locparam) return(TRUE);
+   return(FALSE);
+  case vpiSigned:
+   /* SJM 09/28/06 - for 2001/5 net type objects have signed prop */ 
+   if (hp->hrec->htyp == vpiParameter)
+    {
+     if (np->n_signed) return(TRUE);
+     return(FALSE);
+    }
+  /* SJM 09/28/06 - fall thru if specparam since no has sign property */
   default: notpropof_err(hp->hrec->htyp, prop); break;
  }
  return(vpiUndefined);
@@ -5821,6 +5803,11 @@ static int32 funcdefprop_vpiget(struct h_t *hp, int32 prop)
    /* first pin for func. is the return value */
    np = tskp->tskpins->tpsy->el.enp;
    pval = np->nwid;
+   break;
+  case vpiSigned:
+   /* SJM 09/28/06 - for 2001/5 net type objects have signed prop */ 
+   np = tskp->tskpins->tpsy->el.enp;
+   if (np->n_signed) pval = TRUE; else pval = FALSE;
    break;
   default: 
    notpropof_err(hp->hrec->htyp, prop);
@@ -6307,6 +6294,10 @@ static int32 iodecl_prop_vpiget(struct h_t *hp, int32 prop)
   case vpiScalar:
    if (!np->n_isavec) pval = TRUE; else pval = FALSE;
    break;
+  case vpiSigned:
+   /* SJM 09/28/06 - for 2001/5 net type objects have signed prop */ 
+   if (np->n_signed) pval = TRUE; else pval = FALSE;
+   break;
   case vpiVector:
    if (np->n_isavec) pval = TRUE; else pval = FALSE;
    break;
@@ -6550,7 +6541,6 @@ extern char *vpi_get_str(PLI_INT32 property, vpiHandle object)
   case vpiIntegerVar: case vpiTimeVar: case vpiNamedEvent:
   case vpiRealVar: case vpiParameter: case vpiSpecParam:
   case vpiMemory: case vpiMemoryWord:
-  case vpiParamArray: case vpiParamArrayWord:
    return(netstrprop_vpiget(hp, property));
   case vpiPort: case vpiPortBit:
    return(portstrprop_vpiget(hp, property));

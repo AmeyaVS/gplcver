@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 

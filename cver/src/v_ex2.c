@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -2321,6 +2323,8 @@ static int32 mdata_rdhex(FILE *f, int32 c)
        nsize = 2*__numtok_wid;
        __numtoken = __my_realloc(__numtoken, __numtok_wid, nsize);
        __numtok_wid = nsize;
+       /* AIV 04/20/06 - need to reset chp pointer due to realloc */ 
+       chp = &(__numtoken[len - 1]); 
        *chp++ = c;
       }
     }
@@ -2397,6 +2401,8 @@ static int32 mdata_rdbin(FILE *f, int32 c)
        nsize = 2*__numtok_wid;
        __numtoken = __my_realloc(__numtoken, __numtok_wid, nsize);
        __numtok_wid = nsize;
+       /* AIV 04/20/06 - need to reset chp pointer due to realloc */ 
+       chp = &(__numtoken[len - 1]); 
        *chp++ = c;
       }
     }
@@ -2770,10 +2776,12 @@ static void do_srm_xtrct(struct expr_t *xp, int32 base, struct net_t *np,
 extern void __exec_sfrand(struct expr_t *ndp)
 {
  int32 ranv;
+ int32 localseed;
  struct xstk_t *xsp;
  struct expr_t *fax;
 
  /* case 1 random with seed set - arg is inout */
+ /* AIV 03/06/07 - case should not modify global seed - thanks SAS@ Tharas */
  if (ndp->ru.x != NULL && ndp->ru.x->optyp != OPEMPTY)
   {
    fax = ndp->ru.x->lu.x;
@@ -2788,12 +2796,12 @@ extern void __exec_sfrand(struct expr_t *ndp)
       __regab_tostr(__xs, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE));
      xsp->bp[0] = 0L;
     }
-   __seed = (int32) xsp->ap[0]; 
+   localseed = (int32) xsp->ap[0]; 
    __pop_xstk();
 
    /* this sets the seed (acutally a state) - 1 to reset to defl. sequence */
    /* generator returns only 31 (signed +) bits so high bit always 0 */  
-   ranv = rtl_dist_uniform(&__seed, MY_LONG_MIN, MY_LONG_MAX);
+   ranv = rtl_dist_uniform(&localseed, MY_LONG_MIN, MY_LONG_MAX);
 
    push_xstk_(xsp, WBITS);
    xsp->bp[0] = 0L;
@@ -2802,7 +2810,7 @@ extern void __exec_sfrand(struct expr_t *ndp)
    /* SJM 11/19/03 - I misread LRM - if seed arg passed it is inout not in */ 
    /* temp use of top of stack - removed before return that needs tos */
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word32) __seed;
+   xsp->ap[0] = (word32) localseed;
    xsp->bp[0] = 0L;
 
    __exec2_proc_assign(fax, xsp->ap, xsp->bp);
@@ -3716,8 +3724,9 @@ extern void __eval_qcol(register struct expr_t *ndp)
    /* xspq overwritten with x case (i.e. 2 down from top) */
    /* SJM 09/30/03 - select self determined so may or may not be signed */
    /* : operands either both signed or neither signed */
-   lxqcol(xspq, xsp1, xsp2, ndp->szu.xclen, ndp->lu.x->has_sign,
-    ndp->ru.x->lu.x->has_sign);
+   /* AIV 01/04/07 - was passing the wrong expr parts for has_sign bit */
+   lxqcol(xspq, xsp1, xsp2, ndp->szu.xclen, ndp->ru.x->lu.x->has_sign,
+    ndp->ru.x->ru.x->has_sign);
    /* pop top 2 arguments leaving result that is always down 2 */
    __pop_xstk();
    __pop_xstk();
@@ -3929,7 +3938,8 @@ static void lxqcol(register struct xstk_t *xspq, register struct xstk_t *xsp1,
  /* SJM 09/30/03 - widen only but can be sign extend - know : opands same */
  if (xsp1->xslen < opbits)
   {
-   if (col_sign) __sgn_xtnd_widen(xsp1, opbits);
+   /* AIV 01/10/07 - was using col sign for sel part sign */
+   if (sel_sign) __sgn_xtnd_widen(xsp1, opbits);
    else __sizchg_widen(xsp1, opbits);
   }
  if (xsp2->xslen < opbits)
@@ -4016,6 +4026,9 @@ static void eval_unary(struct expr_t *ndp)
        /* SJM 06/01/04 - may need to sign extend operand */
        if ((op1a & (1 << (ndp->lu.x->szu.xclen - 1))) != 0) 
         op1a |= ~(__masktab[ndp->lu.x->szu.xclen]);
+       /* AIV 09/25/06 - if the sign bit is on converting to size of expr */
+       /* was wrong - since sign extended/mask here just set needed size */
+       xsp->xslen = ndp->szu.xclen;
       } 
      /* convert to signed 32 bit then copy back to word32 */
      /* works because narrower than 32 signed extended already */
@@ -4646,6 +4659,8 @@ static void eval_binary(struct expr_t *ndp)
       {
        /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op1a = op1a | ~(__masktab[xsp1->xslen]);
+       /* AIV 10/12/06 - forgot to do the sign cast */
+       op1a = (word32) (-((sword32) op1a)); 
        has_sign = TRUE;
       }
      else has_sign = FALSE; 
@@ -4655,6 +4670,7 @@ static void eval_binary(struct expr_t *ndp)
       {
        /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op2a = op2a | ~(__masktab[xsp2->xslen]);
+       op2a = (word32) (-((sword32) op2a)); 
       }
 
      /* know op1a and op2a positive */
@@ -5065,7 +5081,8 @@ static void eval_binary(struct expr_t *ndp)
    if (op2b != 0L) rtb = rta = mask;
    /* if shift length wider than op1, result is 0 */
    /* 2nd shift width operand is interpreted as range index (word32) */
-   else if (op2a > (word32) opwid) rtb = rta = 0L;
+   /* AIV 03/14/06 - shift >= set to zero */
+   else if (op2a >= (word32) opwid) rtb = rta = 0L;
    else
     {
      if (nd_signop && xsp1->xslen < ndp->szu.xclen)
@@ -5082,7 +5099,8 @@ static void eval_binary(struct expr_t *ndp)
    /* SJM 09/30/03 - logical shift right stays same even if sign bit 1 */
    /* if shift amt x/z, result is 0 */ 
    if (op2b != 0L) rtb = rta = mask;
-   else if (op2a > (word32) ndp->szu.xclen)
+   /* AIV 03/14/06 - shift >= set to zero */
+   else if (op2a >= (word32) ndp->szu.xclen)
     {
      /* if shift length wider than op1, result is 0 */
      /* 2nd shift width operand is interpreted as range index (word32) */
@@ -5102,7 +5120,8 @@ static void eval_binary(struct expr_t *ndp)
     {
      rtb = rta = mask;
     }
-   else if (op2a > (word32) ndp->szu.xclen)
+   /* AIV 03/14/06 - shift >= set to zero */
+   else if (op2a >= (word32) ndp->szu.xclen)
     { 
      /* 2nd shift width operand is interpreted as range index (word32) */
      /* notice if word32, no sign bit */
@@ -5389,72 +5408,48 @@ ashift_pop:
   /* binary of these is bit by bit not reducing and ndp width is needed */
   case /* & */ BITREDAND:
    /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* AIV 10/13/06 - need to ignore sign here */
    if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
-   else if (xsp1->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
-     else __sizchg_widen(xsp1, ndp->szu.xclen);
-    }
+   else if (xsp1->xslen < ndp->szu.xclen) __sizchg_widen(xsp1, ndp->szu.xclen);
+
    if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
-   else if (xsp2->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
-     else __sizchg_widen(xsp2, ndp->szu.xclen);
-    }
+   else if (xsp2->xslen < ndp->szu.xclen) __sizchg_widen(xsp2, ndp->szu.xclen);
 
    __lbitand(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* | */ BITREDOR:
    /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* AIV 10/13/06 - need to ignore sign here */
    if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
-   else if (xsp1->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
-     else __sizchg_widen(xsp1, ndp->szu.xclen);
-    }
+   else if (xsp1->xslen < ndp->szu.xclen) __sizchg_widen(xsp1, ndp->szu.xclen);
+
    if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
-   else if (xsp2->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
-     else __sizchg_widen(xsp2, ndp->szu.xclen);
-    }
+   else if (xsp2->xslen < ndp->szu.xclen) __sizchg_widen(xsp2, ndp->szu.xclen);
 
    __lbitor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* ^ */ BITREDXOR:
    /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* AIV 10/13/06 - need to ignore sign here */
    if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
-   else if (xsp1->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
-     else __sizchg_widen(xsp1, ndp->szu.xclen);
-    }
+   else if (xsp1->xslen < ndp->szu.xclen) __sizchg_widen(xsp1, ndp->szu.xclen);
+
    if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
-   else if (xsp2->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
-     else __sizchg_widen(xsp2, ndp->szu.xclen);
-    }
+   else if (xsp2->xslen < ndp->szu.xclen) __sizchg_widen(xsp2, ndp->szu.xclen);
 
    __lbitxor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* ^~ */ REDXNOR:
    /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* AIV 10/13/06 - need to ignore sign here */
    if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
-   else if (xsp1->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
-     else __sizchg_widen(xsp1, ndp->szu.xclen);
-    }
+   else if (xsp1->xslen < ndp->szu.xclen) __sizchg_widen(xsp1, ndp->szu.xclen);
+
    if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
-   else if (xsp2->xslen < ndp->szu.xclen)
-    {
-     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
-     else __sizchg_widen(xsp2, ndp->szu.xclen);
-    }
+   else if (xsp2->xslen < ndp->szu.xclen) __sizchg_widen(xsp2, ndp->szu.xclen);
 
    __lbitxnor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
@@ -6092,7 +6087,7 @@ extern int32 __do_sign_widecmp(int32 *isx, register word32 *op1ap,
  if ((op1ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0)
   {
    /* if op1 is negative and op2 is positive */
-   if (!(op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0) return(-1);
+   if ((op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) == 0) return(-1);
   }
  /* op1 is positive and op2 is negative */
  else if ((op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0) return(1);
@@ -6480,10 +6475,11 @@ extern void __lmult(register word32 *res, register word32 *u, register word32 *v
   {
    wp[i + vwlen] += accmuladd32(&(wp[i]), &(wp[i]), u[i], v, vwlen);
   }
- /* SJM 04/07/03 - need to mask high bits in high word32 here */
- wp[wlen - 1] &= __masktab[ubits_(blen)];
  
  memcpy(res, wp, ((wlen < prodwlen) ? wlen : prodwlen)*WRDBYTES); 
+ /* SJM 04/07/03 - need to mask high bits in high word32 here */
+ /* AIV 12/20/06 - was masking wrong pointer should be res not wp */
+ res[wlen - 1] &= __masktab[ubits_(blen)];
  __pop_xstk();
 }
 

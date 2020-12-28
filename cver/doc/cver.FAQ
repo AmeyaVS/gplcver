@@ -13,27 +13,22 @@ Frequently Asked Questions
     * 8. Why can't I use ` defined preprocessor values to define numbers?
     * 9. Where are the instructions for the complicated compilation and
          linking steps needed before simulation?
-    * 10. Why does optimizer (-O) option sometimes slow down my simulation?
-    * 11. Why is the OS dynamic loader unable to find my .so PLI program
+    * 10. Why is the OS dynamic loader unable to find my .so PLI program
           libraries? 
-    * 12. Why won't gdb let me set break points in my user PLI code?
-    * 13. How do I use gdb in conjunction with Cver ':' debugger to debug my
+    * 11. Why won't gdb let me set break points in my user PLI code?
+    * 12. How do I use gdb in conjunction with Cver ':' debugger to debug my
           PLI code?
-    * 14. Why does value assigned by vpi_put_value to a wire disappear?  What
+    * 13. Why does value assigned by vpi_put_value to a wire disappear?  What
           is this vpiAddDriver non standard feature anyway?
-    * 15. How does glitch (pulse) checking work in Cver?
-    * 16. Why doesn't Cver support $save/$restart?
-    * 17. Why doesn't Cver support new Verilog 2001 generate feature?
-    * 18. Why can't I set debugger statement breakpoints when I use -O?
-    * 19. Why are Cver's debugger breakpoints so complicated?
-    * 20. Why does the Cvlic license manager complain when I quit from gdb?
-    * 21. Why aren't more Verilog 2001 features implemented?
-    * 22. Why can't I use $dumpvars to dump all vars with dinotrace for large
-           design?
-    * 23. What is vcddiff for?
-    * 24. Why doesn't Cver support separate assertion and test languages?
-    * 25. How do I report bugs?
-    * 26. How do I purchase support or commercial Cver from Pragmatic C
+    * 14. How does glitch (pulse) checking work in Cver?
+    * 15. Why doesn't Cver support $save/$restart?
+    * 16. Why doesn't Cver support new Verilog 2001 generate feature?
+    * 17. Why are Cver's debugger breakpoints so complicated?
+    * 18. Why aren't more Verilog 2001 features implemented?
+    * 19. What is vcddiff for?
+    * 20. Why doesn't Cver support separate assertion and test languages?
+    * 21. How do I report bugs?
+    * 22. How do I purchase the new CVC Compiler from Pragmatic C
 
   ----------------------------------------------------------------------
 1. What is Verilog and what is Verilog Simulation?
@@ -73,13 +68,14 @@ Frequently Asked Questions
    Antrim release under GNU Public License (GPL) because we realized that we
    could not compete with the branding power of the large Ecad vendors.
 
-   We currently are working on improving simulation speed using a compiler
-   which compiles Verilog to virtual machine instructions (called byte codes)
-   which are then interpreted (paper ver-vm.pdf on the www.pragmatic-c.com
-   web site describes the method).  The commercial version of Cver contains
-   the new VM compiler.  Pragmatic C is applying for research grants and
-   hopes to diversify to become both a simulator vendor and and a research
-   company. 
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  It allows either 
+   compiling to assembly (the default) or running the interpreter 
+   (+interp option).  We will continue to support a version of Cver released 
+   under the GPL license, but new Verilog 2005 (and 2001) features will not 
+   be added to GPL Cver. 
 
   ----------------------------------------------------------------------
 3. What Computers has Cver been ported to?
@@ -248,23 +244,7 @@ Frequently Asked Questions
     update the byte code simulation model.
 
   ----------------------------------------------------------------------
-10.  Why does optimizer (-O) option sometimes slow down my simulation?
-    ** NOTE: only applies to commercial Cver **
-
-    Interpreted simulation speed had reached a point where no more
-    speed improvement was possible.  The new byte code virtual machine (VM)
-    interpreter now allows future speed improvements as more sophisticated
-    compiler algorithms and optimizations are added.  Current
-    weakest parts of compiled VM byte code quality are simulation of
-    gates and path and timing check event recording.  Completely flattened
-    gate simulations currently show small or no speed improvement over
-    interpreted Cver.  Also because compiled simulators must preserve
-    module port interfaces, much of the speed gain from compilation
-    is lost for designs with complicated ports.  This is why XL is sometimes
-    much faster than VCS.
-
-  ----------------------------------------------------------------------
-11.  Why is the OS dynamic loader unable to find my .so PLI program
+10.  Why is the OS dynamic loader unable to find my .so PLI program
     libraries? 
 
 
@@ -282,7 +262,7 @@ Frequently Asked Questions
     appears and then try again with .so suffix appended.
 
   ----------------------------------------------------------------------
-12.  Why won't gdb let me set break points in my user PLI code?
+11.  Why won't gdb let me set break points in my user PLI code?
 
     Because Cver loads user PLI libraries as dynamic (usually suffix .so)
     libraries using +load_pii1= and +load_vpi= options, the libraries are
@@ -296,7 +276,7 @@ Frequently Asked Questions
     examples of how to compile and create user PLI program dynamic libraries.
 
   ----------------------------------------------------------------------
-13.  How do I use gdb in conjunction with Cver ':' debugger to debug my
+12.  How do I use gdb in conjunction with Cver ':' debugger to debug my
      PLI code?
 
      Follow the instructions in question 9 except before starting
@@ -308,7 +288,7 @@ Frequently Asked Questions
      simulation.
 
   ----------------------------------------------------------------------
-14.  Why does value assigned by vpi_put_value to a wire disappear?  What
+13.  Why does value assigned by vpi_put_value to a wire disappear?  What
      is this vpiAddDriver non standard feature anyway?
 
      One result of current dominance of compiled to machine code Verilog
@@ -333,7 +313,7 @@ Frequently Asked Questions
      down so it is currently a non standard enhancement.
 
   ----------------------------------------------------------------------
-15.  How does glitch (pulse) checking work in Cver?
+14.  How does glitch (pulse) checking work in Cver?
 
      Cver pulse detection uses the normal +show_cancel_e option to
      turn on insertion of x when a pulse occurs.  If the option is not
@@ -356,7 +336,7 @@ Frequently Asked Questions
      manufacturing process. 
 
   ----------------------------------------------------------------------
-16.  Why doesn't Cver support $save/$restart?
+15.  Why doesn't Cver support $save/$restart?
 
      Operating system level programs and system calls exist in modern
      operating systems so it is better to simply stop a process and
@@ -364,7 +344,7 @@ Frequently Asked Questions
      stopped and its process image saved to disk.
 
   ----------------------------------------------------------------------
-17.  Why doesn't Cver support new Verilog 2001 generate feature?
+16.  Why doesn't Cver support new Verilog 2001 generate feature?
 
      Cver is intended to be an accurate and close to actual hardware
      models gate level simulator.  The new Verilog generate is a feature
@@ -378,18 +358,7 @@ Frequently Asked Questions
      coding of regular Verilog HDL source.
 
   ----------------------------------------------------------------------
-18.  Why can't I set debugger statement breakpoints when I use -O?
-    ** NOTE: only applies to commercial Cver **
-
-     The byte code compiler separates procedural Verilog into delay
-     control free regions.  This process removes statement boundaries.
-     Therefore there is no place to set breakpoints in the byte code
-     program.  Verilog statement delay and edge control breakpoints
-     can still be set even when -O option is selected.  If you
-     need to debug procedural RTL statements, run without optimization.
-
-  ----------------------------------------------------------------------
-19.  Why are Cver's debugger statement breakpoints so complicated?
+17.  Why are Cver's debugger statement breakpoints so complicated?
 
      Cver supports all of the statement break point control capabilities
      in gdb plus some additional features needed because circuits are
@@ -436,43 +405,8 @@ Frequently Asked Questions
      different other conditions are met.
 
   ----------------------------------------------------------------------
-20. Why does the Cvlic license manager complain when I quit from gdb?
-    ** NOTE: only applies to commercial Cver **
-
-    Cver normally uses Pragmatic C developed node locked single job
-    lock license manager.  It works by writing a file "/tmp/.CVERRUN.LCK" 
-    into the /tmp directory.  When a Cver run completes, the file is removed.
-    However if you exit from gdb with the quit command, control is never
-    returned to Cver so it can not remove the /tmp/.CVERRUN.LCK file.
-    If you run Cver and get the following message: 
-
-      **FATAL: a job is running - limit exceeded for SJL license.
-
-    Remove the single job lock file by typing: "rm /tmp/.CVERRUN.LCK". 
-    It is also possible for a core dump termination to die in such a way
-    that the lock file is not removed.  Again if Cver emits the above
-    message remove the lock file.  We put the following lines in our 
-    .gdbinit file (usually placed in your home directory):
-
-define cvrun
-she rm /tmp/.CVER*
-run
-end
-define cvquit
-she rm /tmp/.CVER*
-quit
-end
-    
-    Then to start a simulation to debug your user PLI code type "cvrun"
-    instead of run and cvquit instead of quit.
-
-    We also can support FlexLM license manager but we prefer not to use it
-    because it adds considerably to our costs and since Verilog simulations
-    are compute cycle intensive, there is no reason to run more than
-    one simulation on one computer.
-
   ----------------------------------------------------------------------
-21.  Why aren't more Verilog 2001 features added?
+18.  Why aren't more Verilog 2001 features added?
 
      A number of new features are under development such as new file I/O
      mechanism, configurations alternative to -y/-v options, and new signed
@@ -489,15 +423,7 @@ end
      We are also working on other minor new Verilog 2001 features.
 
   ----------------------------------------------------------------------
-22.  Why can't I use $dumpvars to dump all vars with dinotrace for large
-     design?
-
-     This is a Dinotrace limitation.  Namely, current Dinotrace algorithm
-     requires very large area of memory for every signal.  Work around
-     is to use $dumpvars form that only dumps nets of interest.
-
-  ----------------------------------------------------------------------
-23. What is vcddiff for?
+19. What is vcddiff for?
 
     vcddiff is program we have developed to assist in making sure
     that when changes are made to a design,  the changes can be  
@@ -506,7 +432,7 @@ end
     See README file for vcddiff for more instructions.
 
   ----------------------------------------------------------------------
-24. Why does not Cver support separate assertion and test languages?
+20. Why does not Cver support separate assertion and test languages?
 
     The idea behind Cver is provide an interpreter that is so flexible
     that whatever assertions need to be checked can be accomplished by
@@ -517,20 +443,18 @@ end
     complex tools.
 
   ----------------------------------------------------------------------
-25. How do I report bugs?
+21. How do I report bugs?
 
-    Send email to support@pragmatic-c.com.  Before reporting a bug check
+    Send email to avanvick@pragmatic-c.com.  Before reporting a bug check
     the known-problems.txt file to see if the problem is already known.
-    Also, make sure you are running the latest version of Cver by checking
-    the http://www.pragmatic-c.com/gplcver web site if you are running
-    open source Cver or the http://www.pragmatic-c.com/commercial-cver
-    web site if you have licensed commercial Cver.  Bug reports should
-    include a small failing example if possible.
+    Also, make sure you are running the latest version of GPL Cver by
+    checking the http://www.pragmatic-c.com/gplcver web site for the
+    latest GPL Cver release.  Bug reports should include a small failing
+    example if possible.
 
   ----------------------------------------------------------------------
-26. How do I purchase support or commercial Cver from Pragmatic C
+22. How do I purchase the new CVC Compiler from Pragmatic C
 
-    For more information on commercial Cver, either visit the
-    http://www.pragmatic-c.com/commericial-cver web site or contact Pragmatic
-    C Software by sending email to sales@pragmatic-c.com.
-
+    We have a stable version of our CVC compiler.  You can purchase it by
+    contacting Andrew at avanvick@pragmatic-c.com.  You can also get release 
+    notes and an evaluation copy of CVC by contacting Andrew.

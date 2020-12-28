@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -692,6 +694,9 @@ extern void __set_mpp_aoff_routines(void)
       mpp->mpaf.mpp_downassgnfunc = std_downtomdport;
      else continue;
 
+     /* SJM 09/18/06 - if not simulated as decomposed bits, avoid this code */
+     if (!mpp->has_scalar_mpps) continue;
+
      for (pbi = 0; pbi < mpp->mpwide; pbi++)    
       {
        mpp2 = &(mpp->pbmpps[pbi]);
@@ -891,7 +896,11 @@ static void std_downtomdport(register struct expr_t *lhsx,
    xsp = __ndst_eval_xpr(rhsx);
    /* widen to lhs width with z's - if too narrow, high part just unused */
    /* SJM 05/10/04 - no sign extension because widening to z'x */
-   if (xsp->xslen < lhsx->szu.xclen)
+   /* AIV 03/15/07 - strength for xsp->xslen was wrong for same reaston */
+   /* as one fixed on 11/21/06 */
+   /* SJM 11/21/06 - for stren's xsp is 4 times width for byte per bit */
+   /* problem is xslen for stren is not the expr bit width */
+   if (rhsx->szu.xclen < lhsx->szu.xclen)
     __strenwiden_sizchg(xsp, lhsx->szu.xclen);
   }
  else
@@ -1182,7 +1191,9 @@ static void std_uptoiconn(register struct expr_t *lhsx,
    xsp = __ndst_eval_xpr(rhsx);
    /* widen to lhs width with z's - if too narrow, high part just unused */
    /* SJM 05/10/04 - no sign extension because widening to z'x */
-   if (xsp->xslen < lhsx->szu.xclen)
+   /* SJM 11/21/06 - for stren's xsp is 4 times width for byte per bit */
+   /* problem is xslen for stren is not the expr bit width */
+   if (rhsx->szu.xclen < lhsx->szu.xclen)
     __strenwiden_sizchg(xsp, lhsx->szu.xclen);
   }
  else
@@ -4714,11 +4725,16 @@ static void turnon_1net_dmpv(struct net_t *np, struct itree_t *itp,
    np->n_hasdvars = TRUE;
    /* if net has any dumpvars must always use change stores */
    /* but recording now unrelated to dumpvars */ 
-   /* SJM 03/15/01 - change to fields in net record */
-   /* SJM 12/30/02 - must be turned on by dumpvar in src processing */
-   /* DBG remove -- */
-   if (!np->nchg_nd_chgstore) __misc_terr(__FILE__, __LINE__);
-   /* -- */
+   /* SJM 10/10/06 - if dmpv in src legal to turn */
+   /* the nchg nd chgstore bit on because needed for dumpvars and starts */
+   /* using nchg processing from here on when know no dces */
+   if (!np->nchg_nd_chgstore)
+    {
+     /* DBG remove -- */
+     if (!np->dmpv_in_src) __misc_terr(__FILE__, __LINE__);
+     /* -- */
+     np->nchg_nd_chgstore = TRUE;
+    }
 
    /* if first time any net of module has dumpvars - alloc table */
    /* for all nets in module */ 

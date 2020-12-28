@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -92,6 +94,8 @@ static void chg_ins_wval(register word32 *, register int32, register word32 *,
  register int32);
 static int32 chg_ofs_cmp(register word32 *, register word32 *, int32, int32);
 static void eval_wide_gate(struct gate_t *, struct xstk_t *);
+static void st_psel(struct net_t *, int32, int32, register word32 *,
+ register word32 *);
 static void chg_st_psel(struct net_t *, int32, int32, register word32 *,
  register word32 *);
 
@@ -3929,8 +3933,8 @@ extern void __record_sel_nchg(struct net_t *np, int32 i1, int32 i2)
  * caller must adjust
  * notice this does not add changed net to change list
  */
-static void chg_st_vecval(register word32 *dwp, int32 blen, register word32 *ap,
- register word32 *bp)
+static void chg_st_vecval(register word32 *dwp, int32 blen,
+ register word32 *ap, register word32 *bp)
 {
  int32 wlen;
  word32 *dwp2;
@@ -3940,9 +3944,15 @@ static void chg_st_vecval(register word32 *dwp, int32 blen, register word32 *ap,
    if (dwp[0] != ap[0])
     {
      dwp[0] = ap[0];
+     /* AIV 09/19/06 - if a part is not the same assign bpart regardless */
+     /* this is better than doing another compare */
+     dwp[1] = bp[0];
      __lhs_changed = TRUE;
+     return;
     }
-   if (dwp[1] != ap[1])
+   /* AIV 09/19/06 - was assuming contiguous words (using ap[1] for bpart) */
+   /* which isn't always true local words av, bv can be passed */
+   if (dwp[1] != bp[0])
     {
      dwp[1] = bp[0];
      __lhs_changed = TRUE;
@@ -4503,7 +4513,17 @@ extern void __assign_to_psel(struct expr_t *idndp, int32 ri1, int32 ri2,
  if (idndp->optyp == GLBREF)
   { grp = idndp->ru.grp; __xmrpush_refgrp_to_targ(grp); nd_itpop = TRUE; }
  /* if strength, know ap points to st bytes and array rhswid 4x to big */
- chg_st_psel(np, ri1, ri2, ap, bp);
+
+ /* SJM - 12/14/05 - must not call chg store of psel unless needed */
+ /* otherwise - next assign that needs chg store but doesn't chg */  
+ /* incorrectly looks like it changed */
+ if (np->nchg_nd_chgstore)
+  {
+   /* if strength, know ap points to st bytes and array rhswid 4x to big */
+   chg_st_psel(np, ri1, ri2, ap, bp);
+  }
+ else st_psel(np, ri1, ri2, ap, bp);
+
  if (nd_itpop) __pop_itstk();
 }
 
@@ -4788,6 +4808,38 @@ extern void __cp_sofs_wval(register word32 *dwp, register word32 *swp,
   }
  /* bits in high source word32 will probably be on but must not be selected */
  dwp[wi] &= __masktab[ubits_(numbits)];
+}
+
+/*
+ * non change store assign to psel
+ *
+ * SJM 12/14/05 - can't use chg form for non chg since may wrongly leave
+ * lhs changed on so next one wrongly appears to be changed
+ */
+static void st_psel(struct net_t *np, int32 ri1, int32 ri2,
+ register word32 *ap, register word32 *bp)
+{
+ int32 numbits, wlen;
+ word32 *rap;
+ byte *netsbp, *newsbp;
+
+ numbits = ri1 - ri2 + 1;
+ if (np->srep == SR_VEC)
+  {
+   /* SJM 07/15/00 - all non mem vecs in at least 2 wrds - scalars in byte */
+   /* while this needs words since always some number of words */
+   wlen = wlen_(np->nwid);
+   rap = &(np->nva.wp[2*wlen*__inum]);
+   __lhspsel(rap, ri2, ap, numbits);
+   rap = &(rap[wlen]);
+   __lhspsel(rap, ri2, bp, numbits);
+  }
+ else
+  {
+   netsbp = &(np->nva.bp[np->nwid*__inum + ri2]);
+   newsbp = (byte *) ap;
+   memcpy(netsbp, newsbp, numbits);
+  }
 }
 
 /*
@@ -5164,7 +5216,8 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
    /* if signed, sign extend, otherwise nothing to do */
    if ((xsp->ap[0] & (1 << (osgn_bofs))) != 0)
     {
-     mask = __masktab[nblen - osgn_bofs + 1] << (osgn_bofs + 1);
+     /* AIV 01/18/06 - added parenthesis around minus amount */
+     mask = __masktab[nblen - (osgn_bofs + 1)] << (osgn_bofs + 1);
      xsp->ap[0] |= mask;
      /* if x/z x/z extend */
      if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0) xsp->bp[0] |= mask;
@@ -5174,7 +5227,7 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
      if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0)
       {
        /* since sign bit off, 0 extend a part but if z, z extend b part */
-       mask = __masktab[nblen - osgn_bofs + 1] << (osgn_bofs + 1);
+       mask = __masktab[nblen - (osgn_bofs + 1)] << (osgn_bofs + 1);
        if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0) xsp->bp[0] |= mask;
       }
     }
@@ -5193,7 +5246,8 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
    /* notice nwlen and stkwlen same */
    if ((xsp->ap[nwlen - 1] & (1 << osgn_bofs)) != 0)
     {
-     mask = ((__masktab[ubits_(nblen) - osgn_bofs + 1]) << (osgn_bofs + 1));
+     /* AIV 12/22/06 - masktab index was wrong */
+     mask = ((__masktab[WBITS - (osgn_bofs + 1)]) << (osgn_bofs + 1));
      xsp->ap[nwlen - 1] |= mask;
      /* SJM 09/29/04 - was checking word32 after high end not high word32 */
      /* if x/z, x/z extend */
@@ -5202,9 +5256,11 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
     }
    else
     {
-     if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0)
+     /* AIV 01/10/07 - was using bp[0] - wrong for wide case */
+     if ((xsp->bp[nwlen - 1] & (1 << (osgn_bofs))) != 0)
       {
-       mask = ((__masktab[ubits_(nblen) - osgn_bofs + 1]) << (osgn_bofs + 1));
+       /* AIV 12/22/06 - masktab index was wrong */
+       mask = ((__masktab[WBITS - (osgn_bofs + 1)]) << (osgn_bofs + 1));
        /* SJM 09/29/04 - was masking word32 after high end not high word32 */
        xsp->bp[nwlen - 1] |= mask;
       }
@@ -5266,7 +5322,7 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
  /* sign extend if sign bit on, x/z extend if sign bit x/z, else 0 extend */
  if ((xsp->ap[stkwlen - 1] & (1 << osgn_bofs)) != 0)
   {
-   mask = __masktab[WBITS - osgn_bofs - 1] << (osgn_bofs + 1);
+   mask = __masktab[WBITS - (osgn_bofs + 1)] << (osgn_bofs + 1);
    /* one high bits of this word32 */
    xsp->ap[stkwlen - 1] |= mask;
    /* then all bits of rest */
@@ -5286,7 +5342,7 @@ extern void __sgn_xtnd_widen(struct xstk_t *xsp, int32 nblen)
  zero_allbits_(&(xsp->ap[stkwlen]), xtra_wbits);
  if ((xsp->bp[stkwlen - 1] & (1 << osgn_bofs)) != 0)
   {
-   mask = __masktab[WBITS - osgn_bofs - 1] << (osgn_bofs + 1);
+   mask = __masktab[WBITS - (osgn_bofs +1)] << (osgn_bofs + 1);
    xsp->bp[stkwlen - 1] |= mask;
    one_allbits_(&(xsp->bp[stkwlen]), xtra_wbits);
    return;
@@ -5310,7 +5366,8 @@ extern void __sgn_xtnd_wrd(register struct xstk_t *xsp, int32 nblen)
    mask = (__masktab[WBITS - oubits]) << oubits;
    xsp->ap[0] |= mask;
    /* if x/z x/z extend */
-   if ((xsp->bp[0] & (1 << (oubits - 1))) != 0) xsp->bp[0] &= mask;
+   /* AIV - 10/10/05 - b part was & should be | */
+   if ((xsp->bp[0] & (1 << (oubits - 1))) != 0) xsp->bp[0] |= mask;
   }
  else
   {

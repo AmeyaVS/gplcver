@@ -59,13 +59,13 @@ the "tests_and_examples" directory.   You should always run the
 basic functionality test in the install.tst directory by executing
 the "inst_tst.sh" script.  There should be no diff output messages
 printed.  See the README file in the install.tst directory for
-more information.  If you plan to use any of the PLI interfaces,
-the dinotrace wave form viewer or the vcddiff VCD output file compare
-program, you should run the tests in the appropriate directory in
-the "tests_and_examples" directory.  The shell scripts in the installation
-directories have relative paths names built in, so you must not change
-the GPL cver release directory structure before running the test shell
-scripts.  In particular, you must leave cver binary in the "bin" directory.
+more information.  If you plan to use any of the PLI interfaces, or the 
+vcddiff VCD output file compare program, you should run the tests in the
+appropriate directory in the "tests_and_examples" directory.  The shell
+scripts in the installation directories have relative paths names built in,
+so you must not change the GPL cver release directory structure before 
+running the test shell scripts.  In particular, you must leave cver binary
+in the "bin" directory.
 
      See the README files in each of the install directories for detailed
 instructions on running the tests.  The "capacity.tst" directory contains

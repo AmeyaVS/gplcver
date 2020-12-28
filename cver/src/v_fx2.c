@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -55,7 +57,7 @@ static void set2_poundparams(struct itree_t *);
 static void assgn_is_param(struct net_t *, struct xstk_t *, int32, int32, int32);
 static void replace_param_rhs_expr(struct net_t *, word32 *, struct mod_t *);
 static void set_1defparam(struct dfparam_t *);
-static void recalc_1mod_params(struct mod_t *);
+static void recalc_1mod_params(struct mod_t *, struct net_t *, int32);
 static void recalc_1mod_pndparams(struct mod_t *);
 static int32 xpr_has_is_param(struct expr_t *);
 static void set_parmval_from_isxpr(struct net_t *, struct expr_t *,
@@ -1814,6 +1816,7 @@ extern void __cnvt_param_stkval(struct xstk_t *xsp, struct expr_t *xrhs,
 extern void __recalc_param_vals(void)
 {
  register struct mod_t *mdp;
+ struct task_t *tskp;
  int32 mlevel, chged, all_done;
 
  for (;;)
@@ -1843,10 +1846,19 @@ extern void __recalc_param_vals(void)
        /* LOOKATME - always recalculate since can't detect if recalced */
        /* if no instance have pound params, does no extra checking */
        /* but can't call if top mod */  
+       /* AIV 09/27/06 - no need to recalc local params here */
        if (mdp->minstnum != 0) recalc_1mod_pndparams(mdp);
 
+       /* AIV 09/27/06 - must recalc all params/local parms/task local parm */
        /* after any pound param recalc done, can set params to final vals */
-       recalc_1mod_params(mdp);
+       recalc_1mod_params(mdp, mdp->mprms, mdp->mprmnum);
+       /* recalc all the localparams */
+       recalc_1mod_params(mdp, mdp->mlocprms, mdp->mlocprmnum);
+       /* recalc all the task localparams */
+       for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+        {
+         recalc_1mod_params(mdp, tskp->tsk_locprms, tskp->tlocprmnum);
+        }
 
        /* now all parameters in this module set to good final value */
        mdp->mod_parms_gd = TRUE;
@@ -1863,7 +1875,8 @@ extern void __recalc_param_vals(void)
  *
  * know all parameters set by pound and/or def params have right value
  */
-static void recalc_1mod_params(struct mod_t *mdp)
+static void recalc_1mod_params(struct mod_t *mdp, struct net_t *mprms, 
+ int32 num)
 {
  register int32 pi, ii;
  int32 wlen;
@@ -1872,9 +1885,9 @@ static void recalc_1mod_params(struct mod_t *mdp)
  struct xstk_t *xsp;
  struct expr_t *xp, **xtab;
 
- for (pi = 0; pi < mdp->mprmnum; pi++)
+ for (pi = 0; pi < num; pi++)
   {
-   np = &(mdp->mprms[pi]);
+   np = &(mprms[pi]);
 
    /* if rhs does not contain any parameter, or parameter set by defparam */
    /* that removes the rhs expr, no need to recalculate */      
@@ -5097,11 +5110,13 @@ static void reconn_1mod_gateterms(struct mod_t *mdp)
          wp = &(__contab[xp->ru.x->lu.x->ru.xvi]);
          r0 = (int32) wp[0];
 
+         /* AIV 06/08/06 - was getting the net from the wrong part of xpr */
+         np = xp->lu.x->lu.sy->el.enp;
          gi2 = giap->gia_bi;
          for (bi = r0; gi2 < giap->gia_bi + giawid; gi2++, bi--)
           {
            gp2 = &(mdp->mgates[gi2]);          
-           gp2->gpins[pi] = bld_bsel_expr(xp->lu.sy->el.enp, bi);
+           gp2->gpins[pi] = bld_bsel_expr(np, bi);
           }
          break;
         case LCB:

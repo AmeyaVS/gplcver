@@ -1,20 +1,16 @@
-GPLCVER_1.10a of 07/29/03 (Linux-elf).
-Copyright (c) 1991-2003 Pragmatic C Software Corp.
+GPLCVER_2.12a of 05/16/07 (Linux-elf).
+Copyright (c) 1991-2007 Pragmatic C Software Corp.
   All Rights reserved.  Licensed under the GNU General Public License (GPL).
   See the 'COPYING' file for details.  NO WARRANTY provided.
-Today is Thu Jul 31 03:02:02 2003.
-             ** CVER VERILOG SIMULATOR HELP MESSAGE **
+Today is Wed May 30 09:17:41 2007.
+             ** GPL CVER VERILOG SIMULATOR HELP MESSAGE **
  
-  Cver is a Verilog HDL simulator following the 1995 IEEE P1364 standard
+  GPL Cver is a Verilog HDL simulator following the 1995 IEEE P1364 standard
   with some 2001 P1364 LRM features added and some modifications to match
   actual behavior of de facto standard XL simulator.  Modeling in C/C++ and
   Verilog using PLI 1 and PLI 2 interfaces is supported.  PLI implementation
-  follows 2001 P1364 LRM.  Cver now supports faster compiled to byte code
-  simulation selected using -O (optimize on) option, but optimizer is still
-  only in beta release state.  If you detect different results running with
-  and without -O, submit bug report.  See release notes in doc directory of
-  your release for list of P1364 2001 supported features and list of known
-  compiler problems.
+  follows 2001 P1364 LRM.  See release notes in doc directory for list of
+  P1364 2001 supported features and list of known problems.
  
   Usage:  cver [intermixed options and Verilog source files].
  
@@ -27,15 +23,13 @@ Today is Thu Jul 31 03:02:02 2003.
   It is assumed that you already know Verilog and have access to a P1364 LRM
   or other Verilog documentation.  Cver supports both PLI (Programming
   Language Interface) 1 tf_ and acc_ and PLI 2 vpi_ utility, design object
-  and callback routines using +loadpli1= and +load_vpi= dynamic PLI load
+  and callback routines using +loadpli1= and +loadvpi= dynamic PLI load
   options defined below.  Both old PLI 1 and new PLI 2 libraries can be
   dynamically loaded during one run.  See examples in examples.vpi,
   examples.tf and examples.acc release directories for examples showing how
-  to link and run PLI models.  If you need to statically link PLI models, you
-  must obtain different Cver binary and cverobj.o library.  Cver contains a
-  number of new system tasks and functions.  See systasks.1 man page in the
-  doc directory for definition of every system task and system function
-  supported by Cver.
+  to link and run PLI models.  Cver contains a number of new system tasks
+  and functions.  See systasks.1 man page in the doc directory for
+  definition of every system task and system function supported by Cver.
  
   Cver generally produces results matching other simulators even when other
   simulators differ from P1364 standard up to differences in event order.
@@ -107,6 +101,13 @@ Today is Thu Jul 31 03:02:02 2003.
   from the beginning of library list.  Options to control order dependent
   resolution and +libnamehide are not implemented.  Library options are:
  
+  Cver also now supports configuration files for selecting libraries and
+  design components following the Verilog 2005 LRM description.  See LRM
+  section 13.
+ 
+   +config [config file name]  Use this option to specify library file
+         mapping using new 2001 config feature.  See LRM section 13 and
+         see the tests_and_exmaples/v2001/config directory for examples.
    -v [file]   Treat [file] as a library containing module and UDP
          definitions.  File is sequentially searched for definitions that
          resolve unresolved names.  Within a -v file, if a name if defined
@@ -131,6 +132,7 @@ Today is Thu Jul 31 03:02:02 2003.
          library pass.
    +libverbose  Emit detailed trace messages giving resolution order and
          reason a particular element was resolved at the particular place.
+ 
    +show_canceled_e  Path and gate (1 bit continuous assignments implemented
          as gates) outputs set to X when pulses occur that cause scheduled
          but not matured events to be canceled because second input edge
@@ -175,9 +177,7 @@ Today is Thu Jul 31 03:02:02 2003.
  
   The following two options for dynamically loading user PLI libraries are
   not explicitly defined in IEEE P1364 reference manual but are supported
-  by all modern simulators.  If you need to statically link your PLI models
-  you must request a different Cver binary and cverobj.o static PLI library,
-  but we strongly encourage use of dynamic PLI loading:
+  by all modern simulators:
  
    +loadpli1=[.so library]:[boostrap routines]  Load [.so library] dynamic
          library containing user PLI 1 model and execute each bootstrap
@@ -207,13 +207,13 @@ Today is Thu Jul 31 03:02:02 2003.
          coding +loadpli1= option in a -f command argument file. See release
          examples.tf directory in tests_and_examples directory for example
          PLI 1 programs and make files specific to your operating system.
-   +load_vpi=[.so library]:[boostrap routines]  Load [.so library] dynamic
+   +loadvpi=[.so library]:[boostrap routines]  Load [.so library] dynamic
          library containing user PLI 2 vpi model and execute each bootstrap
          routine.  [bootstrap routines] is a comma separated list of C/C++
          routines.  List may be empty but : is still required.  No spaces
          are allowed around the equal sign, the colon or commas separating
          bootstrap C routine names.  All dynamic libraries defined by
-         +load_vpi= options are first loaded using OS dlopen mechanism and
+         +loadvpi= options are first loaded using OS dlopen mechanism and
          then all bootstrap routines are executed before elaboration begins.
          The OS specific dynamic library suffix (.so on Linux) may be
          omitted.  If omitted and the [.so library] is not found in any
@@ -245,8 +245,6 @@ Today is Thu Jul 31 03:02:02 2003.
          to cause OS error message description strings to be printed.
          Option will probably produce voluminous output unless
          +suppress_warns+[+ separated list] option(s) also used.
-   -O    Turn on compilation to byte codes faster simulation.  This option
-         currently turns off interactive debugger.
    -et   Turn on event tracing.  Option is similar to the -t (or $settrace)
          option but -t only traces procedural execution.  To dynamically
          control event tracing use $setevtrace and $clearevtrace system
@@ -331,14 +329,19 @@ Today is Thu Jul 31 03:02:02 2003.
          input ports with loconn drivers and for output ports with highconn
          drivers.  WARNING: Use of this option may be required to match
          results of other simulators that use port collapsing algorithm.
+   +no_separate_nb_queue  Cver non blocking event scheduling algorithm has
+         changed to match XL (all non blocking events scheduled only
+         after all #0 events processed).  Use this option for backward
+         compatibility with old cver algorithm that mixed non blocking
+         eventing in the #0 queue.  If using this option changes your
+         results, your circuit probably has a race.
    +nospecify  Simulation run with specify section ignored.  This option
          causes specify section to be read and parsed but it is discarded
          before simulation.  +nospecify of course implies +notimingchecks.
    +nointeractive  Option turns off interactive environment, interrupt signal
          (^c) causes immediate termination.  $stop causes a warning to be
          printed without stopping.  Suppress warning 560 to silently ignore
-         stops.  If machine code simulation option +compiled_sim is selected,
-          this option is automatically turned on.
+         stops.
    +snapshot  If +nointeractive option is selected, if interrupt signal
          (^c) is generated, this option causes a port mortem activity
          snapshot to be printed before program termination.  Debugger

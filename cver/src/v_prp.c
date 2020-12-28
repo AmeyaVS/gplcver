@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -184,6 +186,7 @@ extern struct expr_t *__alloc_newxnd(void);
 extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
 extern int32 __get_const_bselndx(register struct expr_t *);
 extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern int32 __is_const_expr(struct expr_t *);
 
 extern void __cv_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
@@ -1296,7 +1299,6 @@ static void free_udp_lines(struct udp_t *udpp)
 /*
  * ROUTINES TO CHANGE ALL WIRE RANGE REPS 
  */
-
 /*
  * change representation and allocate sim net struct for every net range
  * must do unused var. checking before change range rep since uses ncomp
@@ -1305,6 +1307,9 @@ static void free_udp_lines(struct udp_t *udpp)
  * BEWARE - for normal nets allocating nu.ct to large chunk area because
  * freeing too slow - but here for params (also specparams) since cannot
  * distinguish must copy since now can be annotated too
+ *
+ * AIV 01/19/07 - need to do local params here as well for mod and tasks
+ * 09/27/06 - local params not used in delay annotation so not copied here
  */
 static void change_all_rngreps(void)
 {
@@ -1349,6 +1354,19 @@ static void change_all_rngreps(void)
      np->nu.ct = nncomp;
     }
 
+   /* AIV 01/19/07 - need to do local params here as well */
+   for (pi = 0; pi < __inst_mod->mlocprmnum; pi++)  
+    {
+     np = &(__inst_mod->mlocprms[pi]);
+     oncomp = np->nu.ct;
+     nncomp = (struct ncomp_t *) __my_malloc(sizeof(struct ncomp_t));
+     /* expressions not freed and copied will point to right ones */ 
+     memcpy(nncomp, oncomp, sizeof(struct ncomp_t));
+     np->nu.ct = nncomp;
+    }
+
+   /* AIV 09/27/06 - do not need copy for local params since */
+   /* can't be set with SDF label annotate */
    __cur_declobj = TASK; 
    for (tskp = __inst_mod->mtasks; tskp != NULL; tskp = tskp->tsknxt)
     {
@@ -1366,6 +1384,16 @@ static void change_all_rngreps(void)
      for (pi = 0; pi < tskp->tprmnum; pi++)  
       {
        np = &(tskp->tsk_prms[pi]);
+       oncomp = np->nu.ct;
+       nncomp = (struct ncomp_t *) __my_malloc(sizeof(struct ncomp_t));
+       /* expressions not freed and copied will point to right ones */ 
+       memcpy(nncomp, oncomp, sizeof(struct ncomp_t ));
+       np->nu.ct = nncomp;
+      }
+     /* AIV 01/19/07 - need to do local params here as well */
+     for (pi = 0; pi < tskp->tlocprmnum; pi++)  
+      {
+       np = &(tskp->tsk_locprms[pi]);
        oncomp = np->nu.ct;
        nncomp = (struct ncomp_t *) __my_malloc(sizeof(struct ncomp_t));
        /* expressions not freed and copied will point to right ones */ 
@@ -1392,6 +1420,7 @@ static void change_all_rngreps(void)
  __cur_declobj = sav_declobj;
  free_ncablks();
 }
+
 
 /*
  * copy fields form ncomp into run time net fields
@@ -2295,6 +2324,8 @@ static int32 rhs_cat_separable(struct expr_t *rhsx)
      np = catndp->lu.x->lu.x->lu.sy->el.enp;
      if (np->n_isarr || !np->vec_scalared)
       return(FALSE);
+     /* SJM 03/03/07 - bit select inside concat must be constant bsel */ 
+     if (!__is_const_expr(catndp->lu.x->ru.x)) return(FALSE);
      break;
     case NUMBER: 
      break;

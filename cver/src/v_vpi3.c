@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -54,7 +56,6 @@ static void stscal_fill_valuep(p_vpi_value, register byte *, int32);
 static void stvec_fill_valuep(p_vpi_value, register byte *, int32);
 static void get_var_bit(struct h_t *, p_vpi_value);
 static void get_arrwrd_val(struct h_t *, p_vpi_value);  
-static void get_paramarrwrd_val(struct h_t *, p_vpi_value);  
 static void get_expr_val(struct h_t *, p_vpi_value);  
 static int32 valp_stren_err(struct hrec_t *, p_vpi_value);  
 static void get_primterm_val(struct h_t *, p_vpi_value);  
@@ -1391,9 +1392,6 @@ extern void vpi_get_value(vpiHandle expr, p_vpi_value value_p)
   case vpiMemoryWord:
    get_arrwrd_val(hp, value_p);
    break;  
-  case vpiParamArrayWord:
-   get_paramarrwrd_val(hp, value_p);  
-   break;
   case vpiConstant: case vpiPartSelect: case vpiOperation: case vpiFuncCall:
    __push_itstk(hp->hin_itp); 
    get_expr_val(hp, value_p);
@@ -1683,64 +1681,6 @@ static void get_arrwrd_val(struct h_t *hp, p_vpi_value value_p)
  push_xstk_(xsp, np->nwid); 
  __ld_arr_val(xsp->ap, xsp->bp, np->nva, arrwid, np->nwid, arri);
  
- if (value_p->format != vpiStrengthVal)
-  {
-   fill_valuep(value_p, xsp, np->ntyp, np->nwid);
-   __pop_xstk();
-   __pop_itstk();
-   return;
-  }
-
- /* always need to add stren here */
- push_xstk_(xsp2, 4*np->nwid); 
- sbp = (byte *) xsp2->ap;
- __st_standval(sbp, xsp, ST_STRVAL); 
-
- if (np->nwid == 1) stscal_fill_valuep(value_p, sbp, 0);
- else stvec_fill_valuep(value_p, sbp, np->nwid);
- __pop_xstk();
- __pop_xstk();
- __pop_itstk();
-}
-
-/*
- * get value of one param array word32 given a array word32 (indexed) handle 
- *
- * know passed handle is parameter array word32 and correct index in range
- * paramater array values are not packed and must access nva.wp here
- * because for parameter arrays same as expr. which is top level concat
- *
- * LOOKATME - if allowing global param arrays need to fix pushing itree loc
- * LOOKATME - also maybe should not allow strengths
- */
-static void get_paramarrwrd_val(struct h_t *hp, p_vpi_value value_p)  
-{
- int32 arri, wlen;
- word32 *wp;
- byte *sbp;
- struct net_t *np;
- struct xstk_t *xsp, *xsp2;
-
- /* nothing to check - allowing strengths */
-
- /* DBG remove --- */
- if (hp->hin_itp == NULL) __vpi_terr(__FILE__, __LINE__); 
- /* --- */
- __push_itstk(hp->hin_itp); 
-
- /* always constant for param array word32 get values */
- /* this needs itree context */
- arri = get_vpibit_index(&np, hp);
-
- if (value_p->format == vpiObjTypeVal)
-  correct_objtypval(value_p, np->ntyp, np->n_isavec, FALSE, FALSE);
-
- /* do not need array size (no. of cells) because know handle ind in rng */
- push_xstk_(xsp, np->nwid); 
- wlen = wlen_(np->nwid);
- wp = &(np->nva.wp[2*wlen*arri]);
- memcpy(xsp->ap, wp, 2*WRDBYTES*wlen);
-
  if (value_p->format != vpiStrengthVal)
   {
    fill_valuep(value_p, xsp, np->ntyp, np->nwid);
@@ -6193,7 +6133,6 @@ extern PLI_INT32 vpi_compare_objects(vpiHandle object1, vpiHandle object2)
  switch (hrp1->htyp) {
   case vpiNetBit: case vpiRegBit: case vpiVarSelect: case vpiMemoryWord:
   /* for param array words only bith ndx form */
-  case vpiParamArrayWord:
    if (hrp1->bith_ndx && hrp2->bith_ndx)
     {
      if (hrp1->hu.hanyp != hrp2->hu.hanyp) return(0);
@@ -7042,8 +6981,6 @@ static struct onamvpi_t cv_onames_vpi[] = {
  { "vpiNetDriver", vpiNetDriver },
  { "vpiNetBitDriver", vpiNetBitDriver },
  { "vpiSchedBitEvent", vpiSchedBitEvent },
- { "vpiParamArray", vpiParamArray },
- { "vpiParamArrayWord", vpiParamArrayWord },
  { "vpiPoundParam", vpiPoundParam },
  { "vpiOneOfEachMod", vpiOneOfEachMod }
 };

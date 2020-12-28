@@ -6,10 +6,6 @@
 >>>> wire initialization complete <<<<<
 -- resuming at statement **aspike1.v(11)
 -- scheduling delay resume at **aspike1.v(12) for time 0
--- evaluating loads of reg/wire test.w1
--- not gate test.__gate$$2 input 1 value unchanged
--- evaluating loads of reg/wire test.w2
--- bufif1 gate test.__gate$$3 input 1 value unchanged
 -- resuming at statement **aspike1.v(12)
 -- scheduling delay resume at **aspike1.v(13) for time 100
 -- evaluating loads of reg/wire test.in

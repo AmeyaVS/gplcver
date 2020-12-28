@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,19 +15,21 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
 #define VERS "GPLCVER_2"
 
-#define VERS2 ".11a"
+#define VERS2 ".12a"
 
-#define OFDT "07/05/05"
+#define OFDT "05/16/07"
 #define OUTLINLEN 71          /* length of output file line */
 #define DFLTIOWORDS 8         /* preallocated size for I/O and work values */
 #define MUSTFREEWORDS 64      /* for stk values wider free when done */
@@ -475,48 +477,49 @@ typedef union {
 #define INTEGER 175
 #define JOIN 176
 #define LARGE 177
-#define MACROMODULE 178
-#define MEDIUM 179
-#define MODULE 180
-#define NEGEDGE 181
-#define OUTPUT 182
-#define PARAMETER 183
-#define POSEDGE 184
-#define PRIMITIVE 185
-#define PULL0 186
-#define PULL1 187
-#define REAL 188
-#define REALTIME 189
-#define REG 190
-#define RELEASE 191
-#define REPEAT 192
-#define SCALARED 193
-#define SIGNED 194
-#define SPECIFY 195
-#define SPECPARAM 196
-#define SMALL 197
-#define Strength 198
-#define STRONG0 199
-#define STRONG1 200
-#define SUPPLY0 201
-#define SUPPLY1 202
-#define TABLE 203
-#define TASK 204
-#define TIME 205
-#define TRI 206
-#define TRI0 207
-#define TRI1 208
-#define TRIAND 209
-#define TRIOR 210
-#define TRIREG 211
-#define VECTORED 212
-#define WAIT 213
-#define WAND 214
-#define WEAK0 215
-#define WEAK1 216
-#define WHILE 217
-#define WIRE 218
-#define WOR 219
+#define LOCALPARAM 178
+#define MACROMODULE 179
+#define MEDIUM 180
+#define MODULE 181
+#define NEGEDGE 182
+#define OUTPUT 183
+#define PARAMETER 184
+#define POSEDGE 185
+#define PRIMITIVE 186
+#define PULL0 187
+#define PULL1 188
+#define REAL 189
+#define REALTIME 190
+#define REG 191
+#define RELEASE 192
+#define REPEAT 193
+#define SCALARED 194
+#define SIGNED 195
+#define SPECIFY 196
+#define SPECPARAM 197
+#define SMALL 198
+#define Strength 199
+#define STRONG0 200
+#define STRONG1 201
+#define SUPPLY0 202
+#define SUPPLY1 203
+#define TABLE 204
+#define TASK 205
+#define TIME 206
+#define TRI 207
+#define TRI0 208
+#define TRI1 209
+#define TRIAND 210
+#define TRIOR 211
+#define TRIREG 212
+#define VECTORED 213
+#define WAIT 214
+#define WAND 215
+#define WEAK0 216
+#define WEAK1 217
+#define WHILE 218
+#define WIRE 219
+#define WOR 220
 
 /* gate nums (not tokens) for sim - now separate gatid range */
 /* now for debugging do not use low numbers */
@@ -2226,7 +2229,9 @@ struct task_t {
  struct st_t *st_namblkin;    /* stmt named block in in */
  struct task_pin_t *tskpins;  /* task ports - procedural not wires */
  struct net_t *tsk_prms;      /* parameters defined in task */
+ struct net_t *tsk_locprms;   /* local parameters defined in task */
  int32 tprmnum;               /* number of task parameters */
+ int32 tlocprmnum;            /* number of task local parameters */
  struct net_t *tsk_regs;      /* list then array of nets in task */
  int32 trnum;                 /* number of task regs */   
  struct st_t *tskst;          /* one task statement (usually a block) */
@@ -2708,6 +2713,7 @@ struct mod_t {
  int32 mnnum;                 /* number of nets in module */  
  int32 mtotvarnum;            /* total number of variables mod+task */
  int32 mprmnum;               /* number of pound params defined */ 
+ int32 mlocprmnum;            /* number of local params defined */ 
  int32 mlpcnt;                /* mod. inst. loop count (static level) */
  struct sy_t *msym;           /* symbol from separate module name space */
  int32 mod_last_lini;         /* line no. of end (mabye in next file) */
@@ -2720,6 +2726,7 @@ struct mod_t {
  struct conta_t *mcas;        /* module cont. assigns */
  struct inst_t *minsts;       /* array of module instance records */
  struct giarr_t **miarr;      /* parallel ptr array to minst for inst arr. */
+ struct net_t *mlocprms;      /* local param definitions - list then tab */
  struct net_t *mprms;         /* local param definitions - list then tab */
  struct net_t *mnets;         /* list then array of nets in module */
  /* SJM 12/19/04 - only fixed ones from conn npin - vpi added malloced */
@@ -3191,9 +3198,11 @@ extern struct task_pin_t *__end_tpp; /* end of task port list */
 extern struct task_t *__end_tbp;/* end of top level task/functions/blocks */
 extern struct task_t *__cur_tsk;/* ptr. to current task */
 extern struct net_t *__end_paramnp; /* end of ordered parm decl. list */
+extern struct net_t *__end_loc_paramnp; /* end of ordered parm loc decl. list */
 extern struct net_t *__end_impparamnp; /* end of ordered imprt parm decl lst */
 extern struct net_t *__end_glbparamnp; /* end of ordered glb parm decl. lst */
 extern struct net_t *__end_tskparamnp; /* end of task param decl. list */
+extern struct net_t *__end_tsk_loc_paramnp; /* end of task param decl. list */
 extern struct ialst_t *__end_ialst; /* end of module initial/always list */
 extern struct gref_t *__grwrktab;  /* work table for building mod glbs */
 extern int32 __grwrktabsiz;        /* its size */
@@ -3312,6 +3321,7 @@ extern struct h_t *__cur_vpi_inst;
 extern struct hrec_t *__cur_vpi_obj;
 extern struct loadpli_t *__vpi_dynlib_hd; /* hd of ld vpi dynamic lib list */
 extern struct loadpli_t *__vpi_dynlib_end; /* and its end */
+extern struct dcevnt_t *__cbvc_causing_dcep; /* glb for vc cb if it is remed */
 
 /* specify work variables */
 extern struct spfy_t *__cur_spfy;/* current specify block */

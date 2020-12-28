@@ -1,5 +1,5 @@
-.\" $Cver: systasks,man,v 2.4 11/25/02 $
-.TH Systasks 1 "Release 2.5" "Pragmatic C Software" "" 
+.\" $Cver: systasks,man,v 2.4 05/29/07 $
+.TH Systasks 1 "Release 3.0" "Pragmatic C Software" "" 
 .de LN
 .sp
 .ti -1.0i
@@ -23,9 +23,9 @@ For system functions, the SYNOPSIS section contains
 normal user function declaration notation to define return type
 and argument type even though system functions are never really declared.
 There is no concept of separate function header in Verilog.
-In the P1364 LRM most system function are indicated as returning
-integer, but since they rarely can return a negative value they
-really return reg [31:0].
+In the 2005 P1364 LRM most system function are indicated as returning
+integer, now that signed values are supported, system functions must
+be assigned to an integer or a "signed [31:0]" reg.
 .PP
 System tasks appear in the SYNOPSIS section using
 the task invocation form (i.e. task keyword omitted)
@@ -43,9 +43,10 @@ off and then interpret each byte as a character) or literal strings
 (enclosed by double quotation marks).  Any [file name] can be either
 type of string.
 .PP
-P1364 LRM timing checks are not documented here because they do
-not vary between simulators.  See P1364 LRM section 14.5 for
-documentation of timing checks, edge control specifiers, and notifiers.
+The 2005 P1364 LRM timing checks are not documented here because they do
+not vary between simulators and are not really system functions.  See 2005
+P1364 LRM section 15 and A.7.5 for documentation of timing checks,
+edge control specifiers, and notifiers.
 .LN
 .SH NAME
 $bitstoreal \- convert 64 bit register to real
@@ -84,7 +85,7 @@ side Lvalue type.  Cver conversion to real from wider than 32 bit
 values attempts to preserve as many bits as possible (usually 51 or 52
 depending on hardware platform).
 .SH REFERENCE
-Defined in P1364 LRM section 14.9.
+Defined in 2005 P1364 LRM section 17.8.
 .LN
 .SH NAME
 $cleartrace \- turn off statement tracing
@@ -194,7 +195,7 @@ See any Hspice documentation.
 .SH NAME
 $countdrivers \- return 1 if bus contention because more than one driver
 .SH SYNOPSIS
-function [31:0] $countdrivers;
+function integer $countdrivers;
 .br
 .ti +0.1i
 // must be wire
@@ -202,19 +203,19 @@ function [31:0] $countdrivers;
 input net;
 .br
 .ti +0.1i
-output [31:0] net_is_forced;
+output integer net_is_forced;
 .br
 .ti +0.1i
-output [31:0] number_of_01x_drivers;
+output integer number_of_01x_drivers;
 .br
 .ti +0.1i
-output [31:0] number_of_0_drivers; 
+output integer number_of_0_drivers; 
 .br
 .ti +0.1i
-output [31:0] number_of_1_drivers; 
+output integer number_of_1_drivers; 
 .br
 .ti +0.1i
-output [31:0] number_of_x_drivers; 
+output integer number_of_x_drivers; 
 .SH DESCRIPTION
 System function return 0 if there is no more than one driver
 (all wire fan-in is tri-stated (in hiZ state) or a most one fan-in
@@ -235,8 +236,7 @@ value changing especially for strength wires.
 Notice that in the LRM, driver usually means non tri-stated fan-in.
 Sometimes driver means instead any fan-in whether or not it is tri-stated.
 .SH REFERENCE
-Mentioned in P1364 LRM section F.1 but detailed definition in OVI LRM
-section B.10.
+Defined in 2005 P1364 LRM Appendix C.1
 .LN
 .SH NAME
 $display, $displayb, $displayh, $displayo \- write formatted value to stdout
@@ -266,7 +266,7 @@ Use $displayb and $writeb to change the default to binary, $displayh
 and $writeh to change default to hex, and $displayo and $writeo to change
 to octal.
 .SH "REFERENCE"
-Defined in P1364 LRM section 14.1.1.
+Defined in P1364 LRM section 17.1.
 .SH "SEE ALSO"
 The same format is used by the $fdisplay and $fwrite tasks which write
 to file(s), the $monitor and $fmonitor tasks that write changed expressions
@@ -288,18 +288,18 @@ $dist_t \- return random 32 bit value in Standard T distribution
 .br
 $dist_uniform \- return random 32 bit value uniformly distributed in range
 .SH SYNOPSIS
-function [31:0] $dist_chi_square;
+function integer $dist_chi_square;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
-input [31:0] degree_of_freedom;
+input integer degree_of_freedom;
 .br
-function [31:0] $dist_erlang;
+function integer $dist_erlang;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer k_stage;
@@ -307,18 +307,18 @@ input integer k_stage;
 .ti +0.1i
 input integer mean;
 .br
-function [31:0] $dist_exponential;
+function integer $dist_exponential;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer mean;
 .br
-function [31:0] $dist_normal;
+function integer $dist_normal;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer mean;
@@ -326,26 +326,26 @@ input integer mean;
 .ti +0.1i
 input integer standard_deviation;  
 .br
-function [31:0] $dist_poisson;
+function integer $dist_poisson;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer mean;
 .br
-function [31:0] $dist_t;
+function integer $dist_t;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer degree_of_freedom;
 .br
-function [31:0] $dist_uniform;
+function integer $dist_uniform;
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .br
 .ti +0.1i
 input integer start;
@@ -379,7 +379,7 @@ uniformly distributed random number fits.  Start and end may be negative
 but start must be less than end.  The mean, k_stage and degree_of_freedom
 parameters must be positive
 .SH REFERENCE
-Defined in P1364 LRM section 14.10.2.
+Defined 2005 in P1364 LRM section 17.9.2.
 .SH "SEE ALSO"
 See any statistics textbook or CRC Handbook of Standard Math Tables 
 for definitions of the formulas.
@@ -445,32 +445,39 @@ The +dumpvarsextended added Cver option writes a non standard VCD file but
 allows strengths (not just the value part) to be written and uses hex
 format instead of binary where possible to reduce the VCD file size.
 .SH "REFERENCE"
-Defined in P1364 LRM section 15.
+Defined in 2005 P1364 LRM section 18.
 .LN
 .SH NAME
 $fdisplay, $fdisplayb, $fdisplayh, $fdisplayo \- write formatted value to file(s)
 .br
 $fwrite, $fwriteb, $fwriteh, $fwriteo \- write formatted value to file(s)
 .SH SYNOPSIS
-$fdisplay([multi-channel], [intermixed list of format strings and expressions]);
+$fdisplay([multi-channel or fd], [intermixed list of format strings and expressions]);
 .br
-$fdisplay[bho]([multi-channel], [intermixed list of format strings and expressions]);
+$fdisplay[bho]([multi-channel or fd], [intermixed list of format strings and expressions]);
 .br
-$fwrite([multi-channel], [intermixed list of format strings and expressions]);
+$fwrite([multi-channel or fd], [intermixed list of format strings and expressions]);
 .br
-$fdisplay[bho]([multi-channel], [intermixed list of format strings and expressions]);
+$fdisplay[bho]([multi-channel or fd], [intermixed list of format strings and expressions]);
 .SH DESCRIPTION
-Same as $display and $write but writes to all file streams
+Same as $display and $write but writes to either a Unix style
+file stream (abbreviated fd below) or all file descriptors
 selected by on bits in passed 32 bit multi-channel descriptor.
-If bit is on but file corresponding to bit position if not opened
-with $fopen system function, no write occurs.
-The idea of multi-channel descriptors allows one $fdisplay to write
-to more than one file as opposed to requiring multiple writes.
+For multi-channel descriptors if a bit is on but the file corresponding to
+the bit position is not opened with $fopen system function, no write occurs.
+The multi-channel descriptor idea allows one $fdisplay to write
+to more than one file in contrast to requiring multiple writes.
+.PP
+The modern Unix OS I/O stream form allows opening a file using the
+stream two argument form of $fopen and then using that
+strean descriptor (fd) for Unix OS style fwriting.  The old file descriptor
+with bit 31 turned on is now used to indicate the new Unix OS style fd stream.
 .SH REFERENCE
-Defined in P1364 LRM section 14.2.2.
+Defined in 2005 P1364 2005 LRM section 17.2.2.
 .SH "SEE ALSO"
 See related $display and $write system tasks.  See $fopen and $fclose
-for opening and closing file streams and assigning multi-channel descriptors.
+for opening and closing new Unix OS file streams and assigning multi-channel
+descriptors.
 .LN
 .SH NAME
 $finish \- exit Cver
@@ -484,7 +491,7 @@ if a value is passed, if it is 0 (same as no argument) prints nothing,
 if 1 is passed prints normal exit message, and if 1 prints message as
 if +verbose option were selected.
 .SH REFERENCE
-Defined in P1364 LRM section 14.4.1.
+Defined in 2005 P1364 LRM section 17.4.1.
 .LN
 .SH NAME
 $flushlog \- flush log and trace file internal OS buffers
@@ -499,65 +506,130 @@ Not defined in P1364 LRM but commonly implemented.
 .SH NAME
 $fmonitor, $fmonitorb, $fmonitorh, $fmonitoro \- write changed formatted value to file(s)
 .SH SYNOPSIS
-$fmonitor([multi-channel], [intermixed list of format strings and expressions]);
+$fmonitor([multi-channel or fd], [intermixed list of format strings and expressions]);
 .br
-$fmonitor[bho]([multi-channel], [intermixed list of format strings and expressions]);
+$fmonitor[bho]([multi-channel of fd], [intermixed list of format strings and expressions]);
 .SH DESCRIPTION
 If any expression in the format variable list changes, format and write the
-value to a multi-channel descriptor file list at the
-end of the simulation time slot.
+value to the new Unix OS file descriptor (fd) or a multi-channel descriptor
+file list at the end of the simulation time slot.
 If a time returning system functions such as $time appears in the list,
 it does not cause a change.  Format is same as $fdisplay.
 Any number of $fmonitors may be used and if more than one changed the
 format list for each changed $fmonitor is written at time slot end.
 .br
 .SH "REFERENCE"
-Defined in P1364 LRM section 14.2.2.
+Defined in new 2005 P1364 LRM section 17.2.2.  Also 17.1.3 for $fmonitor. 
 .SH "SEE ALSO"
-$monitor is same but writes to stdout.  See $display for format definition.
+$monitor is same but writes to stdout.  See $display for format definitions.
 .LN
 .SH NAME
-$fopen \- open a file and assign a multi-descriptor channel bit 
+$fopen \- open a file and assign a Unix OS stream or multi-descriptor channel bit 
 .br
-$fclose \- close a file and free for reuse a multi-descriptor bit
+$fclose \- close a file and free for reuse a Unix OS stream or multi-descriptor
 .SH SYNOPSIS
-function [31:0] $fopen([file name]); 
+function integer $fopen([file name]); 
 .br
-$fclose([multi-channel descriptor]);
+function integer $fopen([file name], [open description type]);
+.br
+$fclose([multi-channel or fd]);
 .SH DESCRIPTION
 Verilog allows writing to multiple open files at once
 using a multi-channel file descriptor.
 Bit 0 (least significant bit) is associated with stdout and is always open.
 The $fclose call closes the file associated with any on bit in the
 passed 32 bit multi-channel value.
-The $fopen system function is passed a file name (can be any length
-and need not be a literal string) and returns a multi-channel descriptor
-with the next available bit (bit corresponding to
+The file descript form of $fopen system function is passed a file name
+(can be any length and need not be a literal string) and returns a
+multi-channel descriptor with the next available bit (bit corresponding to
 un-opened descriptor channel) set.
-$fopen reuses multi-channel bits freed by $fclose.
+$fopen reuses multi-channel bits freed by the file descriptor form of $fclose.
+.PP
+The new file stream form of fopen can be used to open a Unix OS style
+stream.  For opening streams, the 2nd I/O type string must be present.
+The strings correspond exactly Unix $fopen I/O types (see 2005 LRM
+table 17-7).  The return Unix OS stream has bit 31 turned on.  Therefore
+bit 31 can no longer be used for old style file descriptors.
 .SH REFERENCE
-Defined in P1364 LRM section 14.2.1.
+Defined in 2005 P1364 LRM section 17.2.1.
 .SH "SEE ALSO"
 See $fdisplay, $fwrite, $fmonitor, and $fstrobe routines that write to
-multi-channel descriptors.
+multi-channel descriptors or Unix OS streams.
 .LN
 .SH NAME
-$fstrobe, $fstrobeb, $fstrobeh, $fstrobeo \- write formatted value to file at end of time slot
+$swrite[bho], $sformat - write formatted value to a string
 .SH SYNOPSIS
-$fstrobe([multi-channel], [intermixed list of format strings and expressions]);
+$swrite[bho]([ouput reg], [intermixed list of format strings and expressions]);
 .br
-$fstrobe[bho]([multi-channel], [intermixed list of format strings and expressions]);
+$sformat([ouput reg, [format string], [list of arguments]]);
 .SH DESCRIPTION
-Same as $fdisplay but formats and writes value at the end of time
-time slot rather than when the $fstrobe statement is executed. 
-Format is identical to $fdisplay and [bho] suffix letter changes
-default for expression that appears outside of any format as with $display.
-One format is written for every $fstrobe and $strobe executed during
-the time slot.
+Routines to allow writing to Verilog regs.  $swrite is the same as
+$display except the output is written to as a string to a Verilog reg.
+$sformat requires exactly one format string.
+The remaining arguments are interpreted as
+format values (never as format strings).  This allows compile time checking
+of formats and is the same as the Unix OS sprintf type routine.
 .SH REFERENCE
-Defined in P1364 LRM section 14.2.2.
-.SH "SEE ALSO"
-$strobe is same except writes to stdout.
+Defined in 2005 P1364 LRM section 17.2.3.
+.LN
+.SH NAME
+$fgetc, $ungetc, $fgets, $fscanf, $sscanf, $fread, $fseek, $ftell, $rewind 
+.SH SYNOPSIS
+integer $fread([reg], [fd only]);
+.br
+integer $fread([Verilog array], [fd only]);
+.br
+integer $fread([Verilog array], [fd only], [start], [count]);
+.br
+[other routines have same arguments and order as UNIX I/O library input routines]
+.SH DESCRIPTION
+All the Unix I/O library input routine are implemented.  Except for
+binary $fread that can read into arrays so it has extra arguments,
+all the read routines are the same as the Unix OS library routines
+in behavior and take the same arguments in the same order.
+See section 17.2.4.3 for a definition of the $fscanf and $sscanf legal
+format strings because formats are available for the Verilog two bit
+values and streng values (form v).  Also unformatted binary data
+can be read in 2 bit chunks using the %z format and 1 bit values
+that are expanded to 4 value Verilog x/z values using the %u format.
+.PP
+Notice that only I/O streams (fds), not multi-channel descriptors can
+be used as the file argument for the file I/O read routines.
+Also, notice that the output value from these routines should be assigned
+to an integer, not an unsigned value.
+$fseek, $fell, $rewind and $ungetc correspond exactly to the Unix I/O library
+corresponding routines.  All read routines return the number of items
+read or EOF (-1) when end-of-file is read.  You must invoke $ferror to
+determine the cause of the error.
+.SH REFERENCE
+Defined in 2005 P1364 LRM section 17.2.4.
+.LN
+.SH NAME
+$fflush - writes any buffer output for an open file or stream
+.SH SYNOPSIS
+$flush([mcd]);
+.br
+$flush([fd]);
+.br
+$flush();
+.SH DESCRIPTION
+These routine flush any buffered output for either an open multi-channel
+descriptor, a Unix OS file stream (fd) or all open multi-channel descriptor
+files and streams.
+.SH REFERENCE
+Defined in 2005 P1364 LRM section 17.2.6.
+.LN
+.SH NAME
+$ferror - returns I/O error status
+.SH SYNOPSIS
+integer $ferror([mcd or fd], str);
+.SH DESCRIPTION
+This routine correspeonds to the Unix OS I/O library ferror routine.
+If an I/O error is detected, the OS error number is returned and the
+[str] is set to a string indicating the error reason.  The reason is
+the same as the Unix OS returned I/O library error reason string.
+.SH REFERENCE
+Defined in 2005 P1364 LRM section 17.2.7.
 .LN
 .SH NAME
 $getpattern \- function for rapid assignment of memory bits to concatenate of scalars
@@ -573,10 +645,25 @@ no need for expression evaluation) assigned to the scalars.
 Normally the assignment process will be driven by a for loop that increments
 the index.  No other use of $getpattern is allowed.
 .SH REFERENCE
-Defined in P1364 LRM section F.2.
+Defined in 2005 P1364 LRM Appendix C.1
+.LN
+.SH NAME
+$fstrobe, $fstrobeb, $fstrobeh, $fstrobeo \- write formatted value to file at end of time slot
+.SH SYNOPSIS
+$fstrobe([multi-channel or fd], [intermixed list of format strings and expressions]);
+.br
+$fstrobe[bho]([multi-channel or fd], [intermixed list of format strings and expressions]);
+.SH DESCRIPTION
+Same as $fdisplay but formats and writes value at the end of time
+time slot rather than when the $fstrobe statement is executed. 
+Format is identical to $fdisplay and [bho] suffix letter changes
+default for expression that appears outside of any format as with $display.
+One formated string is written for every $fstrobe and $strobe executed during
+the time slot.
+.SH REFERENCE
+Defined in 2005 P1364 LRM section 17.2.2.
 .SH "SEE ALSO"
-See P1364 LRM section F.2 for a module that uses $getpattern or see the
-ver_srcs directory from your release for example use.
+$strobe is same except writes to stdout.
 .LN
 .SH NAME
 $history \- print list previously executed interactive commands
@@ -609,7 +696,7 @@ $keepcommands to minimize history list size.  The added debugger
 :history command is more flexible than $history.  Multiple line commands
 (end with escaped new line in Cver) are printed as one command. 
 .SH REFERENCE
-Not defined in P1364 LRM.  OVI LRM 1.0 section D.8.
+Not defined in 2005 P1364 LRM.  OVI LRM 1.0 section D.8.
 .SH "SEE ALSO"
 See added debugger online ":help history" command for more detailed 
 description of Cver's history mechanism.
@@ -629,7 +716,7 @@ Interactive mode must be entered before commands can
 be read from the $input file so both -i and $input do nothing unless
 interactive mode is entered.  $input should not appear in Verilog source. 
 .SH REFERENCE
-Defined in P1364 LRM section F.3.
+Defined in 2005 P1364 LRM section C.3.
 .SH "SEE ALSO"
 See added debugger online ":help debugging" for additional documentation.
 .LN
@@ -652,7 +739,7 @@ determine the number of times a break point was hit.  Alternative
 use the :breakpoint command :cond [expression] command to attach a
 condition to a statement break point.
 .SH REFERENCE
-See P1364 LRM section F.4.
+See 2005 P1364 LRM section C.4.
 .SH "SEE ALSO"
 See added debugger :help online help system messages.
 .LN
@@ -671,7 +758,7 @@ task is used).  It is better from interactive mode to use the :list
 added debugger command that prints source lines exactly as they appear
 in the source input and allows more control of lines to list.
 .SH REFERENCE
-See P1364 LRM section F.5.
+See 2005 P1364 LRM section C.5.
 .SH "SEE ALSO"
 Type ":help :list" in interactive mode for
 documentation of :list range specification.
@@ -693,7 +780,7 @@ command option set the log file to [file].  Another
 way to disable writing to the log file is to use file name /dev/null on
 Unix and nul on OS2/DOS.
 .SH REFERENCE
-See P1364 LRM section F.6.
+See 2005 P1364 LRM section C.6.
 .LN
 .SH "NAME (CVER EXTENSION)"
 $memuse \- print message giving dynamically allocated memory.
@@ -714,9 +801,9 @@ $monitoroff- disable display of monitor changes
 .br
 $monitoron- re-enable display of monitor changes
 .SH SYNOPSIS
-$monitor([multi-channel], [intermixed list of format strings and expressions]);
+$monitor([intermixed list of format strings and expressions]);
 .br
-$monitor[bho]([multi-channel], [intermixed list of format strings and expressions]);
+$monitor[bho]([intermixed list of format strings and expressions]);
 .br
 $monitoron;
 .br
@@ -732,7 +819,7 @@ does not cause a change.  Format is same as $fdisplay. $monitoroff turns
 off display of changed monitor values and $monitoron re-enables writing
 of changed formatted values.
 .SH "REFERENCE"
-Defined in P1364 LRM section 14.1.
+Defined in 2005 P1364 LRM section 17.1.3.
 .SH "SEE ALSO"
 $fmonitor is same but writes to file using multi-channel descriptor,
 See $display for format documentation.
@@ -804,7 +891,7 @@ input integer inform_id; // user defined value removed from queue
 .ti +0.1i
 output integer status; // completion status
 .br
-function [31:0] $q_full;
+function integer $q_full;
 .br
 .ti +0.1i
 input integer q_id; // unique number to identify queue
@@ -825,7 +912,7 @@ in the queue.  Any queue routine may set the status output parameter to:
 cannot create queue, 5=specified length <=0, cannot create, 
 6=duplicate q_id, cannot create, not enough memory, cannot create.
 .SH "REFERENCE"
-Defined in P1364 LRM section 14.7.
+Defined in 2005 P1364 LRM section 17.6.
 .LN
 .SH NAME
 $random \- generate signed random 32 bit value
@@ -833,7 +920,7 @@ $random \- generate signed random 32 bit value
 function integer $random; 
 .br
 .ti +0.1i
-inout [31:0] seed;
+inout integer seed;
 .ti +0.1i
 integer seed;
 .SH DESCRIPTION
@@ -845,7 +932,7 @@ in the 2**32 (almost) element sequence of pseudo random values is altered.
 Because the random generator only used 32 bit arithmetic the low
 bit is unrandom.
 .SH REFERENCE
-See P1364 LRM section 14.10.1.
+See 2005 P1364 LRM section 17.9.1.
 .LN
 .SH NAME
 $readmemb \- read binary number from memory stored in file
@@ -899,7 +986,7 @@ If only [start_address] is given, [finish_addr] is the last (second)
 memory declaration range.  If only [finish_addr] is given, [start_addr]
 is the start (first) memory declaration range.
 .SH "REFERENCE"
-See P1364 LRM sections and 14.2.3 and F.13.
+See 2005 P1364 LRM sections and 17.2.9 and C.13.
 .LN
 .SH NAME
 $reset \- reset time to 0 and restart the simulation
@@ -936,11 +1023,11 @@ simulation to start over in interactive mode running the first command
 in [file].  Cver will never stop unless $reset_count is checked and
 used to cause end of simulation.
 .SH REFERENCE
-See P1364 LRM section F.7.
+See 2005 P1364 LRM section C.7.
 .SH "SEE ALSO"
 See debugger online help for :reset added debugger command.
 .LN
-.SH NAME (NOT YET IMPLEMENTED)
+.SH NAME (NOT IMPLEMENTED)
 $save \- save state of simulation to a file for later restart
 .br
 $incsave \- save only changed values from last $save to a file
@@ -960,7 +1047,7 @@ so far loading the binary data structure does not reduce load time.
 $incsave will probably not be supported since Cver already packs to the
 bit in order to support it, extra simulation event are needed.
 .SH REFERENCE
-See P1364 LRM section F.7.
+See 2005 P1364 LRM section C.8.
 .LN
 .SH NAME
 $scale \- convert a time value from one module's time scale to another as real
@@ -973,7 +1060,7 @@ input [time hierarchical value as either real or reg];
 Given a time value as an hierarchical reference, convert to the time scale
 in which the $scale system task is executed.  Usage: r = $scale(top.i1.i2.t1);
 .SH REFERENCE
-See P1364 LRM section F.7.
+See 2005 P1364 LRM section C.9.
 .LN
 .SH NAME
 $scope \- change scope for use by interactive commands
@@ -988,7 +1075,7 @@ set to the entering simulation scope.  Also Cver supports an extended
 :scope command that allow relative movement between scopes and general
 reference for new scopes such as line numbers.
 .SH REFERENCE
-See P1364 LRM section F.7.
+See 2005 P1364 LRM section C.10.
 .SH "SEE ALSO"
 See the added debugger ":help :scope" help screen.
 .LN
@@ -1042,7 +1129,7 @@ If called during simulation, scope is current simulation scope.
 If value is present and non zero, print all scopes in or below the
 current scope to be output to stdout and the log file.
 .SH REFERENCE
-See P1364 LRM section F.11.
+See 2005 P1364 LRM section C.11.
 .LN
 .SH NAME
 $showvars \- show information about variables
@@ -1058,7 +1145,7 @@ are allowed.  Cver's added interactive debugger supports additional commands
 for examining variable values and information.  Use the :help data debugger
 command for more information.
 .SH REFERENCE
-See P1364 LRM section F.12.
+See 2005 P1364 LRM section C.12.
 .SH "SEE ALSO"
 See :print, :whatis, :expris, :varis added debugger commands.
 .LN
@@ -1091,7 +1178,7 @@ print a message.  1 prints simulation time and 2 prints +verbose
 simulation statistics.  Interactive debugger can also be entered by
 pressing interrupt key (usually ^c) or from the -s option.
 .SH REFERENCE
-Defined in P1364 LRM section 14.4.2.
+Defined in 2005 P1364 LRM section 17.4.
 .LN
 .SH NAME
 $strobe, $strobeb, $strobeh, $strobeo \- write formatted value to terminal at end of time slot
@@ -1107,7 +1194,7 @@ default for expression that appears outside of any format as with $display.
 One format is written to stdout and log file for every $strobe executed during
 the time slot.
 .SH REFERENCE
-Defined in P1364 LRM section 14.2.
+Defined in 2005 P1364 LRM section 17.1.2 and 17.2.2.
 .SH "SEE ALSO"
 $fstrobe is same except writes to multi-channel file(s).
 .LN
@@ -1154,7 +1241,7 @@ $test$plusargs \- test Cver for existence of command argument
 .br
 $scan$plusargs \- scan Cver command arguments to match prefix 
 .SH SYNOPSIS
-function [31:0] $test$plusargs([string]); 
+function integer $test$plusargs([string]); 
 .br
 function $scan$plusargs([plus option prefix as string], [string lvalue]);
 .SH DESCRIPTION
@@ -1214,7 +1301,7 @@ except it is truncated to fit in 32 bits.
 Simulation ticks are the minimum time scale unit in
 any module and is the value used internally during simulation.
 .SH REFERENCE
-Defined in P1364 LRM section 14.8.
+Defined in 2005 P1364 LRM section 17.7.
 $tickstime and $stickstime are Cver extensions.
 .LN
 .SH NAME
@@ -1233,16 +1320,16 @@ the information for the current module is printed.
 .PP
 The $timeformat system task sets the format for the %t format specifier.
 .SH REFERENCE
-See P1364 LRM section 14.3 and the `timescale directive discussion 
-section 16.7.
+See 2005 P1364 LRM section 17.3 and the `timescale directive discussion 
+section 19.8.
 .LN
 .SH "TRADEMARKS AND COPYRIGHT"
 Verilog is a Trademark of Cadence Design Systems Licensed to
 Open Verilog International.
 .br
-Cver and Vcmp are Trademarks of Pragmatic C Software Corporation.
+Cver, CVC and Vcmp are Trademarks of Pragmatic C Software Corporation.
 .sp
-Copyright (c) 1991-2002 Pragmatic C Software.  All Rights Reserved.
+Copyright (c) 1991-2007 Pragmatic C Software.  All Rights Reserved.
 .br
 This document contains confidential and proprietary information
 .br

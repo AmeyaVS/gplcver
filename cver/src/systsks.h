@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -199,6 +199,7 @@
 #define STN_MEMUSE 201
 #define STN_FLUSHLOG 202
 #define STN_SCANPLUSARGS 203
+#define STN_VALUEPLUSARGS 204
 
 /* new ams transcendental function extension but works in digital */
 /* SJM 10/01/03 - leaving in for now */

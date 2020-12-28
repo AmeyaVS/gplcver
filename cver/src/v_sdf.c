@@ -1,4 +1,4 @@
-/* Copyright (c) 1993-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1993-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -5482,6 +5484,7 @@ static int32 rdset_labels(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
    /* first look up symbol in specify symbol table if exists */
    if (mdp->mspfy != NULL && mdp->mspfy->spfsyms != NULL) 
     {
+     /* SJM 09/28/06 - notice only specparams in specify symbol table */
      if ((syp =__get_sym(labnam, mdp->mspfy->spfsyms)) != NULL)
       goto got_lab_param;
     }
@@ -5492,6 +5495,22 @@ static int32 rdset_labels(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
       labnam, mdp->msym->synam);
      goto done;
     }
+   /* AIV 09/27/06 - Cver non standard SDF label form checking was not right */
+   if (syp->sytyp != SYM_N || !syp->el.enp->n_isaparam)
+    {
+     __pv_ferr(1309,
+      "(LABEL form label (spec or def param) %s not a parameter", syp->synam);
+     goto done;
+    }
+   /* AIV 09/27/06 - Cver non standard SDF label form can't be local param */
+   if (syp->el.enp->nu.ct->p_locparam)
+    {
+     __pv_ferr(1309,
+      "(LABEL form label %s is localparam - must be specparam or parameter",
+      syp->synam);
+     goto done;
+    }
+
    __pv_fwarn(2304,
     "(LABEL form back annotation to parameter %s non standard - will need to change to module scope specparam for Verilog 2000",
      syp->synam);
@@ -5535,7 +5554,8 @@ got_lab_param:
 
      if (__sdf_verbose)
       {
-       sprintf(s1, "%s(%s)", __msg2_blditree(s2, itp2), mdp->msym->synam);
+       sprintf(s1, "%s(%s)", __msg2_blditree(s2, itp2), 
+        mdp->msym->synam);
        emit_sdflblverb_msg(np, xsp, s1);
       }
      goto done2;

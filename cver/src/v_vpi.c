@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -120,9 +122,8 @@ static vpiHandle bld_gate_iterator(struct h_t *);
 static vpiHandle bld_modpth_iterator(struct h_t *);
 static vpiHandle bld_tchk_iterator(struct h_t *);
 static vpiHandle bld_param_iterator(struct h_t *, int32);
-static vpiHandle bld_listofparams_iter(struct net_t *, int32, struct itree_t *,
- struct task_t *, int32);
-static vpiHandle bld_paramarr_iterator(struct h_t *, int32);
+static vpiHandle bld_listofparams_iter(struct net_t *, int32, struct net_t *,
+ int32, struct itree_t *, struct task_t *);
 static vpiHandle bld_specparam_iterator(struct h_t *);
 static vpiHandle bld_defparam_stmt_iterator(struct h_t *);
 
@@ -141,7 +142,7 @@ extern int32 __expr_is_vpiconst(struct expr_t *);
 extern void __find_call_force_cbs(struct net_t *, int32);
 extern void __find_call_rel_cbs(struct net_t *, int32);
 extern void __cb_all_rfs(struct net_t *, int32, int32);
-extern void __cbvc_callback(struct cbrec_t *, struct h_t *);
+extern void __cbvc_callback(struct dcevnt_t *, struct cbrec_t *, struct h_t *);
 extern void __delay_callback(i_tev_ndx);
 extern void __vpi_startreset_trycall(void);
 extern void __vpi_endreset_trycall(void);
@@ -180,7 +181,6 @@ extern vpiHandle __bld_lds_iterator(struct h_t *, int32);
 extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_arrwrd_iterator(struct h_t *);
-extern vpiHandle __bld_paramwrd_iterator(struct h_t *);
 extern vpiHandle __bld_bitof_iterator(struct h_t *);
 extern vpiHandle __bld_systf_iterator(struct h_t *);
 extern vpiHandle __bld_tfargexpr_iterator(struct h_t *);
@@ -1942,11 +1942,13 @@ try_non_rng:
    /* SJM 07/24/00 - must run with this callback off in case rf in user code */
    dcep->dce_off = TRUE;
 
-   __cbvc_callback(cbp, cbp->cb_hp);
+   /* SJM 10/06/06  - must run with this cb off - if user did not turn off */ 
+   /* or remove call back, cbvc routine turns back on */
+   __cbvc_callback(dcep, cbp, cbp->cb_hp);
 
-   /* SJM 07/24/00 - unless user turned off with vpi control turn back on */
-   /* user may turn off in value change call back routine */
-   if (!dcep->dceu.dce_cbp->cb_user_off) dcep->dce_off = FALSE;
+
+   /* SJM 10/06/06 - call back routine turns back on if not turned off */
+   /* by user */
 
    /* if only one force cb (common case) can stop now */
    if (__num_vpi_force_cbs == 1) return; 
@@ -1979,11 +1981,12 @@ try_non_rng:
    /* SJM 07/24/00 - must run with this callback off in case rf in user code */
    dcep->dce_off = TRUE;
 
-   __cbvc_callback(cbp, cbp->cb_hp);
+   /* SJM 10/06/06  - must run with this cb off - if user did not turn off */ 
+   /* or remove call back, cbvc routine turns back on */
+   __cbvc_callback(dcep, cbp, cbp->cb_hp);
 
-   /* SJM 07/24/00 - unless user turned off with vpi control turn back on */
-   /* user may turn off in value change call back routine */
-   if (!dcep->dceu.dce_cbp->cb_user_off) dcep->dce_off = FALSE;
+   /* SJM 10/06/06 - call back routine turns back on if not turned off */
+   /* by user */
 
    /* if only one force cb (common case) can stop now */
    if (__num_vpi_rel_cbs == 1) return; 
@@ -2051,7 +2054,8 @@ extern void __cb_all_rfs(struct net_t *np, int32 bi, int32 is_force)
    /* does some forcing and releasing */
    if (is_force) __allforce_cbs_off = TRUE; else __allrel_cbs_off = TRUE;
 
-   __cbvc_callback(cbp, hp);
+   /* since know cbp dce pointer also nil, will not access dce field */
+   __cbvc_callback(NULL, cbp, hp);
 
    if (is_force) __allforce_cbs_off = FALSE; else __allrel_cbs_off = FALSE;
 
@@ -2079,7 +2083,8 @@ extern void __cb_all_rfs(struct net_t *np, int32 bi, int32 is_force)
  * this routine runs with no vpi_ location because event usually changes
  * but does have an itree loc.
  */
-extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
+extern void __cbvc_callback(struct dcevnt_t *dcep, struct cbrec_t *cbp,
+ struct h_t *hp)
 {
  int32 biti, ndx;
  struct t_cb_data wrk_cbdata, *datp;
@@ -2167,7 +2172,24 @@ extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
   }
  --- */
 
+ /* 10/06/06 - this will be set to nil if user code removes the call back */
+ /* that is now being processed */ 
+ __cbvc_causing_dcep = dcep;
+
  (*(datp->cb_rtn))(datp);
+
+ /* SJM 07/24/00 - unless user turned off with vpi control turn back on */
+ /* user may turn off in value change call back routine */
+
+ /* SJM 10/06/06 - also if user removed this call back in value change */
+ /* routine, must not turn back on since dcep will have been freed */
+
+ /* SJM 10/06/06 - the cbvc causing dcep will be nil if user code */
+ /* call cb remove for the currently active call back cbp (and dcep) */
+ 
+ if (__cbvc_causing_dcep != NULL && !dcep->dceu.dce_cbp->cb_user_off)
+   dcep->dce_off = FALSE;
+ __cbvc_causing_dcep = NULL; 
 
  /* t_cb_data automatic so no need to free */
 }
@@ -2191,7 +2213,8 @@ extern void __exec_vpi_gateoutcbs(register int32 tevpi)
    /* SJM 07/24/00 - user can turn off/on with sim control */ 
    if (cbp->cb_user_off) continue;
 
-   __cbvc_callback(cbp, cbp->cb_hp);
+   /* SJM 10/06/06 - this does not need to run with cb off since no assign */
+   __cbvc_callback(NULL, cbp, cbp->cb_hp);
   }
  /* nothing to free since cb_data record in automatic storage */ 
 }
@@ -2972,9 +2995,9 @@ no_sim:
    if (cbp->cb_gateout) linkout_gateout_cb(cbp); 
    else
     {
-     /* SJM 02/08/03 - can only free iact stmt dce if -O on */
-     if (__optimized_sim) __dcelst_off(cbp->cbdcep);
-     else __free_dceauxlst(cbp->cbdcep, 1);
+     /* SJM 10/06/06 - now vpi looks at head of dce list so */
+     /* can always free */
+     __free_dceauxlst(cbp->cbdcep, 1);
     }
    free_cbrec(cbp);
    break;
@@ -2982,9 +3005,9 @@ no_sim:
    if (__run_state != SS_SIM) goto no_sim;
    if (cbp->cb_hp != NULL) 
     {
-     /* SJM 02/08/03 - can only free iact stmt dce if -O on */
-     if (__optimized_sim) __dcelst_off(cbp->cbdcep);
-     else __free_dceauxlst(cbp->cbdcep, 1);
+     /* SJM 10/06/06 - now vpi looks at head of dce list so */
+     /* can always free */
+     __free_dceauxlst(cbp->cbdcep, 1);
 
      free_cbrec(cbp);
      __num_vpi_force_cbs--;
@@ -2996,9 +3019,9 @@ no_sim:
    if (__run_state != SS_SIM) goto no_sim;
    if (cbp->cb_hp != NULL) 
     {
-     /* SJM 02/08/03 - can only free iact stmt dce if -O on */
-     if (__optimized_sim) __dcelst_off(cbp->cbdcep);
-     else __free_dceauxlst(cbp->cbdcep, 1);
+     /* SJM 10/06/06 - now vpi looks at head of dce list so */
+     /* can always free */
+     __free_dceauxlst(cbp->cbdcep, 1);
 
      free_cbrec(cbp);
      __num_vpi_rel_cbs--;
@@ -3608,7 +3631,7 @@ static vpiHandle get_inmod_itp(struct h_t *hp)
   case vpiRealVar: case vpiMemory: case vpiNamedEvent: case vpiContAssign:
   case vpiGate: case vpiSwitch: case vpiUdp: case vpiModPath: case vpiTchk:
   case vpiSpecParam: case vpiDefParam:
-  case vpiIODecl: case vpiParamArray:
+  case vpiIODecl:
    break;
   case vpiParameter: case vpiParamAssign:
    break;
@@ -3707,7 +3730,6 @@ static vpiHandle get_obj_index(struct h_t *hp)
  hrp = hp->hrec;
  switch (hrp->htyp) {
   case vpiMemoryWord: case vpiNetBit: case vpiRegBit: case vpiVarSelect:
-  case vpiParamArrayWord:
    /* case 1, alternate form for expr. handle is fixed index */
    if (hrp->bith_ndx)
     {
@@ -3768,7 +3790,7 @@ set_val:
    rhp->hrec->hu.hxp = __bld_rng_numxpr(rngv, 0L, WBITS);
    rhp->hrec->free_xpr = TRUE;
    break;
-  case vpiMemoryWord: case vpiParamArrayWord:
+  case vpiMemoryWord:
    if (hrp->bith_ndx) np = hrp->hu.hnp;
    else
     {
@@ -3790,7 +3812,7 @@ set_val:
    __getwir_range(np, &r1, &r2);
    if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
    goto set_val;
-  case vpiMemory: case vpiParamArray:
+  case vpiMemory: 
    __getarr_range(hrp->hu.hnp, &r1, &r2, &wid);
    if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
    goto set_val;
@@ -3855,15 +3877,6 @@ bld_par_handle:
    exprobj_to_itreeloc(&nitp, &ntskp, idndp, hp->hin_itp, hrp->hin_tskp);
    ihref = __mk_handle(hotyp, (void *) idndp->lu.sy->el.enp, nitp, ntskp);
    break;
-  case vpiParamArrayWord:
-   if (hrp->bith_ndx)
-    {
-     ihref = __mk_handle(vpiParamArray, (void *) hrp->hu.hnp, hp->hin_itp,
-      hrp->hin_tskp);
-     break;
-    }
-   hotyp = vpiParamArray; 
-   goto bld_par_handle;
   case vpiNetBit:
    if (hrp->bith_ndx)
     {
@@ -4023,7 +4036,7 @@ static vpiHandle get_obj_side(struct h_t *rhp, int32 type)
    np = rhrp->hu.hnp;
    if (type == vpiLhs)
     {
-     if (np->n_isarr) hotyp = vpiParamArray; else hotyp = vpiParameter;
+     hotyp = vpiParameter;
      /* i.e. same thing except type different */
      ihref = __mk_handle(hotyp, (void *) np, rhp->hin_itp, rhrp->hin_tskp);
      return(ihref);
@@ -4798,7 +4811,6 @@ static vpiHandle get_obj_scope(struct h_t *hp)
   /* for expression forms - in module is where expr. appears not variable */
   case vpiMemoryWord: case vpiNetBit: case vpiRegBit: case vpiVarSelect:
   case vpiNetDriver: case vpiNetBitDriver:
-  case vpiParamArray: case vpiParamArrayWord:
   /* 10/28/00 - added missing things with scope */ 
   case vpiEventControl: case vpiRepeatControl:
    /* if index is expression form, context is where expr appears */
@@ -5144,9 +5156,9 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
   case vpiModPath: return(bld_modpth_iterator(hp));    
   case vpiTchk: return(bld_tchk_iterator(hp));    
   case vpiParameter: return(bld_param_iterator(hp, itype));
-  case vpiParamArray: return(bld_paramarr_iterator(hp, itype));
   case vpiSpecParam: return(bld_specparam_iterator(hp));    
   case vpiDefParam: return(bld_defparam_stmt_iterator(hp));
+  /* AIV 09/27/06 - this includes localparams too */ 
   case vpiParamAssign: return(__bld_paramassign_stmt_iter(hp));
   case vpiIODecl: return(__bld_iodecl_stmt_iter(hp));
   case vpiTableEntry: return(__bld_udpline_iter(hp));
@@ -5158,7 +5170,6 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
   case vpiDriver: return(__bld_drvs_iterator(hp, itype)); 
 
   case vpiMemoryWord: return(__bld_arrwrd_iterator(hp));
-  case vpiParamArrayWord: return(__bld_paramwrd_iterator(hp));
   case vpiBit: return(__bld_bitof_iterator(hp));
 
   case vpiUserSystf: return(__bld_systf_iterator(hp));
@@ -5961,13 +5972,14 @@ static vpiHandle bld_param_iterator(struct h_t *hp, int32 otype)
   case vpiModule: 
    mdp = hp->hin_itp->itip->imsym->el.emdp;
    if (mdp->mprms == NULL) return(NULL);
-   return(bld_listofparams_iter(mdp->mprms, mdp->mprmnum, itp, NULL, FALSE));
+   return(bld_listofparams_iter(mdp->mprms, mdp->mprmnum,
+    mdp->mlocprms, mdp->mlocprmnum, itp, NULL));
   case vpiTask: case vpiFunction:
    tskp = hrp->hu.htskp;
 bld_tskprms:
    if (tskp->tsk_prms == NULL) return(NULL);
-   return(bld_listofparams_iter(tskp->tsk_prms, tskp->tprmnum, itp, tskp,
-    FALSE));
+   return(bld_listofparams_iter(tskp->tsk_prms, tskp->tprmnum,
+    tskp->tsk_locprms, tskp->tlocprmnum, itp, tskp));
   case vpiNamedBegin: case vpiNamedFork:
    tskp = hrp->hu.htskp;
    goto bld_tskprms;
@@ -5983,80 +5995,49 @@ bld_tskprms:
  * build the iterator scan table for parameters (all nets of mprms)
  *
  * LOOKATME - why was mprms not freed? - needed for here
+ * SJM 09/28/06 - simplified since no more param arrays
  */
 static vpiHandle bld_listofparams_iter(struct net_t *nptab, int32 nparams,
- struct itree_t *itp, struct task_t *tskp, int32 sel_parrays)
+ struct net_t *loc_nptab, int32 loc_nparams, struct itree_t *itp, 
+ struct task_t *tskp)
 {
  register int32 pi, iti;
  register struct hrec_t *hrp;
- int32 pitersiz;
+ int32 tot_nparams;
  vpiHandle ihref;
  struct h_t *hp;
  struct net_t *np;
  struct pviter_t *iterp;
 
- if (nparams == 0) return(NULL);
- for (pi = 0, pitersiz = 0; pi < nparams; pi++)
-  {
-   np = &(nptab[pi]);
-   if (sel_parrays) { if (np->n_isarr) pitersiz++; }
-   else { if (!np->n_isarr) pitersiz++; }
-  }
+ tot_nparams = nparams + loc_nparams;
+ if (tot_nparams == 0) return(NULL);
  /* because iter by array class may have params but 0 iterator size */
- if (pitersiz <= 0) return(NULL);
+ if (tot_nparams <= 0) return(NULL);
 
- iterp = __alloc_iter(pitersiz, &ihref);
+ iterp = __alloc_iter(tot_nparams, &ihref);
  for (pi = 0, iti = -1; pi < nparams; pi++)
   {
    np = &(nptab[pi]);
-   if (sel_parrays) { if (!np->n_isarr) continue; }
-   else { if (np->n_isarr) continue; }
-
    hp = &(iterp->scanhtab[++iti]);
    hrp = hp->hrec;
-   if (np->n_isarr) hrp->htyp = vpiParamArray; else hrp->htyp = vpiParameter;
+   hrp->htyp = vpiParameter;
    hrp->hu.hnp = &(nptab[pi]);
    hp->hin_itp = itp;
    hrp->hin_tskp = tskp;
   }
+ /* SJM 09/27/06 - local params go into iterator after normal */
+ for (pi = 0; pi < loc_nparams; pi++)
+  {
+   np = &(loc_nptab[pi]);
+   hp = &(iterp->scanhtab[++iti]);
+   hrp = hp->hrec;
+   hrp->htyp = vpiParameter;
+   hrp->hu.hnp = &(loc_nptab[pi]);
+   hp->hin_itp = itp;
+   hrp->hin_tskp = tskp;
+  }
+
  return(ihref);
-}
-
-/*
- * given param array object handle - build iterator of all param arrays
- *
- * otype is vpi_ type of containing scope
- */
-static vpiHandle bld_paramarr_iterator(struct h_t *hp, int32 otype)
-{
- struct mod_t *mdp;
- struct task_t *tskp;
- struct itree_t *itp; 
- struct hrec_t *hrp;
-
- if (hp == NULL) return(__nil_iter_err(vpiParameter));
- itp = hp->hin_itp;
- hrp = hp->hrec;
- switch (hrp->htyp) {
-  case vpiModule: 
-   mdp = hp->hin_itp->itip->imsym->el.emdp;
-   if (mdp->mprms == NULL) return(NULL);
-   return(bld_listofparams_iter(mdp->mprms, mdp->mprmnum, itp, NULL, TRUE));
-  case vpiTask: case vpiFunction:
-   tskp = hrp->hu.htskp;
-bld_tskprms:
-   if (tskp->tsk_prms == NULL) return(NULL);
-   return(bld_listofparams_iter(tskp->tsk_prms, tskp->tprmnum, itp, tskp,
-    TRUE));
-  case vpiNamedBegin: case vpiNamedFork:
-   tskp = hrp->hu.htskp;
-   goto bld_tskprms;
-  default:
-   __vpi_err(1851, vpiError,
-    "unable to construct iterator of contained %s for %s object",
-    __to_vpionam(__wrks1, (word32) otype), __to_vpionam(__wrks2, hrp->htyp));
- }
- return(NULL);
 }
 
 /*

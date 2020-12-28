@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -68,11 +70,13 @@ static void cmpadd_1var_storsiz(struct net_t *);
 static void alloc_var(struct net_t *);
 static void alloc_real_var(struct net_t *, int32);
 static void alloc_scal_var(struct net_t *, int32);
+static int32 all_drvrs_bidirect(struct net_t *);
 static void alloc_sscal_var(struct net_t *, int32);
 static void alloc_svec_var(struct net_t *, int32);
 static void reinit_1wirereg(struct net_t *, struct mod_t *);
 static void alloc_dce_prevval(struct dcevnt_t *, struct mod_t *);
 static void init_dce_exprval(struct dcevnt_t *);
+static struct mod_t *dcep_ref_mod(struct dcevnt_t *);
 static void init_dce_prevval(struct dcevnt_t *, struct mod_t *);
 static void prep_stskcalls(struct st_t *);
 static struct st_t *add_loopend_goto(struct st_t *, struct st_t *);
@@ -2223,7 +2227,21 @@ extern int32 __get_initval(struct net_t *np, int32 *stval)
  switch ((byte) np->ntyp) { 
   case N_WIRE: case N_TRI: case N_TRIAND: case N_WA: case N_TRIOR: case N_WO:
    /* normal wires are z (hiz(0),hiz(0), z) */
-   ival = 2; sval = ST_HIZ;
+   /* SJM 02/16/07 - initialize to x if net has drivers otherwise z */
+
+   /* SJM 03/16/07 - if wire is an inout special case - may have npp bid */
+   /* mod port drvrs here, but since inout are in tran channels removed */
+   /* later - if all drivers are bid ports, really has no drivers */
+   if (np->ndrvs == NULL || all_drvrs_bidirect(np))
+    {
+     ival = 2; 
+     sval = ST_HIZ;
+    }
+   else
+    {
+     ival = 3; 
+     sval = 0xdb;
+    }
    break;
   /* these are normal wires, that have pull0 or pull driver added */  
   case N_TRI0: ival = 0; sval = ST_PULL0; break; /* <5:5>=0 Pu0 10110100 */
@@ -2247,6 +2265,22 @@ extern int32 __get_initval(struct net_t *np, int32 *stval)
  } 
  *stval = sval;
  return(ival); 
+}
+
+/*
+ * return T if all drivers are bid mdprt drivers because they are all 
+ * removed later when inout are converted to switch channels
+ */
+static int32 all_drvrs_bidirect(struct net_t *np)
+{
+ register struct net_pin_t *npp;  
+
+ for (npp = np->ndrvs; npp != NULL; npp = npp->npnxt)
+  {
+   if (npp->npntyp != NP_BIDMDPRT && npp->npntyp != NP_BIDICONN)
+    return(FALSE);
+  }
+ return(TRUE);
 }
 
 /*
@@ -2597,11 +2631,9 @@ skip_spec:
  */
 extern void __init_1net_dces(struct net_t *np, struct mod_t *mdp)
 {
- register int32 i;
  int32 insts;
- i_tev_ndx *itevpp;
  struct dcevnt_t *dcep; 
- struct mod_t *decl_mdp;
+ struct mod_t *ref_mdp;
 
  insts = mdp->flatinum;
  /* must go through setting all dce schedule per inst tables to nil */
@@ -2612,35 +2644,46 @@ extern void __init_1net_dces(struct net_t *np, struct mod_t *mdp)
      /* set per inst. schedule table to nil but leave this type of dce */
      /* not per bit since filter applied to range */
      /* also for dce forms accessed from ref. not target itree loc. */
-     itevpp = dcep->st_dctrl->dceschd_tevs;
-     /* DBG remove --- */
-     if (itevpp == NULL) __misc_terr(__FILE__, __LINE__);
-     /* --- */
-     for (i = 0; i < insts; i++) itevpp[i] = -1;
 
+     /* DBG remove --- */
+     if (dcep->st_dctrl->dceschd_tevs == NULL)
+       __misc_terr(__FILE__, __LINE__);
+     /* --- */
+
+     /* SJM 10/07/06 - NOTICE that dce previous values are indexed by */ 
+     /* declare in (target) instance number and have that size but */
+     /* because dce scheduled tevs are accessed while arming from ref */
+     /* point, the dce schd tev table is the size of and index by ref mod */
+
+     /* SJM 10/07/06 - since init called from declared in (targ) itree loc */
+     /* need to use the defined in mdp number of insts for XMRs */
+     /* AIV 03/03/07 - made a routine to get the ref mod */
+     ref_mdp = dcep_ref_mod(dcep);
+
+     /* SJM 10/07/06 - for XMR dces (@(i1.reg) say), the schd tev table */
+     /* has the size of the referenced in (in mdp) module and is accessed */
+     /* by the referencing (used in) inum - XMR dce prevals are accessed */
+     /* and have the size of the declare in (target) module */
+     /* AIV 03/03/07 - these are init when alloced for the intep  */
+     /* they are init when linked in for the compiler as well */
+     /*
+     for (i = 0; i < ref_mdp->flatinum; i++)
+      {
+       dcep->st_dctrl->dceschd_tevs[i] = -1;
+      }
+     */
+
+     /* AIV 01/04/07 - init dce expr was using the wrong inst for */
+     /* dce with more than one inst and was also skipping init for the */
+     /* dce_expr for the one instance case */
      /* set dce previous values to initial wire value */
-     if (dcep->dce_1inst)
+     if (dcep->dce_expr != NULL) init_dce_exprval(dcep);
+     else
       {
        if (dcep->prevval.wp != NULL)
         {
-         __push_itstk(dcep->dce_matchitp);
-         __init_1instdce_prevval(dcep);
-         __pop_itstk();
-        }
-      }
-     else
-      {
-       if (dcep->dce_expr != NULL) init_dce_exprval(dcep);
-       else
-        {
-         if (dcep->prevval.wp != NULL)
-          {
-           /* 05/18/03 - for XMR there is one for each decl in inst */
-           if (dcep->dce_xmrtyp != XNP_LOC)
-            decl_mdp = dcep->dceu.dcegrp->targmdp;
-           else decl_mdp = __inst_mod;
-           init_dce_prevval(dcep, decl_mdp);
-          }
+         /* 05/18/03 - for XMR there is one for each decl in inst */
+         init_dce_prevval(dcep, ref_mdp);
         }
       }
      break;
@@ -2872,6 +2915,29 @@ static void init_dce_exprval(struct dcevnt_t *dcep)
 }
 
 /*
+ * return the reference dcep mod 
+ */
+static struct mod_t *dcep_ref_mod(struct dcevnt_t *dcep)
+{
+ struct mod_t *ref_mdp;
+ struct itree_t *itp;
+
+ if (dcep->dce_xmrtyp == XNP_UPXMR || dcep->dce_xmrtyp == XNP_DOWNXMR)
+  {
+   ref_mdp = dcep->dceu.dcegrp->targmdp;
+  }
+ /* AIV 03/01/07 - rooted must be linked with its containing mod */
+ else if (dcep->dce_xmrtyp == XNP_RTXMR)
+  {
+   /* AIV 03/03/07 - should be match itp not ref */
+   itp = dcep->dce_matchitp;
+   ref_mdp = itp->itip->imsym->el.emdp;
+  }
+ else ref_mdp = __inst_mod;
+ return(ref_mdp);
+}
+
+/*
  * allocate one inst form dce
  *
  * since called before dce filled, can only allocate - can't initialize
@@ -2882,6 +2948,7 @@ extern void __alloc_1instdce_prevval(struct dcevnt_t *dcep)
 {
  int32 dcewid, totchars;
  struct net_t *np;
+ struct mod_t *ref_mdp;
 
  /* SJM 05/08/03 - dce expr can never be 1 inst - always var and never XMR */
  /* DBG remove -- */
@@ -2903,7 +2970,8 @@ extern void __alloc_1instdce_prevval(struct dcevnt_t *dcep)
  if (np->n_stren) dcep->prevval.bp = (byte *) __my_malloc(dcewid);
  else
   {
-   totchars = __get_pcku_chars(dcewid, 1);
+   ref_mdp = dcep_ref_mod(dcep);
+   totchars = __get_pcku_chars(dcewid, ref_mdp->flatinum);
    dcep->prevval.wp = (word32 *) __my_malloc(totchars);
   }
 }
@@ -3911,34 +3979,23 @@ static void init_iact_dce(struct dcevnt_t *dcep, struct delctrl_t *dctp,
 {
  struct net_t *np;
  struct dceauxlst_t *dclp;
- struct mod_t *decl_mdp;
+ struct mod_t *ref_mdp;
 
  np = dcep->dce_np;
- /* SJM 05/08/03 - not that dce filled can initialize with proper handling */
- /* of XMRs and interactive cases */
- if (dcep->dce_1inst)
-  { 
-   if (dcep->prevval.wp != NULL)
-    {
-     __push_itstk(dcep->dce_matchitp);
-     __init_1instdce_prevval(dcep);
-     __pop_itstk();
-    }
-  }
+
+ /* AIV 01/04/07 - init dce expr was using the wrong inst for */
+ /* dce with more than one inst and was also skipping init for the */
+ /* dce_expr for the one instance case */
+ if (dcep->dce_expr != NULL) init_dce_exprval(dcep);
  else
   {
-   if (dcep->dce_expr != NULL) init_dce_exprval(dcep);
-   else
+   if (dcep->prevval.wp != NULL)
     {
-     if (dcep->prevval.wp != NULL)
-      {
-       /* 05/18/03 - for XMR there is one for each decl in inst */
-       if (dcep->dce_xmrtyp != XNP_LOC) decl_mdp = dcep->dceu.dcegrp->targmdp;
-       else decl_mdp = __inst_mod;
-       init_dce_prevval(dcep, decl_mdp);
-      }
+     ref_mdp = dcep_ref_mod(dcep);
+     init_dce_prevval(dcep, ref_mdp);
     }
-  }
+   }
+
  if (dctp->dc_iact)
   {
    /* add to iact list for this statement - will be linked to hctrl */  
@@ -7029,6 +7086,8 @@ static void cmp_xform_tasks(void)
  /* DBG remove --- */ 
  if (__prpsti != 0) __misc_terr(__FILE__, __LINE__); 
  /* --- */
+ /* AIV 10/20/05 - must reset __processing_func to FALSE */
+ __processing_func = FALSE;
 }
 
 /*

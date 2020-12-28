@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -2812,7 +2814,7 @@ static word32 get_dce_edgeval(struct mod_t *mdp, struct dcevnt_t *dcep)
 static int32 bin_trim_abval(word32 *ap, word32 *bp, int32 blen)
 {
  int32 ahigh0, bhigh0;
- int32 wlen, ubits, trimalen, trimblen;
+ int32 wlen, ubits, trimalen, trimblen, nblen;
 
  /* this adjusts 0 to WBITS */
  wlen = wlen_(blen);
@@ -2831,25 +2833,30 @@ static int32 bin_trim_abval(word32 *ap, word32 *bp, int32 blen)
  else trimalen = trim1_1val(ap, blen);
  if (bhigh0) trimblen = __trim1_0val(bp, blen);
  else trimblen = trim1_1val(bp, blen);
- blen = (trimalen >= trimblen) ? trimalen : trimblen;
+ nblen = (trimalen >= trimblen) ? trimalen : trimblen;
 
  /* if all 0s, x's, or z's, make 1 bit */
- if (blen == 0) return(1);
+ if (nblen == 0) return(1);
 
  /* if trimmed x or z always need high x or z */ 
- if (!bhigh0) return(blen + 1);
+ /* AIV 01/18/06 - if the high bit was one x or z was returning an extra bit */
+ if (!bhigh0)
+  {
+   if (blen == nblen) return(nblen);
+   return(nblen + 1);
+  }
 
  /* trimmed 0's to something */
  /* if trim 0's to x or z - need the to inc for one extra high 0 */ 
- wlen = wlen_(blen);
- ubits = ubits_(blen);
+ wlen = wlen_(nblen);
+ ubits = ubits_(nblen);
  if (ubits == 0) ubits = WBITS;
  /* notice range for bits is [32:1] */
  /* if trimmed 0's to 1, do not need extra high 1 */
- if (!bithi_is0(bp[wlen - 1], ubits)) return(blen + 1);
+ if (!bithi_is0(bp[wlen - 1], ubits)) return(nblen + 1);
 
  /* if trimmed 0's to 1, then no extra high 0 */
- return(blen);
+ return(nblen);
 }
 
 /*
@@ -2863,7 +2870,7 @@ static int32 bin_trim_abval(word32 *ap, word32 *bp, int32 blen)
 static int32 trim_abval(word32 *ap, word32 *bp, int32 blen)
 {
  int32 ahigh0, bhigh0;
- int32 wlen, ubits, trimalen, trimblen;
+ int32 wlen, ubits, trimalen, trimblen, nblen;
 
  /* this adjusts 0 to WBITS */
  wlen = wlen_(blen);
@@ -2879,13 +2886,18 @@ static int32 trim_abval(word32 *ap, word32 *bp, int32 blen)
  else trimalen = trim1_1val(ap, blen);
  if (bhigh0) trimblen = __trim1_0val(bp, blen);
  else trimblen = trim1_1val(bp, blen);
- blen = (trimalen >= trimblen) ? trimalen : trimblen;
+ nblen = (trimalen >= trimblen) ? trimalen : trimblen;
  /* if all 0s, make 1 bit */
- if (blen == 0) return(1);
+ if (nblen == 0) return(1);
 
  /* if x or z extension, need 1 extra bit */
- if (!ahigh0 || !bhigh0) return(blen + 1);
- return(blen);
+ /* AIV 01/18/06 - if the high bit was one x or z was returning an extra bit */
+ if (!ahigh0 || !bhigh0)
+  {
+   if (blen == nblen) return(nblen);
+   return(nblen + 1);
+  }
+ return(nblen);
 }
 
 /*
@@ -3102,10 +3114,17 @@ extern int32 __v64_to_real(double *d1, word64 *tim)
 
 /*
  * convert a stack value to a real and 
+ *
+ * 09/30/06 SJM - thanks to Bryan Catanzaro from Tabula for find this
+ *
+ * there is a slight bug here because this must also change stack  
+ * width to WBITS - needed because the stack value is used later
+ * and changing the xslen field is always good - see narrow sizchg
  */
 extern double __cnvt_stk_to_real(struct xstk_t *xsp, int32 is_signed)
 {
- int32 i;
+ int32 i, blen;
+ word32 mask_val;
  word32 u;
  word64 tim;
  double d1;
@@ -3127,9 +3146,25 @@ not_real:
   }
  else
   {
-   if (is_signed) { i = (int32) xsp->ap[0]; d1 = (double) i; }
+   /* AIV 09/29/06 - if sign bit on and < WBITS need mask prior to cast */
+   if (is_signed) 
+    { 
+     blen = xsp->xslen;
+     mask_val = xsp->ap[0]; 
+     if (xsp->xslen != WBITS)
+      {
+       if ((mask_val & (1 << (blen - 1))) != 0)
+        {
+         mask_val |= ~(__masktab[blen]);
+        }
+       }
+     i = (int32) mask_val; 
+     d1 = (double) i; 
+    }
    else { u = (word32) xsp->ap[0]; d1 = (double) u; } 
   }
+ /* SJM 09/30/06 - can resue the strength arg */
+ xsp->xslen = WBITS;
  return(d1);
 }
 
@@ -3524,6 +3559,10 @@ extern void __dmp_mod(FILE *f, struct mod_t *mdp)
 
  dmp_paramdecls(f, mdp->mprms, mdp->mprmnum, "parameter");
  if (mdp->mprms != NULL) { __wrap_putc('\n', f); __outlinpos = 0; }
+
+ /* AIV 09/27/06 - must dump local param declarations too */
+ dmp_paramdecls(f, mdp->mlocprms, mdp->mlocprmnum, "localparam");
+ if (mdp->mlocprms != NULL) { __wrap_putc('\n', f); __outlinpos = 0; }
 
  dmp_defparams(f, mdp);
 

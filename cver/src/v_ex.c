@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -80,6 +82,7 @@ static void grow_fcstk(void);
 static void exec_count_drivers(struct expr_t *);
 static void exec_testplusargs(struct expr_t *);
 static void exec_scanplusargs(struct expr_t *);
+static void exec_valueplusargs(struct expr_t *);
 static void exec_1arg_transcendental(int32, struct expr_t *);
 static void exec_transcendental_int(struct expr_t *);
 static void exec_transcendental_sign(struct expr_t *);
@@ -3625,6 +3628,9 @@ conv_0:
   case STN_SCANPLUSARGS:
    exec_scanplusargs(ndp);      
    break;
+  case STN_VALUEPLUSARGS:
+   exec_valueplusargs(ndp);
+   break;
   case STN_RESET_COUNT:
    push_xstk_(xsp, WBITS);
    xsp->ap[0] = (word32) __reset_count;
@@ -3892,6 +3898,135 @@ static void exec_scanplusargs(struct expr_t *ndp)
      break;
     }
   }
+ push_xstk_(xsp, WBITS);
+ xsp->bp[0] = 0L;
+ xsp->ap[0] = (word32) rv;
+ __my_free(plusarg, arglen + 1);
+}
+
+/*
+ * execute the $value$plusargs system function 
+ * takes a string with a single format and places the value into a single
+ * variable passed as the second argument
+ *
+ * works by dividing string from the variable name and the format
+ * so "TEST=%d", becomes two strings "TEST=" and "%d" 
+ * when it is passed to scanf routine
+ * 
+ * returns TRUE on success fails returns FALSE
+ * $value$plusargs("TEST=%d", var)
+ * takes +TEST=3 off command line and places value (format %) into var
+ */
+static void exec_valueplusargs(struct expr_t *ndp)
+{
+ register struct optlst_t *olp;
+ register char *chp;
+ int32 arglen, rv, i, j, namlen, saverrno;
+ struct expr_t *fax;
+ struct xstk_t *xsp;
+ char *plusarg;
+ char format[RECLEN];
+ 
+ fax = ndp->ru.x;
+ /* this is the passed argment prefix */
+ plusarg = __get_eval_cstr(fax->lu.x, &arglen);
+
+ rv = FALSE;
+ chp = plusarg;
+ /* namlen is the name of the +variable minus the format */
+ namlen = -1; 
+ /* get the +variable without the format */
+ for (i = 0; i < arglen; i++, chp++)
+  {
+   /* first '%' found probably the format */
+   if (*chp == '%')
+    {
+     /* check for escaped '%%' */
+     if (i+1 < arglen && *(chp+1) == '%')
+      {
+       i++; chp++;
+      }
+     else break;
+    }
+  }
+
+ /* the one format has to have at least '%d' */
+ if (i > (arglen-2))
+  {
+   __sgferr(1300, "$value$plusargs string '%s' doesn't contain a format",
+    plusarg); 
+   goto done;
+  }
+
+  /* end of +variable name */
+  namlen = i; 
+  j = 0;
+  /* the one format has to have at least '%d' */
+  format[j++] = *chp++;
+  /* add the number format */
+  while (isdigit(*chp))  
+   {
+    format[j++] = *chp++;
+   }
+  /* check to make sure the format is valid */
+  switch (*chp) {
+   case 'd':
+   case 'o':
+   case 'h':
+   case 'b':
+   case 'e':
+   case 'f':
+   case 'g':
+   case 's':
+    format[j++] = *chp;
+    /* the fomat has to be the end of the string */
+    if (i+j == arglen)
+     {
+      format[j] = '\0';
+      break;
+     }
+    /* FALLTHRU */
+   default:
+    __sgferr(1301, "$value$plusargs string '%s' contains illegal format",
+     plusarg); 
+    goto done; 
+    break;
+  }
+
+ /* this part just the same as $scan$plusargs */
+ for (olp = __opt_hdr; olp != NULL; olp = olp->optlnxt)
+  {
+   /* ignore markers added for building vpi argc/argv */
+   if (olp->is_bmark || olp->is_emark) continue;
+
+   chp = olp->opt;
+   if (*chp != '+') continue;
+
+   /* option length if the length of the command line plus option string */
+   /* option must be at least as long as passed arg or cannot match */
+   if (strlen(chp) < namlen) continue; 
+   /* match prefix - arg. is same or narrow that plus command line option */
+   if (strncmp(&(chp[1]), plusarg, namlen) == 0)
+    {
+     /* set the scanf format string */
+     /* SJM 09/28/06 - can't pass local var pointed to by global */ 
+     __fiofp = __pv_stralloc(format); 
+     /* pass the string value */
+     __fiolp = &(chp[namlen+1]); 
+     /* move to next - assign to arg */
+     fax = fax->ru.x;
+     /* save and restore errno since it isn't an IO operation */
+     saverrno = errno;
+     /* get the format */
+     rv = fio_exec_scanf(NULL, fax);
+     __my_free(__fiofp, strlen(__fiofp) + 1);
+     errno = saverrno;
+     if (rv == -1) rv = FALSE;
+     else rv = TRUE;
+     break;
+    }
+  }
+done:
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  xsp->ap[0] = (word32) rv;
@@ -7052,7 +7187,9 @@ static int32 chk_get_mcd_or_fd(struct expr_t *fdxp, int32 *is_mcd)
  __pop_xstk();
 
  /* if high bit 0, then know mcd */
- if ((fd & FIO_FD) == 0)
+ /* SJM 09/30/06 - using wrong mask - need only high bit on for test */
+ /* was using fio fd wrongly */
+ if ((fd & FIO_MSB) == 0)
   {
    *is_mcd = TRUE;
    return(fd);

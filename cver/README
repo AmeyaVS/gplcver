@@ -65,15 +65,6 @@ Vcddiff
    directory.  For more information see th README files each of those
    directories.
    
-Dinotrace
-   Dinotrace binary is included in the platform specific release bzipped
-   tar files.  It is an open source wave form viewer that was
-   originally developed by DEC.  You can download source from 
-   http://www.veripool.com/dinotrace.  The linux binary dinotrace was
-   built on Red Hat Linux using GLIBC_3.2.  If you are running an older
-   linux release, you may need to download dinotrace source from the
-   dinotrace home page and make a dinotrace binary for your system.
-
 
 E. WHERE TO GO NEXT
 

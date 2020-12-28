@@ -1,4 +1,4 @@
-/* Copyrght (c) 1993-2005 Pragmatic C Software Corp. */
+/* Copyrght (c) 1993-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -1338,6 +1340,13 @@ extern void __free_dceauxlst(struct dceauxlst_t *dcehdr, int32 numinsts)
 
        /* if no dce value, does nothing */
        __free_dce_prevval(dcep, numinsts, __get_dcewid(dcep, np));
+
+       /* SJM 10/06/06 - if free dce aux list, called from a vpi cb value */
+       /* change and the a freed dce is the same as the one that caused the */
+       /* value chg user c routine to run, must indicate the one dce */
+       /* that caused the cbvc callback to be called has been freed */
+       if (dcep == __cbvc_causing_dcep) __cbvc_causing_dcep = NULL;
+
        __my_free((char *) dcep, sizeof(struct dcevnt_t));
        dcep = NULL;
        goto nxt_dce;

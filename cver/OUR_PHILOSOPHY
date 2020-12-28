@@ -1,5 +1,5 @@
 
-                 PHILOSOPHICAL JUSTIFICATION OF GPL CVE
+                 PHILOSOPHICAL JUSTIFICATION OF GPL CVER
 
   We believe strongly that software should be distributed with source. 
   This allows users to study and understand Verilog algorithms as part
@@ -7,12 +7,11 @@
 
   However, since Pragmatic C is a commercial enterprise with salaries
   to pay, it does not make sense to release our software using only
-  the open source model.  We have decided to follow the method used
-  to distribute Ghostscript.  Namely, we are releasing an older version
-  called GPL Cver under the GNU General Public License (GPL) and a newer
-  version under a commercial license.  We have chosen to release the
-  older GPL Cver version using the GNU GPL license because it is currently
-  the most popular free software license and because it allows the
+  the open source model.  Namely, we are releasing an older version
+  called GPL Cver under the GNU General Public License (GPL) and a new
+  compiled version called CVC under a commercial license.  We have chosen to
+  release the older GPL Cver version using the GNU GPL license because it 
+  is currently the most popular free software license and because it allows the
   widest distribution. 
 
   We are not sure if the GNU development model will work with Ecad software
@@ -21,14 +20,12 @@
   behavior is the result of commercial users reporting mismatches with
   the de facto standard Cadence Verilog XL (TM) simulator.
 
-  We think that the combination of GPL and commercial higher speed version
+  We think that the combination of GPL and compiled CVC
   is particularly good for Ecad software.  The GPL version allows 
   archiving the exact simulator source used for circuit sign off  
   along with design data so if there is a need for future changes, 
   the full set of design data (i.e. including the simulator used to process
   the data) can be retrieved to recreate the exact sign off conditions. 
-  The commercial version facilitates running more regression tests during
-  commercial circuit development.
 
   Since we are concerned about the high unemployment rate among programmers
   and design engineers, we want to encourage people to write their own

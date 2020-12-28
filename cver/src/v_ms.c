@@ -1,4 +1,4 @@
-/* Copyright (c) 1986-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1986-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -2426,7 +2428,7 @@ static int32 vgetstr(FILE *f)
    }
    /* should never happen since max. line is same as IDLEN - nd " room */
    /* SJM 03/20/00 - now allow up to 1M length strings */
-   if (++len >= __numtok_wid)
+   if (++len >= __strtok_wid)
     {
      if (len >= MAXNUMBITS) 
       {
@@ -2440,9 +2442,12 @@ static int32 vgetstr(FILE *f)
      else
       {
        /* LOOKATME - SJM 03/20/00 - doubling may be too fast growth */
+       /* AIV 04/20/06 - was incorrectly using num should be str */
        nsize = 2*__strtok_wid;
-       __numtoken = __my_realloc(__numtoken, __strtok_wid, nsize);
+       __strtoken = __my_realloc(__strtoken, __strtok_wid, nsize);
        __strtok_wid = nsize;
+       /* AIV 04/20/06 - need to reset chp pointer due to realloc */ 
+       cp = &(__strtoken[len - 1]); 
        *cp++ = c;
       }
     }
@@ -2894,6 +2899,8 @@ ok_letend:
        nsize = 2*__numtok_wid;
        __numtoken = __my_realloc(__numtoken, __numtok_wid, nsize);
        __numtok_wid = nsize;
+       /* AIV 04/20/06 - need to reset chp pointer due to realloc */ 
+       chp = &(__numtoken[len - 1]); 
        *chp++ = c1;
       }
     }
@@ -3678,6 +3685,7 @@ static struct vkeywds_t vkeywds[] = {
  { "integer", INTEGER },
  { "join", JOIN },
  { "large", LARGE },
+ { "localparam", LOCALPARAM },
  { "macromodule", MACROMODULE },
  { "medium", MEDIUM },
  { "module", MODULE },
@@ -4026,7 +4034,7 @@ static int32 set_syncto_tokclass(byte ttyp)
    break;
   case INITial: case ALWAYS:
   case DEFPARAM: case SPECIFY: case TASK: case FUNCTION: 
-  case PARAMETER: case ASSIGN:
+  case PARAMETER: case LOCALPARAM: case ASSIGN:
   case INPUT: case OUTPUT: case INOUT:
   case WIRE: case TRI: case TRI0: case TRI1: case TRIAND: 
   case TRIOR: case TRIREG: case WAND: case WOR: case SUPPLY0:

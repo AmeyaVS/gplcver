@@ -1,4 +1,4 @@
-/* Copyright (c) 1992-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1992-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -4649,7 +4651,8 @@ extern int32 tf_propagatep(int32 pnum)
  else
   {
    /* here just convert from vecval p form to internal a/b form */
-   push_xstk_(xsp, 2*xpinfo->expr_ngroups*WRDBYTES);
+   /* SJM 02/16/07 - push xstk takes num bits not bytes - thanks SAS@Tharas */
+   push_xstk_(xsp, xpinfo->expr_ngroups*WBITS);
    vecp = xpinfo->expr_value_p;
    for (wi = 0; wi < xpinfo->expr_ngroups; wi++)
     {
@@ -4937,6 +4940,10 @@ static void linkon_pvc_dce(struct net_t *np, int32 biti, int32 bitj,
   }
  /* link this on front */
  dcep->dcenxt = np->dcelst;
+
+ /* AIV 09/25/06 - need to set has_dces bit to T - could be only one */
+ /* has checking bit in record_nchg_ - and not executing list */
+ np->nchg_has_dces = TRUE;
 
  np->dcelst = dcep;
  dcep->dce_1inst = TRUE;

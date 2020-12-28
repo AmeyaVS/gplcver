@@ -19,7 +19,7 @@ Wed Aug 18 12:32:10 CDT 2004
 
 1. Fixed wrong syntax error when @* was used instead of @(*).
 
-2. Changed port declaration code for both new ansii style port headers
+2. Changed port declaration code for both new ANSI style port headers
    and old style port headers to add the completed port definition concept,
    i.e. new style port declarations are completed in the header.  Now,
    for old style declarations, once the range and/or net type are given, the
@@ -27,11 +27,11 @@ Wed Aug 18 12:32:10 CDT 2004
    the port.
 
    There is still a possible minor problem because the wire declaration
-   continous assignment form can't be used with new ansii style port
+   continuous assignment form can't be used with new ANSI style port
    declarations as specified in LRM.  Only assign keyword is allowed for
    port wire continuous assigns.
 
-3. Fixed problem with tf_strgetp.  It was wrongly trimmming the input
+3. Fixed problem with tf_strgetp.  It was wrongly trimming the input
    string's leading zeros.       
 
 4. Removed incorrect bit and part select warning when @(*) was used and
@@ -99,7 +99,7 @@ on 64 bit Linux systems.
 
 6. Constant folding was wrongly removing signs.
 
-7. Multi-word widing was sometimes not sign extending or wrongly setting
+7. Multi-word widening was sometimes not sign extending or wrongly setting
    some bits to x/z.  For very wide vector sign extends, the widening
    would also sometimes core dump.  This happened for both signed and
    unsigned widening.
@@ -107,7 +107,7 @@ on 64 bit Linux systems.
 8. Fix bug in timing checks that was causing spurious and wrong extra 
    timing violations to be detected and printed.  Problem was that
    sometimes the data event was being recorded as the reference event.
-   It happened when a second data event edge occured within on time tick.
+   It happened when a second data event edge occurred within on time tick.
 
 9. Fixed parameter problem when a per instance value was set by a pound
    or defparam and a design contained many constants.  The symptom was
@@ -208,3 +208,99 @@ after all #0 events are processed following XL.
    resulted in widening to z instead of 0.
 
 9. `include `[macro] now works.
+
+==========================================
+Tue May 29 20:08:56 EDT 2007
+
+  Major release 2.12a with bug fixes and some new features.  This documents
+bug fixes and new features not included in the new commerical CVC compiler.
+
+1. Added support for localparam.  Needed to run some Xilinx libraries.
+
+2. Fixed problem with initial values of driven wires not matching XL.
+   Cver previously always initialized wires to 'z'.  Now wires with
+   drivers are initialized to 'x' following XL and wires with no
+   drivers are initialized to 'z'.  This change eliminated a number of
+   extra and wrong edges at time 0.
+
+3. Fixed part select bug where a change was recorded but the change
+   really did not happen.  This resulted in extra wrong edges in
+   dumpvars files and $monitor output.
+
+4. Changed $random functionality to match XL.  Now $random and
+   $random([seed]); use independent pseudo random sequences.  Previously,
+   mixing the non seed and seed forms changed the sequence.  When
+   $random is called with a [seed] argument, the global seed is not
+   changed.
+
+5. Fixed problem with PLI 1.0 tf_propagate routine.  The assigned
+   user passed value's width was wrong (too narrow).
+
+6. Rewrote the vpi_ call back code to work more rationally.  Previously
+   when a cbValueChange call back was removed (using vpi_remove_cb) inside
+   the user C code callback service routine, Cver core dumped.  This is 
+   now allowed and works.  It is also now legal (it has mostly worked in the
+   past) to assign a new value to the net that caused the call back in the
+   change routine that processes the net change.  The new change value will
+   not cause another cbChangeValue callback.  The Cver extension to allow
+   users to turn on and off call backs without removing the call back
+   works as before and is allowed in the user C code that processes the
+   callback.
+
+7. There was a bug in stren model port assignments (except for inouts)
+   when the port sink left hand side was wider than the right hand
+   side.  The required strength widening by adding z's often did not
+   happen, or the amount of widening was too narrow.
+
+8. Previously following old XL, Cver did not allow vpi_put_value to
+   array words (vpiMemoryWord).  That access path is now supported.
+
+9. Fixed bug that caused core dumping when $readmemb or $readmemh were
+   used to read wide memories. 
+
+10. Fixed problem that resulted in core dump with $fclose when designs used
+    both new stdio type File I/O and old file descriptor 32 bit mask I/O. 
+
+11. Fixed problem when time values were converted to reals in complex
+    expressions.  The conversion was producing the wrong real value.
+
+12. Legal Verilog code "always @({sig1,sig2,sig3}) ..."  now runs.  Previously,
+    a wrong syntax error was emitted.  It is the same as
+    "always @(sig1, sig2, sig3) ..." or always @(sig1 or sig2 or sig3) ...".
+   
+13. Repeat form right hand side delay controls inside a block with a 
+    guarding normal delay control would sometimes core dump or not delay
+    the right amount of time.  Something like this would fail:
+
+     @(clk) r = repeat (2) @(clk) r + 1;
+
+14. Changed behavior of parallel (=>) path delays to not emit an error
+    when the source and destination of a delay path had different widths.
+    Now Cver does not emit an error for "(posedge aclr => dataout) = <delay>;"
+    when dataout is vector.  The path delay is only put on the low bit.
+    We think this should be an error because in this case there will be
+    no path delay on the higher bits.  The path should use the full delay
+    form (*>) so that a delay is put on every bit of the path destination
+    bus.  The change was needed because Altera libraries use the parallel
+    path delay form for this case.
+
+15. Fixed problem with cross module reference delay controls.
+    Something like @(i1.regs) would sometime try to access regs in the
+    referencing module rather than in the defining module.
+
+16. Fixed bug involving interaction between value change call backs and
+    $dumpvars.  If within one time tick, first a value change call back
+    was registered and then dump vars was turned on for the same variable,
+    Cver would core dump.
+
+17. Fixed many more new bugs involving signed operators especially signed
+    shifts.  There are too many fixes to describe in detail.
+
+18. $dumpvars dump file was sometimes wrong.  If high bit was x or z would 
+    wrongly propagate a 0 to the result.
+
+19. Fixed a bug involving the interaction between arrays of gates and
+    cross module references.
+
+20. If you are using +no_separate_nb_queue, you should stop using it because
+    it has been deprecated and will be removed soon. 

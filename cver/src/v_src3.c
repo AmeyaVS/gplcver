@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -201,7 +203,8 @@ extern int32 __col_comsemi(int32);
 extern void __bld_xtree(int32);
 extern int32 __src_rd_chk_paramexpr(struct expr_t *, int32);
 extern void __set_numval(struct expr_t *, word32, word32, int32);
-extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *);
+extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *, 
+ int32);
 extern int32 __col_parenexpr(int32);
 extern int32 __bld_expnode(void);
 extern void __set_xtab_errval(void);
@@ -1680,7 +1683,7 @@ bad_end:
    /* check and links on modules parameter list */
    /* when rhs expr. evaluated, if real will change */
    /* LOOKATME - problem with all params in list sharing range xprs? */ 
-   np = __add_param(paramnam, x1, x2);
+   np = __add_param(paramnam, x1, x2, FALSE);
  
    /* using ncomp delay union to store original expresssion - set first */
    /* need this separate copy even after parameter value assigned */

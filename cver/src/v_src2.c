@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -508,7 +510,8 @@ bad_end:
  /* according to grammar this must be a statement list */
  /* format is begin/fork : [name] [decls?] [stmt list] end/join */
  /* this will have sync to end of block - or mod/file level thing */
- if (!rd_lstofsts(endbtok, &hdstp, sfnind, slcnt)) goto bad_end;
+ /* SJM 10/19/05 - line count and file arguments name were reversed */ 
+ if (!rd_lstofsts(endbtok, &hdstp, slcnt, sfnind)) goto bad_end;
  __cur_tsk->tsk_last_lini = __lin_cnt;
  __cur_tsk->tsk_last_ifi = __cur_fnam_ind;
 
@@ -1993,6 +1996,9 @@ bad_end:
   }
  parlevel = catlevel = 0;
  if (__toktyp == LPAR) parlevel++;
+ /* AIV 09/27/06 - catlevel was off for first case LCB */
+ /* was incorrectly handling @({a, b}) */
+ if (__toktyp == LCB) catlevel++;
 
  for (;;)
   {

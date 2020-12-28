@@ -16,9 +16,12 @@ fi
 if [ "$OS" != "lnx" ]
  then
   if [ "$OS" != "sparc-gcc" ]
-   then
-      echo "must specify an OS(lnx, sparc-gcc) on command line" 
+   then 
+    if [ "$OS" != "lnx64" ]
+     then
+      echo "must specify an OS(lnx, sparc-gcc, lnx64) on command line" 
       exit;
+    fi
   fi
 fi
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,10 +15,12 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
    
  */
 
@@ -2745,7 +2747,9 @@ is_1inst:
      if (xreal)
       {
        memcpy(&d1, xsp->ap, sizeof(double)); 
-       dp = (double *) &(__contab[xwi + __inum]);
+       /* AIV 05/30/07 - if expression is real need to 2*__inum reals use */
+       /* two words not one */
+       dp = (double *) &(__contab[xwi + (2*__inum)]);
        *dp = d1;
       }
      else
@@ -2772,7 +2776,13 @@ is_1inst:
    /* notice this eliminates width - so must be set from saved */
    ndp->szu.xclen = sav_xclen;
    ndp->ru.xvi = xwi;
-   if (xreal) ndp->optyp = ISREALNUM; else ndp->optyp = ISNUMBER;
+   if (xreal) 
+    {
+     ndp->optyp = ISREALNUM; 
+     /* AIV 05/30/07 - need to mark expression real if folded to real value */
+     ndp->is_real = TRUE;
+    }
+   else ndp->optyp = ISNUMBER;
    ndp->consubxpr = TRUE;
    ndp->consub_is = TRUE;
    ndp->folded = TRUE;
@@ -3650,6 +3660,7 @@ first_arg_ok:
    if (anum != 1) sf_errifn(syp, 1);
    break;
   case STN_SCANPLUSARGS:  
+  case STN_VALUEPLUSARGS:  
    if (anum != 2) sf_errifn(syp, 2);
    fandp = ndp->ru.x; 
    if (anum >= 1) { fax = fandp->lu.x; __chk_rhsexpr(fax, 0); }
@@ -3706,13 +3717,17 @@ static void chkbld_pli_func(struct expr_t *fcallx, int32 sfnum)
 {
  int32 sav_errcnt, anum;
  struct tfrec_t *tfrp;
+ struct expr_t *cpfcallx;
 
  sav_errcnt = __pv_err_cnt;
 
  /* also check syntax of argument list */
  /* this sets tf_rw flags */
  if (fcallx->ru.x != NULL)
-  { chk_pli_arglist(fcallx->ru.x, sfnum); anum = __cnt_tfargs(fcallx->ru.x); }
+  { 
+   chk_pli_arglist(fcallx->ru.x, sfnum); 
+   anum = __cnt_tfargs(fcallx->ru.x); 
+  }
  else anum = 0;
 
  /* need separate routine for vpi_ systfs compiletf and maybe sizetf */
@@ -3722,12 +3737,20 @@ static void chkbld_pli_func(struct expr_t *fcallx, int32 sfnum)
    return;
   }
 
+ /* need both direction links */
+ /* SJM 04/06/07 since free del list expr calls after delay must make */
+ /* copy here to handle case of tf sysfunc that is delay expr */
+ cpfcallx = __copy_expr(fcallx);
+
  /* allocate the tf aux d.s. and link on to func. name expr unused len fld */
  /* every call of tf_ system function needs d.s. chges (pvc flags etc) */
- tfrp = chkalloc_tfrec(fcallx->ru.x, anum);
+ /* AIV 05/17/07 - need to pass the new copied expression - not the actual */
+ tfrp = chkalloc_tfrec(cpfcallx->ru.x, anum);
  tfrp->tf_func = TRUE;
- /* need both direction links */
- tfrp->tfu.callx = fcallx;
+ tfrp->tfu.callx = cpfcallx;
+ /* need to set the xfrec for the copied expression as well */
+ cpfcallx->lu.x->szu.xfrec = tfrp;
+
  fcallx->lu.x->szu.xfrec = tfrp;
  if (__tfrec_hdr == NULL) __tfrec_hdr = __tfrec_end = tfrp;
  else { __tfrec_end->tfrnxt = tfrp; __tfrec_end = tfrp; }
@@ -3738,6 +3761,8 @@ static void chkbld_pli_func(struct expr_t *fcallx, int32 sfnum)
  /* call the sizetf - this sets the func. return width in tf rec */
  /* must he called or cannot check rhs exprs */
  __pli_func_sizetf(fcallx);
+ /* AIV 05/17/07 - need to set size of copied function as well */
+ __pli_func_sizetf(cpfcallx);
 }
 
 /*
@@ -6563,6 +6588,16 @@ extern void __emit_param_informs(void)
     "in %s: parameter %s unused", __inst_mod->msym->synam, np->nsym->synam);
   }
 
+ /* AIV 09/27/06 - also need to check the local params */
+ for (pi = 0; pi < __inst_mod->mlocprmnum; pi++)
+  {
+   np = &(__inst_mod->mlocprms[pi]);
+   if (!np->n_isaparam || !np->nu.ct->p_locparam || np->nu.ct->n_onrhs)
+    continue; 
+
+   __gfinform(451, np->nsym->syfnam_ind, np->nsym->sylin_cnt,
+    "in %s: localparam %s unused", __inst_mod->msym->synam, np->nsym->synam);
+  }
 
  for (tskp = __inst_mod->mtasks; tskp != NULL; tskp = tskp->tsknxt)
   { 
@@ -6573,6 +6608,16 @@ extern void __emit_param_informs(void)
 
      __gfinform(451, np->nsym->syfnam_ind, np->nsym->sylin_cnt,
       "in %s.%s: parameter %s unused", __inst_mod->msym->synam,
+      tskp->tsksyp->synam, np->nsym->synam);
+    }
+   for (pi = 0; pi < tskp->tlocprmnum; pi++)
+    {
+     np = &(tskp->tsk_locprms[pi]);
+     if (!np->n_isaparam || !np->nu.ct->p_locparam || np->nu.ct->n_onrhs)
+      continue; 
+
+     __gfinform(451, np->nsym->syfnam_ind, np->nsym->sylin_cnt,
+      "in %s.%s: localparam %s unused", __inst_mod->msym->synam,
       tskp->tsksyp->synam, np->nsym->synam);
     }
   }

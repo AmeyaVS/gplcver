@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2007 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -15,11 +15,13 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA, 02111-1307.
  
-   There is also a commerically supported faster new version of Cver that is
-   not released under the GPL.   See file commerical-cver.txt, or web site
-   www.pragmatic-c.com/commercial-cver or contact sales@pragmatic-c.com to
-   learn more about commerical Cver.
-   
+   We are selling our new Verilog compiler that compiles to X86 Linux
+   assembly language.  It is at least two times faster for accurate gate
+   level designs and much faster for procedural designs.  The new
+   commercial compiled Verilog product is called CVC.  For more information
+   on CVC visit our website at www.pragmatic-c.com/cvc.htm or contact 
+   Andrew at avanvick@pragmatic-c.com
+
  */
 
 
@@ -1388,26 +1390,64 @@ static void chg_params_to_tab(void)
      mdp->mprms = nptab;
     }
 
-   /* next parameters in each task */
-   for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+   /* first module LOCAL params */
+   pnum = cnt_prms(mdp->mlocprms);
+   if (pnum != 0)
     {
-     if ((pnum = cnt_prms(tskp->tsk_prms)) == 0) continue;
-
      nptab = (struct net_t *) __my_malloc(pnum*sizeof(struct net_t));
      pi = 0;
-     for (pnp = tskp->tsk_prms; pnp != NULL; pnp = pnp->nu2.nnxt, pi++)
+     for (pnp = mdp->mlocprms; pnp != NULL; pnp = pnp->nu2.nnxt, pi++)
       {
        pnp2 = &(nptab[pi]);
        *pnp2 = *pnp;
-       /* symbol points back to net - because copied to table change ptr */
        pnp2->nsym->el.enp = pnp2;
-       /* ptr filds in pnp uniue so will just get moved to new */
-       /* except must nil out new table pnp2 nu2 because needed for saving */
        pnp2->nu2.wp = NULL;
       }
-     tskp->tprmnum = pnum;
-     free_param_listform(tskp->tsk_prms);
-     tskp->tsk_prms = nptab;
+     mdp->mlocprmnum = pnum;
+     free_param_listform(mdp->mlocprms);
+     mdp->mlocprms = nptab;
+    }
+
+   /* next parameters in each task */
+   for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+    {
+     if ((pnum = cnt_prms(tskp->tsk_prms)) != 0) 
+      {
+       nptab = (struct net_t *) __my_malloc(pnum*sizeof(struct net_t));
+       pi = 0;
+       for (pnp = tskp->tsk_prms; pnp != NULL; pnp = pnp->nu2.nnxt, pi++)
+        {
+         pnp2 = &(nptab[pi]);
+         *pnp2 = *pnp;
+         /* symbol points back to net - because copied to table change ptr */
+         pnp2->nsym->el.enp = pnp2;
+         /* ptr filds in pnp uniue so will just get moved to new */
+         /* except must nil out new table pnp2 nu2 because needed for saving */
+         pnp2->nu2.wp = NULL;
+        }
+       tskp->tprmnum = pnum;
+       free_param_listform(tskp->tsk_prms);
+       tskp->tsk_prms = nptab;
+      }
+     /* do the task LOCAL parameters as well */
+     if ((pnum = cnt_prms(tskp->tsk_locprms)) != 0) 
+      {
+       nptab = (struct net_t *) __my_malloc(pnum*sizeof(struct net_t));
+       pi = 0;
+       for (pnp = tskp->tsk_locprms; pnp != NULL; pnp = pnp->nu2.nnxt, pi++)
+        {
+         pnp2 = &(nptab[pi]);
+         *pnp2 = *pnp;
+         /* symbol points back to net - because copied to table change ptr */
+         pnp2->nsym->el.enp = pnp2;
+         /* ptr filds in pnp uniue so will just get moved to new */
+         /* except must nil out new table pnp2 nu2 because needed for saving */
+         pnp2->nu2.wp = NULL;
+        }
+       tskp->tlocprmnum = pnum;
+       free_param_listform(tskp->tsk_locprms);
+       tskp->tsk_locprms = nptab;
+      }
     }
    /* finally specparams */
    if ((spfyp = mdp->mspfy) == NULL) goto nxt_mod;
@@ -2005,6 +2045,15 @@ undcl_param:
     }
    np = syp->el.enp;
    if (!np->n_isaparam || np->nu.ct->p_specparam) goto undcl_param;
+
+   /* AIV 09/27/06 - net cannot be a local param value cannot be overridden */
+   if (np->nu.ct->p_locparam)
+    {
+     __gferr(3431, npmp->prmfnam_ind, npmp->prmlin_cnt,
+      "%s explicit pound parameter %s (pos. %d) cannot be a localparam (declared pos. %d)",
+      s1, npmp->pnam, pi, np->nu2.npi);
+     continue;
+    }
 
    if (npxtab[np->nu2.npi] != NULL)
     {
@@ -3292,6 +3341,8 @@ extern void __init_itree_node(struct itree_t *itp)
  *
  * this is point where gia ranges set so parameters evaluated but must
  * be put back because later defparams may change final values
+ *
+ * AIV 09/27/06 - since can't be changed do not need to save local params
  */
 static void save_all_param_vals(void)
 {
@@ -4207,6 +4258,7 @@ static int32 lhs_chk1dfparam(struct dfparam_t *dfpp)
  struct gref_t *grp;
  struct expr_t *lhsndp;
  struct sy_t *syp;
+ struct net_t *np;
 
  lhsndp = dfpp->dfpxlhs;
  grp = NULL;
@@ -4232,9 +4284,19 @@ static int32 lhs_chk1dfparam(struct dfparam_t *dfpp)
     }
 
    syp = lhsndp->lu.sy;
-   if (syp->sytyp != SYM_N || !syp->el.enp->n_isaparam)
+   np = syp->el.enp;
+   if (syp->sytyp != SYM_N || !np->n_isaparam)
     {
      __sgferr(755, "defparam hierarchical name lvalue %s is not a parameter",
+      grp->gnam);
+     grp->gr_err = TRUE;
+     return(FALSE);
+    }
+  
+   /* AIV 09/27/06 - lhs of a defparam cannot be a localparam */
+   if (np->nu.ct->p_locparam)
+    {
+     __sgferr(3430, "defparam hierarchical name lvalue %s cannot be a localparam",
       grp->gnam);
      grp->gr_err = TRUE;
      return(FALSE);
@@ -4269,9 +4331,18 @@ static int32 lhs_chk1dfparam(struct dfparam_t *dfpp)
 is_local:
  /* this is local - if in module gref - converted to simple by here */
  syp = lhsndp->lu.sy;
- if (syp->sytyp != SYM_N || !syp->el.enp->n_isaparam)
+ np = syp->el.enp;
+ if (syp->sytyp != SYM_N || !np->n_isaparam)
   {
    __sgferr(756, "defparam local lvalue variable %s not a parameter",
+    syp->synam);
+   if (grp != NULL) grp->gr_err = TRUE;
+   return(FALSE);
+  }
+ /* AIV 09/27/06 - lhs of a defparam cannot be a localparam */
+ if (np->nu.ct->p_locparam)
+  {
+   __sgferr(3430, "defparam local lvalue variable %s cannot be a localparam",
     syp->synam);
    if (grp != NULL) grp->gr_err = TRUE;
    return(FALSE);
@@ -5380,7 +5451,9 @@ static struct sy_t *find_inmod_sym(struct gref_t *grp, struct expr_t *gcmp_ndp,
       ndp->ru.qnchp);
      return(NULL);
     } 
-   if (syp->sytyp != SYM_LB)
+   /* SJM 10/07/06 - also legal for local XMR reference nets in tasks and */
+   /* functions declared within the current module (i.e. t.r) */
+   if (syp->sytyp != SYM_LB && syp->sytyp != SYM_TSK && syp->sytyp != SYM_F)
     {
      __sgferr(764, 
       "hierarchical path %s internal component %s type %s instead of expected named block",
@@ -6225,6 +6298,10 @@ static void copy_mod(struct mod_t *omdp, char *newnam)
  __inst_mod->mprms = copy_params(__oinst_mod->mprms, __oinst_mod->mprmnum,
   MODULE);
 
+ /* AIV 09/27/06 - need to copy the local params as well */
+ __inst_mod->mlocprms = copy_params(__oinst_mod->mlocprms, 
+  __oinst_mod->mlocprmnum, MODULE);
+
  if (__oinst_mod->mdfps != NULL) copy_defparams();
  if (__oinst_mod->mattrs != NULL)
   __inst_mod->mattrs = copy_attrs(__oinst_mod->mattrs);
@@ -6880,7 +6957,8 @@ static void copy_mgarr(void)
    giawid = __get_giarr_wide(ogiap);
    for (gi2 = gi + 1; gi2 < gi + giawid; gi2++)
      __inst_mod->mgarr[gi2] = ngiap;
-   gi = gi2;
+   /* AIV 06/08/06 - was skipping one because gi2 is + 1 */
+   gi = gi2 - 1;
   }
 }
 
@@ -6946,6 +7024,10 @@ static void copy_mdtasks(void)
 
    /* copy task params */
    ntskp->tsk_prms = copy_params(otskp->tsk_prms, otskp->tprmnum, MODULE);
+
+   /* AIV 09/27/06 - need to copy the local params as well */
+   ntskp->tsk_locprms = copy_params(otskp->tsk_locprms, otskp->tlocprmnum,
+    MODULE); 
 
    /* copy the 1 statement */
    ntskp->tskst = copy_lstofsts(otskp->tskst);
@@ -7061,9 +7143,13 @@ static struct st_t *copy_stmt(struct st_t *ostp)
     ndcp->dc_delrep = odcp->dc_delrep;
     ndcp->dc_du.pdels = __copy_dellst(odcp->dc_du.pdels);
     ndcp->repcntx = __copy_expr(odcp->repcntx);
-    /* SJM 08/17/04 - also repcnts was not set - used during sim */
-    ndcp->dce_repcnts = odcp->dce_repcnts;
 
+    /* SJM 10/07/06 - repcnts not yet set - set in v prp2 */
+    /* DBG remove --- */
+    if (odcp->dce_repcnts != NULL) __misc_terr(__FILE__, __LINE__);
+    /* --- */
+
+    ndcp->dce_repcnts = NULL;
     ndcp->dceschd_tevs = NULL;
     /* can be list because of #10 begin ... end */
     ndcp->actionst = copy_lstofsts(odcp->actionst);
@@ -7415,6 +7501,8 @@ static void copy_specify(void)
  /* first allocate new module's specify section */
  ospfyp = __oinst_mod->mspfy;
  nspfyp = (struct spfy_t *) __my_malloc(sizeof(struct spfy_t));
+ /* AIV 06/08/06 - need to do copy of old to new */
+ *nspfyp = *ospfyp;
  __inst_mod->mspfy = nspfyp;
  /* if has symbol table for specparams copy */
  /* this will link old specparams to new */ 
