@@ -91,9 +91,10 @@ static void bld2_lhsexpr_npins(struct expr_t *, int32);
 static void bld_rhsexpr_npins(struct expr_t *, int32);
 static void conn_rtxmr_npin(struct net_t *, int32, int32, int32, int32,
  struct gref_t *, int32, char *);
-static void conn_xmr_npin(struct net_t *, int32, int32, int32, int32, struct gref_t *,
- int32, char *);
-static struct net_pin_t *conn2_npin(struct net_t *, int32, int32, int32, int32);
+static void conn_xmr_npin(struct net_t *, int32, int32, int32, int32,
+ struct gref_t *, int32, char *);
+static struct net_pin_t *conn2_npin(struct net_t *, int32, int32, int32,
+ int32);
 static void set_chgsubfld(struct net_pin_t *, int32, char *);
 static void add_netdel_pnp(struct net_t *, struct paramlst_t *);
 static void init_pnp(struct parmnet_pin_t *);
@@ -112,7 +113,8 @@ static void eat_nets(int32);
 static void rem_del_npps(void);
 static void remove_all_npps(struct net_t *);
 static void bld1vec_fifo(struct net_t *);
-static void update_vec_fifo(struct net_t *, word32 *, int32 *, int32 *, int32 *);
+static void update_vec_fifo(struct net_t *, word32 *, int32 *, int32 *,
+ int32 *);
 static int32 wire_implied_driver(struct net_t *);
 static void eat_cells(int32 *);
 static int32 conn_expr_gone(struct expr_t *);
@@ -123,8 +125,8 @@ static void getbit_fifo(struct net_t *, int32, int32 *, int32 *);
 extern void __prep_sim(void);
 extern void __set_init_gstate(struct gate_t *, int32, int32);
 extern void __set_init_udpstate(struct gate_t *, int32, int32);
-extern void __conn_npin(struct net_t *, int32, int32, int32, int32, struct gref_t *,
- int32, char *);
+extern void __conn_npin(struct net_t *, int32, int32, int32, int32,
+ struct gref_t *, int32, char *);
 extern struct net_pin_t *__alloc_npin(int32, int32, int32);
 extern struct npaux_t *__alloc_npaux(void);
 extern void __add_dctldel_pnp(struct st_t *);
@@ -136,6 +138,7 @@ extern int32 __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
 extern int32 __add_conta_pnd0del(struct conta_t *, struct mod_t *, char *);
 
 extern void __prep_xmrs(void);
+extern void __alloc_nchgaction_storage(void);
 extern void __alloc_sim_storage(void);
 extern void __bld_bidandtran_graph(void);
 extern void __setchk_all_fifo(void);
@@ -159,7 +162,8 @@ extern char *__to_ptnam(char *, word32);
 extern void __prep_delay(struct gate_t *, struct paramlst_t *, int32, int32,
  char *, int32, struct sy_t *, int32);
 extern void __free_xtree(struct expr_t *);
-extern void __init_vec_var(register word32 *, int32, int32, int32, word32, word32);
+extern void __init_vec_var(register word32 *, int32, int32, int32, word32,
+ word32);
 extern char *__to_mpnam(char *, char *);
 extern int32 __isleaf(struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
@@ -236,6 +240,9 @@ extern void __prep_sim(void)
  /* if errors building np list can't check further */
  if (__pv_err_cnt != 0) return;
 
+ /* SJM 05/03/05 - now always allocate nchg action byte table separately */
+ __alloc_nchgaction_storage();
+
  /* allocate storage for wire and regs (variables) and gate states */
  __alloc_sim_storage();
 
@@ -285,6 +292,8 @@ extern void __prep_sim(void)
  /* LOOKATME - only setting optim fields for dmpvars so far */
  __set_optimtab_bits();
 
+ /* SJM 05/05/05 - since using new nchgbtab for per inst nchg bytes */
+ /* must always initialize the nchg action bits here */
  /* notice all event control dces added by here */
  __set_nchgaction_bits();
 
@@ -294,7 +303,6 @@ extern void __prep_sim(void)
     __dmpmod_nplst(mdp, FALSE); 
   }
  if (__debug_flg && __decompile) __do_decompile();
-
 
  if (__debug_flg) __show_allvars();
 }
@@ -932,7 +940,8 @@ static void dmp_edge_udptab(struct udp_t *udpp)
  * leave out lines where edge input and edge new value are same
  * know eipnum never state value
  */
-static void dmp_udp3v_etab(word32 *tabp, word32 nstates, int32 eipnum, int32 e1val) 
+static void dmp_udp3v_etab(word32 *tabp, word32 nstates, int32 eipnum,
+ int32 e1val) 
 {
  register word32 i;
  int32 bi, wi, ndxev;
@@ -963,7 +972,8 @@ static void dmp_udp3v_etab(word32 *tabp, word32 nstates, int32 eipnum, int32 e1v
  * input is array of words and number of inputs 
   * notice for 11 states size will be 1 million lines
  */
-static void dmp_udp2b_etab(word32 *tabp, word32 nstates, int32 eipnum, int32 e1val) 
+static void dmp_udp2b_etab(word32 *tabp, word32 nstates, int32 eipnum,
+ int32 e1val) 
 {
  register word32 i;
  int32 bi, wi, ndxev;
@@ -1317,6 +1327,7 @@ static void change_all_rngreps(void)
      for (ni = 0, np = &(__inst_mod->mnets[0]); ni < __inst_mod->mnnum;
       ni++, np++)
       {
+//SJM FIXME - why both { {
         {
          /* expect inout ports to be set but not used or used but not set */
          if (np->iotyp != IO_BID)
@@ -1337,7 +1348,6 @@ static void change_all_rngreps(void)
      memcpy(nncomp, oncomp, sizeof(struct ncomp_t));
      np->nu.ct = nncomp;
     }
-
 
    __cur_declobj = TASK; 
    for (tskp = __inst_mod->mtasks; tskp != NULL; tskp = tskp->tsknxt)
@@ -1657,8 +1667,8 @@ static void bld_gstate(void)
      else
       {
        add_gatedel_pnp(gp, gp->g_du.pdels);
-       __prep_delay(gp, gp->g_du.pdels, FALSE, FALSE, "primitive delay", FALSE,
-        gp->gsym, FALSE);
+       __prep_delay(gp, gp->g_du.pdels, FALSE, FALSE, "primitive delay",
+        FALSE, gp->gsym, FALSE);
        if (__nd_neg_del_warn)
         {
          __gferr(972, gp->gsym->syfnam_ind, gp->gsym->sylin_cnt,
@@ -1818,7 +1828,8 @@ extern void __set_init_gstate(struct gate_t *gp, int32 insts, int32 nd_alloc)
  * ustate values are stored as n 2 bit scalars not separate a and b parts
  * since no need for reduction word32 evaluation operations
  */
-extern void __set_init_udpstate(struct gate_t *gp, int32 insts, int32 nd_alloc)
+extern void __set_init_udpstate(struct gate_t *gp, int32 insts,
+ int32 nd_alloc)
 {
  register int32 gsi;
  register word32 *wp;
@@ -2377,6 +2388,7 @@ static struct pbexpr_t *bld_pb_expr_map(struct expr_t *xp, int32 xwid)
        pbxp = &(pbexpr[xofs]);
        pbxp->xp = idndp;
        pbxp->bi = -1;
+       /* SJM 05/25/05 - need gt-eq since must stop at xwid not 1 past */
        if (++xofs >= xwid) goto done;
        break;
       }
@@ -2438,8 +2450,8 @@ static struct pbexpr_t *bld_pb_expr_map(struct expr_t *xp, int32 xwid)
        bv = (__contab[cur_xp->ru.xvi + wlen + wi] >> bi) & 1;
        pbxp->aval = av;
        pbxp->bval = bv;
-       /* if out of lhs - remaining rhs unused so ignore */
-       if (++xofs > xwid) goto done; 
+       /* SJM 05/25/05 - if out of lhs - remaining rhs unused so ignore */
+       if (++xofs >= xwid) goto done; 
       } 
      break;
     default: __case_terr(__FILE__, __LINE__);
@@ -2477,7 +2489,8 @@ static void init_pbexpr_el(struct pbexpr_t *pbxp)
 /*
  * fill separated per bit assign expr pair table
  */
-static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp, int32 is_stren)
+static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp,
+ int32 is_stren)
 {
  struct expr_t *xp;
 
@@ -2497,7 +2510,8 @@ static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp, int32 is_stren)
     }
    else
     {
-     xp = __bld_rng_numxpr(0, 1, 1);
+     /* SJM 06/27/05 - rhs widening - always widen with 0's */
+     xp = __bld_rng_numxpr(0, 0, 1);
      xp->ibase = BHEX;
     }
    return(xp); 
@@ -3083,8 +3097,8 @@ extern void __conn_npin(struct net_t *np, int32 ni1, int32 ni2, int32 islhs,
  *  when wire changes must match npauxp npdownitp inst or not load or driver
  *  to move from target (wire that changes) to ref. one loc. is npdownitp
  */
-static void conn_rtxmr_npin(struct net_t *np, int32 ni1, int32 ni2, int32 islhs,
- int32 npctyp, struct gref_t *grp, int32 chgtyp, char *chgp)
+static void conn_rtxmr_npin(struct net_t *np, int32 ni1, int32 ni2,
+ int32 islhs, int32 npctyp, struct gref_t *grp, int32 chgtyp, char *chgp)
 {
  register int32 ii;
  struct net_pin_t *npp; 
@@ -4366,7 +4380,7 @@ static void getbit_fifo(struct net_t *np, int32 bi, int32 *nfi, int32 *nfo)
  * return T if gate is acceleratable buf or not
  * accelerate classes are 0 std non accel., 2 buf/not, 3 acc. logic
  *
- * will not accelerate if: 1) >3 inputs, 2) drives strength, 3) 1 in and style  
+ * will not accelerate if: 1) >3 inputs, 2) drives strength, 3) 1 in and style 
  * 4) drives fi>1 wire, 5) output is not scalar or constant bit select,
  * 6) inputs not accelerable
  *
@@ -4636,7 +4650,7 @@ extern void __rem_0path_dels(void)
    if (!has_0del) continue;
 
    /* know at least one path must be removed */
-   /* step 1: set all path source ref counts - >1 dests for one src possible */
+   /* step 1: set all path src ref counts - >1 dests for one src possible */
    for (pthp = mdp->mspfy->spcpths; pthp != NULL; pthp = pthp->spcpthnxt)
     {
      /* think impossible for some paths to be gone and make it to prep */   
@@ -4648,7 +4662,8 @@ extern void __rem_0path_dels(void)
        snp = spep->penp;
        for (npp = snp->nlds; npp != NULL; npp = npp->npnxt) 
         {
-         if (npp->npntyp != NP_TCHG || npp->chgsubtyp != NPCHG_PTHSRC) continue;
+         if (npp->npntyp != NP_TCHG || npp->chgsubtyp != NPCHG_PTHSRC)
+          continue;
          /* know tchg sources always per bit - for scalar 0 */
 
          /* path source npp's always one bit, -1 only if scalar */
@@ -4662,7 +4677,7 @@ extern void __rem_0path_dels(void)
         }
       }
     } 
-   /* step 2: actually remove path dest npp's and decr. pstchg source counts */
+   /* step 2: actually remove path dst npp's and decr. pstchg source counts */
    for (pthp = mdp->mspfy->spcpths; pthp != NULL; pthp = pthp->spcpthnxt)
     {
      if (!pthp->pth_0del_rem) continue;
@@ -4677,7 +4692,8 @@ extern void __rem_0path_dels(void)
   
        for (npp = dnp->nlds; npp != NULL; npp = npp->npnxt) 
         {
-         if (npp->npntyp != NP_TCHG || npp->chgsubtyp != NPCHG_PTHSRC) continue;
+         if (npp->npntyp != NP_TCHG || npp->chgsubtyp != NPCHG_PTHSRC)
+          continue;
          if (!dnp->n_isavec) dbi = dbi2 = 0; 
          else
           {

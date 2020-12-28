@@ -43,10 +43,12 @@
 static void setchk_1w_fifo(struct net_t *);
 static int32 cnt_scalar_fo(struct net_t *);
 static int32 has_npp_isform(register struct net_pin_t *);
-static void chkset_vec_fifo(struct net_t *, int32 *, int32 *, int32, int32, int32);
+static void chkset_vec_fifo(struct net_t *, int32 *, int32 *, int32, int32,
+ int32);
 static int32 has_rng_npp(struct net_t *);
 static struct itree_t *cnvt_to_itp(struct mod_t *, int32);
-static struct itree_t *cnvt_todown_itp(struct itree_t *, struct mod_t *, int32);
+static struct itree_t *cnvt_todown_itp(struct itree_t *, struct mod_t *,
+ int32);
 static void chk_trifctrl_insame_chan(struct gate_t *, struct expr_t *);
 static void chk_samechan_trifctrl_simple(struct mod_t *, struct gate_t *,
  int32, struct expr_t *, struct expr_t *);
@@ -59,18 +61,16 @@ static void chk_decl_siderep(struct expr_t *, struct expr_t *, char *,
 int32, word32, int32);
 static int32 find_var_in_xpr(struct expr_t *, struct net_t *, int32 *);
 static void add_portbit_map(struct tenp_t *, struct expr_t *, int32);
-static void cmp_wtabsiz(void);
+static void cmp_nchgbtabsize(void);
+static void set_1net_srep(struct net_t *);
+static void cmp_tabsizes(void);
 static void cmpadd_1var_storsiz(struct net_t *);
 static void alloc_var(struct net_t *);
 static void alloc_real_var(struct net_t *, int32);
-static void allocinit_arr_var(struct net_t *, int32, int32);
 static void alloc_scal_var(struct net_t *, int32);
-static int32 get_initval(struct net_t *, int32 *);
 static void alloc_sscal_var(struct net_t *, int32);
-static void allocinit_vec_var(struct net_t *, int32, int32);
 static void alloc_svec_var(struct net_t *, int32);
 static void reinit_1wirereg(struct net_t *, struct mod_t *);
-static void reinit_1net_dces(struct net_t *, struct mod_t *);
 static void alloc_dce_prevval(struct dcevnt_t *, struct mod_t *);
 static void init_dce_exprval(struct dcevnt_t *);
 static void init_dce_prevval(struct dcevnt_t *, struct mod_t *);
@@ -84,9 +84,9 @@ static void cnv_cmpdctl_todu(struct st_t *, struct delctrl_t *);
 static void prep_event_dctrl(struct delctrl_t *);
 static void bld_ev_dces(struct expr_t *, struct delctrl_t *);
 static void bld_evxpr_dces(struct expr_t *, struct delctrl_t *, int32);
-static void linkon_dce(struct net_t *, int32, int32, struct delctrl_t *, int32,
- struct gref_t *);
-static void init_linkedon_dce(struct dcevnt_t *, struct delctrl_t *,
+static void linkon_dce(struct net_t *, int32, int32, struct delctrl_t *,
+ int32, struct gref_t *);
+static void init_iact_dce(struct dcevnt_t *, struct delctrl_t *,
  struct gref_t *);
 static void xmr_linkon_dce(struct net_t *, int32, int32, struct delctrl_t *,
  int32, struct gref_t *);
@@ -136,26 +136,35 @@ static void free_csitemlst(register struct csitem_t *);
 extern void __setchk_all_fifo(void);
 extern void __bld_pb_fifo(struct net_t *, int32 *, int32 *, int32 *, int32);
 extern void __prep_exprs_and_ports(void);
-extern void __alloc_tfdrv_wp(struct tfarg_t *, struct expr_t *, struct mod_t *);
+extern void __alloc_tfdrv_wp(struct tfarg_t *, struct expr_t *,
+ struct mod_t *);
 extern void __init_tfdrv(struct tfarg_t *, struct expr_t *, struct mod_t *);
 extern void __prep_contas(void);
 extern void __allocinit_perival(union pck_u *, int32, int32, int32);
-extern void __allocinit_stperival(union pck_u *, int32, struct net_t *, int32);
+extern void __allocinit_stperival(union pck_u *, int32, struct net_t *,
+ int32);
+extern void __alloc_nchgaction_storage(void);
 extern void __alloc_sim_storage(void);
-extern void __init_vec_var(register word32 *, int32, int32, int32, word32, word32);
+extern void __allocinit_arr_var(struct net_t *, int32, int32);
+extern void __init_vec_var(register word32 *, int32, int32, int32, word32,
+ word32);
+extern int32 __get_initval(struct net_t *, int32 *);
+extern void __allocinit_vec_var(struct net_t *, int32, int32);
 extern void __reinitialize_vars(struct mod_t *);
-extern void __reinitialize_dces(struct mod_t *);
+extern void __initialize_dces(struct mod_t *);
 extern void __prep_stmts(void);
 extern struct st_t *__prep_lstofsts(struct st_t *, int32, int32);
 extern void __push_nbstk(struct st_t *);
 extern void __pop_nbstk(void);
 extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
 extern struct dcevnt_t *__alloc_dcevnt(struct net_t *);
-extern int32 __is_upward_dsable_syp(struct sy_t *, struct symtab_t *, int32 *);
+extern int32 __is_upward_dsable_syp(struct sy_t *, struct symtab_t *,
+ int32 *);
 extern void __prep_xmrs(void);
 extern void __fill_grp_targu_fld(struct gref_t *);
 extern void __prep_specify(void);
-extern void __xtract_wirng(struct expr_t *, struct net_t **, int32 *, int32 *);
+extern void __xtract_wirng(struct expr_t *, struct net_t **, int32 *,
+ int32 *);
 extern void __free_1stmt(struct st_t *);
 extern void __free_xprlst(struct exprlst_t *);
 
@@ -178,6 +187,7 @@ extern char *__to_idnam(struct expr_t *);
 extern int32 __get_arrwide(struct net_t *);
 extern void __reinit_regwir_putvrec(struct net_t *, int32);
 extern void __reinit_netdrvr_putvrec(struct net_t *, struct mod_t *);
+extern void __init_1net_dces(struct net_t *, struct mod_t *);
 extern void __alloc_1instdce_prevval(struct dcevnt_t *);
 extern void __init_1instdce_prevval(struct dcevnt_t *);
 extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
@@ -194,8 +204,8 @@ extern int32 __ip_indsrch(char *);
 extern struct itree_t *__find_unrt_targitp(struct gref_t *,
  register struct itree_t *, int32);
 extern void __add_tchkdel_pnp(struct tchk_t *, int32);
-extern void __conn_npin(struct net_t *, int32, int32, int32, int32, struct gref_t *,
- int32, char *);
+extern void __conn_npin(struct net_t *, int32, int32, int32, int32,
+ struct gref_t *, int32, char *);
 extern void __add_pathdel_pnp(struct spcpth_t *);
 extern char *__to_deltypnam(char *, word32);
 extern void __free_xtree(struct expr_t *);
@@ -213,14 +223,14 @@ extern char *__to_opname(word32);
 extern struct expr_t *__sim_copy_expr(struct expr_t *);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct mod_t *__get_mast_mdp(struct mod_t *);
-extern struct net_t *__tranx_to_netbit(register struct expr_t *, int32, int32 *,
- struct itree_t *oside_itp);
+extern struct net_t *__tranx_to_netbit(register struct expr_t *, int32,
+ int32 *, struct itree_t *oside_itp);
 extern struct mipd_t *__get_mipd_from_port(struct mod_pin_t *, int32);
 extern struct tenp_t *__bld_portbit_netbit_map(struct mod_pin_t *);
 extern struct net_pin_t *__alloc_npin(int32, int32, int32);
 extern void __alloc_qcval(struct net_t *);
-extern void __get_qc_wirrng(struct expr_t *, struct net_t **, int32 *, int32 *,
- struct itree_t **);
+extern void __get_qc_wirrng(struct expr_t *, struct net_t **, int32 *,
+ int32 *, struct itree_t **);
 extern void __prep_insrc_monit(struct st_t *, int32);
 extern int32 __cnt_dcelstels(register struct dcevnt_t *);
 extern void __dcelst_off(struct dceauxlst_t *);
@@ -464,8 +474,8 @@ static int32 has_npp_isform(register struct net_pin_t *npp)
 /*
  * build per bit fi and fo tables - caller must pass wide enough tables
  */
-extern void __bld_pb_fifo(struct net_t *np, int32 *pbfi, int32 *pbfo, int32 *pbtcfo,
- int32 ii)
+extern void __bld_pb_fifo(struct net_t *np, int32 *pbfi, int32 *pbfo,
+ int32 *pbtcfo, int32 ii)
 {
  register struct net_pin_t *npp;
  register int32 bi;
@@ -527,8 +537,8 @@ extern void __bld_pb_fifo(struct net_t *np, int32 *pbfi, int32 *pbfo, int32 *pbt
  * know vector or will not be called
  * could call lds and drivers reorganization routine from in here
  */
-static void chkset_vec_fifo(struct net_t *np, int32 *pbfi, int32 *pbfo, int32 ii,
- int32 isform, int32 nd_fi_chk)
+static void chkset_vec_fifo(struct net_t *np, int32 *pbfi, int32 *pbfo,
+ int32 ii, int32 isform, int32 nd_fi_chk)
 {
  register int32 bi;
  int32 r1, r2;
@@ -1205,7 +1215,7 @@ extern void __allocinit_stperival(union pck_u *nvap, int32 insts,
  if (nd_alloc) nvap->bp = (byte *) __my_malloc(totbits);
  /* for trireg in tran channel, hard driver must be z - it will set value */
  if (np->ntraux != NULL && np->ntyp == N_TRIREG) stval = ST_HIZ;
- else get_initval(np, &stval);
+ else __get_initval(np, &stval);
  sval = (byte) stval;
  set_byteval_(nvap->bp, totbits, sval);
 }
@@ -1283,7 +1293,8 @@ cmp_wire:
    if (deltyp == DBAD_NONE) { strcpy(s1, "no delay"); nd_inform = FALSE; }
    else if (deltyp == DBAD_EXPR || deltyp == DBAD_MAYBE0) 
     { strcpy(s1, "possible 0 delay"); nd_inform = FALSE; }
-   else if (deltyp == DBAD_0) { strcpy(s1, "all 0 delay"); nd_inform = FALSE; }
+   else if (deltyp == DBAD_0)
+    { strcpy(s1, "all 0 delay"); nd_inform = FALSE; }
    else strcpy(s1, "delay");
 
    if (nd_inform || wire_issel)
@@ -1433,8 +1444,8 @@ extern void __setup_mipd(struct mipd_t *mipdp, struct net_t *np, int32 ninsts)
 
  mipdp->oldvals = (byte *) __my_malloc(ninsts); 
 
- if (!np->n_stren) bv = (byte) get_initval(np, &stval);
- else { get_initval(np, &stval); bv = (byte) stval; }
+ if (!np->n_stren) bv = (byte) __get_initval(np, &stval);
+ else { __get_initval(np, &stval); bv = (byte) stval; }
  for (ii = 0; ii < ninsts; ii++) mipdp->oldvals[ii] = bv;
  
  mipdp->mipdschd_tevs = (i_tev_ndx *) __my_malloc(ninsts*sizeof(i_tev_ndx));
@@ -1475,8 +1486,8 @@ extern void __reinit_mipd(struct mod_pin_t *mpp, struct mod_t *mdp)
    /* -- */
    mipdp = &(np->nlds->elnpp.emipdbits[bi]);
 
-   if (!np->n_stren) bv = (byte) get_initval(np, &stval);
-   else { get_initval(np, &stval); bv = (byte) stval; }
+   if (!np->n_stren) bv = (byte) __get_initval(np, &stval);
+   else { __get_initval(np, &stval); bv = (byte) stval; }
    for (ii = 0; ii < mdp->flatinum; ii++) mipdp->oldvals[ii] = bv;
  
    for (ii = 0; ii < mdp->flatinum; ii++) mipdp->mipdschd_tevs[ii] = -1;
@@ -1613,79 +1624,117 @@ static void add_portbit_map(struct tenp_t *prtnetmap, struct expr_t *xp,
 }
 
 /*
- * ROUTINES TO ALLOCATE VARIBLE STORAGE
+ * ROUTINES TO ALLOCATE NCHG ACTION STORAGE
  */
 
 /*
- * allocate storage for all simulation variables
+ * allocate nchg byte table and set nchgaction net ptrs
+ * even for cver-cc compiler, nchg storage malloc since access through net
+ *
+ * 08/22/02 - always need nchg store for dmpvars
+ * FIXME - should align ptrs at least on 4 byte boundaries
  */
-extern void __alloc_sim_storage(void)
+extern void __alloc_nchgaction_storage(void)
 {
  register int32 ni;
  register struct net_t *np;
  struct mod_t *mdp;
  struct task_t *tskp;
 
- __wtabwsiz = 0;
- __btabbsiz = 0; 
- __rltabdsiz = 0;  
- cmp_wtabsiz();
+ __nchgbtabbsiz = 0;
+ cmp_nchgbtabsize();
+ if (__nchgbtabbsiz > 0)
+  {
+   __nchgbtab = (byte *) __my_malloc(__nchgbtabbsiz);
+  }
+ __nchgbtabbi = 0;
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   if (mdp->mnnum != 0)
+    {
+     for (ni = 0, np = &(mdp->mnets[0]); ni < mdp->mnnum; ni++, np++) 
+      {
+       /* always need the changed byte array even for event */
+       np->nchgaction = (byte *) &(__nchgbtab[__nchgbtabbi]);
+       /* set to zero for now - initialize after lds/dces added */
+       memset(np->nchgaction, 0, mdp->flatinum);
+       __nchgbtabbi += mdp->flatinum; 
+      }
+    }
+   for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+    {
+     if (tskp->trnum == 0) continue;
 
- /* LOOKATME - is 0 storage size possible - think yes */
- if (__btabbsiz > 0) __btab = (byte *) __my_malloc(__btabbsiz);
- if (__wtabwsiz > 0) __wtab = (word32 *) __my_malloc(__wtabwsiz*sizeof(word32));
- if (__rltabdsiz > 0) __rltab = (double *)
-  __my_malloc(__rltabdsiz*sizeof(double));
+     for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
+      {
+       /* always need the changed byte array even for event */
+       np->nchgaction = (byte *) &(__nchgbtab[__nchgbtabbi]);
+       /* set to zero for now - initialize after dces/lds built */
+       memset(np->nchgaction, 0, mdp->flatinum);
+       __nchgbtabbi += mdp->flatinum;
+      }
+    }
+  }
+}
 
- __wtabwi = 0; 
- __btabbi = 0; 
- __rltabdi = 0;
+/*
+ * compute size of needed nchg byte table in bytes
+ * also sets srep since always called
+ */
+static void cmp_nchgbtabsize(void)
+{
+ register int32 ni;
+ register struct net_t *np;
+ struct mod_t *mdp;
+ struct task_t *tskp;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
-   __push_wrkitstk(mdp, 0);
-
-   if (__inst_mod->mnnum != 0)
+   if (mdp->mnnum != 0)
     {
-     for (ni = 0, np = &(__inst_mod->mnets[0]); ni < __inst_mod->mnnum;
-      ni++, np++) 
+     for (ni = 0, np = &(mdp->mnets[0]); ni < mdp->mnnum; ni++, np++) 
       {
-       /* SJM 12/13/00 - there was spurious and wrong set of n lds to nil */
-       /* removed from here */
-       np->nchgaction = (byte *) &(__btab[__btabbi]);
+       /* storage for byte per inst. all changed table */
+       /* change state bytes go into scalar (byte) storage table */
+       __nchgbtabbsiz += mdp->flatinum;
 
-       /* set to zero for now - initialize after lds/dces added */
-       memset(np->nchgaction, 0, __inst_mod->flatinum);
-       __btabbi += __inst_mod->flatinum; 
-
-       /* no allocated storage here for parameters - in different list */
-       /* also none for events (if dce will be allocated when used) */
-       if (np->ntyp == N_EVENT) continue;
-
-       /* for now always zeroing variables - when x/z */
-       /* could free later if no fan-in and no fan-out */
-       alloc_var(np);
+       set_1net_srep(np);
       } 
     }
-   for (tskp = __inst_mod->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+   for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
     {
      if (tskp->trnum == 0) continue;
      for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
       {
        /* always need the changed byte array even for event */
-       np->nchgaction = (byte *) &(__btab[__btabbi]);
-       /* set to zero for now - initialize after dces/lds built */
-       memset(np->nchgaction, 0, __inst_mod->flatinum);
-       __btabbi += __inst_mod->flatinum;
+       /* change state bytes go into scalar (byte) storage table */
+       __nchgbtabbsiz += mdp->flatinum;
 
-       if (np->ntyp == N_EVENT) continue;
-
-       /* for now always zeroing variables - when x/z */
-       alloc_var(np);
+       set_1net_srep(np);
       }
     }
-   __pop_wrkitstk();
   }
+}
+
+/*
+ * set the storage rep type for one net
+ *
+ * SJM 05/04/05 - since not calling alloc storage routine for cver-cc, 
+ * must set sreps in separate routine called from nchg routines that
+ * are always called
+ */
+static void set_1net_srep(struct net_t *np)
+{
+ if (np->ntyp == N_EVENT) return;
+
+ if (np->n_isarr) { np->srep = SR_ARRAY; return; }
+ if (np->ntyp == N_REAL) { np->srep = SR_VEC; return; } 
+ if (!np->n_isavec)
+  {
+   if (np->n_stren) np->srep = SR_SSCAL; else np->srep = SR_SCAL;
+   return;
+  }
+ if (!np->n_stren) np->srep = SR_VEC; else np->srep = SR_SVEC;
 }
 
 /*
@@ -1776,7 +1825,6 @@ extern void __set_nchgaction_bits(void)
 
 /*
  * set computed optimtab bits for all vars in entire design
- * 08/22/02 - always need nchg store for dmpvars
  */
 extern void __set_optimtab_bits(void)
 {
@@ -1812,12 +1860,76 @@ extern void __set_optimtab_bits(void)
 }
 
 /*
- * compute size of needed non memory and separate real
- * storage table in words
+ * ROUTINES TO ALLOCATE VARIABLE STORAGE
+ */
+
+/*
+ * allocate storage for all simulation variables
+ */
+extern void __alloc_sim_storage(void)
+{
+ register int32 ni;
+ register struct net_t *np;
+ struct mod_t *mdp;
+ struct task_t *tskp;
+
+ /* always calculate var storage size - but only emit for interpreter */
+ __wtabwsiz = 0;
+ __btabbsiz = 0; 
+ cmp_tabsizes();
+
+ /* for cver-cc, gen .comm lable in bss section */
+ /* LOOKATME - is 0 storage size possible - think yes */
+ if (__btabbsiz > 0)
+  {
+   __btab = (byte *) __my_malloc(__btabbsiz);
+  }
+ if (__wtabwsiz > 0)
+  {
+   __wtab = (word32 *) __my_malloc(__wtabwsiz*sizeof(word32));
+  }
+ __wtabwi = 0; 
+ __btabbi = 0; 
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   __push_wrkitstk(mdp, 0);
+
+   if (__inst_mod->mnnum != 0)
+    {
+     for (ni = 0, np = &(__inst_mod->mnets[0]); ni < __inst_mod->mnnum;
+      ni++, np++) 
+      {
+       /* no allocated storage here for parameters - in different list */
+       /* also none for events (if dce will be allocated when used) */
+       if (np->ntyp == N_EVENT) continue;
+
+       /* for now always zeroing variables - when x/z */
+       /* could free later if no fan-in and no fan-out */
+       alloc_var(np);
+      } 
+    }
+   for (tskp = __inst_mod->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+    {
+     if (tskp->trnum == 0) continue;
+     for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
+      {
+       if (np->ntyp == N_EVENT) continue;
+
+       /* for now always zeroing variables - when x/z */
+       alloc_var(np);
+      }
+    }
+   __pop_wrkitstk();
+  }
+}
+
+/*
+ * compute size of needed startage tables
  *
  * PORTABILITY FIXME - maybe need 8 byte alignment for ptr too?
+ * SJM 05/02/05 - now setting net srep here
  */
-static void cmp_wtabsiz(void)
+static void cmp_tabsizes(void)
 {
  register int32 ni;
  register struct net_t *np;
@@ -1833,10 +1945,6 @@ static void cmp_wtabsiz(void)
      for (ni = 0, np = &(__inst_mod->mnets[0]); ni < __inst_mod->mnnum;
       ni++, np++) 
       {
-       /* storage for byte per inst. all changed table */
-       /* change state bytes go into scalar (byte) storage table */
-       __btabbsiz += __inst_mod->flatinum; 
-
        /* no allocated storage here for parameters - in different list */
 
        /* also none for events (if dce will be allocated when used) */
@@ -1853,13 +1961,12 @@ static void cmp_wtabsiz(void)
      if (tskp->trnum == 0) continue;
      for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
       {
-       /* always need the changed byte array even for event */
-       /* change state bytes go into scalar (byte) storage table */
-       __btabbsiz += __inst_mod->flatinum; 
-
        if (np->ntyp == N_EVENT) continue;
 
        /* no allocated storage here for parameters - in different list */
+       /* SJM 05/02/05 - was previously counting task arrays as part of */
+       /* the tab storage but still mallocing for interpreter */
+       if (np->n_isarr) continue;
 
        /* for now always zeroing variables - when x/z */
        cmpadd_1var_storsiz(np);
@@ -1876,13 +1983,13 @@ static void cmp_wtabsiz(void)
  */
 static void cmpadd_1var_storsiz(struct net_t *np)
 {
- register int32 insts, bitsiz;
+ register int32 insts;
 
  /* allocate array of srep structs for each inst. */
  insts = __inst_mod->flatinum;
 
- /* real table indexed as doubles */
- if (np->ntyp == N_REAL) { __rltabdsiz += insts; return; }
+ /* 05/03/05 - reals now just put in wtab (take 2 words) */
+ if (np->ntyp == N_REAL) { __wtabwsiz += 2*insts; return; }
 
  /* compute needed size in bits */
  /* non vectors */
@@ -1896,10 +2003,9 @@ static void cmpadd_1var_storsiz(struct net_t *np)
    if (!np->n_stren)
     {
      /* hard non strength packed vector case - bits later converted to wrds */
-     /* SJM 12/16/99 - now packed vector packs from 2 to 16 bits into 1 word32 */
+     /* SJM 12/16/99 - now packed vector packs from 2 to 16 bits into 1 word */
      /* SJM 07/15/00 - now for vars only bits packed into bytes */
-     bitsiz = WBITS*2*wlen_(np->nwid)*insts;
-     __wtabwsiz += (wlen_(bitsiz)); 
+     __wtabwsiz += 2*wlen_(np->nwid)*insts;
     }
    else
     { 
@@ -1926,7 +2032,7 @@ static void alloc_var(struct net_t *np)
  /* and now real can be array */
  if (np->ntyp == N_REAL) { alloc_real_var(np, insts); return; }
 
- if (np->n_isarr) allocinit_arr_var(np, insts, TRUE);
+ if (np->n_isarr) __allocinit_arr_var(np, insts, TRUE);
  else if (!np->n_isavec)
   {
    if (!np->n_stren) alloc_scal_var(np, insts);
@@ -1934,7 +2040,7 @@ static void alloc_var(struct net_t *np)
   }
  else
   {
-   if (!np->n_stren) allocinit_vec_var(np, insts, TRUE);
+   if (!np->n_stren) __allocinit_vec_var(np, insts, TRUE);
    else alloc_svec_var(np, insts);
   }
 }
@@ -1946,7 +2052,7 @@ static void alloc_real_var(struct net_t *np, int32 insts)
 {
  register int32 i;
  int32 arrw, totchars;
- double d1;
+ double *dp;
 
  /* case 1: new real array - must be malloced */
  /* must malloc arrays because they can be large */
@@ -1956,22 +2062,20 @@ static void alloc_real_var(struct net_t *np, int32 insts)
    totchars = arrw*(2*WRDBYTES*insts*wlen_(REALBITS));
    np->nva.wp = (word32 *) __my_malloc(totchars);
    /* reals arrays contiguous a/b 8 bytes with no x/z */
-   np->srep = SR_ARRAY; 
-   d1 = 0.0; 
+   dp = np->nva.dp;
    for (i = 0; i < arrw*insts; i++)
     {
-     memcpy(&(np->nva.wp[2*i]), &d1, sizeof(double));
+     *dp++ = 0.0;
     }
    __arrvmem_use += totchars;
    return;
   }
 
  /* case 2 non array */
- np->nva.wp = (word32 *) &(__rltab[__rltabdi]);
- np->srep = SR_VEC; 
- for (i = 0; i < insts; i++) __rltab[__rltabdi + i] = 0.0; 
-
- __rltabdi += insts;
+ np->nva.wp = (word32 *) &(__wtab[__wtabwi]);
+ dp = np->nva.dp;
+ for (i = 0; i < insts; i++) *dp++ = 0.0; 
+ __wtabwi += 2*insts;
 }
 
 /*
@@ -1985,14 +2089,14 @@ static void alloc_real_var(struct net_t *np, int32 insts)
  * initialized to x's
  * notice this routine is somewhat dependent on 32 bit words
  */
-static void allocinit_arr_var(struct net_t *np, int32 insts, int32 nd_alloc)
+extern void __allocinit_arr_var(struct net_t *np, int32 insts,
+ int32 nd_alloc)
 {
  register int32 i;
  int32 arrw, wlen, totchars, elwlen, totcells;
  word32 *rap, mask;
 
  totchars = 0;
- np->srep = SR_ARRAY;
  /* arrw is number of cells in memory */
  arrw = __get_arrwide(np);
  /* case 1, each cell is a scalar */
@@ -2097,13 +2201,11 @@ static void alloc_scal_var(struct net_t *np, int32 insts)
 {
  int32 ival, stval;
 
- np->srep = SR_SCAL;
-
  /* variables accessed as section of design wide storage table */
  np->nva.bp = &(__btab[__btabbi]);
  __btabbi += insts;
 
- ival = get_initval(np, &stval);
+ ival = __get_initval(np, &stval);
  if (ival == 0L) memset(np->nva.bp, 0, insts);
  /* initialize net storage */
  else set_byteval_(np->nva.bp, insts, ival);
@@ -2114,7 +2216,7 @@ static void alloc_scal_var(struct net_t *np, int32 insts)
  * stval is entire 8 bit value - ival returned is low 2 bits only
  * strength format is (st0 (7-5), st1 (4-2), val (1-0) 
  */
-static int32 get_initval(struct net_t *np, int32 *stval)
+extern int32 __get_initval(struct net_t *np, int32 *stval)
 {
  int32 ival, sval;
 
@@ -2158,10 +2260,8 @@ static void alloc_sscal_var(struct net_t *np, int32 insts)
  int32 stval;
 
  /* first allocate the normal 2 bits packed per inst values */
- np->srep = SR_SSCAL;
-
  /* for sscal 1 byte per instance for strength and value (s000,s111,vv) */
- get_initval(np, &stval);
+ __get_initval(np, &stval);
  /* here byte array value allocated in some words */
  sbp = &(__btab[__btabbi]);
  __btabbi += insts;
@@ -2173,16 +2273,16 @@ static void alloc_sscal_var(struct net_t *np, int32 insts)
 /*
  * allocate all instances for a vector variable
  */
-static void allocinit_vec_var(struct net_t *np, int32 insts, int32 nd_alloc)
+extern void __allocinit_vec_var(struct net_t *np, int32 insts,
+ int32 nd_alloc)
 {
  int32 ival, stval;
  int32 wlen, totchars;
  word32 maska, maskb;
 
- ival = get_initval(np, &stval);
+ ival = __get_initval(np, &stval);
  maska = maskb = 0L;
  /* SJM 07/15/00 - no longer pack <16 bit vecs - still pack scalar in byte */ 
- np->srep = SR_VEC;
  wlen = wlen_(np->nwid);
  totchars = 2*WRDBYTES*insts*wlen;
  if (nd_alloc)
@@ -2208,8 +2308,8 @@ static void allocinit_vec_var(struct net_t *np, int32 insts, int32 nd_alloc)
 /*
  * initialize a non strength vector (non packed) to z 
  */
-extern void __init_vec_var(register word32 *wp, int32 insts, int32 wlen, int32 vecw,
- word32 maska, word32 maskb)
+extern void __init_vec_var(register word32 *wp, int32 insts, int32 wlen,
+ int32 vecw, word32 maska, word32 maskb)
 { 
  register int32 ii, wi;
  word32 *iwp;
@@ -2256,8 +2356,7 @@ static void alloc_svec_var(struct net_t *np, int32 insts)
  bp = &(__btab[__btabbi]);
  __btabbi += totbits;
 
- np->srep = SR_SVEC;
- get_initval(np, &stval);
+ __get_initval(np, &stval);
  sval = (byte) stval;
  set_byteval_((char *) bp, totbits, sval);
  np->nva.bp = bp;
@@ -2392,35 +2491,50 @@ static void reinit_1wirereg(struct net_t *np, struct mod_t *mdp)
    return;
   }
  /* not for real arrays */
- if (np->n_isarr) { allocinit_arr_var(np, mdp->flatinum, FALSE); return; }
+ if (np->n_isarr) { __allocinit_arr_var(np, mdp->flatinum, FALSE); return; }
  if (!np->n_isavec)
   {
    if (!np->n_stren)
     {
-     ival = get_initval(np, &stval);
+     ival = __get_initval(np, &stval);
      if (ival == 0) memset(np->nva.bp, 0, mdp->flatinum);
      else set_byteval_(np->nva.bp, mdp->flatinum, ival);
      return;
     }
-   get_initval(np, &stval);
+   __get_initval(np, &stval);
    sbp = np->nva.bp;
    sval = (byte) stval;
    set_byteval_(sbp, mdp->flatinum, sval);
    return;
   }
- if (!np->n_stren) { allocinit_vec_var(np, mdp->flatinum, FALSE); return; }
- get_initval(np, &stval);
+ if (!np->n_stren) { __allocinit_vec_var(np, mdp->flatinum, FALSE); return; }
+ __get_initval(np, &stval);
  sval = (byte) stval;
  set_byteval_(np->nva.bp, mdp->flatinum*np->nwid, sval);
 }
 
 /*
- * routine to re-initialize variables for 1 module
+ * initialize all dces (and tchk old vals) in design
+ */
+extern void __initialize_dsgn_dces(void)
+{
+ register struct mod_t *mdp;
+
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   __push_wrkitstk(mdp, 0);
+   __initialize_dces(__inst_mod);
+   __pop_wrkitstk();
+  }
+}
+
+/*
+ * routine to re-initialize dces (and tchk npp old vals) for 1 module
  *
- * do not need to reinitialize npps except path and timing check which have
+ * do not need to (re)initialize npps except path and timing check which have
  * internal state - normal npp's need processing on any kind of change
  */
-extern void __reinitialize_dces(struct mod_t *mdp)
+extern void __initialize_dces(struct mod_t *mdp)
 {
  register int32 i, ni;
  register struct net_t *np;
@@ -2461,7 +2575,7 @@ extern void __reinitialize_dces(struct mod_t *mdp)
       }
     }
 skip_spec:
-   reinit_1net_dces(np, mdp);
+   __init_1net_dces(np, mdp);
   }
  for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt) 
   {
@@ -2469,19 +2583,19 @@ skip_spec:
    for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
     {
      /* LOOKATME - think need to do this for events too */
-     reinit_1net_dces(np, mdp);
+     __init_1net_dces(np, mdp);
     }
   }
 }
 
 /*
- * reinitialize one net's dces
+ * initialize one net's dces (called faster cver-cc compile and $reset)
  *
  * for XMR mdp is the define (target) itree loc since dce on define var
  * FIXME (OR FINDOUT) - why is algorithm to remove PLI 1.0 vcls
  * but leave PLI 2.0 val chg cbs
  */
-static void reinit_1net_dces(struct net_t *np, struct mod_t *mdp)
+extern void __init_1net_dces(struct net_t *np, struct mod_t *mdp)
 {
  register int32 i;
  int32 insts;
@@ -2507,22 +2621,34 @@ static void reinit_1net_dces(struct net_t *np, struct mod_t *mdp)
      /* set dce previous values to initial wire value */
      if (dcep->dce_1inst)
       {
-       __push_itstk(dcep->dce_matchitp);
-       __init_1instdce_prevval(dcep);
-       __pop_itstk();
+       if (dcep->prevval.wp != NULL)
+        {
+         __push_itstk(dcep->dce_matchitp);
+         __init_1instdce_prevval(dcep);
+         __pop_itstk();
+        }
       }
      else
       {
-       if (dcep->prevval.wp != NULL)
+       if (dcep->dce_expr != NULL) init_dce_exprval(dcep);
+       else
         {
-         if (dcep->dce_xmrtyp != XNP_LOC)
-          decl_mdp = dcep->dceu.dcegrp->targmdp;
-         else decl_mdp = mdp;
-         init_dce_prevval(dcep, decl_mdp);
+         if (dcep->prevval.wp != NULL)
+          {
+           /* 05/18/03 - for XMR there is one for each decl in inst */
+           if (dcep->dce_xmrtyp != XNP_LOC)
+            decl_mdp = dcep->dceu.dcegrp->targmdp;
+           else decl_mdp = __inst_mod;
+           init_dce_prevval(dcep, decl_mdp);
+          }
         }
       }
      break;
     case DCE_RNG_MONIT: case DCE_MONIT:
+     /* DBG remove -- */
+     if (!dcep->dce_1inst) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+   
      /* SJM 12/30/02 - since monits can't be removed - only turned off */
      /* on reset must turn off and initialize to start value */
      /* previous fix was wrong */
@@ -2543,6 +2669,10 @@ static void reinit_1net_dces(struct net_t *np, struct mod_t *mdp)
      dcep->dce_off = TRUE;
      break;
     case DCE_RNG_PVC: case DCE_PVC:
+     /* DBG remove -- */
+     if (!dcep->dce_1inst) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+
      /* SJM 01/02/03 - for the dce - always inst specific - just reinit in */
      /* case has previous value */
      __push_itstk(dcep->dce_matchitp);
@@ -2551,6 +2681,10 @@ static void reinit_1net_dces(struct net_t *np, struct mod_t *mdp)
      break;
     case DCE_CBVC: case DCE_RNG_CBVC:
     case DCE_CBF: case DCE_RNG_CBF: case DCE_CBR: case DCE_RNG_CBR:
+     /* DBG remove -- */
+     if (!dcep->dce_1inst) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+
      /* this handles re-init of PLI 2.0 dce that must be left on */
      /* know will always exist */  
      /* LOOKATME - why left on? or why not consistent with PLI 1 */
@@ -2697,8 +2831,8 @@ static void init_dce_prevval(struct dcevnt_t *dcep, struct mod_t *decl_mdp)
  * since expr evaluated in ref XMR loc, module context is referenced module
  * or XMR case which is set by caller
  *
- * SJM 05/06/03 - need to eval and save in ref mod loc XMR 
- * dce case
+ * SJM 05/06/03 - need to eval and save in ref mod loc XMR dce case
+ * SJM 05/04/05 - notice this 
  */
 static void init_dce_exprval(struct dcevnt_t *dcep)
 {
@@ -3286,7 +3420,8 @@ static void prep_stskcalls(struct st_t *stp)
  * back to front of loop
  * returns previous last statement - error to be called withh begstp nul
  */
-static struct st_t *add_loopend_goto(struct st_t *begstp, struct st_t *targstp)
+static struct st_t *add_loopend_goto(struct st_t *begstp,
+ struct st_t *targstp)
 {
  register struct st_t *stp; 
  struct st_t *last_stp, *gtstp;
@@ -3519,6 +3654,16 @@ static void prep_event_dctrl(struct delctrl_t *dctp)
  __my_free((char *) pmp, sizeof(struct paramlst_t));
  dctp->dc_du.d1x = evx;
  dctp->dc_delrep = DT_1X;
+
+ /* SJM 06/28/05 - for degenerate form no dces to build but must catch */  
+ /* nil event expr */
+ if (evx == NULL)
+  {
+   __sgfwarn(3139,
+    "implicit event control - no events in statement - will never trigger");
+   return;
+  }
+
  if (evx->optyp != OPEVOR && evx->optyp != OPEVCOMMAOR)
   { bld_ev_dces(evx, dctp); return; }
  /* notice evor tree must associate left to right - i.e. evor chain */
@@ -3628,7 +3773,8 @@ expr_edge:
  * many dces since 1 per variable for non edge expr. that is handled here
  * need itree place since called while running
  */
-static void bld_evxpr_dces(struct expr_t *xp, struct delctrl_t *dctp, int32 eval)
+static void bld_evxpr_dces(struct expr_t *xp, struct delctrl_t *dctp,
+ int32 eval)
 {
  struct net_t *np;
  int32 biti, bitj;
@@ -3747,16 +3893,20 @@ static void linkon_dce(struct net_t *np, int32 biti, int32 bitj,
  dcep = linkon2_dce(np, biti, bitj, dctp, e_val, FALSE, __inst_mod,
   __inst_mod);
  dcep->dce_xmrtyp = XNP_LOC;
- init_linkedon_dce(dcep, dctp, NULL);
+ if (dctp->dc_iact) init_iact_dce(dcep, dctp, NULL);
 }
 
 /*
- * initialize dceps 
+ * initialize interactive only dces 
  * 
  * expects inst mod to be set to module where net declared in
  * SJM 01/14/03 - LOOKATME - think there is reason need to pass grp
+ *
+ * SJM 05/04/05 - because putting var storage (np.nva) in .bss section
+ * for cver-cc, this is only for interactive init using interpreter
+ * after linking in .bss .so lib var values, now initializing by net in mod
  */
-static void init_linkedon_dce(struct dcevnt_t *dcep, struct delctrl_t *dctp,
+static void init_iact_dce(struct dcevnt_t *dcep, struct delctrl_t *dctp,
  struct gref_t *grp)
 {
  struct net_t *np;
@@ -3839,7 +3989,7 @@ static void xmr_linkon_dce(struct net_t *np, int32 biti, int32 bitj,
    /* downward case */
    else { dcep->dceu.dcegrp = grp; dcep->dce_xmrtyp = XNP_DOWNXMR; }
    /* SJM 05/08/03 - now initialize only after complete dce built */
-   init_linkedon_dce(dcep, dctp, grp);
+   if (dctp->dc_iact) init_iact_dce(dcep, dctp, grp);
    return;
   }
 
@@ -3866,7 +4016,7 @@ static void xmr_linkon_dce(struct net_t *np, int32 biti, int32 bitj,
    dcep->dce_xmrtyp = XNP_RTXMR;
 
    /* SJM 05/08/03 - now initialize only after complete dce built */
-   init_linkedon_dce(dcep, dctp, grp);
+   if (dctp->dc_iact) init_iact_dce(dcep, dctp, grp);
   }
 }
 
@@ -4406,6 +4556,8 @@ extern void __alloc_qcval(struct net_t *np)
  register int32 i;
  register struct qcval_t *qcvalp;
 
+ /* AIV 03/09/05 - if force from vpi bit needs to be set */
+ np->frc_assgn_allocated = TRUE;
  if (np->ntyp >= NONWIRE_ST)
   {
    /* here need 1 qcval per inst. but need 1 for assign and 1 for force */
@@ -5217,13 +5369,13 @@ static byte *bld_npp_oldval(struct net_t *np, struct mod_t *mdp)
  if (np->n_stren)
   { 
    bp = (byte *) __my_malloc(insts);
-   get_initval(np, &stval);
+   __get_initval(np, &stval);
    sval = (byte) stval;
    set_byteval_(bp, insts, sval);
    return(bp);
   }
  bp = (byte *) __my_malloc(insts);
- ival = get_initval(np, &stval);
+ ival = __get_initval(np, &stval);
  set_byteval_(bp, insts, ival);
  return(bp);
 }
@@ -5240,13 +5392,13 @@ static void reinit_npp_oldval(byte *bp, struct net_t *np, struct mod_t *mdp)
  insts = mdp->flatinum;
  if (np->n_stren)
   { 
-   get_initval(np, &stval);
+   __get_initval(np, &stval);
    sval = (byte) stval;
    set_byteval_(bp, insts, sval);
   }
  else 
   {
-   ival = get_initval(np, &stval);
+   ival = __get_initval(np, &stval);
    set_byteval_(bp, insts, ival);
   }
 }
@@ -5563,7 +5715,8 @@ static struct net_pin_t *find_1timchg_psnpp(struct net_t *snp, int32 bi,
  * for scalar dbi will be 0
  */
 static int32 bldchk_1bit_pthdst(struct spcpth_t *pthp, struct net_t *s_np,
- int32 sbi, struct net_t *d_np, int32 dbi, int32 dnwid, struct tchg_t *src_tchg)
+ int32 sbi, struct net_t *d_np, int32 dbi, int32 dnwid,
+ struct tchg_t *src_tchg)
 {
  register int32 i;
  int32 pb_gd;
@@ -5607,7 +5760,8 @@ static int32 bldchk_1bit_pthdst(struct spcpth_t *pthp, struct net_t *s_np,
 /*
  * compute a path's input and output bit widths
  */
-static void get_pthbitwidths(struct spcpth_t *pthp, int32 *pinwid, int32 *poutwid)
+static void get_pthbitwidths(struct spcpth_t *pthp, int32 *pinwid,
+ int32 *poutwid)
 {
  register int32 pei;
  int32 pbwid;
@@ -6526,7 +6680,10 @@ static void cmp_xform_ialst(void)
  __prpstk[0] = NULL;
  for (ialp = __inst_mod->ialst; ialp != NULL; ialp = ialp->ialnxt)
   {
-   if (ialp->iatyp == ALWAYS) cxf_fixup_loopend_goto(ialp->iastp, ialp->iastp);
+   if (ialp->iatyp == ALWAYS)
+    {
+     cxf_fixup_loopend_goto(ialp->iastp, ialp->iastp);
+    }
    cxf_fixup_lstofsts_gotos(ialp->iastp, TRUE);
 
    /* DBG remove --- */ 
@@ -7030,7 +7187,7 @@ static char *bld_opname(char *s, struct expr_t *ndp)
   case REALNUM: case ISREALNUM:
    /* just pass a for both here */ 
    /* LOOKATME - should just format as double */ 
-   ap = (word32 *) &(__rlcontab[ndp->ru.xvi]);
+   ap = &(__contab[ndp->ru.xvi]);
    sprintf(s1, "REAL: %s", __regab_tostr(s2, ap, ap, ndp->szu.xclen, BDBLE,
     FALSE));
    break;

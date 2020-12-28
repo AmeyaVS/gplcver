@@ -24,9 +24,9 @@ diff verilog.log acc_nxtchld.plg
 rm acc_nxtchld.dylib acc_nxtchld.o
 
 make -f makefile.$OS accxl_drvld.dylib
-$CVER -q +loadpli1=./acc_nxtchld:pli1_compat_bootstrap accxldrvtst.v >/dev/null
+$CVER -q +loadpli1=./accxl_drvld:pli1_compat_bootstrap accxldrvtst.v >/dev/null
 ./rmlic.pl
-diff verilog.log accxl_drvtst.plg
+diff verilog.log accxldrvtst.plg
 rm accxl_drvld.dylib accxl_drvld.o 
 
 make -f makefile.$OS acc_prtchg.dylib

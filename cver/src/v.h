@@ -25,9 +25,9 @@
 
 #define VERS "GPLCVER_2"
 
-#define VERS2 ".10c"
+#define VERS2 ".11a"
 
-#define OFDT "02/28/05"
+#define OFDT "07/05/05"
 #define OUTLINLEN 71          /* length of output file line */
 #define DFLTIOWORDS 8         /* preallocated size for I/O and work values */
 #define MUSTFREEWORDS 64      /* for stk values wider free when done */
@@ -80,7 +80,6 @@
 #define MAXEMSGNUM 4000       /* highest possible any type error num */
 
 #define MY_FOPEN_MAX 1024     /* guess at OS process max open stdio.h wrong */
-
 
 typedef unsigned long word32;
 typedef long sword32;
@@ -453,69 +452,71 @@ typedef union {
 #define END 152
 #define ENDCASE 153
 #define ENDFUNCTION 154
-#define ENDMODULE 155
-#define ENDPRIMITIVE 156
-#define ENDSPECIFY 157
-#define ENDTABLE 158
-#define ENDTASK 159
-#define EVENT 160
-#define FOR 161
-#define FORCE 162
-#define FOREVER 163
-#define FORK 164
-#define FUNCTION 165
-#define HIGHZ0 166
-#define HIGHZ1 167
-#define IF 168
-#define IFNONE 169
-#define INITial 170
-#define INOUT 171
-#define INPUT 172
-#define INTEGER 173
-#define JOIN 174
-#define LARGE 175             /* this is trireg decl. cap size */
-#define MACROMODULE 176
-#define MEDIUM 177
-#define MODULE 178
-#define NEGEDGE 179
-#define OUTPUT 180
-#define PARAMETER 181
-#define POSEDGE 182
-#define PRIMITIVE 183
-#define PULL0 184
-#define PULL1 185
-#define REAL 186
-#define REALTIME 187
-#define REG 188
-#define RELEASE 189
-#define REPEAT 190
-#define SCALARED 191
-#define SIGNED 192
-#define SPECIFY 193
-#define SPECPARAM 194
-#define SMALL 195
-#define Strength 196
-#define STRONG0 197
-#define STRONG1 198
-#define SUPPLY0 199
-#define SUPPLY1 200
-#define TABLE 201
-#define TASK 202
-#define TIME 203
-#define TRI 204
-#define TRI0 205
-#define TRI1 206
-#define TRIAND 207
-#define TRIOR 208
-#define TRIREG 209
-#define VECTORED 210
-#define WAIT 211
-#define WAND 212
-#define WEAK0 213
-#define WEAK1 214
-#define WHILE 215
-#define WIRE 216
-#define WOR 217
+#define ENDGENERATE 155
+#define ENDMODULE 156
+#define ENDPRIMITIVE 157
+#define ENDSPECIFY 158
+#define ENDTABLE 159
+#define ENDTASK 160
+#define EVENT 161
+#define FOR 162
+#define FORCE 163
+#define FOREVER 164
+#define FORK 165
+#define FUNCTION 166
+#define GENERATE 167
+#define HIGHZ0 168
+#define HIGHZ1 169
+#define IF 170
+#define IFNONE 171
+#define INITial 172
+#define INOUT 173
+#define INPUT 174
+#define INTEGER 175
+#define JOIN 176
+#define LARGE 177
+#define MACROMODULE 178
+#define MEDIUM 179
+#define MODULE 180
+#define NEGEDGE 181
+#define OUTPUT 182
+#define PARAMETER 183
+#define POSEDGE 184
+#define PRIMITIVE 185
+#define PULL0 186
+#define PULL1 187
+#define REAL 188
+#define REALTIME 189
+#define REG 190
+#define RELEASE 191
+#define REPEAT 192
+#define SCALARED 193
+#define SIGNED 194
+#define SPECIFY 195
+#define SPECPARAM 196
+#define SMALL 197
+#define Strength 198
+#define STRONG0 199
+#define STRONG1 200
+#define SUPPLY0 201
+#define SUPPLY1 202
+#define TABLE 203
+#define TASK 204
+#define TIME 205
+#define TRI 206
+#define TRI0 207
+#define TRI1 208
+#define TRIAND 209
+#define TRIOR 210
+#define TRIREG 211
+#define VECTORED 212
+#define WAIT 213
+#define WAND 214
+#define WEAK0 215
+#define WEAK1 216
+#define WHILE 217
+#define WIRE 218
+#define WOR 219
 
 /* gate nums (not tokens) for sim - now separate gatid range */
 /* now for debugging do not use low numbers */
@@ -1988,6 +1989,12 @@ union h_u {
  struct hrec_t *hfreenxt;     /* ptr to next hrec on free list */
 };
 
+/* non-blocking event list */
+struct nb_event_t { 
+ i_tev_ndx nb_tevpi; 
+ struct nb_event_t *nbnxt;
+};
+
 /* handle object event table record for scheduled vector events */ 
 struct schdev_t {
  struct net_t *evnp;
@@ -2223,7 +2230,6 @@ struct task_t {
  struct net_t *tsk_regs;      /* list then array of nets in task */
  int32 trnum;                 /* number of task regs */   
  struct st_t *tskst;          /* one task statement (usually a block) */
-
  struct task_t *tsknxt;       /* next defined task in current module */
  struct tskthrd_t **tthrds;   /* per inst. list of active threads for task */
 };
@@ -2703,7 +2709,6 @@ struct mod_t {
  int32 mtotvarnum;            /* total number of variables mod+task */
  int32 mprmnum;               /* number of pound params defined */ 
  int32 mlpcnt;                /* mod. inst. loop count (static level) */
-
  struct sy_t *msym;           /* symbol from separate module name space */
  int32 mod_last_lini;         /* line no. of end (mabye in next file) */
  int32 mod_last_ifi;          /* and file in case spans multiple */
@@ -3092,6 +3097,7 @@ extern int32 __lib_verbose;   /* T => emit src.file/lib source messages */
 extern int32 __sdf_verbose;   /* T => emit msgs for SDF annotated delays */
 extern int32 __switch_verbose;/* T => emit msgs for switch/tran chan build */
 extern int32 __chg_portdir;   /* T => chg port dir to bid. for XL compat */
+extern int32 __nb_sep_queue;  /* F => old un-seperated nb in pnd0 queue */
 extern int32 __decompile;     /* T => decompile and print Verilog source */
 extern int32 __compile_only;  /* T => check syntax (inc. lib.) no quads */
 extern int32 __parse_only;    /* T => first pass parse only to chk sep mod */
@@ -3378,11 +3384,7 @@ extern int32 __size_tevtab;   /* num tev's allocated in tev tab */
 extern word32 *__contab;      /* design wide constant table */
 extern int32 __contabwsiz;    /* currrent size of const tab in words */
 extern int32 __contabwi;      /* next free word32 slot in const tab */
-extern int32 __opempty_contabi; /* special contab index for opempty expr leaf */
-extern int32 __b32_minus1;    /* special contab ndx for 32 bit -1 */
-extern double *__rlcontab;    /* design wide constant table for reals*/
-extern int32 __rlcontabdsiz;  /* currrent size of const tab in no. of dbls */
-extern int32 __rlcontabdi;    /* next free double slot in real const tab */
+extern int32 __opempty_contabi; /* special contab ndx for opempty expr leaf */
 extern struct contab_info_t **__contab_hash; /* contab hash information */
 
 /* n.l. access routines */  
@@ -3498,16 +3500,13 @@ extern int32 __num_switch_chans; /* total num tranif channels in design */
 /* storage tables variables */
 extern byte *__btab;          /* design wide scalar (byte) storage table */
 extern int32 __btabbsiz;      /* scalar storage byte table size in bytes */
-extern int32 __btabbi;        /* during var init next word32 index to use */ 
+extern int32 __btabbi;        /* during var init next index to use */ 
+extern byte *__nchgbtab;      /* table for per inst nchg bytes */
+extern int32 __nchgbtabbsiz;  /* size in btab of nchg action bits */
+extern int32 __nchgbtabbi;    /* during init, next index to use */
 extern word32 *__wtab;        /* design wide var but not mem storage area */
 extern int32 __wtabwsiz;      /* precomputed size (need ptrs into) in words */
-extern int32 __wtabwi;        /* during var init next word32 index to use */ 
-extern word64 *__lwtab;       /* design wide long long var storage area */
-extern int32 __lwtabwsiz;     /* precomputed size (need ptrs into) in lwords */
-extern int32 __lwtabwi;       /* during var init next lword index to use */ 
-extern double *__rltab;       /* design wide real var storage area */
-extern int32 __rltabdsiz;     /* precomputed size in doubles (nd ptr into)  */
-extern int32 __rltabdi;       /* during var init next double index to use */ 
+extern int32 __wtabwi;        /* during var init next index to use */ 
 
 /* simulation control and state values */
 extern int32 __stmt_suspend;  /* set when behavioral code suspends */
@@ -3646,6 +3645,8 @@ extern struct nchglst_t *__nchgfreelst; /* change element free list */
 extern struct tc_pendlst_t *__tcpendfreelst; /* free slot end changed tchks */
 extern struct dltevlst_t *__dltevfreelst; /* pend double event free list */
 extern struct tevlst_t *__ltevfreelst; /* pend event free list */
+extern i_tev_ndx __nb_te_hdri; /* non-blocking new end queue hd */ 
+extern i_tev_ndx __nb_te_endi; /* and tail */
 
 /* net change list variables */
 extern struct nchglst_t *__nchg_futhdr; /* header of future net chg list */

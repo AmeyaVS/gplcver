@@ -79,14 +79,7 @@ static void bsel_acc_uptoiconn(register struct expr_t *,
  register struct expr_t *, struct itree_t *);
 static void ldcomb_driver(struct xstk_t *, struct net_t *,
  register struct net_pin_t *);
-static struct xstk_t *ld_conta_driver(struct net_pin_t *);
-static struct xstk_t *ld_vpiputv_driver(struct net_pin_t *);
-static struct xstk_t *ld_gate_driver(struct net_pin_t *);
 static word32 widegate_ld_bit(word32 *, int32, int32);
-static struct xstk_t *ld_iconn_up_driver(register struct net_pin_t *);
-static struct xstk_t *ld_pb_iconn_up_driver(register struct net_pin_t *);
-static struct xstk_t *ld_modport_down_driver(register struct net_pin_t *);
-static struct xstk_t *ld_pb_modport_down_driver(register struct net_pin_t *);
 static void ldcomb_stdriver(register byte *, struct net_t *,
  register struct net_pin_t *);
 static struct xstk_t *init_stwire_accum(struct net_t *);
@@ -102,11 +95,13 @@ static struct xstk_t *ld_stpull_driver(struct net_pin_t *);
 static void ndst_eval2_xpr(register byte *, register struct expr_t *);
 static void access_stpsel(register byte *, register struct expr_t *);
 static void rhs_stconcat(register byte *, struct expr_t *);
-static void eval_stwire(word32, register byte *, int32, int32, register byte *);
+static void eval_stwire(word32, register byte *, int32, int32,
+ register byte *);
 static void adds_evgate_ins(word32 *, word32 *, int32);
 static void show2_allvars(struct itree_t *);
 static void emit1_driver(struct net_t *, struct net_pin_t *, int32);
-static char *drive_tostr(char *, word32 *, word32 *, struct net_pin_t *, int32, int32);
+static char *drive_tostr(char *, word32 *, word32 *, struct net_pin_t *,
+ int32, int32);
 static char *stdrive_tostr(char *, byte *, struct net_pin_t *, int32, int32);
 static char *bld_wire_telltale(char *, struct net_t *);
 static void emit1_load(struct net_t *, struct net_pin_t *);
@@ -115,8 +110,8 @@ static void setup_all_dvars(void);
 static void setup_1argdvars(struct mdvmast_t *);
 static void setup_1subtree_allvars(struct itree_t *, int32);
 static void setup_1installvars(struct mod_t *, struct itree_t *);
-static void turnon_1net_dmpv(struct net_t *, struct itree_t *, struct task_t *,
- struct mod_t *, int32);
+static void turnon_1net_dmpv(struct net_t *, struct itree_t *,
+ struct task_t *, struct mod_t *, int32);
 static char *to_dvcode(register char *, register int32);
 static void wr_1argdvhdr(struct mdvmast_t *);
 static void wr_1subtree_allvars(struct itree_t *, int32);
@@ -152,9 +147,20 @@ extern struct xstk_t *__load_mdrwire(register struct net_t *);
 extern int32 __move_to_npprefloc(struct net_pin_t *);
 extern struct xstk_t *__ld_wire_driver(register struct net_pin_t *);
 extern struct xstk_t *__ld_tfrwarg_driver(struct net_pin_t *);
+extern struct xstk_t *__ld_conta_driver(struct net_pin_t *);
+extern struct xstk_t *__ld_vpiputv_driver(struct net_pin_t *);
+extern struct xstk_t *__ld_gate_driver(struct net_pin_t *);
+extern struct xstk_t *__ld_iconn_up_driver(register struct net_pin_t *);
+extern struct xstk_t *__ld_pb_iconn_up_driver(register struct net_pin_t *);
+extern struct xstk_t *__ld_modport_down_driver(register struct net_pin_t *);
+extern struct xstk_t *__ld_pb_modport_down_driver(register struct net_pin_t *);
+
+
 extern word32 __ld_gate_out(register struct gate_t *, int32 *);
-extern void __eval_wire(word32 *, word32 *, struct net_t *, struct net_pin_t *); 
-extern void __eval_wide_wire(word32 *, word32 *, word32 *, word32 *, int32, word32);
+extern void __eval_wire(word32 *, word32 *, struct net_t *,
+ struct net_pin_t *); 
+extern void __eval_wide_wire(word32 *, word32 *, word32 *, word32 *, int32,
+ word32);
 extern void __eval_1w_nonstren(register word32 *, register word32 *,
  register word32, register word32, word32);
 extern struct xstk_t *__stload_mdrwire(struct net_t *);
@@ -192,8 +198,8 @@ extern void __exec_ca_concat(struct expr_t *, register word32 *,
  register word32 *, int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__to_gassign_str(char *, struct expr_t *);
-extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
- int32);
+extern void __ld_perinst_val(register word32 *, register word32 *,
+ union pck_u, int32);
 extern void __grow_xstk(void);
 extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __lhsbsel(register word32 *, register int32, word32);
@@ -204,10 +210,11 @@ extern char *__to_vvnam(char *, word32);
 extern char *__to_timstr(char *, word64 *);
 extern int32 __correct_forced_newwireval(struct net_t *, word32 *, word32 *);
 extern void __chg_st_val(struct net_t *, register word32 *, register word32 *);
-extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern void __ld_wire_val(register word32 *, register word32 *,
+ struct net_t *);
 extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
-extern void __ld_bit(register word32 *, register word32 *, register struct net_t *,
- int32);
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
 extern int32 __forced_inhibit_bitassign(struct net_t *, struct expr_t *,
  struct expr_t *);
 extern void __assign_to_bit(struct net_t *, struct expr_t *, struct expr_t *,
@@ -221,7 +228,8 @@ extern void __st_val(struct net_t *, register word32 *, register word32 *);
 extern char *__st_regab_tostr(char *, byte *, int32);
 extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern void __pth_stren_schd_allofwire(struct net_t *, register byte *, int32);
-extern void __wdel_stren_schd_allofwire(struct net_t *, register byte *, int32);
+extern void __wdel_stren_schd_allofwire(struct net_t *, register byte *,
+ int32);
 extern void __pth_schd_allofwire(struct net_t *, register word32 *,
  register word32 *, int32);
 extern void __wdel_schd_allofwire(struct net_t *, register word32 *,
@@ -1689,16 +1697,16 @@ static void ldcomb_driver(struct xstk_t *acc_xsp, struct net_t *np,
  /* this puts the driving value (normal rhs with rhs width) on stack */
  /* notice tran strength only so error if appears here */
  switch ((byte) npp->npntyp) {
-  case NP_CONTA: xsp = ld_conta_driver(npp); break;
+  case NP_CONTA: xsp = __ld_conta_driver(npp); break;
   case NP_TFRWARG: xsp = __ld_tfrwarg_driver(npp); break;
-  case NP_VPIPUTV: xsp = ld_vpiputv_driver(npp); break;
-  case NP_GATE: xsp = ld_gate_driver(npp); break;
+  case NP_VPIPUTV: xsp = __ld_vpiputv_driver(npp); break;
+  case NP_GATE: xsp = __ld_gate_driver(npp); break;
   /* these are up to highconn output port drivers */
-  case NP_ICONN: xsp = ld_iconn_up_driver(npp); break;
-  case NP_PB_ICONN: xsp = ld_pb_iconn_up_driver(npp); break;
+  case NP_ICONN: xsp = __ld_iconn_up_driver(npp); break;
+  case NP_PB_ICONN: xsp = __ld_pb_iconn_up_driver(npp); break;
   /* these are down to lowconn input port drivers */
-  case NP_MDPRT: xsp = ld_modport_down_driver(npp); break;
-  case NP_PB_MDPRT: xsp = ld_pb_modport_down_driver(npp); break;
+  case NP_MDPRT: xsp = __ld_modport_down_driver(npp); break;
+  case NP_PB_MDPRT: xsp = __ld_pb_modport_down_driver(npp); break;
   default: __case_terr(__FILE__, __LINE__); xsp = NULL; 
  }
  if (nd_itpop) __pop_itstk();
@@ -1763,16 +1771,16 @@ extern struct xstk_t *__ld_wire_driver(register struct net_pin_t *npp)
 
  /* iconn and mod port may return xsp of nil - caller does not pop */
  switch ((byte) npp->npntyp) {
-  case NP_CONTA: xsp = ld_conta_driver(npp); break;
+  case NP_CONTA: xsp = __ld_conta_driver(npp); break;
   case NP_TFRWARG: xsp = __ld_tfrwarg_driver(npp); break;
-  case NP_VPIPUTV: xsp = ld_vpiputv_driver(npp); break;
-  case NP_GATE: xsp = ld_gate_driver(npp); break;
+  case NP_VPIPUTV: xsp = __ld_vpiputv_driver(npp); break;
+  case NP_GATE: xsp = __ld_gate_driver(npp); break;
   /* these are up to highconn output port drivers */
-  case NP_ICONN: xsp = ld_iconn_up_driver(npp); break;
-  case NP_PB_ICONN: xsp = ld_pb_modport_down_driver(npp); break;
+  case NP_ICONN: xsp = __ld_iconn_up_driver(npp); break;
+  case NP_PB_ICONN: xsp = __ld_pb_modport_down_driver(npp); break;
   /* these are down to lowconn input port drivers */
-  case NP_MDPRT: xsp = ld_modport_down_driver(npp); break;
-  case NP_PB_MDPRT: xsp = ld_pb_modport_down_driver(npp); break;
+  case NP_MDPRT: xsp = __ld_modport_down_driver(npp); break;
+  case NP_PB_MDPRT: xsp = __ld_pb_modport_down_driver(npp); break;
   /* tran strength only */
   default: __case_terr(__FILE__, __LINE__); return(NULL);
  }
@@ -1786,7 +1794,7 @@ extern struct xstk_t *__ld_wire_driver(register struct net_pin_t *npp)
  *
  * if rhs conta concat causes sep into bits, this is PB conta
  */
-static struct xstk_t *ld_conta_driver(struct net_pin_t *npp)
+extern struct xstk_t *__ld_conta_driver(struct net_pin_t *npp)
 {
  register struct xstk_t *xsp;
  register int32 blen;
@@ -1881,7 +1889,7 @@ extern struct xstk_t *__ld_tfrwarg_driver(struct net_pin_t *npp)
  *
  * if any bits unused z's will never be seen
  */
-static struct xstk_t *ld_vpiputv_driver(struct net_pin_t *npp)
+extern struct xstk_t *__ld_vpiputv_driver(struct net_pin_t *npp)
 {
  register struct net_t *np;
  register struct xstk_t *xsp;
@@ -1910,7 +1918,7 @@ static struct xstk_t *ld_vpiputv_driver(struct net_pin_t *npp)
  * load a gate driver npp - also for strength case
  * caller must have moved to right itree loc. for xmr form
  */
-static struct xstk_t *ld_gate_driver(struct net_pin_t *npp)
+extern struct xstk_t *__ld_gate_driver(struct net_pin_t *npp)
 {
  register struct xstk_t *xsp;
  register word32 uwrd;
@@ -2073,7 +2081,7 @@ static word32 widegate_ld_bit(word32 *gsp, int32 gwid, int32 biti)
  * driver is down module output port (inout handled in switch channel) 
  * called from up iconn itree location
  */
-static struct xstk_t *ld_iconn_up_driver(register struct net_pin_t *npp)
+extern struct xstk_t *__ld_iconn_up_driver(register struct net_pin_t *npp)
 {
  register struct mod_pin_t *mpp;
  register struct expr_t *xlhs;
@@ -2122,7 +2130,7 @@ static struct xstk_t *ld_iconn_up_driver(register struct net_pin_t *npp)
  * driver is down module output port (inouts handled in tran channels)
  * called from up iconn itree location
  */
-static struct xstk_t *ld_pb_iconn_up_driver(register struct net_pin_t *npp)
+extern struct xstk_t *__ld_pb_iconn_up_driver(register struct net_pin_t *npp)
 {
  register struct mod_pin_t *mpp;
  register struct itree_t *itp;
@@ -2159,7 +2167,7 @@ static struct xstk_t *ld_pb_iconn_up_driver(register struct net_pin_t *npp)
  * driver is up iconn rhs connection for input port
  * called from down module itree location
  */
-static struct xstk_t *ld_modport_down_driver(register struct net_pin_t *npp)
+extern struct xstk_t *__ld_modport_down_driver(register struct net_pin_t *npp)
 {
  register struct xstk_t *xsp;
  register struct mod_pin_t *mpp;
@@ -2214,7 +2222,7 @@ static struct xstk_t *ld_modport_down_driver(register struct net_pin_t *npp)
  * driver of this down iput port is up highconn iconn rhs expr
  * called from down module itree location
  */
-static struct xstk_t *ld_pb_modport_down_driver(
+extern struct xstk_t *__ld_pb_modport_down_driver(
  register struct net_pin_t *npp)
 {
  register struct xstk_t *xsp;
@@ -2716,10 +2724,15 @@ static struct xstk_t *ld_stconta_driver(struct net_pin_t *npp)
    if (blen != xsp2->xslen)
     {
      orhslen = xsp2->xslen;
-     /* notice first rhs is eval then widened to 0's before stren added */ 
-/* ??? how do load drivers work ### either can be signed */
-     __sizchgxs(xsp2, cap->rhsx->szu.xclen);
-/* ??? ### what about signed initialization */
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     /* SJM 06/20/05 - rare case but needs signed widen (stren maybe added?) */
+     if (xsp2->xslen > blen) __narrow_sizchg(xsp2, blen);
+     else if (xsp2->xslen < blen)
+      {
+       if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp2, blen);
+       else __sizchg_widen(xsp2, blen);
+      }
 
      if (__wire_init) __fix_widened_toxs(xsp2, orhslen);
     }
@@ -3766,7 +3779,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_gate_driver(npp);
+     xsp = __ld_gate_driver(npp);
      wrd = xsp->ap[0] | (xsp->bp[0] << 1);
      if (nonz_only && wrd == 2L) break;
      __to_vvnam(s1, wrd);
@@ -3807,7 +3820,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_conta_driver(npp);
+     xsp = __ld_conta_driver(npp);
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, cap2->rhsx->szu.xclen,
       nonz_only) == NULL) break;
     }
@@ -3871,7 +3884,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_vpiputv_driver(npp); 
+     xsp = __ld_vpiputv_driver(npp); 
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, np->nwid, nonz_only) == NULL)
       break;
     }
@@ -3892,7 +3905,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_iconn_up_driver(npp);
+     xsp = __ld_iconn_up_driver(npp);
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, xsp->xslen, nonz_only)
       == NULL) break;
     }
@@ -3914,7 +3927,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_pb_iconn_up_driver(npp);
+     xsp = __ld_pb_iconn_up_driver(npp);
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, xsp->xslen, nonz_only)
       == NULL) break;
     }
@@ -3936,7 +3949,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_modport_down_driver(npp);
+     xsp = __ld_modport_down_driver(npp);
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, xsp->xslen, nonz_only)
       == NULL) break;
     }
@@ -3959,7 +3972,7 @@ static void emit1_driver(struct net_t *np, struct net_pin_t *npp,
     }
    else
     {
-     xsp = ld_pb_modport_down_driver(npp);
+     xsp = __ld_pb_modport_down_driver(npp);
      if (drive_tostr(s1, xsp->ap, xsp->bp, npp, xsp->xslen, nonz_only)
       == NULL) break;
     }

@@ -169,3 +169,42 @@ using Xilinx libraries to leak memory.
    was previously not evaluating the ~ operator using left hand side
    context "cg = ~(a << b);" 
 
+Tue Jul  5 13:53:17 CDT 2005
+
+  Major release 2.11a that hopefully fixes the problems simulating Xilinx
+libraries.  A number of problems that resulted in core dumps involving the
+combination of pound params and defparams are fixed.  Arrays of instances
+and gates had a significant problem that is fixed.  The non blocking
+scheduling algorithm has been changed to process non blocking events
+after all #0 events are processed following XL.  
+
+1. Changed the non blocking assignment algorithm to process all non blocking
+   assignments only after all #0 events have been processed.  Use the
+   new +no_separate_nb_queue to match old Cver behavior that combined
+   #0 and non blocking events into the same queue.
+
+2. Combinations of defparams and pound params often did not work but instead 
+   core dumped.  The Xilinx library used the pattern that caused the error.
+   Cver parameter handling should now be more solid.
+
+3. Fixed a number of signed arithmetic bugs.   Most bugs involved signed
+   shift or multiply.
+
+4. Implicit event control (@*) sometimes core dumped when there were
+   no implicit events to add to the event control list in the guarded block.
+
+5. Cver now recognizes and emits an error for generate keyword, but generate
+   is not supported still.  Elaboration syncs to the endgenerate keyword
+   so at least the rest of a design can be checked for syntax errors. 
+
+6. Arrays of instances core dumped when instances of the module containing
+   arrays of instances or gates were used in hierarchical references. 
+   The core dump did not occur if realloc did not move the memory area.
+   Arrays of instances and gates should now work.
+
+7. Declaration of local events in tasks and named blocks did not work.
+
+8. Continuous assigns with right hand side concatenates that needed widening
+   resulted in widening to z instead of 0.
+
+9. `include `[macro] now works.

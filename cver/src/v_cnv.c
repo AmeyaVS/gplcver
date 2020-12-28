@@ -297,7 +297,13 @@ extern void __fio_do_disp(register struct expr_t *axp, int32 dflt_fmt, int32 nd_
 
    fd = (int32) (mcd & ~FIO_MSB);
    /* if fd does not correspond to open file, just set error indicator */
-   if (__fio_fdtab[fd] == NULL) { errno = EBADF; __cur_sofs = 0; return; }
+   /* AIV 06/27/05 - fd cannot be greater than max file size */
+   if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) 
+    { 
+     errno = EBADF; 
+     __cur_sofs = 0; 
+     return; 
+    }
    fputs(__exprline, __fio_fdtab[fd]->fd_s);
    if (nd_nl) fputc('\n', __fio_fdtab[fd]->fd_s);
    __cur_sofs = 0;
@@ -1861,7 +1867,7 @@ static void numexpr_disp(struct expr_t *ndp, int32 inum)
 {
  word32 *ap, *bp, *wp;
  int32 wlen, base;
- double d1;
+ double *dp, d1;
  char s1[RECLEN];
 
  if (ndp == NULL)
@@ -1880,13 +1886,16 @@ static void numexpr_disp(struct expr_t *ndp, int32 inum)
    ap = &(__contab[ndp->ru.xvi]);
    break;
   case ISREALNUM:
-   d1 = __rlcontab[ndp->ru.xvi + inum]; 
+   /* SJM 05/05/05 - must multiply inum by 2 since real cons now use a/bs */
+   dp = (double *) &(__contab[ndp->ru.xvi + 2*inum]); 
+   d1 = *dp;
 disp_real:
    sprintf(s1, "%g", d1);
    __adds(s1);
    return;
  case REALNUM:
-   d1 = __rlcontab[ndp->ru.xvi]; 
+   dp = (double *) &(__contab[ndp->ru.xvi]); 
+   d1 = *dp;
    goto disp_real;
   default: __case_terr(__FILE__, __LINE__); return;
  }

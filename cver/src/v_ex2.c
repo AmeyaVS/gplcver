@@ -48,7 +48,8 @@ extern ungetc(int32 c, FILE *);
 
 /* local prototypes */
 static void prep_bld_monit_dces(struct expr_t *, int32);
-static void linkon_monit_dce(struct net_t *, int32, int32, int32, struct itree_t *);
+static void linkon_monit_dce(struct net_t *, int32, int32, int32,
+ struct itree_t *);
 static int32 chk_monits_chged(register struct dceauxlst_t *);
 static int32 chk_rm_rng_legal(int32, int32, int32, char *);
 static void push_bsel(struct expr_t *);
@@ -67,7 +68,8 @@ static double stdnorm_dev(int32 *);
 static double gamma_dev(double, int32 *);
 static int32 poisson_dev(int32, int32 *);
 static double log_gamma(double);
-static void lxqcol(register struct xstk_t *, register struct xstk_t *, register struct xstk_t *, int32, int32, int32);
+static void lxqcol(register struct xstk_t *, register struct xstk_t *,
+ register struct xstk_t *, int32, int32, int32);
 static void eval_unary(struct expr_t *);
 static void eval_wide_unary(register struct expr_t *,
  register struct xstk_t *);
@@ -108,7 +110,8 @@ extern char *__bld_lineloc(char *, word32, int32);
 extern char *__to_timstr(char *, word64 *);
 extern char *__vval_to_vstr(word32 *, int32, int32 *);
 extern char * __get_eval_cstr(struct expr_t *, int32 *);
-extern word32 __lsub(register word32 *, register word32 *, register word32 *, int32);
+extern word32 __lsub(register word32 *, register word32 *, register word32 *,
+ int32);
 extern void __st_perinst_val(union pck_u pckv, int32, register word32 *,
  register word32 *);
 
@@ -127,14 +130,15 @@ extern void __grow_tevtab(void);
 extern void __grow_xstk(void);
 extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __alloc_xsval(struct xstk_t *, int32);
-extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
-extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
- int32);
+extern void __ld_wire_val(register word32 *, register word32 *,
+ struct net_t *);
+extern void __ld_perinst_val(register word32 *, register word32 *,
+ union pck_u, int32);
 extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
-extern void __ld_bit(register word32 *, register word32 *, register struct net_t *,
- int32);
-extern void __ld_arr_val(register word32 *, register word32 *, union pck_u, int32,
- int32, int32);
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
+extern void __ld_arr_val(register word32 *, register word32 *, union pck_u,
+ int32, int32, int32);
 extern void __ld_psel(register word32 *, register word32 *,
  register struct net_t *, int32, int32);
 extern void __rhspsel(register word32 *, register word32 *, register int32,
@@ -158,15 +162,16 @@ extern int32 __do_widecmp(int32 *, register word32 *, register word32 *,
  register word32 *, register word32 *, int32);
 extern int32 __do_sign_widecmp(int32 *, register word32 *, register word32 *,
  register word32 *, register word32 *, int32);
-extern int32 __do_xzwidecmp(register word32 *, register word32 *, register word32 *,
- register word32 *, int32);
+extern int32 __do_xzwidecmp(register word32 *, register word32 *,
+ register word32 *, register word32 *, int32);
 extern void __ladd(word32 *, word32 *, word32 *, int32);
-extern void __lmult(register word32 *, register word32 *, register word32 *, int32);
-extern void __sgn_lmult(register word32 *, register word32 *, register word32 *,
+extern void __lmult(register word32 *, register word32 *, register word32 *,
  int32);
+extern void __sgn_lmult(register word32 *, register word32 *,
+ register word32 *, int32);
 extern void __ldivmod(word32 *, word32 *, word32 *, int32, int32);
-extern void __sgn_ldivmod(register word32 *, register word32 *, register word32 *,
- int32, int32);
+extern void __sgn_ldivmod(register word32 *, register word32 *,
+ register word32 *, int32, int32);
 extern void __ldivmod2(word32 *, word32 *, word32 *, word32 *, int32);
 extern void __by16_ldivmod(word32 *, word32 *, word32 *, word32, int32);
 
@@ -175,16 +180,17 @@ extern void __do_disp(register struct expr_t *, int32);
 extern void __get_cor_range(register int32, union intptr_u, register int32 *,
  register int32 *);
 extern int32 __get_arrwide(struct net_t *);
-extern void __exec_sysfunc(register struct sy_t *, register struct expr_t *);
-extern void __exec_func(struct sy_t *, register struct expr_t *);
+extern void __exec_sysfunc(register struct expr_t *);
+extern void __exec_func(register struct expr_t *);
 extern void __lhsbsel(register word32 *, register int32, word32);
-extern void __cp_sofs_wval(register word32 *, register word32 *, register int32,
- register int32);
+extern void __cp_sofs_wval(register word32 *, register word32 *,
+ register int32, register int32);
 extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
 extern void __my_fclose(FILE *);
 extern void __to_dhboval(int32, int32);
 extern void __sizchgxs(register struct xstk_t *, int32);
 extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __sgn_xtnd_wrd(struct xstk_t *, int32);
 extern void __sizchg_widen(register struct xstk_t *, int32);
 extern void __narrow_sizchg(register struct xstk_t *, int32);
 extern void __narrow_to1bit(register struct xstk_t *);
@@ -214,10 +220,10 @@ extern int32 __omitxz_widenoteq(register word32 *, register word32 *,
  register word32 *, register word32 *, int32);
 extern void __dcelst_on(struct dceauxlst_t *);
 extern void __dcelst_off(struct dceauxlst_t *);
-extern void reinit_dcelst(struct dceauxlst_t *); 
+extern void init_dcelst(struct dceauxlst_t *); 
 extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
-extern void __do_rm_reading(FILE *, int32, struct net_t *, int32, int32, int32, int32,
- int32);
+extern void __do_rm_reading(FILE *, int32, struct net_t *, int32, int32,
+ int32, int32, int32);
 extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
  register int32);
 extern void __add_select_nchglst_el(register struct net_t *, register int32,
@@ -225,8 +231,8 @@ extern void __add_select_nchglst_el(register struct net_t *, register int32,
 extern void __add_dmpv_chglst_el(struct net_t *);
 extern void __st_arr_val(union pck_u, int32, int32, int32, register word32 *,
  register word32 *);
-extern void __chg_st_arr_val(union pck_u, int32, int32, int32, register word32 *,
- register word32 *);
+extern void __chg_st_arr_val(union pck_u, int32, int32, int32,
+ register word32 *, register word32 *);
 
 extern void __cvsim_msg(char *, ...);
 /* SJM - not used -extern void __pv_err(int32, char *, ...); */
@@ -316,8 +322,8 @@ extern void __start_monitor(struct st_t *stp)
  /* turn on (enable) all dces in list built during prep - off when built */ 
  __dcelst_on(__monit_dcehdr);
 
- /* SJM 01/02/03 - must re-initialize monit dces previous value if presetn */
- reinit_dcelst(__monit_dcehdr);
+ /* SJM 01/02/03 - must re-initialize monit dces previous value if present */
+ init_dcelst(__monit_dcehdr);
 
  /* changing $monitor (including 1st) always trigger 1 output */
  /* no warning since normal to turn off monitoring with $monitor() */
@@ -330,9 +336,9 @@ extern void __start_monitor(struct st_t *stp)
 }
 
 /*
- * reinitialize dce list for monitor form that is always one inst
+ * initialize dce list for monitor form that is always one inst
  */
-extern void reinit_dcelst(struct dceauxlst_t *dcehdr) 
+extern void init_dcelst(struct dceauxlst_t *dcehdr) 
 {
  register struct dceauxlst_t *dclp;
 
@@ -477,7 +483,7 @@ extern void __start_fmonitor(struct st_t *stp)
  __dcelst_on(mauxp->mon_dcehdr[__inum]);
 
  /* SJM 01/02/03 - must re-initialize fmonit dces previous value if presetn */
- reinit_dcelst(mauxp->mon_dcehdr[__inum]); 
+ init_dcelst(mauxp->mon_dcehdr[__inum]); 
 
  dclp = mauxp->mon_dcehdr[__inum];
  for (; dclp != NULL; dclp = dclp->dclnxt)
@@ -521,7 +527,17 @@ extern void __prep_insrc_monit(struct st_t *stp, int32 fmon_type)
 
  tkcp = &(stp->st.stkc);
  /* ignore first mc channel descripter since not involved in monitoring */
- if (tkcp->targs != NULL) alxp = tkcp->targs->ru.x; else alxp = NULL;
+ /* ignore first mc channel descripter since not involved in monitoring */
+ /* AIV 06/25/05 - must check if fmonit if not first arg is not decriptor */
+ /* was skipping first arg to $monitor */ 
+ if (fmon_type) 
+  {
+   if (tkcp->targs != NULL) alxp = tkcp->targs->ru.x; else alxp = NULL;
+  }
+ else
+  {
+   if (tkcp->targs != NULL) alxp = tkcp->targs->lu.x; else alxp = NULL;
+  }
  
  if (fmon_type) strcpy(s1, "$fmonitor"); else strcpy(s1, "$monitor");
 
@@ -715,7 +731,7 @@ static void linkon_monit_dce(struct net_t *np, int32 biti, int32 bitj,
  /* change and change may get filtered out later */
  /* except for entire reg, do not need */
  __alloc_1instdce_prevval(dcep);
- if (dcep->prevval.bp != NULL) __init_1instdce_prevval(dcep);
+ /* SJM 05/04/05 - can initialize since for cver-cc, not linked to .bss yet */
 
  /* then link on undo/chg list - fmon's never undone except for :reset */
  dclp = (struct dceauxlst_t *) __my_malloc(sizeof(struct dceauxlst_t));
@@ -1137,7 +1153,7 @@ extern struct xstk_t *__eval2_xpr(register struct expr_t *ndp)
   case REALNUM:
    push_xstk_(xsp, ndp->szu.xclen);
    /* know high bits of num value already zeroed */
-   memcpy(xsp->ap, &(__rlcontab[ndp->ru.xvi]),
+   memcpy(xsp->ap, &(__contab[ndp->ru.xvi]),
     2*WRDBYTES*wlen_(ndp->szu.xclen));
    return(xsp);
   case OPEMPTY:
@@ -1159,7 +1175,7 @@ extern struct xstk_t *__eval2_xpr(register struct expr_t *ndp)
   case ISREALNUM:
    push_xstk_(xsp, ndp->szu.xclen);
    wlen = wlen_(ndp->szu.xclen);
-   wp = (word32 *) &(__rlcontab[ndp->ru.xvi + __inum]);
+   wp = &(__contab[ndp->ru.xvi + 2*__inum]);
    memcpy(xsp->ap, wp, 2*WRDBYTES*wlen);
    return(xsp);
   case GLBREF:
@@ -1191,8 +1207,7 @@ extern struct xstk_t *__eval2_xpr(register struct expr_t *ndp)
    syp = ndp->lu.x->lu.sy;
    /* notice these routines in v_ex - result left on top of stack */
    /* as usual caller must free */
-   if (syp->sytyp == SYM_SF) __exec_sysfunc(syp, ndp);
-   else __exec_func(syp, ndp);
+   if (syp->sytyp == SYM_SF) __exec_sysfunc(ndp); else __exec_func(ndp);
    /* function return value now on top of stack */
    goto done; 
   case QUEST:
@@ -1487,7 +1502,8 @@ static void push_bsel(struct expr_t *ndp)
  * constants are already normalized during compilation
  * reals illegal and caught before here
  */
-extern int32 __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
+extern int32 __comp_ndx(register struct net_t *np,
+ register struct expr_t *ndx)
 {
  register word32 *rap;
  register word32 *wp;
@@ -1881,7 +1897,7 @@ do_inword:
    return;
   }
 
- /* normalize so swp and corsbit1 start of source with corsbit1 in 1st word32 */
+ /* normalize so swp and corsbit1 start of src with corsbit1 in 1st word32 */
  wi = get_wofs_(sbit1);
  swp = &(swp[wi]);
  corsbit1 = ubits_(sbit1);
@@ -1931,8 +1947,8 @@ extern void __exec_readmem(struct expr_t *argxp, int32 base)
  __cur_fnam = chp;
  if ((f = __tilde_fopen(__cur_fnam, "r")) == NULL)
   {
-   __sgferr(716, "unable to open $readmem%c input file %s", __to_baselet(base),
-    __cur_fnam);
+   __sgferr(716, "unable to open $readmem%c input file %s",
+    __to_baselet(base), __cur_fnam);
    goto no_fil_done;
   }
 
@@ -3002,7 +3018,7 @@ ret_x:
 }
 
 /*
- * return randomly distributed int32 std. normal dist - std. dev. 'standard_dev'
+ * return randomly distributed int std. normal dist - std. dev. 'standard_dev'
  * and mean 'mean'
  *
  * notice requiring all 3 arguments - ,, illegal
@@ -4422,7 +4438,7 @@ static void eval_binary(struct expr_t *ndp)
        /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
        if (ndp->lu.x->szu.xclen != WBITS)
         {
-         /* complex narrower than 32 bit signed case - sign extend to c int32 */ 
+         /* complex narrower than 32 bit signed case - sign extend to c int */ 
          if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
           op1a |= ~(__masktab[xsp1->xslen]);
         } 
@@ -4470,7 +4486,7 @@ static void eval_binary(struct expr_t *ndp)
        /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
        if (ndp->lu.x->szu.xclen != WBITS)
         {
-         /* complex narrower than 32 bit signed case - sign extend to c int32 */ 
+         /* complex narrower than 32 bit signed case - sign extend to c int */ 
          if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
           op1a |= ~(__masktab[xsp1->xslen]);
         }
@@ -4515,14 +4531,14 @@ static void eval_binary(struct expr_t *ndp)
        /* 2's complement makes positive if needed */
        if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
         {
-         /* since c - of cast to int32 can only handle 32 bit ints, sign xtnd */
+         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
          op1a |= ~(__masktab[xsp1->xslen]);
          op1a = (word32) (-((sword32) op1a)); 
          has_sign = TRUE;
         }
        if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
         {
-         /* since c - of cast to int32 can only handle 32 bit ints, sign xtnd */
+         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
          op2a |= ~(__masktab[xsp2->xslen]);
          op2a = (word32) (-((sword32) op2a));
          has_sign = !has_sign;
@@ -4977,7 +4993,7 @@ static void eval_binary(struct expr_t *ndp)
    break;
   case /* !== */ RELCNEQ:
 
-   if (nd_signop)
+   if (nd_signop) 
     {
      /* SJM 05/13/04 - width is opand not result width */
      if (xsp1->xslen < WBITS)
@@ -5045,16 +5061,22 @@ static void eval_binary(struct expr_t *ndp)
    break;
   case /* << */ SHIFTL:
   case /* <<< */ ASHIFTL:
-   /* SJM 09/30/03 - notice new arithmetic lshift same as logical */
    /* if shift amt x/z, result is 0 */ 
    if (op2b != 0L) rtb = rta = mask;
-
    /* if shift length wider than op1, result is 0 */
    /* 2nd shift width operand is interpreted as range index (word32) */
-   else if (op2a > (word32) ndp->szu.xclen) rtb = rta = 0L;
-
-   /* op1a is context determined which is width of shift expr node */
-   else { rtb = (op1b << op2a) & mask; rta = (op1a << op2a) & mask; }
+   else if (op2a > (word32) opwid) rtb = rta = 0L;
+   else
+    {
+     if (nd_signop && xsp1->xslen < ndp->szu.xclen)
+      {
+       __sgn_xtnd_wrd(xsp1, ndp->szu.xclen);
+       op1a = xsp1->ap[0]; 
+       op1b = xsp1->bp[0]; 
+      }
+     rtb = (op1b << op2a) & mask;
+     rta = (op1a << op2a) & mask;
+    }
    break;
   case /* >> */ SHIFTR:
    /* SJM 09/30/03 - logical shift right stays same even if sign bit 1 */
@@ -5104,7 +5126,8 @@ static void eval_binary(struct expr_t *ndp)
       {
        /* SJM 05/10/04 - could use c signed arithmetic shift for WBITS wide */
        /* SJM for word32 arithmetic right shift use c arithmetic shift */
-       if ((op1a & (1 << (ndp->szu.xclen - 1))) != 0)
+       /* AIV 06/02/05 - if shift amt is wrong for 0 - don't mask */
+       if (op2a != 0 && (op1a & (1 << (ndp->szu.xclen - 1))) != 0)
         {
          /* first shift as if 0 bits then or in the bits shifted in from */
          /* injected sign bits */

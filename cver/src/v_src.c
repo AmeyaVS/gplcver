@@ -79,7 +79,7 @@ static void chk1_arrinit_expr(struct expr_t *, char *, int32);
 static int32 rd_contassign(void);
 static struct conta_t *add_conta(struct expr_t *, struct expr_t *, int32,
  int32);
-static int32 rd_eventdecl(void);
+static int32 rd_eventdecl(int32);
 static int32 rd_paramdecl(int32);
 static int32 rd_dfparam_stmt(void);
 static struct dfparam_t *alloc_dfpval(void);
@@ -271,6 +271,10 @@ rd_def:
    /* because library must check for unresolved, get name before call */
    __get_vtok();
    __rd_udpdef(NULL);
+   break;
+  case GENERATE:
+   __pv_ferr(3549, "generate feature not implemented in this version");
+   __vskipto_modend(ENDGENERATE); 
    break;
   default:
    __pv_ferr(975, "module or primitive keyword expected - %s read",
@@ -1425,7 +1429,7 @@ moditem_resync:
      if (!rd_iodecl(IO_BID)) goto moditem_resync;
      continue;
     case EVENT:
-     if (!rd_eventdecl()) goto moditem_resync;
+     if (!rd_eventdecl(FALSE)) goto moditem_resync;
      continue;
     case INITial:
     case ALWAYS:
@@ -1491,6 +1495,11 @@ moditem_stmt:
      /* but assume still in sync */
      __pv_ferr(990, "module definitition cannot end with endprimitive");
      break;
+    case GENERATE:
+     /* AIV 06/27/05 - catch generate */
+     __pv_ferr(3549, "generate feature not implemented in this version");
+     if (!__vskipto_modend(ENDGENERATE)) break;
+     continue;
     default:
      if ((wtyp = __fr_wtnam(__toktyp)) != -1)
       {
@@ -3930,8 +3939,11 @@ static struct conta_t *add_conta(struct expr_t *lhsndp,
 
 /*
  * read an event declaration
+ *
+ * parsing routine to read and declare an event decl (can't be array/vec)
+ * need to declare as task var if reading task/func/named block
  */
-static int32 rd_eventdecl(void)
+static int32 rd_eventdecl(int32 reading_tsk)
 {
  int32 first_time, has_attr;
  struct net_t *np;
@@ -3949,8 +3961,8 @@ static int32 rd_eventdecl(void)
      goto try_resync;
     }
    /* since no range, if fails just try next one*/
-   np = __decl_wirereg(N_EVENT, (struct expr_t *) NULL, (struct expr_t *) NULL,
-    NULL);
+   if (reading_tsk) np = decl_taskvar(N_EVENT, NULL, NULL);
+   else np = __decl_wirereg(N_EVENT, NULL, NULL, NULL);
 
    /* SJM - 03/20/00 - save wire decl attrs */
    if (has_attr)
@@ -4306,7 +4318,6 @@ static struct dfparam_t *alloc_dfpval(void)
  dfpp->idntmastdfp = NULL;
  dfpp->idntnxt = NULL;
  dfpp->rooted_dfps = NULL;
- dfpp->indfp_itp = NULL;
  dfpp->dfptskp = NULL;
  return(dfpp);
 }
@@ -4773,7 +4784,7 @@ do_tfwdecl:
     case INTEGER: wtyp = N_INT; goto do_tfwdecl;
     case REAL: case REALTIME: wtyp = N_REAL; goto do_tfwdecl;
     case EVENT:
-     if (!rd_eventdecl()) goto tfdecl_sync;
+     if (!rd_eventdecl(TRUE)) goto tfdecl_sync;
      break;
     default:
      /* assume start of statement */

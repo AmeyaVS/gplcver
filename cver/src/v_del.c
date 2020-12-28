@@ -886,13 +886,14 @@ done:;
  */
 static void nonis_to_delval(word64 *ticksval, struct expr_t *xp)
 {
- double d1;
+ double *dp, d1;
  word32 *wp;
  word64 delval;
 
  if (xp->optyp == REALNUM)
   {
-   d1 = __rlcontab[xp->ru.xvi];
+   dp = (double *) &(__contab[xp->ru.xvi]);
+   d1 = *dp;
    if (d1 < 0.0)
     {
 neg_del:
@@ -1104,7 +1105,7 @@ try_narrow:
   case ISREALNUM: 
    /* here if value too big - silently truncates to mod 64 bits */
    if (dtab == NULL) dtab = (word64 *) __my_malloc(nbytes);
-   dp = &(__rlcontab[xp1->ru.xvi]);
+   dp = (double *) &(__contab[xp1->ru.xvi]);
    for (ii = 0; ii < __inst_mod->flatinum; ii++)
     {
      /* for reals know fits and non x/z but must scale before conversion */
@@ -1571,7 +1572,7 @@ static void fill_1col_isdel(word64 *dtab, int32 coli, struct expr_t *xp,
     dtab[stride*ii + coli] = ticksval;
    break;
   case ISREALNUM:
-   dp = &(__rlcontab[xp->ru.xvi]);
+   dp = (double *) &(__contab[xp->ru.xvi]);
    for (ii = 0; ii < __inst_mod->flatinum; ii++)
     {
      d1 = dp[ii];

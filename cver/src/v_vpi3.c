@@ -2879,8 +2879,6 @@ extern vpiHandle vpi_put_value(vpiHandle object, p_vpi_value value_p,
        /* thanks to Greenlight for this fix */
        if (ndx == -1) __eval_tran_bits(np);
        else __eval_tran_1bit(np, ndx);
-
-       __eval_tran_1bit(np, ndx);
       }
      else wire_vpi_release(np, ndx);
     }
@@ -4346,14 +4344,14 @@ static void reg_vpi_force(register struct net_t *np, word32 *ap, word32 *bp)
   }
  else
   {
-   /* if no force pending, activate it */
-   frc_qcp->qc_active = FALSE;
    /* LOOKATME - could avoid setting these since never used */
    frc_qcp->qcstp = NULL;
    frc_qcp->qcrhsbi = -1;
    frc_qcp->qclhsbi = -1;
    frc_qcp->lhsitp = NULL;
   }
+ /* AIV 03/09/05 - inactive force was F must be T */
+ frc_qcp->qc_active = TRUE;
  if (__debug_flg && __ev_tracing)
   {
    __tr_msg(":: vpi_put_value%s force of reg %s to %s in %s now %s\n",
@@ -4426,13 +4424,7 @@ static void wire_vpi_force(register struct net_t *np, word32 *ap, word32 *bp,
  char s3[RECLEN]; 
  
  /* make sure assign/force table exists */ 
- if (!np->frc_assgn_allocated)
-  {
-   __alloc_qcval(np);
-   /* SJM 12/23/02 - need to turn on this flag - PLI force as if in source */
-   /* needed to make force/assign logic work right */
-   np->frc_assgn_allocated = TRUE;
-  }
+ if (!np->frc_assgn_allocated) __alloc_qcval(np);
 
  if (__debug_flg && __ev_tracing)
   {
@@ -5232,6 +5224,8 @@ static struct h_t *setschd_var_fromvaluep(p_vpi_value value_p,
      /* SJM 09/05/99 - think elmination when scheduled wrong */
      /* nothing to remove, just put on end of active pnd0 queue */
      /* SJM - if (schtim == 0ULL) goto bld_tev; WRONG */
+     /* AIV 03/09/05 - for 0 delay schedule time will not be 0 */
+     if (ticksdel == 0ULL) goto bld_tev;
 
      /* know delay list in time order */
      /* dlp2 is one before first after (maybe last), nil is before all */ 
@@ -5823,7 +5817,9 @@ extern PLI_BYTE8 *vpi_mcd_name(PLI_UINT32 mcd)
  if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
-   return(__fio_fdtab[fd]->fd_name);
+   /* AIV 06/27/05 - fd cannot be greater than max file size */
+   if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) return(NULL);
+   else return(__fio_fdtab[fd]->fd_name);
   }
  for (i = 2; i < 31; i++)
   {
@@ -5859,7 +5855,15 @@ extern PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, PLI_BYTE8 *format, ...)
   {
    fd = mcd & ~(FIO_FD);
    va_start(va, format);
-   numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, va);
+   /* AIV 06/27/05 - fd cannot be greater than max file size */
+   if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) 
+    {
+     numch_prtfed = -1;
+    }
+   else
+    {
+     numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, va);
+    }
    va_end(va);
    return(numch_prtfed);
   }
@@ -5967,7 +5971,15 @@ extern PLI_INT32 vpi_mcd_vprintf(PLI_UINT32 mcd, PLI_BYTE8 *format,
  if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
-   numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, ap);
+   /* AIV 06/27/05 - fd cannot be greater than max file size */
+   if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) 
+    {
+     numch_prtfed = -1;
+    }
+   else
+    {
+     numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, ap);
+    }
    return(numch_prtfed);
   }
 
@@ -6027,7 +6039,8 @@ extern PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
   {
    fd = mcd & ~(FIO_FD);
    /* know fd in range but if not open error */ 
-   if (__fio_fdtab[fd] == NULL)
+   /* AIV 06/27/05 - fd cannot be greater than max file size */
+   if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) 
     {
      __vpi_err(1896, vpiError,
       "vpi_mcd_vprintf: new 2001 style file descriptor %d - file not open",

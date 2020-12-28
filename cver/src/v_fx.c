@@ -272,6 +272,8 @@ extern void __do_mdsplit(struct mod_t *);
 extern void __init_itree_node(struct itree_t *);
 extern int32 __chk_giarr_ndx_expr(struct expr_t *);
 extern int32 __get_giarr_wide(struct giarr_t *);
+extern void __dmp_dsgn_minst(char *);
+extern void __dmp_1minst(struct inst_t *);
 extern int32 __expr_has_glb(struct expr_t *);
 extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern void __free_namedparams(struct namparam_t *);
@@ -2003,7 +2005,6 @@ undcl_param:
     }
    np = syp->el.enp;
    if (!np->n_isaparam || np->nu.ct->p_specparam) goto undcl_param;
-
 
    if (npxtab[np->nu2.npi] != NULL)
     {
@@ -3810,7 +3811,7 @@ static void rebld_mod_giarrs(void)
 {
  register int32 i, i2, i3;
  register struct mod_t *mdp, *imdp;
- int32 has_iarrs, newgnum, newinum, osize, nsize, giawid, j;
+ int32 has_iarrs, newgnum, newinum, giawid, j;
  int32 arrsynum, bi, gia_dir, new_stsiz;
  struct gate_t *gptab, *gp;
  struct inst_t *iptab, *ip;
@@ -3859,11 +3860,13 @@ static void rebld_mod_giarrs(void)
    /* original moved to giap */
    new_stsiz = mdp->msymtab->numsyms + (newgnum - mdp->mgnum)
     + (newinum - mdp->minum) + arrsynum;
-   osize = mdp->msymtab->numsyms*sizeof(struct sy_t *);
-   nsize = new_stsiz*sizeof(struct sy_t *);
-   __wrkstab = (struct sy_t **)
-    __my_realloc((char *) mdp->msymtab->stsyms, osize, nsize);
-   mdp->msymtab->stsyms = NULL;
+   /* SJM 07/02/05 - can't use realloc because need old stsyms during */
+   /* build of new minst iptab - old worked only if realloc didn't move */
+   /* can't free stsyms yet */
+   __wrkstab = (struct sy_t **) __my_malloc(new_stsiz*sizeof(struct sy_t *));
+   memcpy(__wrkstab, mdp->msymtab->stsyms,
+    mdp->msymtab->numsyms*sizeof(struct sy_t *));
+
    __last_sy = mdp->msymtab->numsyms - 1;
    /* DBG remove --- */
    if (!mdp->msymtab->freezes) __misc_terr(__FILE__, __LINE__);
@@ -3882,7 +3885,12 @@ static void rebld_mod_giarrs(void)
         {
          giatab[i2] = NULL;
          /* copy body (insides) */
-         gptab[i2] = mdp->mgates[i];
+         gp = &(gptab[i2]);
+         *gp = mdp->mgates[i];
+         /* SJM 07/02/05 - for non arrayed insts in mod with inst arrays, */ 
+         /* need to connect the sym to new iptab entry - needed because */
+         /* ip tab is array of inst_t records not array of ptrs */
+         gp->gsym->el.egp = gp;
          i2++;
          continue;
         }
@@ -3931,9 +3939,17 @@ static void rebld_mod_giarrs(void)
       {
        if ((giap = mdp->miarr[i]) == NULL)
         {
+         /* non array inst - just copy */
          giatab[i2] = NULL;
-         iptab[i2] = mdp->minsts[i];
-         /* here jus move ptr */
+
+         ip = &(iptab[i2]);
+         *ip = mdp->minsts[i];
+         /* SJM 07/02/05 - for non arrayed insts in mod with inst arrays, */ 
+         /* need to connect the sym to new iptab entry - needed because */
+         /* ip tab is array of inst_t records not array of ptrs */
+         ip->isym->el.eip = ip; 
+
+         /* here just move ptr */
          sloctabp[i2] = mdp->iploctab[i];
          mdp->iploctab[i] = NULL;
          i2++;
@@ -3969,7 +3985,7 @@ static void rebld_mod_giarrs(void)
           }
          else
           {
-           /* thereafer alloc and copy */
+           /* thereafter alloc and copy */
            if (imdp->mpnum == 0) sloctabp[i3] = NULL; 
            else
             { 
@@ -3997,12 +4013,16 @@ static void rebld_mod_giarrs(void)
      mdp->iploctab = sloctabp; 
      mdp->minum = newinum;
     }
+
    /* must re-sort symbol table - because table of ptr el union right */
    qsort((char *) __wrkstab, (word32) new_stsiz, sizeof(struct sy_t *),
     gia_sym_cmp);
+   /* SJM 07/02/05 - free the mod's symbtab stsyms to fix memory leak */
+   /* symtab is ptr to syms - for non i/g array's sym record still used */
+   __my_free((char *) mdp->msymtab->stsyms,
+    mdp->msymtab->numsyms*sizeof(struct sy_t *)); 
    mdp->msymtab->numsyms = new_stsiz;
    mdp->msymtab->stsyms = __wrkstab;
-
    __pop_wrkitstk();
   }
  /* if any any arrays of instances, must recount */  
@@ -4068,6 +4088,50 @@ static void add_new_isym(struct inst_t *ip, int32 bi)
  __wrkstab[++__last_sy] = isyp;
  ip->isym = isyp;
  isyp->el.eip = ip;
+}
+
+/*
+ * routine to dump minsts for every module in the design
+ */
+extern void __dmp_dsgn_minst(char *hdr_s)
+{
+ register struct mod_t *mdp;
+ int32 ii;
+ struct inst_t *ip;
+
+ __dbg_msg("%s ===>\n", hdr_s);
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   __dbg_msg("+++ dumping instances in module %s:\n", mdp->msym->synam);
+   for (ii = 0; ii < mdp->minum; ii++)
+    {
+     ip = &(mdp->minsts[ii]);
+     __dmp_1minst(ip);
+    }
+  }
+}
+
+/*
+ * dmp one minst element 
+ */
+extern void __dmp_1minst(struct inst_t *ip)
+{
+ char s1[RECLEN];
+
+ if (ip->ipxprtab != NULL)
+  {
+   sprintf(s1, "ipxprtab[0]=%s", __msgexpr_tostr(__xs, ip->ipxprtab[0]));
+  }
+ else strcpy(s1, "[no ipxprtab]");
+ __dbg_msg("     inst %s type %s %s\n", ip->isym->synam, ip->imsym->synam,
+  s1);
+ if (ip->isym->el.eip != ip)
+  {
+   __dbg_msg("inst %s type %s - other inst %s type %s\n",
+     ip->isym->el.eip->isym->synam, ip->isym->el.eip->imsym->synam, 
+     ip->isym->synam, ip->imsym->synam); 
+   __misc_terr(__FILE__, __LINE__);
+  }
 }
 
 /*
@@ -5388,6 +5452,7 @@ static int32 chk_glb_inst_sels(struct gref_t *grp)
      else { up_mdp = NULL;__case_terr(__FILE__, __LINE__); }
     }
    ii = ((byte *) ip - (byte *) up_mdp->minsts)/sizeof(struct inst_t);
+
    if (up_mdp->miarr == NULL || up_mdp->miarr[ii] == NULL)
     {
      if (__glbxcmps[gi] == NULL) continue;
@@ -6482,7 +6547,8 @@ static void copy_defparams(void)
 
    /* must look up target symbols for defparam at end, no copy here */ 
    ndfpp->dfpiis = (int32 *) __my_malloc((ndfpp->last_dfpi + 1)*sizeof(int32));
-   for (dfi = 1; dfi <= ndfpp->last_dfpi + 1; dfi++)
+   /* SJM 06/03/05 - index was wrongly not starting at 0 */
+   for (dfi = 0; dfi < ndfpp->last_dfpi + 1; dfi++)
     ndfpp->dfpiis[dfi] = odfpp->dfpiis[dfi];
 
    if (ndfphdr == NULL) ndfphdr = ndfpp;
@@ -7238,14 +7304,20 @@ extern struct expr_t *__copy_expr(struct expr_t *src)
 
      /* trick is that src gref field points to dst gref */
      sgrp = src->ru.grp;
-     /* destionation global reference saved */
-     dgrp = sgrp->spltgrp;
-     /* dest. gref points to new gref entry */
-     dst->ru.grp = dgrp;
-     /* also finally link dest. group entry expr. ID node ptr to new node */
-     dgrp->gxndp = dst;
-     /* do not need to set lu.sy since later global name resolution sets */
-     /* to target in some other part of design */
+     /* SJM 06/03/05 - when copying checked defparam, grp gone */
+     /* happens when defparam definition in mode split from pound param */
+     if (sgrp == NULL) dst->ru.grp = NULL; 
+     else
+      {
+       /* destionation global reference saved */
+       dgrp = sgrp->spltgrp;
+       /* dest. gref points to new gref entry */
+       dst->ru.grp = dgrp;
+       /* also finally link dest. group entry expr. ID node ptr to new node */
+       dgrp->gxndp = dst;
+       /* do not need to set lu.sy since later global name resolution sets */
+       /* to target in some other part of design */
+      }
     }
    break;
   default:
@@ -7264,7 +7336,7 @@ extern struct expr_t *__copy_expr(struct expr_t *src)
  */
 extern struct expr_t *__sim_copy_expr(struct expr_t *src)
 {
- int sav_stnum, sav_exprnum;
+ int32 sav_stnum, sav_exprnum;
  struct expr_t *dst;
 
  sav_stnum = 0;

@@ -196,7 +196,6 @@ extern int32 __alloc_is_cval(int32);
 extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
 extern int32 __alloc_shareable_cval(word32, word32, int32);
 extern int32 __alloc_shareable_rlcval(double);
-extern int32 __alloc_rlcval(int32);
 extern struct expr_t *__widen_unsiz_rhs_assign(struct expr_t *, int);
 
 extern void __pv_warn(int32, char *,...);
@@ -1342,7 +1341,7 @@ extern int32 __get_rhswidth(struct expr_t *rhsx)
      if (xwid2 > xwid) xwid = xwid2;
     break;
     case WIDLEFT: return(__get_rhswidth(rhsx->lu.x));
-    case WIDSELF: return(__get_rhswidth(rhsx->lu.x));
+   case WIDSELF: return(__get_rhswidth(rhsx->lu.x));
     default: __case_terr(__FILE__, __LINE__);
    }
  }
@@ -1360,8 +1359,8 @@ extern int32 __get_widthclass(struct expr_t *rhsx)
  /* unary form of both always reduction => width one */
  if (opip->opclass == BOTHOP && rhsx->ru.x == NULL)
   {
-   if (rhsx->optyp == MINUS) return(WIDSELF);
-   else return(WIDONE);
+   /* AIV 03/09/05 - minus is only bothop with lhs cnxt size */
+   if (rhsx->optyp != MINUS) return(WIDONE);
   }
  return(opip->reswid);
 }
@@ -2474,9 +2473,12 @@ cnvt_gref_param:
          ndp->optyp = ISREALNUM;
          ndp->consub_is = TRUE;
          *has_isform = TRUE;
-         ndp->ru.xvi = __alloc_rlcval(__inst_mod->flatinum);
+         /* word size is 1 since reals take 2 words but no b part */
+         ndp->ru.xvi = __allocfill_cval_new(np->nva.wp, &(np->nva.wp[wsiz]),
+          __inst_mod->flatinum);
+
          /* LOOKATME - does this work ??? */
-         dp = &(__rlcontab[ndp->ru.xvi]);
+         dp = (double *) &(__contab[ndp->ru.xvi]);
          /* copy from param (aka net) form to constant value table */
 
          /* copy from param (aka net) form to constant value table */
@@ -2634,7 +2636,7 @@ static void fold_const(struct expr_t *ndp)
  register int32 iti;
  int32 wlen, xreal, base, xwi, sav_xclen, xsign;
  word32 *wp; 
- double d1;
+ double *dp, d1;
  struct xstk_t *xsp;
 
  wp = NULL;
@@ -2724,7 +2726,7 @@ is_1inst:
     }
    /* for IS form only indication of real is is_real flag - and expr. and */
    /* replaced constant will have same value */ 
-   if (xreal) xwi = __alloc_rlcval(__inst_mod->flatinum);
+   if (xreal) xwi = __alloc_is_cval(__inst_mod->flatinum);
    else
     {
      xwi = __alloc_is_cval(wlen*__inst_mod->flatinum);
@@ -2743,7 +2745,8 @@ is_1inst:
      if (xreal)
       {
        memcpy(&d1, xsp->ap, sizeof(double)); 
-       __rlcontab[xwi + __inum] = d1;
+       dp = (double *) &(__contab[xwi + __inum]);
+       *dp = d1;
       }
      else
       {
@@ -5247,6 +5250,7 @@ static void chkst_dumpvars_enable(struct tskcall_t *tkcp, int32 anum)
  register struct expr_t *alxp;
  int32 levels;
  word32 *wp;
+ double *dp;
  struct expr_t *dpthndp, *xp;
  struct gref_t *grp;
  struct net_t *np;
@@ -5284,7 +5288,8 @@ static void chkst_dumpvars_enable(struct tskcall_t *tkcp, int32 anum)
   }
  else if (dpthndp->optyp == REALNUM)
   {
-   levels = (int32) __rlcontab[dpthndp->ru.xvi];
+   dp = (double *) __contab[dpthndp->ru.xvi];
+   levels = (int32) *dp;
    if (levels < 0.0) goto non_const_expr;
   }
  else

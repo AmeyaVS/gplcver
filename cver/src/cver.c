@@ -242,6 +242,7 @@ int32 __lib_verbose;   /* T => emit src.file/lib source messages */
 int32 __sdf_verbose;   /* T => emit msgs for SDF annotated delays */
 int32 __switch_verbose;/* T => emit msgs for switch/tran chan build */
 int32 __chg_portdir;   /* T => chg port dir to bid. for XL compat */
+int32 __nb_sep_queue;  /* F => old un-seperated nb in pnd0 queue */
 int32 __decompile;     /* T => decompile and print Verilog source */
 int32 __compile_only;  /* T => check syntax (inc. lib.) no quads */
 int32 __parse_only;    /* T => first pass parse only to chk sep mod */
@@ -530,11 +531,7 @@ int32 __size_tevtab;   /* num tev's allocated in tev tab */
 word32 *__contab;      /* design wide constant table */
 int32 __contabwsiz;    /* currrent size of const tab in words */
 int32 __contabwi;      /* next free word32 slot in const tab */
-int32 __opempty_contabi; /* special contab index for opempty expr leaf */
-int32 __b32_minus1;    /* special contab ndx for 32 bit -1 */
-double *__rlcontab;    /* design wide constant table for reals*/
-int32 __rlcontabdsiz;  /* currrent size of const tab in no. of dbls */
-int32 __rlcontabdi;    /* next free double slot in real const tab */
+int32 __opempty_contabi; /* special contab ndx for opempty expr leaf */
 struct contab_info_t **__contab_hash; /* contab hash information */
 
 /* n.l. access routines */  
@@ -650,16 +647,13 @@ int32 __num_switch_chans; /* total num tranif channels in design */
 /* storage tables variables */
 byte *__btab;          /* design wide scalar (byte) storage table */
 int32 __btabbsiz;      /* scalar storage byte table size in bytes */
-int32 __btabbi;        /* during var init next word32 index to use */ 
+int32 __btabbi;        /* during var init next index to use */ 
+byte *__nchgbtab;      /* table for per inst nchg bytes */
+int32 __nchgbtabbsiz;  /* size in btab of nchg action bits */
+int32 __nchgbtabbi;    /* during init, next index to use */
 word32 *__wtab;        /* design wide var but not mem storage area */
 int32 __wtabwsiz;      /* precomputed size (need ptrs into) in words */
-int32 __wtabwi;        /* during var init next word32 index to use */ 
-word64 *__lwtab;       /* design wide long long var storage area */
-int32 __lwtabwsiz;     /* precomputed size (need ptrs into) in lwords */
-int32 __lwtabwi;       /* during var init next lword index to use */ 
-double *__rltab;       /* design wide real var storage area */
-int32 __rltabdsiz;     /* precomputed size in doubles (nd ptr into)  */
-int32 __rltabdi;       /* during var init next double index to use */ 
+int32 __wtabwi;        /* during var init next index to use */ 
 
 /* simulation control and state values */
 int32 __stmt_suspend;  /* set when behavioral code suspends */
@@ -798,6 +792,8 @@ struct nchglst_t *__nchgfreelst; /* change element free list */
 struct tc_pendlst_t *__tcpendfreelst; /* free slot end changed tchks */
 struct dltevlst_t *__dltevfreelst; /* pend double event free list */
 struct tevlst_t *__ltevfreelst; /* pend event free list */
+i_tev_ndx __nb_te_hdri; /* non-blocking new end queue hd */ 
+i_tev_ndx __nb_te_endi; /* and tail */
 
 /* net change list variables */
 struct nchglst_t *__nchg_futhdr; /* header of future net chg list */
@@ -896,6 +892,7 @@ extern int32 __enum_is_suppressable(int32);
 
 /* extern prototypes defined in other module */
 extern void __xform_nl_to_modtabs(void);
+extern void __initialize_dsgn_dces(void);
 extern int32 __comp_sigint_handler(void);
 extern char *__my_malloc(int32);
 extern char *__my_realloc(char *, int32 , int32);
@@ -1213,7 +1210,7 @@ set_etime:
    rv = 1;
    goto done2;
   }
-
+ 
  /* notice compilation must include prep. for at least udp checking */
  __prep_sim();
 
@@ -1239,8 +1236,8 @@ set_etime:
  if (__verbose)
   {
    __cv_msg(
-    "  Variable storage in bytes: %d for scalars, %d for vectors and %d for reals.\n", 
-    __btabbsiz, 4*__wtabwsiz, 8*__rltabdsiz);
+    "  Variable storage in bytes: %d for scalars, %d for non scalars.\n", 
+    (__btabbsiz + __nchgbtabbsiz), 4*__wtabwsiz);
   }
 
  if (__compile_only)
@@ -1250,7 +1247,6 @@ set_etime:
    goto done;
   }
  if (__pv_err_cnt != 0) goto err_done;
-
 
  if (__verbose) __cv_msg("  Begin load/optimize:\n");
  mem_use_msg(FALSE);
@@ -1328,6 +1324,8 @@ set_etime:
  /* always do transformations to group elements into per module tables */
  __xform_nl_to_modtabs();
 
+ /* SJM 05/04/05 - now can only initialize dce previous values */
+ __initialize_dsgn_dces();
 
  __init_sim();
  __my_ftime(&__end_prep_time, &__end_prep_mstime);
@@ -1420,17 +1418,16 @@ extern void __setup_dbmalloc(void)
 
  /* 0 means don't check str/mem func args */
  /* --- */
- /* --- default is on - uncomment to turn off */
  m.i = 1;
  dbmallopt(MALLOC_CKDATA,&m);
  /* --- */
  /* --- */
- m.i = 1;
+ m.i = 0;
  dbmallopt(MALLOC_REUSE,&m);
  /* --- */
  /* -- */
- /* m.i = 2; */
- m.i = 3;
+ m.i = 2;
+ /* m.i = 3; */
  dbmallopt(MALLOC_FILLAREA, &m);
  /* -- */
 }
@@ -1441,10 +1438,10 @@ extern void __start_chkchain(void)
 
  m.i = 1;
  dbmallopt(MALLOC_CKCHAIN,&m);
- /* --
+ /* -- */
  m.i = 1;
  dbmallopt(MALLOC_CKDATA,&m);
- -- */
+ /* -- */
 }
 #else
 /* nil if db malloc not used */
@@ -1691,6 +1688,7 @@ static void init_glbs(void)
  __impl_evlst_hd = NULL;
  __impl_evlst_tail = NULL;
  __canbe_impl_evctrl = FALSE;
+ __nb_sep_queue = TRUE;
 
  __my_ftime(&__start_time, &__start_mstime);
  cp = ctime(&__start_time);
@@ -1948,18 +1946,14 @@ static void init_ds(void)
  __wtab = NULL;
  __wtabwsiz = -1;
  __wtabwi = -1;
- /* long word32 table only used during thrded interpreter sim */
- __lwtab = NULL;
- __lwtabwsiz = -1;
- __lwtabwi = -1;
 
  __btab = NULL;
  __btabbsiz = -1;
  __btabbi = -1;
 
- __rltab = NULL;
- __rltabdsiz = -1;
- __rltabdi = -1;
+ __nchgbtab = NULL;
+ __nchgbtabbsiz = -1;
+ __nchgbtabbi = -1;
 
  /* least first one unused */
  __numused_tevtab = 0; 
@@ -2167,14 +2161,14 @@ static void init_cfg(void)
 #define CO_FRSPICE 64
 #define CO_SWITCHVERB 65
 #define CO_CHG_PORTDIR 66
-#define CO_SDF_LOG 67
-#define CO_SDF_NO_ERRS 68
-#define CO_SDF_NO_WARNS 69
-#define CO_LOADPLI1 70
-#define CO_LOADVPI 71
-#define CO_LIBLIST 72
-#define CO_LIBMAP 73
-#define CO_DMP_FLOWG 74
+#define CO_NB_NOSEP_QUEUE 67
+#define CO_SDF_LOG 68
+#define CO_SDF_NO_ERRS 69
+#define CO_SDF_NO_WARNS 70 
+#define CO_LOADPLI1 71
+#define CO_LOADVPI 72
+#define CO_LIBLIST 73
+#define CO_LIBMAP 74
 
 /* command line option table */
 /* this does not need to be alphabetical */
@@ -2242,11 +2236,11 @@ static struct namlst_t cmdopts[] = {
  { CO_OPT_SIM, "+optimized_sim" },
  { CO_OPT_SIM, "-O" },
  { CO_OPT_DEBUG, "+Odebug" },
- { CO_DMP_FLOWG, "+dumpfg"},
  { CO_SNAPSHOT, "+snapshot" },
  { CO_FRSPICE, "+fromspice" },
  { CO_SWITCHVERB, "+switchverbose" },
  { CO_CHG_PORTDIR, "+change_port_type" },
+ { CO_NB_NOSEP_QUEUE, "+no_separate_nb_queue" },
  { CO_SDF_NO_ERRS, "+sdf_noerrors" },
  { CO_SDF_NO_WARNS, "+sdf_nowarns" },
  { CO_LIBLIST, "-L"},
@@ -3103,12 +3097,23 @@ bad_maxerrs:
       __cv_msg("  Switch channel construction verbose mode is on.\n");
      break;
     case CO_CHG_PORTDIR:
-     /* SJM 11/29/00 - new option that changes port direction if connected */   
+     /* SJM 11/29/00 - new option that changes port direction if connected */  
      /* as inout, most designs do not need this option but some do */
      __chg_portdir = TRUE;
      if (__verbose)
       __cv_msg(
        "  Changing port type (direction) to inout for ports connected as inout.\n");
+     break;
+    case CO_NB_NOSEP_QUEUE:
+     /* AIV 06/28/05 - new option that changes causes old non blocking */
+     /* algorithm that did not have separate after pnd0 (each section) */
+     /* event queue to be used */
+     __nb_sep_queue = FALSE;
+     if (__verbose)
+      {
+       __cv_msg(
+        "  Using old Cver non-blocking scheduling - no separate non blocking queuel\n");
+      }
      break;
     case CO_LIBRESCAN:
      __lib_rescan = TRUE;
@@ -3238,7 +3243,6 @@ lib_mth:
     /* just ignore if optimization not compiled in */
     case CO_OPT_DEBUG:
     case CO_OPT_SIM:
-    case CO_DMP_FLOWG:
      __gfwarn(3121, olp->optfnam_ind, olp->optlin_cnt,
       " -O native assembly code simulation not enabled in this version.\n");
      break;
@@ -4192,6 +4196,12 @@ static char *txhelp[] =
  "         input ports with loconn drivers and for output ports with highconn",
  "         drivers.  WARNING: Use of this option may be required to match",
  "         results of other simulators that use port collapsing algorithm.",
+ "   +no_separate_nb_queue  Cver non blocking event scheduling algorithm has",
+ "         changed to match XL (all non blocking events scheduled only",
+ "         after all #0 events processed).  Use this option for backward",
+ "         compatibility with old cver algorithm that mixed non blocking",
+ "         eventing in the #0 queue.  If using this option changes your",
+ "         results, your circuit probably has a race.",
  "   +nospecify  Simulation run with specify section ignored.  This option",
  "         causes specify section to be read and parsed but it is discarded",
  "         before simulation.  +nospecify of course implies +notimingchecks.",

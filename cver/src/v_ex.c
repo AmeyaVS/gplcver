@@ -308,6 +308,7 @@ extern void __vstr_to_vval(word32 *, char *, int32);
 extern int32 __is_vdigit(int32, int32);
 extern void __to_dhboval(int32, int32);
 extern double __my_strtod(char *, char **, int32 *);
+extern void __add_pnd0_nonblk_list(i_tev_ndx);
 
 extern struct expr_t *__disp_1fmt_to_exprline(char *, struct expr_t *);
 extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
@@ -1681,9 +1682,21 @@ static void sched_nbproc_delay(struct delctrl_t *dctp, struct xstk_t *xsp,
      __tr_msg("sched: adding #0 %s event to list end\n",
       __to_tetyp(__xs, __tevtab[tevpi].tetyp));
     }
-   /* notice pound 0 only added from current time events */
-   if (__p0_te_hdri == -1) __p0_te_hdri = __p0_te_endi = tevpi;
-   else { __tevtab[__p0_te_endi].tenxti = tevpi; __p0_te_endi = tevpi; }
+   /* notice pound 0 only added for current time events */
+   /* AIV 06/28/05 - if option not set add to the end of the nb #0 list */
+   if (!__nb_sep_queue)
+    {
+     if (__p0_te_hdri == -1) __p0_te_hdri = __p0_te_endi = tevpi;
+     else { __tevtab[__p0_te_endi].tenxti = tevpi; __p0_te_endi = tevpi; }
+    }
+   else
+    {
+     /* AIV 07/05/05 - to match XL need nb te list that only processed */
+     /* when all pnd 0s done */  
+     /* effectively adds another section to current time event queue */
+     if (__nb_te_hdri == -1) __nb_te_hdri = __nb_te_endi = tevpi;
+     else { __tevtab[__nb_te_endi].tenxti = tevpi; __nb_te_endi = tevpi; }
+    }
   }
  /* if non blocking procedural assign, insert in normal moved to #0 later */
  else __insert_event(tevpi);
@@ -3062,11 +3075,12 @@ static void store_tskcall_outs(struct st_t *tskcall_stp)
  * user functions only take input args 
  * notice local variables presist and puts return value on top of expr stk 
  */
-extern void __exec_func(struct sy_t *fsyp, register struct expr_t *ndp) 
+extern void __exec_func(register struct expr_t *ndp) 
 {
  register struct expr_t *argxp;
  register struct task_pin_t *tpp;
  int32 savslin_cnt, savsfnam_ind, nd_thdfree;
+ struct sy_t *fsyp;
  struct itree_t *func_itp, *xmr_savitp;
  struct st_t *stp;
  struct task_t *tskp;
@@ -3077,6 +3091,9 @@ extern void __exec_func(struct sy_t *fsyp, register struct expr_t *ndp)
  struct net_t *np;
  struct expr_t *rhsxp;
  
+ /* SJM 05/22/05 - no reason to pass func symbol - just get from expr node */  
+ fsyp = ndp->lu.x->lu.sy; 
+
  /* for decl. rhs, maybe no thrd - bld for 1st call else take over cur. */ 
  nd_thdfree = FALSE;
  if (__cur_thd == NULL)
@@ -3249,6 +3266,7 @@ again:
  return;
 }
 
+
 /*
  * routine to grow fcstk (function call no display local variables)
  */
@@ -3275,8 +3293,7 @@ static void grow_fcstk(void)
  * ndp is actual FCALL node
  * leaves return value on top of expr. stack but does not return it
  */
-extern void __exec_sysfunc(register struct sy_t *fsyp,
- register struct expr_t *ndp) 
+extern void __exec_sysfunc(register struct expr_t *ndp) 
 {
  register struct xstk_t *xsp, *xsp2;
  register struct expr_t *fax;
@@ -3284,7 +3301,11 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
  word32 uval;
  word64 timval;
  double d1;
+ struct sy_t *fsyp;
  struct sysfunc_t *sfbp;
+
+ /* SJM 05/22/05 - no reason to pass func symbol - just get from expr node */  
+ fsyp = ndp->lu.x->lu.sy; 
 
  sfbp = fsyp->el.esyftbp;
  switch (sfbp->syfnum) {
@@ -7124,7 +7145,9 @@ static int32 chk_get_ver_fd(struct expr_t *fdxp)
  fd = xsp->ap[0] & FIO_FD;
  __pop_xstk();
  if (fd >= FOPEN_MAX) { errno = EBADF; return(-1); }
- if (__fio_fdtab[fd] == NULL) { errno = EBADF; return(-1); } 
+ /* AIV 06/27/05 - fd cannot be greater than max file size */
+ if (fd >= MY_FOPEN_MAX || __fio_fdtab[fd] == NULL) 
+  { errno = EBADF; return(-1); } 
  return(fd);
 }
 

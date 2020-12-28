@@ -4571,8 +4571,9 @@ static void do_vpi_wire_intran_force(struct net_t *np, int32 ndx,
  register int32 ibase;
  char s3[RECLEN]; 
 
- /* make sure assign/force table exists - know vpi itree context set */ 
- if (np->nu2.qcval == NULL) __alloc_qcval(np);
+ /* make sure assign/force table exists */ 
+ /* AIV 03/09/05 - force inhibition requires allocated bit set */
+ if (!np->frc_assgn_allocated) __alloc_qcval(np);
 
  if (__debug_flg && __ev_tracing)
   {

@@ -147,13 +147,11 @@ extern void __free2_xtree(struct expr_t *);
 extern struct st_t *__rd_tskenable(char *, struct expr_t *, int32);
 extern void __setup_contab(void);
 extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __alloc_shareable_rlcval(double);
 extern int32 __alloc_is_cval(int32);
 extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
 extern char *__alloc_vval_to_cstr(word32 *, int32, int32, int32);
 extern void __grow_contab(int32);
-extern int32 __alloc_shareable_rlcval(double);
-extern int32 __alloc_rlcval(int32);
-extern void __grow_rlcontab(int32);
 extern struct expridtab_t *__alloc_expridnd(char *);
 extern struct expr_t *__alloc_exprnd(void);
 
@@ -2593,8 +2591,6 @@ extern void __setup_contab(void)
  /* 6th is 32 bit x */
  __contab[10] = ALL1W;
  __contab[11] = ALL1W;
- /* SJM 06/14/04 - need negatives but for now this is 32 bits (c world) -1 */
- __b32_minus1 = 10;
 
  for (i = 12, j = 0; i <= 12 + 2*128; i += 2, j++)
   {
@@ -2607,14 +2603,6 @@ extern void __setup_contab(void)
  __contab[270] = ' ';
  __contab[271] = 0;
  __contabwi = 272;
-
- /* setup constant table for reals */ 
- __rlcontabdsiz = 400;
- __rlcontab = (double *) __my_malloc(__rlcontabdsiz*sizeof(double));
- /* LOOKATME - maybe need some physical constants too but how search for? */
- /* use index for first 101 constant reals */
- for (i = 0; i < 101; i++) __rlcontab[i] = (double) i;
- __rlcontabdi = 101;
 
  __contab_hash = (struct contab_info_t **)
   __my_malloc(HASHTABSIZ*sizeof(struct contab_info_t *));
@@ -2680,6 +2668,21 @@ extern int32 __alloc_is_cval(int32 wlen)
  wi = __contabwi;
  __contabwi += 2*wlen;
  return(wi);
+}
+
+/*
+ * sharable (non IS form) for real constants
+ * SJM 05/03/05 - now reals go into hashed part of contab
+ */
+extern int32 __alloc_shareable_rlcval(double d1)
+{
+ int32 wi;
+ word32 rword[2];
+
+ memcpy(&(rword), &(d1), sizeof(double)); 
+ /* notice word length is 1 since reals have no b part */
+ wi = __allocfill_cval_new(&(rword[0]), &(rword[1]), 1);
+ return(wi); 
 }
 
 /*
@@ -2760,59 +2763,6 @@ extern void __grow_contab(int32 ndwrds)
  __contab = (word32 *) __my_realloc((char *) __contab, obsize, nbsize);
 }
 
-/*
- * allocate a real constant value in design wide real constant table
- *
- * probably should add some common real constants (such as pi)
- * for IS form will allocate many reals 
- */
-extern int32 __alloc_rlcval(int32 nreals)
-{
- int32 di;
-
- if (__rlcontabdi + nreals >= __rlcontabdsiz) __grow_rlcontab(nreals);
- di = __rlcontabdi;
- __rlcontabdi += nreals;
- return(di);
-}
-
-/*
- * sharable (non IS form) some small common real values
- * here never more than one at a time (non IS) allocated
- */
-extern int32 __alloc_shareable_rlcval(double d1)
-{
- int32 di;
-
- /* SJM 06/18/01 - real constant folding for negative values was returning */
- /* wrong negative index - now only used shared real con table for positive */
- if (d1 >= 0.0 && d1 <= 100.0)
-  {
-   di = (int32) d1; 
-   if ((double) di == d1) return(di);
-  }
- di = __alloc_rlcval(1);
- __rlcontab[di] = d1;
- return(di); 
-}
-
-/*
- * grow design wide real constant table
- *
- * when growing, grow with current needed num in case IS array large  
- * all sizes are in doubles since need alignment
- */
-extern void __grow_rlcontab(int32 ndreals)
-{
- int32 old_rlctabsiz, obsize, nbsize;
- 
- old_rlctabsiz = __rlcontabdsiz;
- obsize = __rlcontabdsiz*sizeof(double);
- /* fibronacci growth */
- __rlcontabdsiz = 3*(old_rlctabsiz + ndreals)/2; 
- nbsize = __rlcontabdsiz*sizeof(double);
- __rlcontab = (double *) __my_realloc((char *) __rlcontab, obsize, nbsize);
-}
 
 /*
  * EXPRESSION PROCESSING CODE
@@ -4998,7 +4948,7 @@ static char *to_xndnam(char *s, int32 xndi)
   case REALNUM: case ISREALNUM:
    /* LOOKATME - better to just format as double */ 
    /* just pass a part for both here */ 
-   ap = (word32 *) &(__rlcontab[ndp->ru.xvi]);
+   ap = &(__contab[ndp->ru.xvi]);
    sprintf(s1, "REAL: %s", __regab_tostr(s2, ap, ap, ndp->szu.xclen, BDBLE,
     FALSE));
    break;

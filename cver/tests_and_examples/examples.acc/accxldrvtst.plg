@@ -1,10 +1,3 @@
-  prohibitions and restrictions as to redistribution and/or use.
-Today is Wed Sep 20 00:13:49 2000.
-  LIC: Licensed to: "Linux t3015 development"
-Compiling source file "accxldrvtst.v"
-Highest level modules:
-test
-
 ... processing instance test.
  ... processing drivers for test.t_clr0:
 net t_clr0 has 0 inside drivers.
@@ -268,4 +261,3 @@ net xxx has 0 outside loads.
  +++ prim test.i3.i1 port 1 is inside load of test.i3.xxx in test.i3.
 net xxx has 2 inside cell loads.
   >>> All instances net drivers processed by acc_.
-  There were 0 error(s), 0 warning(s), and 37 inform(s).

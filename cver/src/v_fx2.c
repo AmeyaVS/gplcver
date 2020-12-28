@@ -41,13 +41,12 @@
 /* local prototypes */
 static void bld_root_dfpglbs(void);
 static int32 dfploc_cmp(const void *, const void *);
-static void dmp_dfps(int32);
+static void dmp_dfps(int32, int32);
 static void bld_root2_dfpglbs(struct itree_t *, int32);
 static void bld_identdfparams(int32);
 static int32 ipth_cmp(const void *, const void *);
 static int32 ipth2_cmp(register struct dfparam_t *, register struct dfparam_t *);
 static void find_mustsplit_dfps(void);
-static struct itree_t *find_dfpbot_itp(struct dfparam_t *);
 static void do_defparam_splitting(void);
 static void reset_dfp_targsyps(void);
 static void reset_1dfp_targsyp(struct dfparam_t *);
@@ -199,6 +198,7 @@ extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
 extern void __set_poundparams(void);
 extern void __set_1inst_pound_params(struct itree_t *, int32);
 extern void __free_1dfparam(struct dfparam_t *);
+extern struct itree_t *__find_dfpbot_itp(struct dfparam_t *);
 extern int32 __ip_indsrch(char *);
 extern void __my_free(char *, int32);
 extern void __mark_widdet_params(struct mod_t *);
@@ -417,13 +417,18 @@ static void bld_root_dfpglbs(void)
  /* design wide rooted (or local) def param list now ordered */
  __my_free((char *) dfpptab, num_defparams*sizeof(struct dfparam_t *));
 
+ /* SJM 06/04/05 - nil the rooted dfps field since no longer needed */
+ /* could leave but nil makes debugging easier */
+ for (dfpp = __dfphdr; dfpp != NULL; dfpp = dfpp->dfpnxt)
+  dfpp->rooted_dfps = NULL;
+
  /* only find identicals if at least one non local */
  if (num_defparams - num_locdefparams != 0)
   {
    bld_identdfparams(num_defparams - num_locdefparams);
    find_mustsplit_dfps();
   } 
- if (__debug_flg) dmp_dfps(TRUE);
+ if (__debug_flg) dmp_dfps(TRUE, TRUE);
 }
 
 static int32 dfploc_cmp(const void *dfpp1, const void *dfpp2)
@@ -440,14 +445,15 @@ static int32 dfploc_cmp(const void *dfpp1, const void *dfpp2)
 /*
  * dump defparam list
  * only called if debugging on
+ *
+ * SJM 05/25/05 - rewrote to work with converted to rooted dfps
  */
-static void dmp_dfps(int32 emit_pth)
+static void dmp_dfps(int32 emit_pth, int32 now_rted)
 {
  struct dfparam_t *dfpp;
  register int32 dfi, ii; 
  char identtyp;
  struct inst_t *ip;
- struct sy_t *syp;
 
  __dbg_msg("$$$ Dumping all design defparams $$$\n");
  for (dfpp = __dfphdr; dfpp != NULL; dfpp = dfpp->dfpnxt)
@@ -467,16 +473,15 @@ static void dmp_dfps(int32 emit_pth)
    /* if root in module that is multiply instantiated must see table */
    /* only once and rule is last source order is right instance to eval in */
    ii = dfpp->dfpiis[0];
-   if (dfpp->dfp_rooted) ip = __top_itab[ii];
+   if (dfpp->dfp_rooted || now_rted) ip = __top_itab[ii];
    else ip = &(dfpp->in_mdp->minsts[ii]);  
-   syp = ip->imsym; 
    for (dfi = 0; dfi <= dfpp->last_dfpi; dfi++) 
     {
-     if (syp->sytyp == SYM_I)
-      sprintf(__xs, " (inst type %s)", syp->el.eip->imsym->synam);
-     else strcpy(__xs, "");
-     __dbg_msg("   component %s%s index %d\n", __xs, syp->synam,
-     dfpp->dfpiis[dfi]);
+     sprintf(__xs, " (inst type %s)", ip->imsym->synam);
+     __dbg_msg("   component %s%s index %d\n", __xs, ip->isym->synam, ii);
+
+     ii = dfpp->dfpiis[dfi + 1];
+     if (dfi < dfpp->last_dfpi) ip = &(ip->imsym->el.emdp->minsts[ii]); 
     }
    __dbg_msg("\n");
   }
@@ -574,11 +579,11 @@ too_deep:
  /* even if only one inst. of this need rooted form */ 
  for (dfpp = imdp->mdfps; dfpp != NULL; dfpp = dfpp->dfpnxt)
   {
+   /* SJM 05/26/05 - can't use indfp itp for dfps because splitting changes */
    if (dfpp->dfp_local)
     {
      /* local defparams - NULL means in all instances - for dependent */
      /* if rhs defparam is IS form must convert local value to IS form */
-     dfpp->indfp_itp = NULL;
      continue;
     }
 
@@ -589,7 +594,6 @@ too_deep:
      /* if rooted appears in multiply instantiated, possible that rhs */
      /* expr. can contain IS form so that same target rooted defparam lhs */ 
      /* gets assigned to once for each - using last one since arbitrary */
-     dfpp->indfp_itp = itp;
      continue;
     }
    rtlen = level + dfpp->last_dfpi + 1;  
@@ -630,7 +634,6 @@ too_deep:
      dfpp->dfpiis = newiis;
      dfpp->last_dfpi = __last_gsc - 1;
      dfpp->dfp_rooted = TRUE;
-     dfpp->indfp_itp = itp;
      continue;
     }
    new_dfpp = (struct dfparam_t *) __my_malloc(sizeof(struct dfparam_t));
@@ -641,7 +644,6 @@ too_deep:
    /* notice tail is pointed to by targsyp (not in cmps) */
    new_dfpp->dfpiis = newiis;
    new_dfpp->last_dfpi = __last_gsc - 1;
-   new_dfpp->indfp_itp = itp;
 
    /* put on front */
    new_dfpp->rooted_dfps = dfpp->rooted_dfps;
@@ -810,7 +812,7 @@ static void find_mustsplit_dfps(void)
    /* only look at non local master's from identicals here */ 
    if (dfpp->dfp_local || dfpp->idntmastdfp != NULL) continue;
 
-   bot_itp = find_dfpbot_itp(dfpp);
+   bot_itp = __find_dfpbot_itp(dfpp);
    imdp = bot_itp->itip->imsym->el.emdp;
    /* if only 1 inst. no need to split */
    if (imdp->flatinum == 1) continue;
@@ -872,7 +874,7 @@ static void find_mustsplit_dfps(void)
 /*
  * find bottom defparam itree loc.
  */
-static struct itree_t *find_dfpbot_itp(struct dfparam_t *dfpp)
+extern struct itree_t *__find_dfpbot_itp(struct dfparam_t *dfpp)
 {
  register int32 dfi, ii;
  register struct itree_t *bot_itp, *itp;
@@ -922,7 +924,7 @@ static void do_defparam_splitting(void)
 
    /* first split module containing defparam target if needed */
    dfi = dfpp->last_dfpi;
-   itp = find_dfpbot_itp(dfpp);
+   itp = __find_dfpbot_itp(dfpp);
    ip = itp->itip;
    imdp = ip->imsym->el.emdp;
 
@@ -1128,7 +1130,7 @@ static void reset_1dfp_targsyp(struct dfparam_t *dfpp)
  struct sy_t *syp;
  char *chp;
 
- itp = find_dfpbot_itp(dfpp);
+ itp = __find_dfpbot_itp(dfpp);
  mdp = itp->itip->imsym->el.emdp;
  chp = dfpp->targsyp->synam;
  if (dfpp->dfptskp != NULL)
@@ -1652,8 +1654,11 @@ static void set_1defparam(struct dfparam_t *dfpp)
   }
  else
   {
-   __push_itstk(mast_dfpp->indfp_itp);
-   imdp = mast_dfpp->indfp_itp->itip->imsym->el.emdp;
+   /* SJM 04/24/05 - fix minor bug this must eval in actual defined in itree */
+   /* loc not the master's - LOOKATME - is master needed here? */
+   itp = __find_dfpbot_itp(dfpp);
+   __push_itstk(itp);
+   imdp = itp->itip->imsym->el.emdp;
    xsp = __eval_xpr(dfpp->dfpxrhs);
    __pop_itstk();
   }
@@ -1704,7 +1709,7 @@ static void set_1defparam(struct dfparam_t *dfpp)
  else 
   {
    /* set the target itree place - use master if part of identical group */
-   itp = find_dfpbot_itp(mast_dfpp);
+   itp = __find_dfpbot_itp(mast_dfpp);
    imdp = itp->itip->imsym->el.emdp;
    /* change to IS NUM form only if more than 1 inst. of module */
    if (np->srep == SR_PNUM && imdp->flatinum > 1) __chg_param_tois(np, imdp);

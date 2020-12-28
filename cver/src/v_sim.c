@@ -43,6 +43,7 @@
 
 
 /* local prototypes */
+static void process_pnd0s(void);
 static void exec_slotend_dv(void);
 static void process_all_netchgs(void);
 static void free_chgedvars(void);
@@ -342,7 +343,7 @@ extern void __pv_sim(void)
  /* unless quiet mode, need blank line before sim writing */
  __cv_msg("\n");
  /* possible that no events scheduled at 0, must really move time to 0 */
- /* this assumes wrap works ? */ 
+ /* this assumes wrap works ? */
  __simtime = 0xffffffffffffffffULL;
  __cur_twi = -1;
 
@@ -350,17 +351,17 @@ extern void __pv_sim(void)
  move_to_time0();
 
  /* now have timing wheel - can run vpi sim controls that are like */
- /* system task execs */ 
+ /* system task execs */
  __can_exec = TRUE;
 
- /* do not call vpiStartOfSim routine if resetting */ 
+ /* do not call vpiStartOfSim routine if resetting */
  if (__now_resetting)
-  { 
+  {
    __now_resetting = FALSE;
    if (__tfrec_hdr != NULL) __call_misctfs_endreset();
    if (__have_vpi_actions) __vpi_endreset_trycall();
 
-   /* if no events after reset - nothing to do so terminate */ 
+   /* if no events after reset - nothing to do so terminate */
    if (__num_twhevents == 0 && __btqroot == NULL && __cur_te_hdri == -1
      && __p0_te_hdri == -1)
     {
@@ -368,8 +369,8 @@ extern void __pv_sim(void)
      "no pending statements or events after reset to time 0 - nothing to do");
      return;
     }
-  }  
- else 
+  }
+ else
   {
    /* no sim (variables) d.s. and time before here */
    /* notice these routines cannot cause inside entry of debugger */
@@ -394,7 +395,7 @@ extern void __pv_sim(void)
  if (__dbg_stop_before >= 100)
   {
    if (__dbg_stop_before != 101) { __dbg_stop_before = 0; goto no_stop; }
-   __dbg_stop_before = 0; 
+   __dbg_stop_before = 0;
    goto stop;
   }
 
@@ -409,7 +410,7 @@ extern void __pv_sim(void)
      goto no_stop;
     }
 stop:
-   /* interactive loop expects int32 (^c) signal to be ignored */ 
+   /* interactive loop expects int32 (^c) signal to be ignored */
    __do_interactive_loop();
   }
 
@@ -427,7 +428,7 @@ no_stop:
  __exec_var_decl_init_assigns();
 
  /* repeat this loop for every time */
- __processing_pnd0s = FALSE; 
+ __processing_pnd0s = FALSE;
  for (;;)
   {
    /* execute events until current time event list empty */
@@ -436,7 +437,7 @@ no_stop:
    for (; __cur_tevpi != -1; __cur_tevpi = __tevtab[__cur_tevpi].tenxti)
     {
      tevp = &(__tevtab[__cur_tevpi]);
-     /* canceled because of inertial delay reschedule */ 
+     /* canceled because of inertial delay reschedule */
      if (tevp->te_cancel)
       { __num_cancel_tevents++; __num_twhevents--; continue; }
 
@@ -454,24 +455,41 @@ no_stop:
       case TE_BIDPATH: process_trpthdst_ev(tevp); break;
       case TE_MIPD_NCHG: process_mipd_nchg_ev(tevp); break;
       case TE_NBPA:
-       /* 10/27/00 SJM - this is rhs delay that has elapsed - never rep form */ 
+       /* 10/27/00 SJM - this is rhs delay that has elapsed - never rep form */
        /* non blocking proc assign, jump to #0 queue to process */
-       alloc_tev_(tevp2i, TE_NBPA, tevp->teitp, __simtime);  
+       alloc_tev_(tevp2i, TE_NBPA, tevp->teitp, __simtime);
        /* this moves entire nb records - since not needed here */
        tevp2 = &(__tevtab[tevp2i]);
        /* if present ptr to constant index lhs expr. copy also copied */
        tevp2->tu.tenbpa = tevp->tu.tenbpa;
        tevp->tu.tenbpa = NULL;
        __num_proc_tevents--;
-       /* notice tevp not counted and contents freed */ 
-       if (__p0_te_hdri == -1) __p0_te_hdri = __p0_te_endi = tevp2i;
-       else { __tevtab[__p0_te_endi].tenxti = tevp2i; __p0_te_endi = tevp2i; }
+       /* notice tevp not counted and contents freed */
+       /* AIV 06/28/05 - if option set add to the end of the nb #0 list */
+       if (!__nb_sep_queue)
+        {
+         if (__p0_te_hdri == -1) __p0_te_hdri = __p0_te_endi = tevp2i;
+         else
+          {
+           __tevtab[__p0_te_endi].tenxti = tevp2i;
+           __p0_te_endi = tevp2i;
+          }
+        }
+       else
+        {
+         /* AIV 07/05/05 - to match XL need nb te list that only processed */
+         /* when all pnd 0 done effectively adds another section to current */
+         /* time event queue */
+         if (__nb_te_hdri == -1) __nb_te_hdri = __nb_te_endi = tevp2i;
+         else
+          { __tevtab[__nb_te_endi].tenxti = tevp2i; __nb_te_endi = tevp2i; }
+        }
        break;
       case TE_TFSETDEL:
        /* RELEASE remove ---
        if (__debug_flg && __ev_tracing)
         {
-         __tr_msg("-- processing tf_ set delay misctf call at %s\n", 
+         __tr_msg("-- processing tf_ set delay misctf call at %s\n",
   	  __to_timstr(__xs, &__simtime));
         }
        --- */
@@ -507,83 +525,35 @@ no_stop:
      __cur_te_hdri = __cur_te_endi = -1;
     }
 
+   process_pnd0s();
+
+   /* AIV 07/05/05 - added processing of separate after all pnd0's non */
+   /* blocking events processing nb events can add new pnd0's that are */
+   /* processed as added and new nb's that are saved and added to do */
+   /* after all current level nbs and pnd0s done */
+   if (__nb_te_hdri != -1)
+    {
+     for (;;)
+      { 
+       __p0_te_hdri = __nb_te_hdri; 
+       __p0_te_endi = __nb_te_endi;
+       __nb_te_hdri = __nb_te_endi = -1;
+
+       /* notice the move to pnd 0 queue events add to free list in */
+       /* process pnd0 routine */
+       process_pnd0s();
+       if (__nb_te_hdri == -1) break;
+     }
+    }
    /* --- DBG remove
    if (__debug_flg && __ev_tracing
     && (__nchg_futhdr != NULL || __p0_te_hdri != -1))
      __tr_msg("-- processing #0 end of slot events\n");
    --- */
 
-   /* process all net changes - this can only enter pnd0 events at now */
-   /* next process net changes, if any new pnd0's process */
-   /* may then add new net changes that in turn can add pnd0's */
-   /* if no 0 delay loop (must catch) will eventually terminate */
-   /* can add normal delays but will occur in future */
-   for (__processing_pnd0s = TRUE, __cur_tevpi = -1;;) 
-    {
-     if (__nchg_futhdr != NULL) process_all_netchgs();
-
-     /* needed in case PLI tf_dostop or vpi_control(vpiStop called */
-     if (__pending_enter_iact) __do_interactive_loop();
-
-     /* no pending net changes and no more pound 0 events, can move time */
-     if (__p0_te_hdri == -1) break;
-
-     /* every event has associated itree element */
-     __cur_tevpi = __p0_te_hdri;
-     for (; __cur_tevpi != -1; __cur_tevpi = __tevtab[__cur_tevpi].tenxti)
-      {
-       tevp = &(__tevtab[__cur_tevpi]); 
-
-       /* canceled because interactive thread disabled */
-       /* but pound 0 events not counted as timing wheel events */
-       if (tevp->te_cancel) { __num_cancel_tevents++; continue; }
-
-       /* notice, pnd0 never canceled since can just replace guts */
-       __push_itstk(tevp->teitp);
-       
-       /* notice before event executed, cur. itp set from event */
-       switch ((byte) tevp->tetyp) {
-        case TE_THRD:
-         __process_thrd_ev(tevp);
-         break;
-         break;
-        case TE_CA: process_conta_ev(tevp); break;
-        /* for gates and 1 bit continous assigns */
-        case TE_G: process_gatechg_ev(tevp); break;
-        case TE_WIRE: process_wire_ev(tevp); break;
-        case TE_BIDPATH: process_trpthdst_ev(tevp); break;
-        /* #0 here is normal 0 delay - start as no delay */    
-        case TE_MIPD_NCHG: process_mipd_nchg_ev(tevp); break;
-        case TE_NBPA: process_nbpa_ev(tevp); break;
-        case TE_TFSETDEL: __setdel_call_misctf(__cur_tevpi); break;
-
-        case TE_TFPUTPDEL: __process_putpdel_ev(__cur_tevpi); break;
-        case TE_VPIPUTVDEL: __process_vpi_varputv_ev(__cur_tevpi); break;
-        case TE_VPIDRVDEL: __process_vpidrv_ev(__cur_tevpi); break;
-        case TE_VPICBDEL: __delay_callback(__cur_tevpi); break;
-        case TE_SYNC: __sync_call_misctf(tevp); break;
-        default: __case_terr(__FILE__, __LINE__);
-       }
-       __num_proc_tevents++;
-       /* when put into pnd0 list, no inc. of number of twheel events */
-       __pop_itstk();
-       /* here cur_tevpi done so any add to front after it */
-       if (__pending_enter_iact) __do_interactive_loop();
-      }
-
-     /* all #0 events for this time slot processed but may be new net chgs */
-     if (__p0_te_hdri != -1)
-      {
-       __tevtab[__p0_te_endi].tenxti = __tefreelsti;
-       __tefreelsti = __p0_te_hdri;
-       __p0_te_hdri = __p0_te_endi = -1;
-      }
-     __cur_tevpi = -1;
-    }
-   __processing_pnd0s = FALSE; 
    /* final step do slot end timing checks and monitoring */
    /* cannot schedule any events from here */
-   if (__slotend_action != 0) 
+   if (__slotend_action != 0)
     {
      if ((__slotend_action & SE_TCHK_VIOLATION) != 0)
       process_all_tchk_violations();
@@ -599,14 +569,90 @@ no_stop:
      if ((__slotend_action & SE_TFROSYNC) != 0) __exec_rosync_misctf();
      if ((__slotend_action & SE_VPIROSYNC) != 0) __vpi_del_rosync_call();
      __slotend_action = 0;
-    } 
+    }
    /* contrl c here serviced at beginning of next time slot */
    /* if no more events done */
    if (!move_time()) break;
 
    /* call backs from vpi cb NextSimTime (after debugger entered) */
    if (__have_vpi_actions) __vpi_del_nxtsimtim_trycall();
-  }     
+  }
+}
+
+/*
+ *  process all net changes - this can only enter pnd0 events at now
+ * next process net changes, if any new pnd0's process
+ * may then add new net changes that in turn can add pnd0's
+ * if no 0 delay loop (must catch) will eventually terminate
+ * can add normal delays but will occur in future
+ */
+static void process_pnd0s(void)
+{
+ register struct tev_t *tevp;
+
+ for (__processing_pnd0s = TRUE, __cur_tevpi = -1;;)
+  {
+   if (__nchg_futhdr != NULL) process_all_netchgs();
+
+   /* needed in case PLI tf_dostop or vpi_control(vpiStop called */
+   if (__pending_enter_iact) __do_interactive_loop();
+
+   /* no pending net changes and no more pound 0 events, can move time */
+   if (__p0_te_hdri == -1) break;
+
+   /* every event has associated itree element */
+   __cur_tevpi = __p0_te_hdri;
+   for (; __cur_tevpi != -1; __cur_tevpi = __tevtab[__cur_tevpi].tenxti)
+    {
+     tevp = &(__tevtab[__cur_tevpi]);
+
+     /* canceled because interactive thread disabled */
+     /* but pound 0 events not counted as timing wheel events */
+     if (tevp->te_cancel) { __num_cancel_tevents++; continue; }
+
+     /* notice, pnd0 never canceled since can just replace guts */
+     __push_itstk(tevp->teitp);
+
+     /* notice before event executed, cur. itp set from event */
+     switch ((byte) tevp->tetyp) {
+      case TE_THRD:
+       __process_thrd_ev(tevp);
+       break;
+       break;
+      case TE_CA: process_conta_ev(tevp); break;
+      /* for gates and 1 bit continous assigns */
+      case TE_G: process_gatechg_ev(tevp); break;
+      case TE_WIRE: process_wire_ev(tevp); break;
+      case TE_BIDPATH: process_trpthdst_ev(tevp); break;
+      /* #0 here is normal 0 delay - start as no delay */
+      case TE_MIPD_NCHG: process_mipd_nchg_ev(tevp); break;
+      case TE_NBPA: process_nbpa_ev(tevp); break;
+      case TE_TFSETDEL: __setdel_call_misctf(__cur_tevpi); break;
+
+      case TE_TFPUTPDEL: __process_putpdel_ev(__cur_tevpi); break;
+      case TE_VPIPUTVDEL: __process_vpi_varputv_ev(__cur_tevpi); break;
+      case TE_VPIDRVDEL: __process_vpidrv_ev(__cur_tevpi); break;
+      case TE_VPICBDEL: __delay_callback(__cur_tevpi); break;
+      case TE_SYNC: __sync_call_misctf(tevp); break;
+      default: __case_terr(__FILE__, __LINE__);
+      }
+     __num_proc_tevents++;
+     /* when put into pnd0 list, no inc. of number of twheel events */
+     __pop_itstk();
+     /* here cur_tevpi done so any add to front after it */
+     if (__pending_enter_iact) __do_interactive_loop();
+    }
+
+   /* all #0 events for this time slot processed but may be new net chgs */
+   if (__p0_te_hdri != -1)
+    {
+     __tevtab[__p0_te_endi].tenxti = __tefreelsti;
+     __tefreelsti = __p0_te_hdri;
+     __p0_te_hdri = __p0_te_endi = -1;
+    }
+   __cur_tevpi = -1;
+  }
+ __processing_pnd0s = FALSE;
 }
 
 /*
@@ -619,20 +665,20 @@ no_stop:
 static void exec_slotend_dv(void)
 {
  /* must only emit time once in all processing */
- __dv_time_emitted = FALSE; 
+ __dv_time_emitted = FALSE;
  /* first execute any dumpall */
  if ((__slotend_action & SE_DUMPALL) != 0)
   {
    /* if over limit silently do nothing */
    /* dump all is indpendent of normal dumpvars processing */
    if (__dv_state != DVST_OVERLIMIT)
-    __do_dmpvars_baseline("$dumpall");  
+    __do_dmpvars_baseline("$dumpall");
   }
 
  switch ((byte) __dv_state) {
   case DVST_DUMPING:
-   /* if encountered dumpoff, handle here */ 
-   if ((__slotend_action & SE_DUMPOFF) != 0) 
+   /* if encountered dumpoff, handle here */
+   if ((__slotend_action & SE_DUMPOFF) != 0)
     {
      /* remove any pending changes */
      if (__dv_chgnethdr != NULL) free_chgedvars();
@@ -649,10 +695,10 @@ static void exec_slotend_dv(void)
    /* if not dumpon and no dump on action do nothing here */
    if ((__slotend_action & SE_DUMPON) != 0)
     {
-     /* start with baseline dump */ 
+     /* start with baseline dump */
      __do_dmpvars_baseline("$dumpon");
      __dv_state = DVST_DUMPING;
-     /* turn on dump change recording and dumping for next time slot */ 
+     /* turn on dump change recording and dumping for next time slot */
      __turnon_all_dumpvars();
     }
    break;
@@ -672,24 +718,24 @@ bad_dvfnam:
        __dv_seen = TRUE;
        __dv_state = DVST_NOTSETUP;
        return;
-      }  
+      }
      else
       {
        __pv_warn(589, "cannot open $dumpvars output file %s trying %s",
 	__dv_fnam, DFLTDVFNAM);
-       strcpy(__dv_fnam, DFLTDVFNAM); 
+       strcpy(__dv_fnam, DFLTDVFNAM);
        if ((__dv_fd = __my_creat(__dv_fnam)) == -1) goto bad_dvfnam;
       }
     }
    /* write the file reference header and setup dv "events" on wires */
-   __setup_dmpvars(); 
-   __do_dmpvars_baseline("$dumpvars"); 
+   __setup_dmpvars();
+   __do_dmpvars_baseline("$dumpvars");
    if (__verbose)
     {
      __cv_msg(
       "  $dumpvars setup complete at %s - variables dumped to file %s.\n",
       __to_timstr(__xs, &__simtime), __dv_fnam);
-    } 
+    }
    if (__dv_state != DVST_OVERLIMIT)
     {
      __dv_state = DVST_DUMPING;
@@ -700,7 +746,7 @@ bad_dvfnam:
    break;
   case DVST_OVERLIMIT:
    if (__dv_chgnethdr != NULL) __misc_terr(__FILE__, __LINE__);
-   break; 
+   break;
   default: __case_terr(__FILE__, __LINE__);
  }
 }
@@ -708,7 +754,7 @@ bad_dvfnam:
 /*
  * reset and free all changed vars when dump all needed
  *
- * in case of dump all - from dv state change may be some changed 
+ * in case of dump all - from dv state change may be some changed
  * vars that need to be reset
  */
 static void free_chgedvars(void)
@@ -727,7 +773,7 @@ static void free_chgedvars(void)
    __dv_netfreelst = __dv_chgnethdr;
    __dv_chgnethdr = NULL;
   }
-} 
+}
 
 /*
  * AFTER CHANGE PROPOGATION FROM RHS ROUTINES
@@ -791,8 +837,8 @@ static void process_all_netchgs(void)
     --- */
 
      /* SJM 07/24/00 - propagate changes to dces for wires at end of queue */
-     /* new algorithm - for regs immediate propagate, for wires end of queue */ 
-     /* LOOKATME - think event controls should be before lds */ 
+     /* new algorithm - for regs immediate propagate, for wires end of queue */
+     /* LOOKATME - think event controls should be before lds */
      if (np->ntyp < NONWIRE_ST && np->dcelst != NULL)
       __wakeup_delay_ctrls(np, nchglp->bi1, nchglp->bi2);
 
@@ -808,18 +854,18 @@ static void process_all_netchgs(void)
    total_num += num_this_pass;
    if (++num_passes > 1000 && (num_passes % 1000) == 0)
     {
-     if (__pending_enter_iact) 
+     if (__pending_enter_iact)
       {
        __ia_warn(1604,
          "interactive mode probably entered from zero delay oscillation - no scheduling");
        __do_interactive_loop();
       }
     }
-   
+
    /* know last nchg lp set since routine not called if at least one */
    /* SJM 08/02/01 - add if to keep lint happy */
    if (last_nchglp != NULL) last_nchglp->nchglnxt = __nchgfreelst;
-   __nchgfreelst = sav_nchglp; 
+   __nchgfreelst = sav_nchglp;
    /* LINUX DBG - add me */
    /* chk_nchgnlst(__nchgfreelst); */
    /* --- */
@@ -840,18 +886,18 @@ void chk_nchgnlst(struct nchglst_t *hdr)
 {
  register struct nchglst_t *nchglp;
  int32 ndx;
- 
+
  ndx = 0;
  for (nchglp = hdr; nchglp != NULL; nchglp = nchglp->nchglnxt)
   {
    if ((void *) nchglp > (void *) 0x13257400)
-    {  
-     __tr_msg("problem at index %d\n", ndx); 
+    {
+     __tr_msg("problem at index %d\n", ndx);
      __misc_terr(__FILE__, __LINE__);
     }
    if (nchglp->nchglnxt > (void *) 0x13257400)
     {
-     __tr_msg("problem at index %d\n", ndx); 
+     __tr_msg("problem at index %d\n", ndx);
      __misc_terr(__FILE__, __LINE__);
     }
    ndx++;
@@ -862,15 +908,15 @@ void chk_nchgnlst(struct nchglst_t *hdr)
 /*
  * after changed net (wire or reg) go through loads evaluating the
  * load net's drivers assigning to the load net a new value
- *  
+ *
  * bit range passed and used to eliminate fan-out for other bit here
  * all ranges here normalized high to low form
- * notice will neve get to event trigger through this path (through cause) 
+ * notice will neve get to event trigger through this path (through cause)
  * this is called with current itstk set to wire targ. (maybe target of xmr)
  *
  * the driver evaluations caused by this cause any changed wires to be
- * added to a list which is then used to provide the next pass of wire 
- * loads 
+ * added to a list which is then used to provide the next pass of wire
+ * loads
  */
 static void eval_netchg_lds(register struct net_t *np, int32 chgi1, int32 chgi2,
  int32 is_delayed_mipd)
@@ -901,12 +947,12 @@ static void eval_netchg_lds(register struct net_t *np, int32 chgi1, int32 chgi2,
     && npp->npaux->npu.filtitp != __inst_ptr)
     continue;
 
-   /* first need non empty union with 2 ranges */ 
+   /* first need non empty union with 2 ranges */
    /* case 1: all bits of changed or driven bits unknown */
    if ((npauxp = npp->npaux) == NULL || npauxp->nbi1 == -1 || chgi1 == -1)
     goto got_match;
    /* case 2: range of npp is IS form */
-   if (npauxp->nbi1 == -2) 
+   if (npauxp->nbi1 == -2)
     {
      if (is2_chg_match(npauxp->nbi2.xvi, chgi1, chgi2))
       goto got_match;
@@ -939,7 +985,7 @@ got_match:
      /* SJM 09/08/01 - can now remove this consistency check */
      /* DBG remove ---
      if (npp->elnpp.eii >= __inst_ptr->itip->imsym->el.emdp->minum)
-      __misc_terr(__FILE__, __LINE__); 
+      __misc_terr(__FILE__, __LINE__);
      --- */
 
      itp = &(__inst_ptr->in_its[npp->elnpp.eii]);
@@ -947,10 +993,10 @@ got_match:
      downmdp = ip->imsym->el.emdp;
      /* SJM 09/08/01 - can now remove this consistency check */
      /* DBG remove ---
-     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__); 
+     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__);
      --- */
      mpp = &(downmdp->mpins[npp->obnum]);
-     /* assign from rhs up rhs iconn to lhs down mpp ref. for input port */ 
+     /* assign from rhs up rhs iconn to lhs down mpp ref. for input port */
      /* notice down always take only 4 args, down do not have first mpp */
      (*mpp->mpaf.mpp_downassgnfunc)(mpp->mpref, ip->ipins[npp->obnum], itp);
      break;
@@ -961,18 +1007,18 @@ got_match:
      /* SJM 09/08/01 - can now remove this consistency check */
      /* DBG remove ---
      if (npp->elnpp.eii >= __inst_ptr->itip->imsym->el.emdp->minum)
-      __misc_terr(__FILE__, __LINE__); 
+      __misc_terr(__FILE__, __LINE__);
      --- */
      itp = &(__inst_ptr->in_its[npp->elnpp.eii]);
      ip = itp->itip;
      downmdp = ip->imsym->el.emdp;
      /* SJM 09/08/01 - can now remove this consistency check */
      /* DBG remove ---
-     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__); 
+     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__);
      --- */
      mpp = &(downmdp->mpins[npp->obnum]);
      mpp = &(mpp->pbmpps[npp->pbi]);
-     /* assign from rhs up rhs iconn to lhs down mpp ref. for input port */ 
+     /* assign from rhs up rhs iconn to lhs down mpp ref. for input port */
      /* notice down always take only 4 args, down do not have first mpp */
      (*mpp->mpaf.mpp_downassgnfunc)(mpp->mpref,
       ip->pb_ipins_tab[npp->obnum][npp->pbi], itp);
@@ -983,7 +1029,7 @@ got_match:
      __immed_assigns++;
      downmdp = npp->elnpp.emdp;
      /* DBG remove --- */
-     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__); 
+     if (npp->obnum >= downmdp->mpnum) __misc_terr(__FILE__, __LINE__);
      /* --- */
      mpp = &(downmdp->mpins[npp->obnum]);
      itp = __inst_ptr->up_it;
@@ -1014,7 +1060,7 @@ got_match:
      (*gp->gchg_func)(gp, npp->obnum);
      break;
     case NP_CONTA:
-     /* know input that changed is always port 0 (only input) */ 
+     /* know input that changed is always port 0 (only input) */
      /* SJM - 09/18/02 - for per bit rhs concat form same net pin type */
      __eval_conta_rhs_ld(npp);
      break;
@@ -1029,7 +1075,7 @@ got_match:
      /* and loads, net pin t that causes schedule before processing rest */
 
      /* DBG remove --- */
-     if (np->nlds != npp) __misc_terr(__FILE__, __LINE__); 
+     if (np->nlds != npp) __misc_terr(__FILE__, __LINE__);
      /* --- */
 
      /* SJM 07/13/01 if mipd net load processing already delayed, skip sched */
@@ -1039,7 +1085,7 @@ got_match:
      /* nchg loop */
 
      if (is_delayed_mipd) break;
-     
+
      /* scalar is special case */
      if (!np->n_isavec)
       {
@@ -1068,12 +1114,12 @@ got_match:
      if (nd_itpop) __pop_itstk();
      /* notice must return since because of MIPD wasn't really changed */
      /* works because mipd npp always first on list */
-     return; 
+     return;
      /* pull driver only illlegal here */
     default: __case_terr(__FILE__, __LINE__);
    }
    if (nd_itpop) __pop_itstk();
-  } 
+  }
 }
 
 /*
@@ -1096,7 +1142,7 @@ static void process_mipd_nchg_ev(struct tev_t *tevp)
  bi = tevp->tu.tenp->nbi;
 
  if (__ev_tracing)
-  { 
+  {
    __evtr_resume_msg();
    __tr_msg("-- tracing MIPD event for %s\n",
     __to_evtrwnam(__xs, np, bi, bi, __inst_ptr));
@@ -1115,7 +1161,7 @@ static void process_mipd_nchg_ev(struct tev_t *tevp)
    if ((np->nchgaction[__inum] & NCHG_ALL_CHGED) == 0)
     {
      __add_nchglst_el(np);
-     /* SJM 19/01/02 - T because this is 2nd delayed event one so must */ 
+     /* SJM 19/01/02 - T because this is 2nd delayed event one so must */
      /* not schedule */
      /* BEWARE - this assumes last element added to end of list */
      __nchg_futend->delayed_mipd = TRUE;
@@ -1126,20 +1172,20 @@ static void process_mipd_nchg_ev(struct tev_t *tevp)
    if ((np->nchgaction[__inum] & NCHG_ALL_CHGED) == 0)
     {
      __add_select_nchglst_el(np, bi, bi);
-     /* SJM 19/01/02 - T because this is 2nd delayed event one so must */ 
+     /* SJM 19/01/02 - T because this is 2nd delayed event one so must */
      /* not schedule */
      /* BEWARE - this assumes last element added to end of list */
      __nchg_futend->delayed_mipd = TRUE;
     }
   }
- 
+
  /* free mipd event auxialiary field here since bit and wire extracted */
  __my_free((char *) tevp->tu.tenp, sizeof(struct tenp_t));
  tevp->tu.tenp = NULL;
 }
 
 /*
- * emit eval netchg lds trace message 
+ * emit eval netchg lds trace message
  */
 static void emit_nchglds_trmsg(struct net_t *np, struct net_pin_t *npp)
 {
@@ -1150,7 +1196,7 @@ static void emit_nchglds_trmsg(struct net_t *np, struct net_pin_t *npp)
  __evtr_resume_msg();
  if (__debug_flg)
   {
-   if ((npauxp = npp->npaux) == NULL) i1 = i2 = -1;  
+   if ((npauxp = npp->npaux) == NULL) i1 = i2 = -1;
    else __get_cor_range(npauxp->nbi1, npauxp->nbi2, &i1, &i2);
    __tr_msg("-- after %s %s changed to %s processing %s\n",
     __to_wtnam(s1, np), __to_evtrwnam(__xs, np, i1, i2, __inst_ptr),
@@ -1287,15 +1333,15 @@ static void acc_chg_bufnot(struct gate_t *gp, word32 i)
 
  /* input for not is bits 0 and 2 */
  uwrd = ouwrd & ~(0x5L);
- uwrd |= (igav | (igbv << 2)); 
- /* input change did not change gate */ 
- if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }  
+ uwrd |= (igav | (igbv << 2));
+ /* input change did not change gate */
+ if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }
  gp->gstate.bp[__inum] = (byte) uwrd;
 
  /* value for not is bits 1 and 3 */
- __old_gateval = ((uwrd >> 1) & 1L) | ((uwrd >> 2) & 2L); 
+ __old_gateval = ((uwrd >> 1) & 1L) | ((uwrd >> 2) & 2L);
 
- /* evaluate - not and buf always convert z to x */ 
+ /* evaluate - not and buf always convert z to x */
  gatid = gp->gmsym->el.eprimp->gateid;
  ngbv = (uwrd >> 2) & 1L;
  if (gatid == G_NOT) ngav = !(uwrd & 1L) | ngbv;
@@ -1323,7 +1369,7 @@ static void acc_chg_bufnot(struct gate_t *gp, word32 i)
  xp = gp->gpins[0];
  /* update state with computed output value is bits 1 and 3 */
  uwrd = uwrd & ~(0x2L) & ~(0x8L);
- uwrd |= ((ngav << 1) | (ngbv << 3)); 
+ uwrd |= ((ngav << 1) | (ngbv << 3));
  gp->gstate.bp[__inum] = (byte) uwrd;
 
  /* accelerated assign to pin 0 (output) */
@@ -1336,9 +1382,9 @@ static void acc_chg_bufnot(struct gate_t *gp, word32 i)
      if (!__correct_forced_newwireval(np, &igav, &igbv))
       goto try_trace;
     }
-   /* here since avoiding value store, need to add net change el. */  
+   /* here since avoiding value store, need to add net change el. */
    chg_st_scalval_(np->nva.bp, ngav, ngbv);
-   /* not 0 for mask ands is T */  
+   /* not 0 for mask ands is T */
    /* if lhs chged and no lds/dces and not entire inst changed, record it */
    if (__lhs_changed) record_nchg_(np);
   }
@@ -1352,7 +1398,7 @@ static void acc_chg_bufnot(struct gate_t *gp, word32 i)
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
    /* notice this adds the net chg element if needed */
    __chg_st_bit(np, biti, ngav, ngbv);
-  }  
+  }
 try_trace:
  if (__ev_tracing) trace_chg_gateout(gp, xp);
 }
@@ -1394,15 +1440,15 @@ static void acc_stichg_bufnot(register struct gate_t *gp, word32 i)
  ouwrd = (word32) gp->gstate.bp[__inum];
  /* input for not is bits 0 and 2 */
  uwrd = ouwrd & ~(0x5L);
- uwrd |= (igav | (igbv << 2)); 
- /* input change did not change gate */ 
- if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }  
+ uwrd |= (igav | (igbv << 2));
+ /* input change did not change gate */
+ if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }
  gp->gstate.bp[__inum] = (byte) uwrd;
 
  /* value for not is bits 1 and 3 */
- __old_gateval = ((uwrd >> 1) & 1L) | ((uwrd >> 2) & 2L); 
+ __old_gateval = ((uwrd >> 1) & 1L) | ((uwrd >> 2) & 2L);
 
- /* evaluate - not and buf always convert z to x */ 
+ /* evaluate - not and buf always convert z to x */
  gatid = gp->gmsym->el.eprimp->gateid;
  ngbv = (uwrd >> 2) & 1L;
  if (gatid == G_NOT) ngav = !(uwrd & 1L) | ngbv;
@@ -1430,7 +1476,7 @@ static void acc_stichg_bufnot(register struct gate_t *gp, word32 i)
  xp = gp->gpins[0];
  /* update state with computed output value is bits 1 and 3 */
  uwrd = uwrd & ~(0x2L) & ~(0x8L);
- uwrd |= ((ngav << 1) | (ngbv << 3)); 
+ uwrd |= ((ngav << 1) | (ngbv << 3));
  gp->gstate.bp[__inum] = (byte) uwrd;
  /* accelerated assign to pin 0 (output) */
  if (xp->optyp == ID)
@@ -1442,23 +1488,23 @@ static void acc_stichg_bufnot(register struct gate_t *gp, word32 i)
      if (!__correct_forced_newwireval(np, &igav, &igbv))
       goto try_trace;
     }
-   /* here since avoiding value store, need to add net change el. */  
+   /* here since avoiding value store, need to add net change el. */
    chg_st_scalval_(np->nva.bp, ngav, ngbv);
 
-   /* not 0 for mask ands is T */  
+   /* not 0 for mask ands is T */
    /* if lhs chged and no lds/dces and not entire inst changed, record it */
    if (__lhs_changed) record_nchg_(np);
   }
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int32) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
    /* notice this adds the net chg element if needed */
    __chg_st_bit(np, biti, ngav, ngbv);
-  }  
+  }
 try_trace:
  if (__ev_tracing) trace_chg_gateout(gp, xp);
 }
@@ -1484,16 +1530,16 @@ static void acc_chg_4igate(register struct gate_t *gp, word32 i)
  if (xp->optyp == ID) ld_scalval_(&gav, &gbv, xp->lu.sy->el.enp->nva.bp);
  else __ld_bit(&gav, &gbv, xp->lu.x->lu.sy->el.enp,
   (int32) __contab[xp->ru.x->ru.xvi]);
- bi = i - 1; 
+ bi = i - 1;
  gwid = gp->gpnum;
  __new_inputval = gav | (gbv << 1);
 
  /* eval changed input and store in gstate if needed */
  ouwrd = (word32) gp->gstate.bp[__inum];
  uwrd = ouwrd & ~(1L << bi) & ~(1L << (gwid + bi));
- uwrd |= ((gav << bi) | (gbv << (gwid + bi))); 
- /* input change did not change gate */ 
- if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }  
+ uwrd |= ((gav << bi) | (gbv << (gwid + bi)));
+ /* input change did not change gate */
+ if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }
  gp->gstate.bp[__inum] = (byte) uwrd;
 
  /* mask off a/b output bit - now gav/gbv all inputs */
@@ -1501,7 +1547,7 @@ static void acc_chg_4igate(register struct gate_t *gp, word32 i)
  gav = uwrd & mask;
  gbv = (uwrd >> gwid) & mask;
  /* works since know n ins at least 1 - b shifts 1 less, goes b bit */
- __old_gateval = ((uwrd >> (gwid - 1)) & 1L) | ((uwrd >> (2*gwid - 2)) & 2L); 
+ __old_gateval = ((uwrd >> (gwid - 1)) & 1L) | ((uwrd >> (2*gwid - 2)) & 2L);
 
  /* evaluate gate */
  /* LOOKATME - could split and copy for each pin/gate combination */
@@ -1569,26 +1615,26 @@ static void acc_chg_4igate(register struct gate_t *gp, word32 i)
      if (!__correct_forced_newwireval(np, &gav, &gbv))
       goto try_trace;
     }
-   /* here since avoiding value store, need to add net change el. */  
+   /* here since avoiding value store, need to add net change el. */
    chg_st_scalval_(np->nva.bp, ngav, ngbv);
    if (__lhs_changed) record_nchg_(np);
   }
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int32) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
    /* this adds the nchg el if needed */
    __chg_st_bit(np, biti, ngav, ngbv);
-  }  
+  }
 try_trace:
  if (__ev_tracing) trace_chg_gateout(gp, xp);
 }
 
 /*
- * accelerated up to 4 input gate 
+ * accelerated up to 4 input gate
  *
  * could unwind to separate for each gate type
  * if no delay and not ev trace does all inline, if delay call normal prop
@@ -1618,16 +1664,16 @@ static void acc_stichg_4igate(register struct gate_t *gp, word32 i)
   }
  else __ld_bit(&gav, &gbv, xp->lu.x->lu.sy->el.enp,
    (int32) __contab[xp->ru.x->ru.xvi]);
- bi = i - 1; 
+ bi = i - 1;
  gwid = gp->gpnum;
  __new_inputval = gav | (gbv << 1);
 
  /* eval changed input and store in gstate if needed */
  ouwrd = (word32) gp->gstate.bp[__inum];
  uwrd = ouwrd & ~(1L << bi) & ~(1L << (gwid + bi));
- uwrd |= ((gav << bi) | (gbv << (gwid + bi))); 
- /* input change did not change gate */ 
- if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }  
+ uwrd |= ((gav << bi) | (gbv << (gwid + bi)));
+ /* input change did not change gate */
+ if (uwrd == ouwrd) { if (__ev_tracing) trace_gunchg(gp, i); return; }
  gp->gstate.bp[__inum] = (byte) uwrd;
 
  /* mask off a/b output bit - now gav/gbv all inputs */
@@ -1635,7 +1681,7 @@ static void acc_stichg_4igate(register struct gate_t *gp, word32 i)
  gav = uwrd & mask;
  gbv = (uwrd >> gwid) & mask;
  /* works since know n ins at least 1 - b shifts 1 less, goes b bit */
- __old_gateval = ((uwrd >> (gwid - 1)) & 1L) | ((uwrd >> (2*gwid - 2)) & 2L); 
+ __old_gateval = ((uwrd >> (gwid - 1)) & 1L) | ((uwrd >> (2*gwid - 2)) & 2L);
 
  /* evaluate gate */
  /* LOOKATME - could split and copy for each pin/gate combination */
@@ -1703,20 +1749,20 @@ static void acc_stichg_4igate(register struct gate_t *gp, word32 i)
      if (!__correct_forced_newwireval(np, &gav, &gbv))
       goto try_trace;
     }
-   /* here since avoiding value store, need to add net change el. */  
+   /* here since avoiding value store, need to add net change el. */
    chg_st_scalval_(np->nva.bp, ngav, ngbv);
    if (__lhs_changed) record_nchg_(np);
   }
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int32) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
    /* this adds the nchg el if needed */
    __chg_st_bit(np, biti, ngav, ngbv);
-  }  
+  }
 try_trace:
  if (__ev_tracing) trace_chg_gateout(gp, xp);
 }
@@ -1736,7 +1782,7 @@ static void trace_gunchg(struct gate_t *gp, word32 i)
 /*
  * evaluate a udp - std not optimized version
  */
-static void std_chg_udp_gate(register struct gate_t *gp, register word32 i) 
+static void std_chg_udp_gate(register struct gate_t *gp, register word32 i)
 {
  register int32 is_edge;
  int32 out_chg;
@@ -1758,7 +1804,7 @@ static void std_chg_udp_gate(register struct gate_t *gp, register word32 i)
 /*
  * evaluate a bufif gate - std not optimized version
  */
-static void std_chg_bufif_gate(register struct gate_t *gp, register word32 i) 
+static void std_chg_bufif_gate(register struct gate_t *gp, register word32 i)
 {
  int32 out_chg;
 
@@ -1780,7 +1826,7 @@ static void std_chg_bufif_gate(register struct gate_t *gp, register word32 i)
  *
  * g resist here is for real resistive gate not flag for acc
  */
-static void std_chg_mos_gate(register struct gate_t *gp, register word32 i) 
+static void std_chg_mos_gate(register struct gate_t *gp, register word32 i)
 {
  register int32 out_chg, gid;
 
@@ -1789,7 +1835,7 @@ static void std_chg_mos_gate(register struct gate_t *gp, register word32 i)
   { if (__ev_tracing) trace_gunchg(gp, i); return; }
 
  out_chg = TRUE;
- gid = gp->gmsym->el.eprimp->gateid; 
+ gid = gp->gmsym->el.eprimp->gateid;
  switch (gid) {
   case G_NMOS: __eval_nmos_gate(gp->gstate.wp[__inum]); break;
   case G_RNMOS: __eval_rnmos_gate(gp->gstate.wp[__inum]); break;
@@ -1811,7 +1857,7 @@ static void std_chg_mos_gate(register struct gate_t *gp, register word32 i)
 /*
  * evaluate a cmos gate - std not optimized version
  */
-static void std_chg_cmos_gate(register struct gate_t *gp, register word32 i) 
+static void std_chg_cmos_gate(register struct gate_t *gp, register word32 i)
 {
  register int32 out_chg;
 
@@ -1832,7 +1878,7 @@ static void std_chg_cmos_gate(register struct gate_t *gp, register word32 i)
 }
 
 /*
- * routine used during prep to determine and set gate in change routine 
+ * routine used during prep to determine and set gate in change routine
  * called for all including udp but not trans
  */
 extern void __set_gchg_func(struct gate_t *gp)
@@ -1866,7 +1912,7 @@ extern void __set_gchg_func(struct gate_t *gp)
 }
 
 /*
- * routine to turn off acceleration for logic gates when gate out terminal 
+ * routine to turn off acceleration for logic gates when gate out terminal
  * value change call back registered
  */
 extern void __logic_acc_off(struct gate_t *gp)
@@ -1888,7 +1934,7 @@ extern void __vpi_set_chg_proc(struct gate_t *gp)
     {
      gp->gchg_func = std_chg_logic_gate;
     }
-  }     
+  }
 }
 
 /*
@@ -1965,7 +2011,7 @@ static void prop_gatechg(register struct gate_t *gp, register int32 outchg,
      if (__showe_onevent)
       { tevp->outv = get_showcancele_val(gp); return; }
 
-     /* immediate assign then cancel */ 
+     /* immediate assign then cancel */
 on_detect_show_x:
      __new_gateval = get_showcancele_val(gp);
      if (tevp->gev_acc) acc_evchg_gate_outwire(gp);
@@ -2001,7 +2047,7 @@ on_detect_show_x:
 }
 
 /*
- * propagate the gate change 
+ * propagate the gate change
  * complicated because of show cancel e analysis
  *
  * notice new gateval and old gateval set and has strength value if present
@@ -2009,7 +2055,7 @@ on_detect_show_x:
  * unlike prop_gatechg, this must be called for DT_NONE assigns
  * all events scheduled from here must not set event accelerate bit
  *
- * SJM 11/27/00 - this always calls or schedules change gate outwire where 
+ * SJM 11/27/00 - this always calls or schedules change gate outwire where
  * the gate terminal call back is checked so do not need separate code
  */
 static void evtr_prop_gatechg(register struct gate_t *gp, register word32 i,
@@ -2025,8 +2071,8 @@ static void evtr_prop_gatechg(register struct gate_t *gp, register word32 i,
   gp->gmsym->synam, to_evtronam(s1, gp->gsym->synam, __inst_ptr,
   (struct task_t *) NULL), i, __to_ginam(vs1, gp, __new_inputval, i));
 
- /* case 0: gate has no delay - not even #0 */ 
- if (gp->g_delrep == DT_NONE) 
+ /* case 0: gate has no delay - not even #0 */
+ if (gp->g_delrep == DT_NONE)
   {
    if (!outchg) { __tr_msg(" NODEL, NOCHG\n"); return; }
 
@@ -2083,7 +2129,7 @@ static void evtr_prop_gatechg(register struct gate_t *gp, register word32 i,
      if (__showe_onevent)
       { tevp->outv = get_showcancele_val(gp); return; }
 
-     /* immediate assign then cancel */ 
+     /* immediate assign then cancel */
 on_detect_show_x:
      __new_gateval = get_showcancele_val(gp);
      if (tevp->gev_acc) acc_evchg_gate_outwire(gp);
@@ -2135,14 +2181,14 @@ on_detect_show_x:
 
    if (__showe_onevent) { tevp->outv = get_showcancele_val(gp); return; }
    goto on_detect_show_x;
-  } 
+  }
 
  __tr_msg(" DEL, PEND, UNSTABLE RESCHD <OV=%s, OSV=%s AT %s, NSV=%s AT %s>\n",
   __to_gonam(vs1, gp, __old_gateval),
   __to_gonam(vs2, gp, tevp->outv), __to_timstr(s1, &(tevp->etime)),
-  __to_gonam(vs3, gp, __new_gateval), __to_timstr(s2, &schtim)); 
- tevpi = reschedule_1gev(tevpi, gdel, schtim, __new_gateval, FALSE); 
-} 
+  __to_gonam(vs3, gp, __new_gateval), __to_timstr(s2, &schtim));
+ tevpi = reschedule_1gev(tevpi, gdel, schtim, __new_gateval, FALSE);
+}
 
 /*
  * compute show cancel x value depending on gate class and strength
@@ -2164,18 +2210,18 @@ static word32 get_showcancele_val(struct gate_t *gp)
    /* LOOKATME - since mos gates pass strength for now driving strong x */
    /* maybe could take strength from input? and leave z */
    return(ST_STRONGX);
-  /* for tranif input spike sched. only, x is turned off (0) */ 
+  /* for tranif input spike sched. only, x is turned off (0) */
   case GC_TRANIF: return(0);
   default: __case_terr(__FILE__, __LINE__);
  }
  /* notice no need to correct for possible highz strength since value x */
  /* SJM 08/07/01 - this works because with val x need both 0 and 1 strens */
- if (nd_stren) return((gp->g_stval << 2) | 3); 
+ if (nd_stren) return((gp->g_stval << 2) | 3);
  return(3);
 }
 
 /*
- * emit an object name for tracing with path 
+ * emit an object name for tracing with path
  * cannot use __xs in here
  */
 static char *to_evtronam(char *s, char *onam, struct itree_t *teitp,
@@ -2195,9 +2241,9 @@ static i_tev_ndx schedule_1gev(register struct gate_t *gp, word64 gdel,
  word64 schtim, int32 is_acc)
 {
  register i_tev_ndx tevpi;
- register struct tev_t *tevp; 
+ register struct tev_t *tevp;
 
- alloc_tev_(tevpi, TE_G, __inst_ptr, schtim);  
+ alloc_tev_(tevpi, TE_G, __inst_ptr, schtim);
  if (gdel == 0ULL)
   {
    /* this is #0, but must still build tev */
@@ -2212,7 +2258,7 @@ static i_tev_ndx schedule_1gev(register struct gate_t *gp, word64 gdel,
  /* if logic or udp, no strength, event processing assign will handle */
  /* if bufif, mos or cmos, know has strength, if tranif conducting state */
  tevp->outv = (byte) __new_gateval;
- /* acc. store only if gate is acc. and no conn. wire delay (resist off) */ 
+ /* acc. store only if gate is acc. and no conn. wire delay (resist off) */
  /* is acc T only if called from acc routine because acc routine never */
  /* possible for real resistive mos or tran */
  /* for mos with delay, can get here with g pdst on but is acc off */
@@ -2267,7 +2313,7 @@ static void emit_pulsewarn(struct gate_t *gp, struct tev_t *tevp,
 
  sprintf(s2, "old %s, scheduled %s, new %s%s",
   __to_gonam(s3, gp, __old_gateval), __to_gonam(s4, gp, tevp->outv),
-  __to_gonam(s5, gp, __new_gateval), s1);   
+  __to_gonam(s5, gp, __new_gateval), s1);
  /* notice spike means new and old the same */
  __gfwarn(592, gp->gsym->syfnam_ind, gp->gsym->sylin_cnt,
   "%s gate %s.%s %s (edge at %s replaced by new at %s) - %s",
@@ -2304,7 +2350,7 @@ static void process_gatechg_ev(register struct tev_t *tevp)
  * this requires new value in new gateval global
  */
 static void acc_evchg_gate_outwire(register struct gate_t *gp)
-{ 
+{
  register struct expr_t *xp;
  register word32 uwrd, ngav, ngbv;
  register struct net_t *lhsnp;
@@ -2320,7 +2366,7 @@ static void acc_evchg_gate_outwire(register struct gate_t *gp)
   {
    /* update state with computed output value is bits 1 and 3 */
    uwrd = uwrd & ~(0xaL);
-   uwrd |= ((ngav << 1) | (ngbv << 3)); 
+   uwrd |= ((ngav << 1) | (ngbv << 3));
   }
  else
   {
@@ -2341,29 +2387,29 @@ static void acc_evchg_gate_outwire(register struct gate_t *gp)
      if (!__correct_forced_newwireval(lhsnp, &igav, &igbv))
       goto try_trace;
     }
-   /* here since avoiding value store, need to add net change el. */  
+   /* here since avoiding value store, need to add net change el. */
    chg_st_scalval_(lhsnp->nva.bp, ngav, ngbv);
    if (__lhs_changed) record_nchg_(lhsnp);
   }
  else
   {
    lhsnp = xp->lu.x->lu.sy->el.enp;
-   biti = (int32) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];
    /* if the 1 bit is forced nothing to do else normal assign */
    if (lhsnp->frc_assgn_allocated
     && __forced_inhibit_bitassign(lhsnp, xp->lu.x, xp->ru.x)) goto try_trace;
    /* notice this adds the net chg element if needed */
    __chg_st_bit(lhsnp, biti, ngav, ngbv);
-  }  
+  }
 try_trace:
  if (__ev_tracing) trace_chg_gateout(gp, xp);
 }
 
 /*
- * emit gate event process trace message 
+ * emit gate event process trace message
  */
 static void emit_gev_trace(struct gate_t *gp, struct tev_t *tevp)
-{ 
+{
  char s1[RECLEN], s2[RECLEN], vs1[10];
 
  __evtr_resume_msg();
@@ -2404,7 +2450,7 @@ extern void __add_nchglst_el(register struct net_t *np)
 
  /* all needed change info for this time slot now records */
  np->nchgaction[__inum] |= NCHG_ALL_CHGED;
- 
+
  nchglp->nchglnxt = NULL;
  /* LOOKATME - maybe add dummy list element on front to avoid comparison */
  if (__nchg_futend != NULL)
@@ -2417,11 +2463,11 @@ extern void __add_nchglst_el(register struct net_t *np)
    __tr_msg("-- added net change element %s\n",
     __to_evtrwnam(__xs, np, -1, -1, __inst_ptr));
   }
- /* --- */ 
+ /* --- */
 }
 
 /*
- * add a net change record select range (usually bit) changed 
+ * add a net change record select range (usually bit) changed
  *
  * add to end of next pass, netchg list elements
  * notice this needs inst. loc of target wire for xmr
@@ -2449,7 +2495,7 @@ extern void __add_select_nchglst_el(register struct net_t *np, register int32 i1
  nchglp->bi2 = i2;
 
  /* here since range not marked as all changed so will match ranges */
- 
+
  /* link on end since good heuristic to process in change order */
  nchglp->nchglnxt = NULL;
  /* LOOKATME - maybe add dummy list element on front to avoid comparison */
@@ -2463,7 +2509,7 @@ extern void __add_select_nchglst_el(register struct net_t *np, register int32 i1
    __tr_msg("-- added net change element %s\n",
     __to_evtrwnam(__xs, np, i1, i2, __inst_ptr));
   }
- --- */ 
+ --- */
 }
 
 /*
@@ -2475,7 +2521,7 @@ extern void __add_dmpv_chglst_el(struct net_t *np)
  register struct dvchgnets_t *dvchgp;
 
  if (__dv_netfreelst == NULL)
-   dvchgp = (struct dvchgnets_t *) __my_malloc(sizeof(struct dvchgnets_t)); 
+   dvchgp = (struct dvchgnets_t *) __my_malloc(sizeof(struct dvchgnets_t));
  else
   {
    dvchgp = __dv_netfreelst;
@@ -2495,7 +2541,7 @@ extern void __add_dmpv_chglst_el(struct net_t *np)
 }
 
 /*
- * assign gate output to driven wire 
+ * assign gate output to driven wire
  * this assumes __new_gateval previously set
  * works for both 8 bit strength and 2 bit non strength values
  *
@@ -2519,7 +2565,7 @@ static void change_gate_outwire(register struct gate_t *gp)
  xp = gp->gpins[0];
  switch ((byte) gp->g_class) {
   case GC_LOGIC:
-   /* SJM 02/07/01 - remove st gstate out routine since only for logic */ 
+   /* SJM 02/07/01 - remove st gstate out routine since only for logic */
    /* this removes inner loop case stmt */
 
    /* must store new gate value into state here - value does not have stren */
@@ -2536,14 +2582,14 @@ static void change_gate_outwire(register struct gate_t *gp)
    __cur_udp = gp->gmsym->el.eudpp;
    nins = __cur_udp->numins;
    bi = 2*nins;
-   /* comb means no state - edge always has state */  
+   /* comb means no state - edge always has state */
    if (__cur_udp->u_wide)
     {
-     wp = &(gp->gstate.wp[2*__inum]);  
+     wp = &(gp->gstate.wp[2*__inum]);
      /* update running 2nd state signature word32 */
      if (__cur_udp->utyp != U_COMB)
       {
-       /* need to access old gate value (out about to change) */ 
+       /* need to access old gate value (out about to change) */
        /* since for event schedule will not be stored */
        /* during initialize this will be meaningless 0 */
        __old_gateval = (wp[0] >> (2*nins)) & 3L;
@@ -2564,7 +2610,7 @@ static void change_gate_outwire(register struct gate_t *gp)
    else
     {
      hwp = &(gp->gstate.hwp[__inum]);
-     /* -- RELASE remove 
+     /* -- RELASE remove
      if (__debug_flg && __ev_tracing)
       __tr_msg("-- st udp out old %x\n", *hwp);
      -- */
@@ -2597,13 +2643,13 @@ static void change_gate_outwire(register struct gate_t *gp)
 do_hasstren_assign:
    /* then assign - here strength variable and new gateval has strength */
    if (xp->x_multfi) __mdr_assign_or_sched(xp);
-   else 
+   else
     {
      if (xp->lhsx_ndel && !__wire_init) schd_wire = TRUE;
      else schd_wire = FALSE;
 
-     /* 07/08/00 - if gate (always 1 bit) drives wider vec must initialize */  
-     /* other bits to z since only has 1 driver */ 
+     /* 07/08/00 - if gate (always 1 bit) drives wider vec must initialize */
+     /* other bits to z since only has 1 driver */
      push_xstk_(xsp, 4*xp->szu.xclen);
      sbp = (byte *) xsp->ap;
      set_byteval_(sbp, xp->szu.xclen, ST_HIZ);
@@ -2611,21 +2657,21 @@ do_hasstren_assign:
      sbp[0] = (byte) __new_gateval;
      __exec_conta_assign(xp, (word32 *) sbp, (word32 *) NULL, schd_wire);
      __pop_xstk();
-    } 
-   goto done; 
+    }
+   goto done;
   case GC_TRANIF:
    /* out wire here is conducting state from 3rd input */
-   /* SJM 12/13/00 - serious malloc bug was using bit ofset */ 
+   /* SJM 12/13/00 - serious malloc bug was using bit ofset */
    wi = get_wofs_(2*__inum);
    bi = get_bofs_(2*__inum);
    /* 2 bits give conducting state */
    if (__new_gateval == 2) __new_gateval = 3;
-   gp->gstate.wp[wi] &= ~(3L << bi);  
-   gp->gstate.wp[wi] |= (__new_gateval << bi); 
+   gp->gstate.wp[wi] &= ~(3L << bi);
+   gp->gstate.wp[wi] |= (__new_gateval << bi);
    if (__ev_tracing)
     {
      __tr_msg("-- relaxing %s in switch channel\n",
-      __gstate_tostr(__xs, gp, TRUE)); 
+      __gstate_tostr(__xs, gp, TRUE));
     }
    /* tranif enable changed must evaluate channel */
    /* LOOKATME think this only needs to be called if from/to 0, x same as 1 */
@@ -2651,14 +2697,14 @@ do_hasstren_assign:
      /* notice always need to add strength logic gate cannot drive z */
      if (__new_gateval == 2) sb2 = 2;
      else
-      { 
+      {
        /* notice tran that uses g st val for mark never goes here */
        uwrd = __new_gateval | (gp->g_stval << 2);
        uwrd = (word32) __stren_map_tab[uwrd];
        sb2 = (byte) uwrd;
       }
-     /* 07/08/00 - if gate (always 1 bit) drives wider vec must initialize */  
-     /* other bits to z since only has 1 driver */ 
+     /* 07/08/00 - if gate (always 1 bit) drives wider vec must initialize */
+     /* other bits to z since only has 1 driver */
      push_xstk_(xsp, 4*xp->szu.xclen);
      sbp = (byte *) xsp->ap;
      set_byteval_(sbp, xp->szu.xclen, ST_HIZ);
@@ -2666,7 +2712,7 @@ do_hasstren_assign:
      sbp[0] = sb2;
      __exec_conta_assign(xp, (word32 *) sbp, (word32 *) NULL, schd_wire);
      __pop_xstk();
-    } 
+    }
    else
     {
      av = __new_gateval & 1L;
@@ -2679,7 +2725,7 @@ do_hasstren_assign:
 done:
  /* SJM 11/27/00 - know out changed, state has been updated and strength */
  /* competition done to set new wire value - this call back monitors the */
- /* gate state so it does ont matter if after wire changed */ 
+ /* gate state so it does ont matter if after wire changed */
  if (__have_vpi_gateout_cbs)
   {
    int32 gi, tevpi;
@@ -2698,24 +2744,24 @@ done:
 /*
  * trace message after change gate outwire
  */
-static void trace_chg_gateout(struct gate_t *gp, struct expr_t *xp) 
+static void trace_chg_gateout(struct gate_t *gp, struct expr_t *xp)
 {
  char s1[RECLEN], s2[RECLEN], vs1[10], vs2[10];
 
  if (xp->lhsx_ndel && !__wire_init) strcpy(vs1, "schedule");
- else strcpy(vs1, "assign"); 
+ else strcpy(vs1, "assign");
  if (gp->g_class == GC_UDP) strcpy(vs2, "udp"); else strcpy(vs2, "gate");
  __tr_msg("-- %s %s event output %s, %s to %s\n", vs1,
   __gstate_tostr(__xs, gp, TRUE), vs2, __to_gassign_str(s1, xp),
   __msgexpr_tostr(s2, xp));
 }
 
-/* SJM 02/07/01 - removed st gstate out routine - moved only used logic */ 
+/* SJM 02/07/01 - removed st gstate out routine - moved only used logic */
 
 /*
  * store into coded wp of length blen at biti for current instance
  * that is stored according to srep format from low 2 bits of rgap
- * notice bits are separated into a and b parts in gate representation 
+ * notice bits are separated into a and b parts in gate representation
  *
  * this differs from lhs bit select in accessing value for current instance
  * and adjusting place to select from according to storage representation
@@ -2739,8 +2785,8 @@ static void gate_st_bit(union pck_u pckv, int32 blen, int32 biti, int32 srep,
    rap = &(pckv.wp[2*wlen*__inum]);
    __lhsbsel(rap, biti, av);
    __lhsbsel(&(rap[wlen]), biti, bv);
-   return;  
-  case SR_PVEC: 
+   return;
+  case SR_PVEC:
    /* SJM 12/19/99 - notice gates still packed into bp, hwp, wp not just word32 */
    ouwrd = get_packintowrd_(pckv, __inum, blen);
    uwrd = ouwrd & ~(1L << biti) & ~(ouwrd & (1L << (blen + biti)));
@@ -2764,7 +2810,7 @@ static void gate_st_scalval(register word32 *wp, register word32 av,
 {
  register int32 bi;
  int32 dbi, dwi;
- 
+
  bi = 2*__inum;
  dwi = get_wofs_(bi);
  dbi = get_bofs_(bi);
@@ -2781,7 +2827,7 @@ static void gate_st_scalval(register word32 *wp, register word32 av,
 static int32 chg_mos_instate(register struct gate_t *gp, word32 i)
 {
  register word32 uwrd;
- register struct expr_t *ndp; 
+ register struct expr_t *ndp;
  register byte *sbp;
  struct xstk_t *xsp;
 
@@ -2795,7 +2841,7 @@ static int32 chg_mos_instate(register struct gate_t *gp, word32 i)
    sbp = (byte *) xsp->ap;
    __new_inputval = sbp[0];
    __pop_xstk();
-   __old_inputval = uwrd & 0xffL; 
+   __old_inputval = uwrd & 0xffL;
    if (__new_inputval == __old_inputval) return(FALSE);
    uwrd &= ~0xffL;
    uwrd |= __new_inputval;
@@ -2806,7 +2852,7 @@ static int32 chg_mos_instate(register struct gate_t *gp, word32 i)
    xsp = __eval_xpr(gp->gpins[2]);
    __new_inputval = (xsp->ap[0] & 1L) | ((xsp->bp[0] & 1L) << 1);
    __pop_xstk();
-   __old_inputval = (uwrd >> 8) & 3L; 
+   __old_inputval = (uwrd >> 8) & 3L;
    if (__new_inputval == __old_inputval) return(FALSE);
    uwrd &= ~(3L << 8);
    uwrd |= (__new_inputval << 8);
@@ -2829,7 +2875,7 @@ static int32 chg_cmos_instate(register struct gate_t *gp, word32 i)
 {
  register word32 uwrd;
  register byte *sbp;
- register struct expr_t *ndp; 
+ register struct expr_t *ndp;
  register struct xstk_t *xsp;
 
  uwrd = gp->gstate.wp[__inum];
@@ -2841,7 +2887,7 @@ static int32 chg_cmos_instate(register struct gate_t *gp, word32 i)
    sbp = (byte *) xsp->ap;
    __new_inputval = sbp[0];
    __pop_xstk();
-   __old_inputval = uwrd & 0xffL; 
+   __old_inputval = uwrd & 0xffL;
    if (__new_inputval == __old_inputval) return(FALSE);
    uwrd &= ~0xffL;
    uwrd |= __new_inputval;
@@ -2855,7 +2901,7 @@ static int32 chg_cmos_instate(register struct gate_t *gp, word32 i)
    if (i == 2)
     {
      /* n ctrl bits 15-8 */
-     __old_inputval = (uwrd >> 8) & 3L; 
+     __old_inputval = (uwrd >> 8) & 3L;
      if (__new_inputval == __old_inputval) return(FALSE);
      uwrd &= ~(3L << 8);
      uwrd |= (__new_inputval << 8);
@@ -2863,7 +2909,7 @@ static int32 chg_cmos_instate(register struct gate_t *gp, word32 i)
    else
     {
      /* p ctrl bits 23-16 */
-     __old_inputval = (uwrd >> 16) & 3L; 
+     __old_inputval = (uwrd >> 16) & 3L;
      if (__new_inputval == __old_inputval) return(FALSE);
      uwrd &= ~(3L << 16);
      uwrd |= (__new_inputval << 16);
@@ -2890,7 +2936,7 @@ extern void __eval_tranif_ld(register struct gate_t *gp, register int32 i)
  /* third in chged - schedule (if needed) conducting state chg */
  /* must always go through scheduling code for spike analysis */
  eval_tranif_onoff(gp);
- /* out_chg T if conducting state changed */ 
+ /* out_chg T if conducting state changed */
  out_chg = (__new_gateval != __old_gateval);
  /* must evaluate both sides */
  if (gp->g_delrep == DT_NONE)
@@ -2909,7 +2955,7 @@ extern void __eval_tranif_ld(register struct gate_t *gp, register int32 i)
  */
 static void eval_tranif_onoff(struct gate_t *gp)
 {
- register int32 wi, bi; 
+ register int32 wi, bi;
  register word32 cval;
  register struct xstk_t *xsp;
  int32 gateid;
@@ -2919,7 +2965,7 @@ static void eval_tranif_onoff(struct gate_t *gp)
  /* step 1: access old value */
  cval = gp->gstate.wp[wi];
  /* this is conducting state independent of if0 or if1 */
- __old_gateval = (cval >> bi) & 3L;  
+ __old_gateval = (cval >> bi) & 3L;
  /* step 2: compute new conducting value */
  xsp = __eval_xpr(gp->gpins[2]);
  __new_inputval = (xsp->ap[0] & 1L) | ((xsp->bp[0] & 1L) << 1);
@@ -2941,7 +2987,7 @@ static void eval_tranif_onoff(struct gate_t *gp)
 
 /*
  * load of changed wire is >1 bit conta rhs needs to be evaluated and
- * if delay scheduled else assigned and lhs added to net changes 
+ * if delay scheduled else assigned and lhs added to net changes
  *
  * current itree element never changes in here
  * for now evaluating and scheduling - no optimization
@@ -2949,7 +2995,7 @@ static void eval_tranif_onoff(struct gate_t *gp)
  * know rhs real illegal here since cannot assign to wire
  *
  * all computations done with non strength values since strength
- * added from conta type if needed when assigning to strength wire 
+ * added from conta type if needed when assigning to strength wire
  *
  * no pulse/glitch analysis here just inertial algorithm because
  * continuous assigns do not correspond to silicon rather modeling convention
@@ -3025,7 +3071,7 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
        /* convert to strength bytes forms - add in driven from ca */
        push_xstk_(xsp2, 4*lhslen);
        sbp = (byte *) xsp2->ap;
-       __st_standval(sbp, xsp, cap->ca_stval); 
+       __st_standval(sbp, xsp, cap->ca_stval);
        if (lhsxp->optyp == LCB) __stren_exec_ca_concat(lhsxp, sbp, schd_wire);
        else __exec_conta_assign(lhsxp, xsp2->ap, xsp2->bp, schd_wire);
        __pop_xstk();
@@ -3058,15 +3104,15 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
 
  /* compute delay - know at least one bit changed */
  __new_gateval = 1L;
- /* if 4v delay, must set new_gateval for use in delay selection */ 
- /* notice modified LRM if left hand side all x's, minimum delay is used */ 
+ /* if 4v delay, must set new_gateval for use in delay selection */
+ /* notice modified LRM if left hand side all x's, minimum delay is used */
  if (mast_cap->ca_4vdel)
   {
    if (mast_cap->ca_pb_sim)
     {
      struct xstk_t *mast_xsp;
 
-     /* if 4v delay, must always eval entire conta rhs to select delay */ 
+     /* if 4v delay, must always eval entire conta rhs to select delay */
      mast_xsp = __eval_xpr(mast_cap->rhsx);
      if (vval_is0_(mast_xsp->ap, lhslen))
       {
@@ -3084,7 +3130,7 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
        if (vval_is0_(xsp->bp, lhslen)) __new_gateval = 0L;
        else if (__vval_is1(xsp->bp, lhslen)) __new_gateval = 2L;
       }
-     else if (__vval_is1(xsp->ap, lhslen) && __vval_is1(xsp->bp, lhslen)) 
+     else if (__vval_is1(xsp->ap, lhslen) && __vval_is1(xsp->bp, lhslen))
       { __new_gateval = 3L; }
     }
   }
@@ -3193,25 +3239,25 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
    __tr_msg(" NODEL <NV=%s>\n",
     __regab_tostr(s1, xsp->ap, xsp->bp, lhslen, BHEX, FALSE));
    /* in here deals with saved driver */
-   
+
    /* SJM 09/28/0-2 - know if master fi>1 all per bit will be */
    if (lhsxp->x_multfi)
     {
      __st_perinst_val(cap->ca_drv_wp, lhslen, xsp->ap, xsp->bp);
      __mdr_assign_or_sched(lhsxp);
-    } 
+    }
    else
     {
      /* here do not need drv and do not need schd driver, rhs is driver */
      if (lhsxp->lhsx_ndel && !__wire_init) schd_wire = TRUE;
      else schd_wire = FALSE;
-     if (lhsxp->x_stren) 
+     if (lhsxp->x_stren)
       {
        /* convert to strength bytes forms - add in driven from ca */
        push_xstk_(xsp2, 4*lhslen);
        sbp = (byte *) xsp2->ap;
        /* stren val also in PB */
-       __st_standval(sbp, xsp, cap->ca_stval); 
+       __st_standval(sbp, xsp, cap->ca_stval);
        if (lhsxp->optyp == LCB) __stren_exec_ca_concat(lhsxp, sbp, schd_wire);
        /* SJM 03/30/99 - was storing value without strength added */
        else __exec_conta_assign(lhsxp, xsp2->ap, xsp2->bp, schd_wire);
@@ -3229,7 +3275,7 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
   }
 
  /* case 2: has delay */
- /* this is current (old) driving value */ 
+ /* this is current (old) driving value */
  lhswlen = wlen_(lhslen);
  push_xstk_(xsp2, lhslen);
  __ld_perinst_val(xsp2->ap, xsp2->bp, cap->ca_drv_wp, lhslen);
@@ -3247,7 +3293,7 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
 
  /* compute delay */
  __new_gateval = 1L;
- /* if 4v delay, must set new gateval for use in delay selection */ 
+ /* if 4v delay, must set new gateval for use in delay selection */
  /* SJM 09/28/02 - now match non evtr 4v case */
  if (mast_cap->ca_4vdel)
   {
@@ -3255,7 +3301,7 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
     {
      struct xstk_t *mast_xsp;
 
-     /* if 4v delay, must always eval entire conta rhs to select delay */ 
+     /* if 4v delay, must always eval entire conta rhs to select delay */
      mast_xsp = __eval_xpr(mast_cap->rhsx);
      if (vval_is0_(mast_xsp->ap, lhslen))
       {
@@ -3273,7 +3319,7 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
        if (vval_is0_(xsp->bp, lhslen)) __new_gateval = 0L;
        else if (__vval_is1(xsp->bp, lhslen)) __new_gateval = 2L;
       }
-     else if (__vval_is1(xsp->ap, lhslen) && __vval_is1(xsp->bp, lhslen)) 
+     else if (__vval_is1(xsp->ap, lhslen) && __vval_is1(xsp->bp, lhslen))
       { __new_gateval = 3L; }
     }
   }
@@ -3337,7 +3383,7 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
   __regab_tostr(s3, xsp->ap, xsp->bp, lhslen, BHEX, FALSE),
   __to_timstr(s4, &schtim));
 
- /* reschedule by replacing (if same time) or cancelling */ 
+ /* reschedule by replacing (if same time) or cancelling */
  reschedule_1caev(tevpi, cadel, schtim, xsp);
 
 done:
@@ -3362,14 +3408,14 @@ extern char *__to_evtrcanam(char *s, struct conta_t *cap,
 
 /*
  * schedule 1 conta event
- * know schd_xsp width is exactly lhs width 
+ * know schd_xsp width is exactly lhs width
  */
 static void schedule_1caev(struct conta_t *cap, word64 cadel,
  word64 schtim, struct xstk_t *schd_xsp)
 {
  register i_tev_ndx tevpi;
 
- alloc_tev_(tevpi, TE_CA, __inst_ptr, schtim);  
+ alloc_tev_(tevpi, TE_CA, __inst_ptr, schtim);
  if (cadel == 0ULL)
   {
    /* this is #0, but must still build tev */
@@ -3406,10 +3452,10 @@ static void reschedule_1caev(i_tev_ndx tevpi, word64 cadel,
     schd_xsp->bp);
    return;
   }
- /* cancel */ 
+ /* cancel */
  tevp->te_cancel = TRUE;
  __inertial_cancels++;
- /* this will change the scheduled field so no need to set to nil */ 
+ /* this will change the scheduled field so no need to set to nil */
  schedule_1caev(cap, cadel, newtim, schd_xsp);
 }
 
@@ -3418,8 +3464,8 @@ static void reschedule_1caev(i_tev_ndx tevpi, word64 cadel,
  * 1 bit continuous assign are processed as gates per Verilog semantics
  * and not seen here
  *
- * will only get here if delay >= 0 (maybe #0) 
- * SJM 09/28/02 - for rhs concat decomposed into PB, event ptr is PB 
+ * will only get here if delay >= 0 (maybe #0)
+ * SJM 09/28/02 - for rhs concat decomposed into PB, event ptr is PB
  */
 static void process_conta_ev(register struct tev_t *tevp)
 {
@@ -3436,14 +3482,14 @@ static void process_conta_ev(register struct tev_t *tevp)
  push_xstk_(xsp, lhslen);
  __ld_perinst_val(xsp->ap, xsp->bp, cap->schd_drv_wp, lhslen);
  if (__ev_tracing)
-  { 
+  {
    struct conta_t *cap2;
 
    __evtr_resume_msg();
-   if (cap->ca_pb_el) cap2 = cap->pbcau.mast_cap; else cap2 = cap;  
+   if (cap->ca_pb_el) cap2 = cap->pbcau.mast_cap; else cap2 = cap;
    __to_evtrcanam(__xs, cap2, tevp->teitp);
    __regab_tostr(__xs2, xsp->ap, xsp->bp, lhslen, BHEX, FALSE);
-   if (lhsxp->x_multfi) 
+   if (lhsxp->x_multfi)
     __tr_msg("-- %s event this driver of multiple:\n   %s\n", __xs, __xs2);
    else __tr_msg("-- %s event the fi=1 driver: %s\n", __xs, __xs2);
   }
@@ -3462,11 +3508,11 @@ static void process_conta_ev(register struct tev_t *tevp)
    if (lhsxp->x_stren)
     {
      /* convert to strength bytes forms - add in driven from ca */
-     /* know all widths exactly  required lhs width */ 
+     /* know all widths exactly  required lhs width */
      push_xstk_(xsp2, 4*lhslen);
      sbp = (byte *) xsp2->ap;
      /* notice stren value also in each per bit, just not delay */
-     __st_standval(sbp, xsp, cap->ca_stval); 
+     __st_standval(sbp, xsp, cap->ca_stval);
      if (lhsxp->optyp == LCB) __stren_exec_ca_concat(lhsxp, sbp, schd_wire);
      else __exec_conta_assign(lhsxp, xsp2->ap, xsp2->bp, schd_wire);
      __pop_xstk();
@@ -3480,7 +3526,7 @@ static void process_conta_ev(register struct tev_t *tevp)
   }
  __pop_xstk();
  cap->caschd_tevs[__inum] = -1;
- /* can just leave scheduled wire value - nothing to free */  
+ /* can just leave scheduled wire value - nothing to free */
 }
 
 /*
@@ -3490,8 +3536,8 @@ static void process_conta_ev(register struct tev_t *tevp)
  * since r,f or path delays will have different delays and inertial
  * conditions for every bit
  * know for scalar bi 0 not -1
- *  
- * could possibly optimize one delay form  
+ *
+ * could possibly optimize one delay form
  * will only get here if wire has delay > 0 (or #0)
  * also know path source or destination can never have wire delay
  *
@@ -3512,14 +3558,14 @@ static void process_wire_ev(register struct tev_t *tevp)
  /* DBG remove ---
  if (bi < 0) __misc_terr(__FILE__, __LINE__);
  --- */
-  
+
  /* free wire event auxialiary field here since bit and wire extracted */
  __my_free((char *) tevp->tu.tenp, sizeof(struct tenp_t));
  tevp->tu.tenp = NULL;
 
  nval = tevp->outv;
  if (__ev_tracing)
-  { 
+  {
    char s1[RECLEN], s2[RECLEN];
 
    __evtr_resume_msg();
@@ -3529,7 +3575,7 @@ static void process_wire_ev(register struct tev_t *tevp)
     __to_evtrwnam(__xs, np, bi, bi, tevp->teitp), s2,
      __to_vvnam(s1, (word32) nval));
   }
- dwirp = np->nu.rngdwir; 
+ dwirp = np->nu.rngdwir;
  dwirp->wschd_pbtevs[np->nwid*tevp->teitp->itinum + bi] = -1;
 
  /* inhibit if active force */
@@ -3551,12 +3597,12 @@ static void process_wire_ev(register struct tev_t *tevp)
    get_stwire_addr_(sbp, np);
    if (sbp[bi] != nval)
     {
-     sbp[bi] = nval;  
+     sbp[bi] = nval;
      /* know change, record if needed */
      record_sel_nchg_(np, bi, bi);
     }
   }
- else __chg_st_bit(np, bi, nval & 1L, (nval >> 1) & 1L); 
+ else __chg_st_bit(np, bi, nval & 1L, (nval >> 1) & 1L);
  __pop_itstk();
 }
 
@@ -3570,19 +3616,19 @@ static void process_wire_ev(register struct tev_t *tevp)
 static void process_nbpa_ev(struct tev_t *tevp)
 {
  register word32 *wp;
- register struct expr_t *con_lhsxp; 
+ register struct expr_t *con_lhsxp;
  register struct st_t *stp;
  int32 wlen;
  struct tenbpa_t *tenbp;
 
  __push_itstk(tevp->teitp);
  tenbp = tevp->tu.tenbpa;
- wp = tenbp->nbawp; 
+ wp = tenbp->nbawp;
  stp = tenbp->nbastp;
 
- /* SJM 08/08/99 - need to assign to copied lhs expr with select indices */ 
- /* (possibly many if lhs concatenate) replaced by constants */ 
- /* SJM PUTMEBACK */ 
+ /* SJM 08/08/99 - need to assign to copied lhs expr with select indices */
+ /* (possibly many if lhs concatenate) replaced by constants */
+ /* SJM PUTMEBACK */
  con_lhsxp = tenbp->nblhsxp;
  if (con_lhsxp == NULL) con_lhsxp = stp->st.spra.lhsx;
 
@@ -3612,13 +3658,13 @@ static void process_nbpa_ev(struct tev_t *tevp)
  /* if needed to copy lhs expr., now free */
  if (tenbp->nblhsxp != NULL) __free_xtree(tenbp->nblhsxp);
 
- __my_free((char *) tevp->tu.tenbpa, sizeof(struct tenbpa_t)); 
+ __my_free((char *) tevp->tu.tenbpa, sizeof(struct tenbpa_t));
  tevp->tu.tenbpa = NULL;
  __pop_itstk();
 }
 
 /*
- * print out evnet trace time - not in event trace message 
+ * print out evnet trace time - not in event trace message
  */
 extern void __evtr_resume_msg(void)
 {
@@ -3644,7 +3690,7 @@ extern void __evtr_resume_msg(void)
  *
  * could keep old getpattern value and build index of change and bit
  * select to change those
- * cannot be xmr 
+ * cannot be xmr
  */
 extern void __process_getpat(struct conta_t *cap)
 {
@@ -3653,7 +3699,7 @@ extern void __process_getpat(struct conta_t *cap)
  register word32 cbita, cbitb;
  int32 i, wlen, ubits;
  word32 tmpa, tmpb;
- struct expr_t *idndp, *lhsxp, *rhsxp; 
+ struct expr_t *idndp, *lhsxp, *rhsxp;
  struct xstk_t *xsp;
  struct net_t *np;
 
@@ -3663,9 +3709,9 @@ extern void __process_getpat(struct conta_t *cap)
  rhsxp = cap->rhsx;
  xsp = __eval_xpr(rhsxp->ru.x->lu.x);
  /* this is except to convert to lhs width - extra array bits ignored or */
- /* lhs just not filled */ 
+ /* lhs just not filled */
 
- /* if out of range or x, value will be changed to x */  
+ /* if out of range or x, value will be changed to x */
 
  if (__ev_tracing)
   {
@@ -3683,7 +3729,7 @@ extern void __process_getpat(struct conta_t *cap)
   {
    tmpa = xsp->ap[i];
    tmpb = xsp->bp[i];
-   /* know need prop. turned off after last propagation (off here) */ 
+   /* know need prop. turned off after last propagation (off here) */
    for (; bi >= 0; catx = catx->ru.x, bi--)
     {
      if (catx == NULL) goto done;
@@ -3710,7 +3756,7 @@ done:
  * emit an netname for tracing with path if needed
  * for ev. know never task/func. part of xmr reference
  */
-extern char *__to_evtrwnam(char *s, struct net_t *np, int32 bi1, int32 bi2, 
+extern char *__to_evtrwnam(char *s, struct net_t *np, int32 bi1, int32 bi2,
  struct itree_t *teitp)
 {
  char s1[RECLEN], s2[RECLEN];
@@ -3729,9 +3775,9 @@ extern char *__to_evtrwnam(char *s, struct net_t *np, int32 bi1, int32 bi2,
 /*
  * emit an MIPD port name for tracing with path if needed
  *
- * port can be only 1 bit always number from hight to low so no normalize 
+ * port can be only 1 bit always number from hight to low so no normalize
  */
-extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int32 bi, 
+extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int32 bi,
  struct itree_t *teitp)
 {
  char s1[RECLEN], s2[RECLEN];
@@ -3751,7 +3797,7 @@ extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int32 bi,
  * here do not need to worry about some bits only forced from range
  * this is only for wire where 1 bit per bit*inst product
  */
-static int32 force_inhibit_wireassign(struct net_t *np, register int32 biti, 
+static int32 force_inhibit_wireassign(struct net_t *np, register int32 biti,
  struct itree_t *itp)
 {
  register struct qcval_t *frc_qcp;
@@ -3793,14 +3839,14 @@ static void process_trpthdst_ev(register struct tev_t *tevp)
  /* DBG remove ---
  if (bi < 0) __misc_terr(__FILE__, __LINE__);
  --- */
-  
+
  /* free wire event auxialiary field here since bit and wire extracted */
  __my_free((char *) tevp->tu.tenp, sizeof(struct tenp_t));
  tevp->tu.tenp = NULL;
 
  nval = tevp->outv;
  if (__ev_tracing)
-  { 
+  {
    char s1[RECLEN];
 
    __evtr_resume_msg();
@@ -3809,7 +3855,7 @@ static void process_trpthdst_ev(register struct tev_t *tevp)
     __to_evtrwnam(__xs, np, bi, bi, tevp->teitp),
      __to_vvnam(s1, (word32) nval));
   }
- dwirp = np->nu.rngdwir; 
+ dwirp = np->nu.rngdwir;
  dwirp->wschd_pbtevs[np->nwid*tevp->teitp->itinum + bi] = -1;
 
  trap = np->ntraux;
@@ -3826,9 +3872,9 @@ static void process_trpthdst_ev(register struct tev_t *tevp)
   {
    if (!np->n_isavec)
     {
-     ld_scalval_(&av, &bv, trap->trnva.bp); 
+     ld_scalval_(&av, &bv, trap->trnva.bp);
      if (nval == (av | (bv << 1))) goto done;
-     /* SJM 07/16/01 - typo was storing old value so tr chan value never chgs */
+     /* SJM 07/16/01 - typo was storing old val so tr chan value never chgs */
      /* need to store new non stren value not old */
      /* ??? wrong - st_scalval_(trap->trnva.bp, av, bv); */
      st2_scalval_(trap->trnva.bp, nval);
@@ -3843,11 +3889,11 @@ static void process_trpthdst_ev(register struct tev_t *tevp)
      __lhsbsel(xsp->ap, bi, (nval & 1L));
      __lhsbsel(xsp->bp, bi, ((nval >> 1) & 1L));
      __st_perinst_val(trap->trnva, np->nwid, xsp->ap, xsp->bp);
-     __pop_xstk();   
+     __pop_xstk();
     }
   }
- /* if some but not this bit in tran channel, just assign */ 
- /* SJM - 03/15/01 - know bit not -1 since schedules as 0 for scalar */ 
+ /* if some but not this bit in tran channel, just assign */
+ /* SJM - 03/15/01 - know bit not -1 since schedules as 0 for scalar */
  __eval_tran_1bit(np, bi);
 done:
  __pop_itstk();
@@ -3867,7 +3913,7 @@ byte __epair_tab[] =
  * after net changed net (wire or reg) progagate to all dces wire drives
  * bit range passed and used to eliminate fan-out for other bits here
  * all ranges here normalized high to low form
- * notice will never get to event trigger through this path (through cause) 
+ * notice will never get to event trigger through this path (through cause)
  *
  * inst. ptr here is place np changed (i.e. for XMR define itree loc)
  * know npi1 >= npi2 since normalized internally
@@ -3885,13 +3931,13 @@ extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
  struct fmselst_t *fmsep;
  struct dce_expr_t *dcexp;
 
- for (dcep = np->dcelst; dcep != NULL; dcep = dcep->dcenxt) 
+ for (dcep = np->dcelst; dcep != NULL; dcep = dcep->dcenxt)
   {
    /* --- DBG remove ---
-   if (__inst_ptr == NULL) __misc_terr(__FILE__, __LINE__); 
+   if (__inst_ptr == NULL) __misc_terr(__FILE__, __LINE__);
    --- */
 
-   /* filter one instance forms before case */ 
+   /* filter one instance forms before case */
    if (dcep->dce_1inst && dcep->dce_matchitp != __inst_ptr) continue;
 
    switch ((byte) dcep->dce_typ) {
@@ -3913,7 +3959,7 @@ extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
       {
        /* SJM 06/26/04 - FIXME ??? ### isn't else needed here ??? */
        /* eliminate if changed bit do not overlap range */
-       /* if low chged above high or high chged below low, eliminate */ 
+       /* if low chged above high or high chged below low, eliminate */
        if (npi2 > dcep->dci1 || npi1 < dcep->dci2.i) continue;
       }
      goto do_event_ctrl;
@@ -3926,7 +3972,7 @@ do_event_ctrl:
      /* first see if variable really changed (plus edge filtering) */
      oval = nval = 3;
      /* if no chg record, then array or reg entire wire so know changed */
-     /* know for any wire even scalar, will exist */ 
+     /* know for any wire even scalar, will exist */
      /* LOOKATME - filtering even for DOWN XMR insts that do not match? */
      if (dcep->prevval.wp != NULL)
       {
@@ -3935,7 +3981,7 @@ do_event_ctrl:
        /* for non dce expr form, sets old and new values for edge detection */
        oneinst = (dcep->dce_1inst) ? TRUE : FALSE;
        if (!np->n_isavec)
-        {  
+        {
          /* SJM 06/29/04 - simplified - always use stren version for scalar */
          if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, oneinst))
           goto dce_done;
@@ -3946,12 +3992,12 @@ do_event_ctrl:
           {
            if (!filter_dce_chg(np, dcep, &oval, &nval, oneinst))
             goto dce_done;
-          } 
+          }
          else
           {
            if (!stfilter_dce_chg(np, dcep, &oval, &nval, oneinst))
             goto dce_done;
-          } 
+          }
         }
       }
      /*
@@ -3965,11 +4011,11 @@ do_event_ctrl:
       * comparing against when match move down to xmr move from target back
       * to xmr ref.
       */
-     /* if one inst form (know matches) move to reference itree loc. */ 
+     /* if one inst form (know matches) move to reference itree loc. */
      if (dcep->dce_1inst)
       { __push_itstk(dcep->dce_refitp); nd_itpop = TRUE; }
      /* for xmr know target wire changed @(i1.i2.i3.i4.w)  w in dest. */
-     else if (dcep->dce_xmrtyp != XNP_LOC) 
+     else if (dcep->dce_xmrtyp != XNP_LOC)
       {
        /* SJM 04/17/03 - if not right instance do not process */
        if (!__match_push_targ_to_ref(dcep->dce_xmrtyp, dcep->dceu.dcegrp))
@@ -3979,7 +4025,7 @@ do_event_ctrl:
 
      /* if armed (i.e. evctrl active) normal processing */
      /* notice current thread (init/always) may differ from dctp thread */
-     /* so current thread must not be used here */ 
+     /* so current thread must not be used here */
      if ((tevpi = dctp->dceschd_tevs[__inum]) != -1)
       {
        /* RELEASE remove ---
@@ -4005,13 +4051,13 @@ do_event_ctrl:
 
          /* even though only pos and neg legal here use general signature */
          /* dce edgval is 1 bit per edge type table - epair tab maps to bit */
-         emask = __epair_tab[nval | (oval << 2)]; 
+         emask = __epair_tab[nval | (oval << 2)];
          /* if no bits in common, no match */
          if (((byte) dcep->dce_edgval & emask) == 0) goto dce_done;
         }
        /* last: after move to ref inst, need to match itree loc for iact */
        /* need edge check before here because update old eval */
-       if (dctp->dc_iact && dcep->iact_itp != __inst_ptr) goto dce_done; 
+       if (dctp->dc_iact && dcep->iact_itp != __inst_ptr) goto dce_done;
 
        /* 10/27/00 SJM - if repeat form check and decrement repeat count */
        /* and if not counted down to 0 yet, do nothing (filter out) */
@@ -4026,7 +4072,7 @@ do_event_ctrl:
             __to_timstr(__xs2, &__simtime), np->nsym->synam,
             __msg2_blditree(__xs, __inst_ptr),
             (int32) dctp->dce_repcnts[__inum] - 1);
-          } 
+          }
          /* --- */
          /* SJM 04/02/02 since word32, any positive still do not trigger */
          if (--dctp->dce_repcnts[__inum] != 0) goto dce_done;
@@ -4057,7 +4103,7 @@ dce_done:
        if (fmonp->fmse_trig == NULL)
         {
          /* allocate new se fmon */
-         if (__fmse_freelst == NULL) 
+         if (__fmse_freelst == NULL)
           fmsep = (struct fmselst_t *) __my_malloc(sizeof(struct fmselst_t));
          else
           {
@@ -4073,8 +4119,8 @@ dce_done:
          __fmonse_end = fmsep;
          /* mark triggered */
          fmonp->fmse_trig = fmsep;
-         __slotend_action |= SE_FMONIT_TRIGGER;     
-        }  
+         __slotend_action |= SE_FMONIT_TRIGGER;
+        }
       }
      continue;
     case DCE_RNG_QCAF:
@@ -4111,9 +4157,9 @@ dce_done:
      if (dcep->prevval.wp != NULL)
       {
        if (np->n_stren)
-        { if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; } 
+        { if (!stfilter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
        else
-        { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; } 
+        { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
       }
      /* do not care which rhs wire changed must eval and assign all */
      __pvc_call_misctf(dcep);
@@ -4152,19 +4198,19 @@ dce_done:
        else { dwid = np->nwid; strcpy(s1, np->nsym->synam); }
        __dbg_msg("CBVC: %s strength value %s (old %s)\n", s1,
         __st_regab_tostr(__xs, sbp, dwid),
-        __st_regab_tostr(__xs2, dcep->prevval.bp, dwid)); 
+        __st_regab_tostr(__xs2, dcep->prevval.bp, dwid));
       }
      else
       {
        struct xstk_t *xsp, *xsp2;
 
-       push_xstk_(xsp, np->nwid);    
-       __ld_wire_val(xsp->ap, xsp->bp, np); 
+       push_xstk_(xsp, np->nwid);
+       __ld_wire_val(xsp->ap, xsp->bp, np);
 
        if (dcep->prevval.wp != NULL)
         {
          -* know have current instance here *-
-         push_xstk_(xsp2, np->nwid);    
+         push_xstk_(xsp2, np->nwid);
          __ld_perinst_val(xsp2->ap, xsp2->bp, dcep->prevval, np->nwid);
          __regab_tostr(__xs2, xsp2->ap, xsp2->bp, xsp2->xslen, BHEX, FALSE);
          __pop_xstk();
@@ -4172,7 +4218,7 @@ dce_done:
        else strcpy(__xs2, "**none**");
 
        __dbg_msg("CBVC: value %s (old %s)\n",
-        __regab_tostr(__xs, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE), __xs2); 
+        __regab_tostr(__xs, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE), __xs2);
        __pop_xstk();
       }
      --- */
@@ -4183,8 +4229,8 @@ dce_done:
      if (dcep->prevval.wp != NULL)
       {
        if (!np->n_isavec)
-        {  
-         /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */ 
+        {
+         /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */
          /* user passed non stren val request to vpi_ cb call back */
          if (!np->n_stren || dcep->dce_nomonstren)
           {
@@ -4202,10 +4248,10 @@ dce_done:
        else
         {
          if (!np->n_stren)
-          { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; } 
+          { if (!filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue; }
          else
           {
-           /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */ 
+           /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */
            /* user passed non stren val request to vpi_ cb call back */
            if (dcep->dce_nomonstren)
             {
@@ -4223,7 +4269,7 @@ dce_done:
      /* need one call back for every change */
 
      /* SJM 07/24/00 - must run with this call back turned off in case */
-     /* call back c code does put value to reg because change propagation */ 
+     /* call back c code does put value to reg because change propagation */
      /* for regs must be immediate */
      /* notice will never get here unless dce on */
      dcep->dce_off = TRUE;
@@ -4252,7 +4298,7 @@ static int32 filter_edge_expr(register struct dce_expr_t *dcexp, word32 *oval,
  register word32 nav, nbv;
  register struct xstk_t *xsp;
  word32 av, bv;
- 
+
  /* evaluate expr. to get current edge in ref. context */
  xsp = __eval_xpr(dcexp->edgxp);
  /* extract low bit in case wide */
@@ -4278,11 +4324,11 @@ static int32 filter_edge_expr(register struct dce_expr_t *dcexp, word32 *oval,
  * know will not see if event delay control not active (armed)
  */
 static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
-{ 
+{
  register struct tev_t *tevp;
 
  tevp = &(__tevtab[tevpi]);
- /* getting here means dctrl event triggered */ 
+ /* getting here means dctrl event triggered */
  /* DBG remove --- */
  if (__debug_flg && __st_tracing)
   {
@@ -4290,9 +4336,9 @@ static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
 
    if (tevp->tetyp == TE_NBPA)
     {
-     stp = tevp->tu.tenbpa->nbastp; 
+     stp = tevp->tu.tenbpa->nbastp;
      __tr_msg(
-      "-- scheduling NB event control assign for now line %s (itree=%s)\n", 
+      "-- scheduling NB event control assign for now line %s (itree=%s)\n",
       __bld_lineloc(__xs, stp->stfnam_ind, stp->stlin_cnt),
       __inst_ptr->itip->isym->synam);
     }
@@ -4300,11 +4346,11 @@ static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
     {
      stp = tevp->tu.tethrd->thnxtstp;
      __tr_msg(
-      "-- scheduling event control resume for now line %s (chg in thd=%s, itree=%s)\n", 
+      "-- scheduling event control resume for now line %s (chg in thd=%s, itree=%s)\n",
       __bld_lineloc(__xs, stp->stfnam_ind, stp->stlin_cnt),
        tevp->tu.tethrd->th_itp->itip->isym->synam,
       __inst_ptr->itip->isym->synam);
-    }  
+    }
   }
  /* --- */
 
@@ -4320,7 +4366,7 @@ static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
    /* in case disable, indicate suspended on ev thrd no suspend to disable */
    tevp->tu.tethrd->th_dctp = NULL;
   }
- /* else add to #0 for non blocking assign */ 
+ /* else add to #0 for non blocking assign */
  else
   {
    /* LOOKATME - is this right */
@@ -4332,7 +4378,7 @@ static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
 
    /* works because no new tevs that could cause realloc called */
    __tevtab[tevpi].tenxti = -1;
-   /* this now looks like normal delay control nb */ 
+   /* this now looks like normal delay control nb */
    tevp->tu.tenbpa->nbdctp = NULL;
   }
 }
@@ -4379,10 +4425,10 @@ static int32 stfilter_dce_chg(register struct net_t *np,
    if ((dcev = (dcesbp[0] & 3)) == (nv = (nsbp[0] & 3))) return(FALSE);
    *oval = dcev;
    *nval = nv;
-   /* update the prevval for next wire change */  
+   /* update the prevval for next wire change */
    dcesbp[0] = nsbp[0];
    return(TRUE);
-  } 
+  }
 
  /* all change operators here (%v handled elsewhere) are value only */
  for (bi = 0; bi < dcewid; bi++)
@@ -4437,10 +4483,10 @@ static int32 vccb_vec_standval_filter(register struct net_t *np,
    if ((dcev = dcesbp[0]) == (nv = nsbp[0])) return(FALSE);
    *oval = dcev & 3;
    *nval = nv & 3;
-   /* update the prevval for next wire change */  
+   /* update the prevval for next wire change */
    dcesbp[0] = nsbp[0];
    return(TRUE);
-  } 
+  }
 
  /* call back happens if only strength changes */
  if (memcmp((char *) nsbp, (char *) dcesbp, dcewid) == 0) return(FALSE);
@@ -4515,7 +4561,7 @@ static int32 filter_dce_chg(register struct net_t *np,
  __get_cor_range(dcep->dci1, dcep->dci2, &i1, &i2);
  __ld_wire_sect(nxsp->ap, nxsp->bp, np, i1, i2);
  if (cmp_vval_(dcexsp->ap, nxsp->ap, dcewid) == 0 &&
-  (cmp_vval_(dcexsp->bp, nxsp->bp, dcewid) == 0)) { rv = FALSE; goto done; } 
+  (cmp_vval_(dcexsp->bp, nxsp->bp, dcewid) == 0)) { rv = FALSE; goto done; }
 
  /* only need to set values for edge if complicated need expr form */
  if (dcep->dce_edge)
@@ -4523,7 +4569,7 @@ static int32 filter_dce_chg(register struct net_t *np,
    /* old value comes from internally stored preval, new is value of wire */
    *oval = (dcexsp->ap[0] & 1L) | ((dcexsp->bp[0] << 1) & 2L);
    *nval = (nxsp->ap[0] & 1L) | ((nxsp->bp[0] << 1) & 2L);
-  } 
+  }
  /* if one instance store into that 0th inst (only) loc. */
  if (oneinst)
   {
@@ -4541,7 +4587,7 @@ done:
 }
 
 /*
- * scalar stren filter non monit dce for real change 
+ * scalar stren filter non monit dce for real change
  * return F if not changed
  *
  * changes are always value only - monit %v strength handles in monit
@@ -4594,7 +4640,7 @@ extern void __process_npp_timofchg(struct net_t *np,
  struct itree_t *downitp;
  struct npaux_t *npauxp;
  struct spcpth_t *newpthp;
- 
+
  /* notice because load bit of scalar works for entire wire get bit 0 */
  if ((npauxp = npp->npaux) == NULL) i1 = 0; else i1 = npauxp->nbi1;
  /* all but in module need this correction */
@@ -4606,7 +4652,7 @@ extern void __process_npp_timofchg(struct net_t *np,
    downitp = __inst_ptr;
    __pop_itstk();
   }
- __ld_bit(&av, &bv, np, i1); 
+ __ld_bit(&av, &bv, np, i1);
  new_eval = av | (bv << 1);
  if (downitp != NULL) __push_itstk(downitp);
 
@@ -4625,7 +4671,7 @@ extern void __process_npp_timofchg(struct net_t *np,
     {
      char s1[RECLEN], s2[RECLEN];
 
-     if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np); 
+     if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np);
      else sprintf(s1, "%s.%s", __msg2_blditree(__xs, __inst_ptr),
       np->nsym->synam);
 
@@ -4666,16 +4712,16 @@ extern void __process_npp_timofchg(struct net_t *np,
       {
        char s1[RECLEN], s2[RECLEN];
 
-       if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np); 
+       if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np);
        else sprintf(s1, "%s.%s", __msg2_blditree(__xs, __inst_ptr),
         np->nsym->synam);
 
-       __tr_msg("## wire %s recording %s (line %s) data event at %s\n", s1, 
+       __tr_msg("## wire %s recording %s (line %s) data event at %s\n", s1,
         __to_tcnam(__xs, tcp->tchktyp),
         __bld_lineloc(s2, tcp->tcsym->syfnam_ind, tcp->tcsym->sylin_cnt),
         __to_timstr(__xs2, &__simtime));
 
-        bld_srcfilter_ref(s2, FALSE, tcp->chkedge, tcp->chkcondx);  
+        bld_srcfilter_ref(s2, FALSE, tcp->chkedge, tcp->chkcondx);
         if (strcmp(s2, "") != 0) __tr_msg("   %s\n", s2);
       }
      /* if repeated edge during same time - use 1st of this time as ref. */
@@ -4706,8 +4752,8 @@ extern void __process_npp_timofchg(struct net_t *np,
    if ((__debug_flg && __ev_tracing) || __pth_tracing)
     {
      char s1[RECLEN], s2[RECLEN];
-      
-     if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np); 
+
+     if (npp->npproctyp != NP_PROC_INMOD) bld_xmrsrc_ref(s1, np);
      else sprintf(s1, "%s.%s", __msg2_blditree(__xs, __inst_ptr),
       np->nsym->synam);
 
@@ -4717,7 +4763,7 @@ extern void __process_npp_timofchg(struct net_t *np,
       newpthp->pthsym->sylin_cnt), __to_timstr(__xs, &__simtime));
 
      bld_srcfilter_ref(s2, newpthp->pth_ifnone, newpthp->pthedge,
-      newpthp->pthcondx);  
+      newpthp->pthcondx);
      if (strcmp(s2, "") != 0) __tr_msg("   %s\n", s2);
     }
    break;
@@ -4729,7 +4775,7 @@ extern void __process_npp_timofchg(struct net_t *np,
  * build xmr source net instance reference
  */
 static void bld_xmrsrc_ref(char *s, struct net_t *np)
-{ 
+{
  sprintf(s, "%s.%s (xmr from %s)",
   __msg2_blditree(__xs, __itstk[__itspi - 1]), np->nsym->synam,
   __msg2_blditree(__xs2, __inst_ptr));
@@ -4759,7 +4805,7 @@ static void bld_srcfilter_ref(char *s, word32 pthifnone, word32 cedge,
    if (cxp != NULL)
     {
      xsp = __eval_xpr(cxp);
-     sprintf(s1, "CONDITION: %s TRUE value %s", __msgexpr_tostr(s2, cxp),  
+     sprintf(s1, "CONDITION: %s TRUE value %s", __msgexpr_tostr(s2, cxp),
       __regab_tostr(s3, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE));
      /* SJM 08/30/99 - for edge trace was not popping stack */
      __pop_xstk();
@@ -4770,7 +4816,7 @@ static void bld_srcfilter_ref(char *s, word32 pthifnone, word32 cedge,
 }
 
 /*
- * return T if bit changed (must pass all filters to change 
+ * return T if bit changed (must pass all filters to change
  * because new edge value already computed (in up), need down itree here
  */
 static int32 filter_bitchange(register word32 new_eval, register byte *oldbp,
@@ -4792,7 +4838,7 @@ static int32 filter_bitchange(register word32 new_eval, register byte *oldbp,
  /* second filter if has edge - only change if matching edge */
  if (signat != 0)
   {
-   /* build edge 4 bit index */ 
+   /* build edge 4 bit index */
    epair = __epair_tab[new_eval | (old_eval << 2)];
    /* if any edge table bit is 1, then found edge */
    if ((signat & epair) == 0) return(FALSE);
@@ -4806,7 +4852,7 @@ static int32 filter_bitchange(register word32 new_eval, register byte *oldbp,
    /* fastest to just always mask */
    /* LRM requires anything but explicit false (0) is T */
    /* for === operators never x/z (only 1 or 0) possible so always works */
-   /* === illegal in SDPDs so never a problem */ 
+   /* === illegal in SDPDs so never a problem */
    /* for nondeterministic x or z is always T on paths or tchks */
 
    if ((xsp->ap[0] & 1L) == 0L && (xsp->bp[0] & 1L) == 0L)
@@ -4820,7 +4866,7 @@ static int32 filter_bitchange(register word32 new_eval, register byte *oldbp,
  * add a timing check to end of now data change routines
  * for processing at end of time slot (required by semantics)
  */
-static void add_tchk_chged(struct chktchg_t *chkchgp) 
+static void add_tchk_chged(struct chktchg_t *chkchgp)
 {
  struct tc_pendlst_t *tcpendp;
 
@@ -4839,7 +4885,7 @@ static void add_tchk_chged(struct chktchg_t *chkchgp)
  /* link on end since need batch movement of all to free list */
  if (__tcpendlst_end != NULL)
   { __tcpendlst_end->tc_plnxt = tcpendp; __tcpendlst_end = tcpendp; }
- else 
+ else
   {
    __tcpendlst_hdr = __tcpendlst_end = tcpendp;
    __slotend_action |= SE_TCHK_VIOLATION;
@@ -4886,12 +4932,12 @@ static void process_all_tchk_violations(void)
      if (diff >= lim1 || diff == 0ULL) break;
 
 emit_msg:
-     bld_tchk_srcdump(__xs, tcp, &reftim, &__simtime, &lim1, &lim2); 
+     bld_tchk_srcdump(__xs, tcp, &reftim, &__simtime, &lim1, &lim2);
      __gfwarn(566, tcp->tcsym->syfnam_ind, tcp->tcsym->sylin_cnt,
       "timing violation in %s (diff. %s)\n %s",
       __msg2_blditree(s1, __inst_ptr), __to_timstr(s2, &diff), __xs);
      /* toggle notify reg if present */
-     if (tcp->ntfy_np != NULL) process_notify(tcp->ntfy_np); 
+     if (tcp->ntfy_np != NULL) process_notify(tcp->ntfy_np);
      if (__have_vpi_actions) __vpi_tchkerr_trycall(tcp, __inst_ptr);
      break;
     case TCHK_SETUPHOLD:
@@ -4942,7 +4988,7 @@ emit_msg:
      if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     case TCHK_RECOVERY:
-     /* SJM 01/16/04 - terminals reversed for rec part of recrem */ 
+     /* SJM 01/16/04 - terminals reversed for rec part of recrem */
      if (tcp->tc_recofrecrem)
       {
        /* added setup of setup hold needs limit from 1st lim of setuphold */
@@ -4969,9 +5015,9 @@ emit_msg:
    __pop_itstk();
   }
  /* must move all processed to front of free list */
- __tcpendlst_end->tc_plnxt = __tcpendfreelst; 
+ __tcpendlst_end->tc_plnxt = __tcpendfreelst;
  __tcpendfreelst = __tcpendlst_hdr;
- __tcpendlst_hdr = __tcpendlst_end = NULL; 
+ __tcpendlst_hdr = __tcpendlst_end = NULL;
 }
 
 /* LOOKATME - to match OVISIM x goes to 1 not 0 */
@@ -4984,16 +5030,16 @@ static void process_notify(struct net_t *np)
 {
  struct xstk_t *xsp;
  word32 val;
- 
+
  push_xstk_(xsp, np->nwid);
  __ld_wire_val(xsp->ap, xsp->bp, np);
  /* DBG remove */
- if (xsp->xslen != 1) __misc_terr(__FILE__, __LINE__); 
+ if (xsp->xslen != 1) __misc_terr(__FILE__, __LINE__);
  /* --- */
  val = xsp->ap[0] | (xsp->bp[0] << 1);
  val = ntfy_toggle_tab[val];
- xsp->ap[0] = val & 1L; 
- xsp->bp[0] = (val >> 1) & 1L; 
+ xsp->ap[0] = val & 1L;
+ xsp->bp[0] = (val >> 1) & 1L;
  __chg_st_val(np, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -5015,7 +5061,7 @@ static char *bld_tchk_srcdump(char *s, struct tchk_t *tcp, word64 *tim1,
  else if (tcp->tc_supofsuphld) __adds("setup(of setuphold)");
  else if (tcp->tchktyp == TCHK_RECREM) __adds("removal(of recrem)");
  else if (tcp->tc_recofrecrem) __adds("recovery(of recrem)");
- else __adds(__to_tcnam(s1, tcp->tchktyp));    
+ else __adds(__to_tcnam(s1, tcp->tchktyp));
 
  __adds("(");
  if (tcp->startedge != NOEDGE || tcp->startcondx != NULL)
@@ -5074,7 +5120,7 @@ extern void __init_sim(void)
  /* this is never called for resets, so initialize to no resets */
  __reset_count = 0;
  /* just set this to some value - task exec. always sets again */
- __reset_value = 0; 
+ __reset_value = 0;
 
  init_stime();
  sav_fnam = __in_fils[0];
@@ -5089,7 +5135,7 @@ extern void __init_sim(void)
  __cur_thd = NULL;
  /* current inst. stack needs nil on bottom for debugging and must be empty */
  /* DBG remove -- */
- if (__itspi != -1) __misc_terr(__FILE__, __LINE__); 
+ if (__itspi != -1) __misc_terr(__FILE__, __LINE__);
  if (__inst_ptr != NULL) __misc_terr(__FILE__, __LINE__);
  /* --- */
 
@@ -5115,7 +5161,7 @@ extern void __init_sim(void)
  /* resetting does not effect this */
  __last_inf = __last_lbf;
 
- /* last step is to setup interactive environment */ 
+ /* last step is to setup interactive environment */
  /* needed since interactive setup stuff can be in source */
  __init_interactive();
  if (__slotend_action != 0) __misc_terr(__FILE__, __LINE__);
@@ -5159,6 +5205,9 @@ static void init_stime(void)
  __simtime = 0ULL;
  __cur_te_hdri = __cur_te_endi = -1;
  __p0_te_hdri = __p0_te_endi = -1;
+ /* SJM 07/05/05 - also initialize non block current time after pnd0 queue */
+ __nb_te_hdri = __nb_te_endi = -1;
+
  __tedpfreelst = NULL;
  __teputvfreelst = NULL;
  /* init overflow q */
@@ -5179,8 +5228,8 @@ static void init_stime(void)
  __strobe_hdr = __strobe_end = __strb_freelst = NULL;
  __monit_active = TRUE;
  __monit_dcehdr = NULL;
- __fmon_hdr = __fmon_end = NULL; 
- __fmonse_hdr = __fmonse_end = __fmse_freelst = NULL; 
+ __fmon_hdr = __fmon_end = NULL;
+ __fmonse_hdr = __fmonse_end = __fmse_freelst = NULL;
  __nchg_futend = __nchg_futhdr = __nchgfreelst = NULL;
  /* SJM 08/16/03 - now need to start with lhs changed off */
  __lhs_changed = FALSE;
@@ -5188,7 +5237,7 @@ static void init_stime(void)
  __dltevfreelst = NULL;
  __cur_thd = NULL;
  /* tf one way pending event free list */
- __ltevfreelst = NULL; 
+ __ltevfreelst = NULL;
  __wrkevtab = NULL;
  __last_wevti = -1;
  __size_wrkevtab = 0;
@@ -5223,8 +5272,8 @@ extern void __reinit_sim(void)
  __suspended_thd = NULL;
  __suspended_itp = NULL;
  /* must empty stack since may have been called from running code */
- __itspi = -1; 
- __itstk[0] = NULL; 
+ __itspi = -1;
+ __itstk[0] = NULL;
  __inst_ptr = NULL;
  __inst_mod = NULL;
 
@@ -5279,6 +5328,8 @@ static void reinit_stime(void)
  __simtime = 0ULL;
  __cur_te_hdri = __cur_te_endi = -1;
  __p0_te_hdri = __p0_te_endi = -1;
+ /* SJM 07/05/05 - also initialize non block current time after pnd0 queue */
+ __nb_te_hdri = __nb_te_endi = -1;
 
  /* works because __twsize never bigger than 2*31 */
  __whetime = (word64) (__twhsize - 1);
@@ -5292,16 +5343,16 @@ static void reinit_stime(void)
  __strobe_hdr = __strobe_end = NULL;
  __monit_active = TRUE;
  __monit_dcehdr = NULL;
- __fmon_hdr = __fmon_end = NULL; 
+ __fmon_hdr = __fmon_end = NULL;
  /* here leave the free list to reuse storage from there */
- __fmonse_hdr = __fmonse_end = NULL; 
+ __fmonse_hdr = __fmonse_end = NULL;
 
  /* SJM 08/16/03 - now need to start with lhs changed off */
  __lhs_changed = FALSE;
 
  /* notice must leave free lists - will begin by allocating from there */
  __nchg_futend = __nchg_futhdr = NULL;
- __tcpendlst_end = __tcpendlst_hdr = NULL; 
+ __tcpendlst_end = __tcpendlst_hdr = NULL;
  __cur_thd = NULL;
 
  /* must leave tevtab timing queue - free added o free list */
@@ -5335,11 +5386,11 @@ static void init_wires(void)
    /* cause a few extra events to be processed from xmrs */
    /* SJM - 05/24/00 - must not process var changes until 0 normal #0 pt. */
    /* if (__nchg_futhdr != NULL) process_all_netchgs(); */
-  } 
+  }
 
- /* SJM 04/11/01 - initializing tran channels after drivers propagated */ 
- /* hard drivers as possible have changed */ 
- __init_all_trchans(); 
+ /* SJM 04/11/01 - initializing tran channels after drivers propagated */
+ /* hard drivers as possible have changed */
+ __init_all_trchans();
 
  __wire_init = FALSE;
  if (__ev_tracing)
@@ -5347,7 +5398,7 @@ static void init_wires(void)
 }
 
 /*
- * initialize all wires and threads in one itree instance 
+ * initialize all wires and threads in one itree instance
  * know that when storage for all wires allocated, also initialized
  *
  * algorithm is to evaluate every cont. assign (including cross module ports)
@@ -5379,14 +5430,14 @@ static void init_itinsts(struct itree_t *up_itp)
  /* evaluate and schedule all gates in instance */
  for (gi = 0; gi < mdp->mgnum; gi++) gate_initeval(&(mdp->mgates[gi]));
 
- /* and all contas */ 
+ /* and all contas */
  for (cap = mdp->mcas, cai = 0; cai < mdp->mcanum; cai++, cap++)
   {
    /* SJM 09/28/02 - need to initialize the PB separated contas */
    if (cap->ca_pb_sim)
     {
      /* SJM 08/08/03 - for per bit sim form, need 2nd arg master conta */
-     for (pbi = 0; pbi < cap->lhsx->szu.xclen; pbi++) 
+     for (pbi = 0; pbi < cap->lhsx->szu.xclen; pbi++)
       { conta_initeval(&(cap->pbcau.pbcaps[pbi]), cap); }
     }
    else conta_initeval(cap, cap);
@@ -5416,7 +5467,7 @@ static void init_itinsts(struct itree_t *up_itp)
  *
  * this requires cur. itp to be set to current place in itree
  */
-static void init_sched_thd(struct mod_t *mdp) 
+static void init_sched_thd(struct mod_t *mdp)
 {
  register struct ialst_t *ialp;
  struct thread_t *thp;
@@ -5425,7 +5476,7 @@ static void init_sched_thd(struct mod_t *mdp)
  struct st_t *stp, *stp2;
 
  /* each element in ia sts list is a possibly added unnamed begin block */
- /* each separate intial/always must be its own thread */ 
+ /* each separate intial/always must be its own thread */
  /* because one blocking does not block others */
  for (ialp = mdp->ialst; ialp != NULL; ialp = ialp->ialnxt)
   {
@@ -5451,7 +5502,7 @@ static void init_sched_thd(struct mod_t *mdp)
      thp->thright = __initalw_thrd_hdr;
      __initalw_thrd_hdr->thleft = thp;
      __initalw_thrd_hdr = thp;
-    } 
+    }
 
    /* this just causes all initial and always 1st statements to happen */
    /* at time 0 - know thnxtstp is just list of statements */
@@ -5461,12 +5512,12 @@ static void init_sched_thd(struct mod_t *mdp)
      if (stp2 == NULL)
       {
        __tr_msg(
-        "-- adding initial machine code thread for init/always at %s\n", 
+        "-- adding initial machine code thread for init/always at %s\n",
         __bld_lineloc(__xs, ialp->ia_first_ifi, ialp->ia_first_lini));
       }
      else
       {
-       __tr_msg("-- adding initial procedural start at statement %s\n", 
+       __tr_msg("-- adding initial procedural start at statement %s\n",
         __bld_lineloc(__xs, stp2->stfnam_ind, stp2->stlin_cnt));
       }
     }
@@ -5482,24 +5533,24 @@ static void init_sched_thd(struct mod_t *mdp)
 
 /*
  * initialize gate by evaluating all inputs, changing wire if needed,
- * and if wire changed, propagate changes 
+ * and if wire changed, propagate changes
  * called once for every gate in itree
  */
 static void gate_initeval(struct gate_t *gp)
 {
  int32 i, gid;
- 
+
  /* evaluate gate - even if no change assign (this stores state) */
  /* if input value same, nothing to do */
  switch ((byte) gp->g_class) {
   case GC_LOGIC: init_logic_gate(gp); break;
-  case GC_UDP: init_udp(gp); break; 
+  case GC_UDP: init_udp(gp); break;
   case GC_BUFIF: init_bufif_gate(gp); break;
   case GC_MOS:
    chg_mos_instate(gp, 1);
    chg_mos_instate(gp, 2);
 
-   gid = gp->gmsym->el.eprimp->gateid; 
+   gid = gp->gmsym->el.eprimp->gateid;
    /* note here input change routine and eval separate */
    /* eval always evals even if new and old input are the same */
    if (gid == G_NMOS) __eval_nmos_gate(gp->gstate.wp[__inum]);
@@ -5541,7 +5592,7 @@ static void gate_initeval(struct gate_t *gp)
    char s1[RECLEN];
 
    if (gp->g_class == GC_UDP) strcpy(s1, "udp"); else strcpy(s1, "gate");
-   /* notice during wire init all wire delays off */ 
+   /* notice during wire init all wire delays off */
    __tr_msg("-- %s %s %s assign initialized to state:\n",
     gp->gmsym->synam, s1, to_evtronam(__xs, gp->gsym->synam, __inst_ptr,
      (struct task_t *) NULL));
@@ -5577,7 +5628,7 @@ static void init_udp(struct gate_t *gp)
  extern word32 __to_uvaltab[];
 
  __cur_udp = gp->gmsym->el.eudpp;
- /* for level, this includes state */ 
+ /* for level, this includes state */
  nins = __cur_udp->numins;
  if (!__cur_udp->u_wide)
   {
@@ -5599,7 +5650,7 @@ static void init_udp(struct gate_t *gp)
      -- */
     }
    /* -- RELEASE remove --
-   if (__debug_flg) 
+   if (__debug_flg)
     __dbg_msg("-- narrow before init eval: hwp=%lx\n", hwp[0]);
    -- */
   }
@@ -5611,7 +5662,7 @@ static void init_udp(struct gate_t *gp)
     {
      /* remove signature contribution from initialized value */
      wide_ival = __to_uvaltab[((wp[0] >> (2*i)) & 3L)];
-     wp[1] -= wide_ival*__pow3tab[i];  
+     wp[1] -= wide_ival*__pow3tab[i];
 
      xsp = __eval_xpr(gp->gpins[i + 1]);
      /* think evaluate can be wide thing that must be truncated */
@@ -5620,9 +5671,9 @@ static void init_udp(struct gate_t *gp)
      wp[0] &= ~(3L << (2*i));
      wp[0] |= (new_inputval << (2*i));
 
-     /* add in new input signature value */ 
+     /* add in new input signature value */
      wide_ival = __to_uvaltab[new_inputval];
-     wp[1] += wide_ival*__pow3tab[i];  
+     wp[1] += wide_ival*__pow3tab[i];
     }
    /* -- RELEASE remove ---
    if (__debug_flg)
@@ -5636,9 +5687,9 @@ static void init_udp(struct gate_t *gp)
    if (!__cur_udp->u_wide)
     {
      hwp = &(gp->gstate.hwp[__inum]);
-     new_inputval = (word32) (hwp[0] & 3L); 
+     new_inputval = (word32) (hwp[0] & 3L);
      if (new_inputval == 0) new_inputval = 3; else new_inputval = 0;
-     hwp[0] &= ~(3L); 
+     hwp[0] &= ~(3L);
      hwp[0] |= (hword) new_inputval;
     }
    else
@@ -5647,18 +5698,18 @@ static void init_udp(struct gate_t *gp)
      new_inputval = wp[0] & 3L;
      /* subtract out old signature contribution */
      wide_ival = __to_uvaltab[new_inputval];
-     wp[1] -= wide_ival*__pow3tab[0];  
+     wp[1] -= wide_ival*__pow3tab[0];
 
      if (new_inputval == 0) new_inputval = 2; else new_inputval = 0;
      wp[0] &= ~(3L);
      wp[0] |= new_inputval;
 
-     /* add in new input signature value */ 
+     /* add in new input signature value */
      wide_ival = __to_uvaltab[new_inputval];
-     wp[1] += wide_ival*__pow3tab[0];  
+     wp[1] += wide_ival*__pow3tab[0];
     }
    /* this sets new gate value */
-   __eval_udp(gp, 1, &out_chg, FALSE); 
+   __eval_udp(gp, 1, &out_chg, FALSE);
   }
  else __new_gateval = __cur_udp->ival;
  /* caller will store or schedule store into output connection */
@@ -5675,9 +5726,9 @@ static void init_logic_gate(struct gate_t *gp)
  int32 out_chg;
  struct xstk_t *xsp;
 
- if (gp->gpnum > 16) srep = SR_VEC; else srep = SR_PVEC;  
+ if (gp->gpnum > 16) srep = SR_VEC; else srep = SR_PVEC;
 
- /* tricky part must - make sure input 0 does not eval the same */ 
+ /* tricky part must - make sure input 0 does not eval the same */
  /* simply invert b bit of input 0 result */
  nins = gp->gpnum - 1;
  for (i = 0; i < nins; i++)
@@ -5723,13 +5774,13 @@ static void init_bufif_gate(struct gate_t *gp)
  hwp[0] &= ~(3L << 2);
  hwp[0] |= ((hword) ((xsp->ap[0] | (xsp->bp[0] << 1)) << 2));
  __pop_xstk();
- /* eval. 1st input in gpins - index 1 */ 
+ /* eval. 1st input in gpins - index 1 */
  __eval_bufif_gate(gp, 1, &out_chg);
-} 
+}
 
 /*
  * initialize the state of a tranif gate by evaluating control input
- * here must evaluate input and store into state 
+ * here must evaluate input and store into state
  * for tran, do not need any initialization
  */
 static void init_tranif_gate(struct gate_t *gp)
@@ -5740,7 +5791,7 @@ static void init_tranif_gate(struct gate_t *gp)
 
  /* first initialize conducting state */
  xsp = __eval_xpr(gp->gpins[2]);
- conducting = (xsp->ap[0] & 1L) | ((xsp->bp[0] & 1L) << 1); 
+ conducting = (xsp->ap[0] & 1L) | ((xsp->bp[0] & 1L) << 1);
  if (conducting == 2) conducting = 3;
  __pop_xstk();
  gateid = gp->gmsym->el.eprimp->gateid;
@@ -5750,7 +5801,7 @@ static void init_tranif_gate(struct gate_t *gp)
    if (conducting == 0) conducting = 1;
    else if (conducting == 1) conducting = 0;
   }
- 
+
  /* immediate change to conducting state during initialization */
  bi = get_bofs_(2*__inum);
  wi = get_wofs_(2*__inum);
@@ -5793,10 +5844,10 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
    syp = xp->lu.x->lu.sy;
    /* know getpat conta form never has rhsval wp or driver wp */
    /* rule is that $getpattern with unknown index is x's */
-   if (syp->sytyp == SYM_SF && syp->el.esyftbp->syfnum == STN_GETPATTERN) 
+   if (syp->sytyp == SYM_SF && syp->el.esyftbp->syfnum == STN_GETPATTERN)
     {
      lhslen = lhsxp->szu.xclen;
-     push_xstk_(xsp, lhslen); 
+     push_xstk_(xsp, lhslen);
      /* IN - getpattern with unknown index (like at init) return x value */
      one_allbits_(xsp->ap, lhslen);
      one_allbits_(xsp->bp, lhslen);
@@ -5860,8 +5911,8 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
 
    /* notice even if delay wire, off during wire initialization */
    strcpy(s1, "assigned");
-   __tr_msg("-- %s %s initial value %s\n", s1,  
-    __to_evtrcanam(__xs, mast_cap, __inst_ptr), 
+   __tr_msg("-- %s %s initial value %s\n", s1,
+    __to_evtrcanam(__xs, mast_cap, __inst_ptr),
     __regab_tostr(__xs2, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE));
   }
 
@@ -5873,9 +5924,9 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
    /* notice wire delays including specify paths off during wire init */
    if (lhsxp->x_stren)
     {
-     push_xstk_(xsp2, 4*lhslen); 
+     push_xstk_(xsp2, 4*lhslen);
      sbp = (byte *) xsp2->ap;
-     __st_standval(sbp, xsp, cap->ca_stval); 
+     __st_standval(sbp, xsp, cap->ca_stval);
      if (lhsxp->optyp == LCB) __stren_exec_ca_concat(lhsxp, sbp, FALSE);
      /* SJM 03/30/99 - was storing value without strength added */
      else __exec_conta_assign(lhsxp, xsp2->ap, xsp2->bp, FALSE);
@@ -5925,21 +5976,21 @@ extern void __insert_event(register i_tev_ndx tevpi)
      word64 t2;
      char s1[RECLEN], s2[RECLEN];
 
-     t = (word64) (__twhsize - 1); 
+     t = (word64) (__twhsize - 1);
      t2 = __whetime - t;
      __tr_msg(
       ".. adding %s event to timing wheel based at %s for time %s (schtwi=%d, cur_twi=%d)\n",
       __to_tetyp(__xs, tevp->tetyp), __to_timstr(s1, &t2),
-      __to_timstr(s2, &schtim), schtwi, __cur_twi); 
+      __to_timstr(s2, &schtim), schtwi, __cur_twi);
     }
-   --- */ 
-    
+   --- */
+
    telp = __twheel[schtwi];
     /* know tevp next field is nil */
-   if (telp->te_hdri == -1) telp->te_hdri = telp->te_endi = tevpi; 
+   if (telp->te_hdri == -1) telp->te_hdri = telp->te_endi = tevpi;
    else
     {
-     if (tevp->vpi_onfront) 
+     if (tevp->vpi_onfront)
       { tevp->tenxti = telp->te_hdri; telp->te_hdri = tevpi; }
      else
       { __tevtab[telp->te_endi].tenxti = tevpi; telp->te_endi = tevpi; }
@@ -5952,7 +6003,7 @@ extern void __insert_event(register i_tev_ndx tevpi)
 
 /*
  * routine to allocate event - non macro for debugging
- * the b zero initializes all flags to off 
+ * the b zero initializes all flags to off
  */
 /* DBG ??? remove --- */
 extern i_tev_ndx __alloc_tev(int32 etyp, struct itree_t *itp, word64 absetime)
@@ -5998,7 +6049,7 @@ extern void __grow_tevtab(void)
 
  /* DBG remove --- UNDO */
  if (__debug_flg)
-  __dbg_msg("+++ fixed event table grew from %d bytes to %d\n", osize, nsize); 
+  __dbg_msg("+++ fixed event table grew from %d bytes to %d\n", osize, nsize);
  /* --- */
 }
 
@@ -6024,8 +6075,8 @@ static void chk_tev_list(register i_tev_ndx tevpi)
 static void chk_schd_dces(void)
 {
  register int32 ni;
- register struct mod_t *mdp; 
- register struct task_t *tskp; 
+ register struct mod_t *mdp;
+ register struct task_t *tskp;
  struct net_t *np;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
@@ -6051,10 +6102,10 @@ static void chk_schd_dces(void)
  * check one static scheduled dce
  * UNUSED
  */
-/* --- 
+/* ---
 static void chk_1nschd_dce(struct net_t *np, struct mod_t *mdp)
 {
- register struct dcevnt_t *dcep; 
+ register struct dcevnt_t *dcep;
  register int32 ii;
  i_tev_ndx tevpi;
  struct delctrl_t *dctp;
@@ -6065,8 +6116,8 @@ static void chk_1nschd_dce(struct net_t *np, struct mod_t *mdp)
      continue;
    dctp = dcep->st_dctrl;
    if (dctp->dceschd_tevs == NULL)
-    __cvsim_msg("*** net %s dcep no dceschd_tevs\n", np->nsym->synam); 
-   for (ii = 0; ii < mdp->flatinum; ii++) 
+    __cvsim_msg("*** net %s dcep no dceschd_tevs\n", np->nsym->synam);
+   for (ii = 0; ii < mdp->flatinum; ii++)
     {
      if ((tevpi = dctp->dceschd_tevs[__inum]) != -1)
       __cvsim_msg("*** net %s inst num. %s dceschd_tevs index %d set\n",
@@ -6096,7 +6147,7 @@ static int32 move_to_time0(void)
 /*
  * move to next time slot
  * return FALSE if no events pending (i.e. all done)
- * know both normal and pound 0 event lists empty from last time 
+ * know both normal and pound 0 event lists empty from last time
  *
  * when done, events to process at current time ready to be processed
  * and __cur_te_hdr and __cur_te_end point to the now event queue
@@ -6112,7 +6163,7 @@ static int32 move_time(void)
  --- */
 
  __simtime++;
- /* normal case, find event in timing wheel */ 
+ /* normal case, find event in timing wheel */
  /* DBG remove ---
  if (__num_twhevents < 0) __misc_terr(__FILE__, __LINE__);
  --- */
@@ -6128,15 +6179,15 @@ again:
  __cur_te_endi = twp->te_endi;
  goto got_event;
 
- /* move all events whose time is < new sim time + twh size to time wheel */ 
+ /* move all events whose time is < new sim time + twh size to time wheel */
  /* copy header of timing q to timing wheel */
  /* if no events in overflow q nothing to do here */
  /* this reduces number of overflow events and increases __twheel events */
 at_twend:
  tmp = (word64) (__twhsize - 1);
  __whetime = __simtime + tmp;
- __cur_twi = -1;  
- /* events still in timing wheel, if ovflow empty, must advance wheel */ 
+ __cur_twi = -1;
+ /* events still in timing wheel, if ovflow empty, must advance wheel */
  if (__btqroot != NULL) ovflow_into_wheel();
  /* DBG remove -- */
  if (__debug_flg && __ev_tracing)
@@ -6157,7 +6208,7 @@ move_gap:
  if (__btqroot == NULL) return(FALSE);
  __simtime = __btqroot->btltim;
  tmp = (word64) (__twhsize - 1);
- __whetime = __simtime + tmp; 
+ __whetime = __simtime + tmp;
  /* DBG remove */
  if (__whetime <= __simtime)
   {
@@ -6172,8 +6223,8 @@ move_gap:
    __tr_msg(".. event gap - jumping to %s\n", __to_timstr(__xs, &__simtime));
   }
  /* -- */
- /* know at least one event in timing wheel */ 
- __cur_twi = -1;  
+ /* know at least one event in timing wheel */
+ __cur_twi = -1;
  goto again;
 got_event:
  /* getting to here means have event - better always happen */
@@ -6206,7 +6257,7 @@ static void chk_event_consist(void)
   }
 
  /* DBG remove --- */
- if (__num_twhevents != num_whevents) __misc_terr(__FILE__, __LINE__); 
+ if (__num_twhevents != num_whevents) __misc_terr(__FILE__, __LINE__);
  if (__btqroot == NULL)
   { if (__num_ovflqevents != 0) __misc_terr(__FILE__, __LINE__); }
  else { if (__num_ovflqevents == 0) __misc_terr(__FILE__, __LINE__); }
@@ -6214,15 +6265,15 @@ static void chk_event_consist(void)
 }
 
 /*
- * adding event tevp to overflow tree at time etim 
+ * adding event tevp to overflow tree at time etim
  * will never see #0 form here and always add exactly 1 event
  */
 static void add_ovfetim(word64 etim, i_tev_ndx tevpi, struct tev_t *tevp)
 {
  struct bt_t *btp, *splthdr, *new_splthdr;
  struct telhdr_t *telpp;
- 
- __num_ovflqevents++; 
+
+ __num_ovflqevents++;
  /* ---
  if (__debug_flg && __ev_tracing)
   {
@@ -6233,7 +6284,7 @@ static void add_ovfetim(word64 etim, i_tev_ndx tevpi, struct tev_t *tevp)
    t = __whetime - tmp + 1;
    __tr_msg(
     ".. adding event after timing wheel based at %s for time %s (ovfl. num. %d)\n",
-    __to_timstr(s1, &t), __to_timstr(__xs, &(tevp->etime)), __num_ovflqevents); 
+    __to_timstr(s1, &t), __to_timstr(__xs, &(tevp->etime)), __num_ovflqevents);
   }
  --- */
  /* empty tree */
@@ -6249,7 +6300,7 @@ static void add_ovfetim(word64 etim, i_tev_ndx tevpi, struct tev_t *tevp)
    btp->ofsu.telp = telpp = (struct telhdr_t *)
     __my_malloc(sizeof(struct telhdr_t));
    telpp->te_hdri = telpp->te_endi = tevpi;
-   telpp->num_events = 1; 
+   telpp->num_events = 1;
    btp->btltim = etim;
    btp->btnxt = NULL;
    btp->btnfill = 1;
@@ -6311,11 +6362,11 @@ static struct bt_t *find_fringe(word64 etim)
  /* stack special size 1 root node */
  __btndhdrstk[0] = __btndstk[0] = __btqroot;
  hdrbtp = __btqroot->ofsu.btofs;
- /* must handle case of fringe immediately under root */ 
- __topi = 0; 
- if (hdrbtp->bttyp == BTFRNGE) return(hdrbtp); 
+ /* must handle case of fringe immediately under root */
+ __topi = 0;
+ if (hdrbtp->bttyp == BTFRNGE) return(hdrbtp);
 
- for (__topi = 0;;) 
+ for (__topi = 0;;)
   {
    /* stack 1 down header of linked node */
    __btndhdrstk[++__topi] = last_btp = hdrbtp;
@@ -6344,7 +6395,7 @@ static struct bt_t *find_fringe(word64 etim)
  *
  * notice fringe node (with pointer to telhdr) never stacked on path list
  */
-static struct bt_t *insert_fringe(struct bt_t *frnghdr, word64 etim, 
+static struct bt_t *insert_fringe(struct bt_t *frnghdr, word64 etim,
  i_tev_ndx tevpi)
 {
  register int32 i;
@@ -6360,16 +6411,16 @@ static struct bt_t *insert_fringe(struct bt_t *frnghdr, word64 etim,
 
    /* found place */
    if (etim == btp->btltim)
-    { 
+    {
      telp = btp->ofsu.telp;
-     if (telp->te_hdri == -1) telp->te_hdri = telp->te_endi = tevpi; 
+     if (telp->te_hdri == -1) telp->te_hdri = telp->te_endi = tevpi;
      else
       {
-       if (__tevtab[tevpi].vpi_onfront) 
+       if (__tevtab[tevpi].vpi_onfront)
         { __tevtab[tevpi].tenxti = telp->te_hdri; telp->te_hdri = tevpi; }
        else { __tevtab[telp->te_endi].tenxti = tevpi; telp->te_endi = tevpi; }
       }
-     telp->num_events += 1; 
+     telp->num_events += 1;
      return(NULL);
     }
 
@@ -6447,21 +6498,21 @@ static void splitinsert_nonfringe(void)
    parbtp = __btndstk[stki];
    parhdr = __btndhdrstk[stki];
    /* up 1 level is special root node - must increase tree height */
-   if (stki == 0) 
+   if (stki == 0)
     {
-     /* allocate new added level parbtp (same as header for root) */ 
+     /* allocate new added level parbtp (same as header for root) */
      parbtp = alloc_btnod(BTNORM);
      parbtp->btltim = splt1->btltim;
      parbtp->ofsu.btofs = splt1;
      parbtp->btnfill = 2;
-     parbtp->btnxt = splt2par; 
+     parbtp->btnxt = splt2par;
      parhdr->ofsu.btofs = parbtp;
      splt2par->btnxt = NULL;
      /* this is only way max. tree level can increase */
      __max_level++;
      return;
     }
-   /* on sun += does not work for bit fields */ 
+   /* on sun += does not work for bit fields */
    parhdr->btnfill = parhdr->btnfill + 1;
 
    splt2par->btnxt = parbtp->btnxt;
@@ -6501,7 +6552,7 @@ static void ovflow_into_wheel(void)
      t = (__whetime - tmp) + 1;
      __tr_msg(
       ".. time queue move to wheel based at %s descending to level %d\n",
-      __to_timstr(__xs, &t), __topi); 
+      __to_timstr(__xs, &t), __topi);
     }
    -- */
    /* case 1 - descended down to fringe node */
@@ -6509,11 +6560,11 @@ static void ovflow_into_wheel(void)
     {
      divide_fringe_node(btphdr);
      break;
-    } 
+    }
    divide_internal_node(btphdr);
    /* move down one level from new divide node */
    btphdr = __btndstk[__topi]->ofsu.btofs;
-  } 
+  }
  /* must set min times of list hdr nodes */
  /* since do not know new and left times until hit fringe */
  if (__btqroot == NULL) return;
@@ -6531,7 +6582,7 @@ static void ovflow_into_wheel(void)
    if (__debug_flg && __ev_tracing)
     {
      __tr_msg(".. removing redundant size 1 node under root\n");
-    }  
+    }
    __btqroot->ofsu.btofs = btphdr->ofsu.btofs;
    __my_free((char *) btphdr, sizeof(struct bt_t));
    btphdr = NULL;
@@ -6552,7 +6603,7 @@ static void divide_fringe_node(struct bt_t *btphdr)
 
  /* case 1 (illegal): all of fringe node remains in tree */
  cnum = btphdr->btnfill - 1;
- for (btp = btphdr->btnxt; btp != NULL; btp = btp->btnxt) 
+ for (btp = btphdr->btnxt; btp != NULL; btp = btp->btnxt)
   {
    if (btp->btltim > __whetime)
     {
@@ -6562,7 +6613,7 @@ static void divide_fringe_node(struct bt_t *btphdr)
       {
        btptmp = btp2->btnxt;
        mv_to_wheel(btp2->btltim, btp2->ofsu.telp);
-       /* SJM 03/07/01 - always fringe, must free telp too */ 
+       /* SJM 03/07/01 - always fringe, must free telp too */
        __my_free((char *) btp2->ofsu.telp, sizeof(struct telhdr_t));
        __my_free((char *) btp2, sizeof(struct bt_t));
        btp2 = btptmp;
@@ -6582,7 +6633,7 @@ static void divide_fringe_node(struct bt_t *btphdr)
   {
    btptmp = btp->btnxt;
    mv_to_wheel(btp->btltim, btp->ofsu.telp);
-   /* AIV 05/21/04 - miss one here, must free telp too */ 
+   /* AIV 05/21/04 - miss one here, must free telp too */
    __my_free((char *) btp->ofsu.telp, sizeof(struct telhdr_t));
    __my_free((char *) btp, sizeof(struct bt_t));
    btp = btptmp;
@@ -6599,14 +6650,14 @@ static void divide_internal_node(struct bt_t *btphdr)
  register struct bt_t *btp;
  int32 cnum;
  struct bt_t *last_btp, *btp2, *btptmp;
- 
+
  /* case 1 (impossible) - all of tree past timing wheel */
  /* internal node low time cannot be larger than wheel end */
  if (btphdr->btltim > __whetime) __misc_terr(__FILE__, __LINE__);
 
  cnum = btphdr->btnfill - 1;
  last_btp = btphdr;
- for (btp = btphdr->btnxt; btp != NULL; btp = btp->btnxt) 
+ for (btp = btphdr->btnxt; btp != NULL; btp = btp->btnxt)
   {
    if (btp->btltim > __whetime)
     {
@@ -6622,8 +6673,8 @@ got_divide:
       }
      /* fixup tree - last_btp is divide node */
      last_btp->btnfill = cnum + 1;
-     __btndstk[__topi] = last_btp; 
-     __btndhdrstk[__topi] = last_btp; 
+     __btndstk[__topi] = last_btp;
+     __btndhdrstk[__topi] = last_btp;
      __btndstk[__topi - 1]->ofsu.btofs = last_btp;
      __btndstk[__topi - 1]->btltim = last_btp->btltim;
      return;
@@ -6645,7 +6696,7 @@ static void remove_empty_upwards(void)
  int32 stki, stki2;
 
  /* case 1, if only root is above now empty fringe - remove all of tree */
- if (__topi == 1) 
+ if (__topi == 1)
   {
 empty_tree:
    __my_free((char *) __btqroot, sizeof(struct bt_t));
@@ -6668,10 +6719,10 @@ empty_tree:
 
 got_nonremove:
  /* know that node at level stki stays */
- /* step 1: link out node */  
+ /* step 1: link out node */
  /* step 1a: find predecessor of linked out node if exists */
  rembtp = __btndstk[stki];
- /* case 2a: header node is removed */ 
+ /* case 2a: header node is removed */
  if (rembtp == __btndhdrstk[stki])
   {
    /* know node following rembtp exists */
@@ -6688,13 +6739,13 @@ got_nonremove:
    for (btp = __btndhdrstk[stki]; btp != rembtp; btp = btp->btnxt)
     last_btp = btp;
    __btndhdrstk[stki]->btnfill -= 1;
-  
+
    /* case 2b1: last node removed */
    if (rembtp->btnxt == NULL)
     {
-     /* last_btp is one before removed node */ 
+     /* last_btp is one before removed node */
      __btndstk[stki] = last_btp;
-   
+ 
      /* SJM 08/02/01 - add if to keep lint happy */
      if (last_btp != NULL) last_btp->btnxt = NULL;
     }
@@ -6705,14 +6756,14 @@ got_nonremove:
      /* SJM 08/02/01 - add if to keep lint happy */
      if (last_btp != NULL) last_btp->btnxt = rembtp->btnxt;
     }
-  } 
+  }
  /* notice __btndstk that points to rembtp - has new value (moved down) */
  __my_free((char *) rembtp, sizeof(struct bt_t));
  /* finally, work upwards to fringe updating __btndstk */
  /* notice even if only fringe removed, this will change ndstk for fringe */
  for (stki2 = stki + 1; stki2 <= __topi; stki2++)
   __btndstk[stki2] = __btndstk[stki2 - 1]->ofsu.btofs;
-}     
+}
 
 /*
  * move an entire subtree to timing wheel and free subtree
@@ -6746,7 +6797,7 @@ static void mv_subtree_towheel(struct bt_t *btphdr)
  */
 static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
 {
- int32 twslot; 
+ int32 twslot;
  word64 tmp;
  struct telhdr_t *twlp;
 
@@ -6754,7 +6805,7 @@ static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
  if (etim > __whetime) __misc_terr(__FILE__, __LINE__);
  /* ---
  if (__debug_flg && __ev_tracing)
-  { 
+  {
    __tr_msg(".. moving time queue to wheel based at time %s\n",
     __to_timstr(__xs, &etim));
   }
@@ -6762,7 +6813,7 @@ static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
 
  /* add overflow q to correct wheel slot - must go on front */
  /* because of wrapping later events already on wheel element */
- /* sim time + 1 is 0th timing wheel position */ 
+ /* sim time + 1 is 0th timing wheel position */
  tmp = etim - __simtime;
  twslot = (int32) (tmp & WORDMASK_ULL);
 
@@ -6797,7 +6848,7 @@ static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
 }
 
 /*
- * find btree node after or same as tim 
+ * find btree node after or same as tim
  *
  * LOOKATME - why is this not called
  */
@@ -6807,7 +6858,7 @@ static struct telhdr_t *tfind_btnode_after(struct bt_t *btphdr, word64 tim)
  struct telhdr_t *telp;
 
  if (btphdr->bttyp == BTFRNGE)
-  { 
+  {
    for (btp = btphdr; btp != NULL; btp = btp->btnxt)
     { if (btp->btltim >= tim) return(btp->ofsu.telp); }
    return(NULL);
@@ -6818,12 +6869,12 @@ static struct telhdr_t *tfind_btnode_after(struct bt_t *btphdr, word64 tim)
     return(telp);
   }
  return(NULL);
-} 
+}
 
 /*
  * Q DEBUGGING ROUTINES
  */
- 
+
 /*
  * dump all events in timing wheel
  * only called if debug flag on
@@ -6839,7 +6890,7 @@ static void dmp_twheel(void)
    /* use sentinel for end */
    if (__twheel[twi]->num_events == -1) break;
    e_num = dmp_events(__twheel[twi]->te_hdri);
-   totenum += e_num; 
+   totenum += e_num;
    /* DBG remove ---
    __dbg_msg("--index %d %d counted events and %d stored--\n", twi,
     e_num, __twheel[twi]->num_events);
@@ -6852,7 +6903,7 @@ static void dmp_twheel(void)
 /*
  * dump event list
  */
-static int32 dmp_events(register i_tev_ndx tevpi) 
+static int32 dmp_events(register i_tev_ndx tevpi)
 {
  int32 e_num;
  /* char s1[20], s2[RECLEN]; */
@@ -6861,7 +6912,7 @@ static int32 dmp_events(register i_tev_ndx tevpi)
   {
    /* --
    struct tev_t *tevp;
-    
+
    tevp = &(__tevtab[tevpi]);
    __dbg_msg("^^%s event index %d in inst. %s at %s cancel=%d\n",
     __to_tetyp(s1, tevp->tetyp), tevpi, __msg2_blditree(s2, tevp->teitp),
@@ -6887,16 +6938,16 @@ extern void __dmp_event_tab(void)
   {
    tevp = &(__tevtab[ei]);
    __dbg_msg("^^%s (%d) event index %d next %d\n",
-    __to_tetyp(s1, tevp->tetyp), tevp->tetyp, ei, tevp->tenxti); 
+    __to_tetyp(s1, tevp->tetyp), tevp->tetyp, ei, tevp->tenxti);
   }
  if (__tefreelsti != -1)
   {
    __dbg_msg("*** DUMPING FREE LIST ***\n");
-   for (ei = __tefreelsti; ei != -1; ei = __tevtab[ei].tenxti) 
+   for (ei = __tefreelsti; ei != -1; ei = __tevtab[ei].tenxti)
     {
      tevp = &(__tevtab[ei]);
      __dbg_msg("^^%s (%d) free event index %d next %d\n",
-      __to_tetyp(s1, tevp->tetyp), tevp->tetyp, ei, tevp->tenxti); 
+      __to_tetyp(s1, tevp->tetyp), tevp->tetyp, ei, tevp->tenxti);
     }
   }
 }
@@ -6911,7 +6962,7 @@ static void dmp_btree(struct bt_t *btphdr)
  if (__btqroot == NULL)
   {
    if (__debug_flg && __ev_tracing)
-    __dbg_msg("--empty tree--\n"); 
+    __dbg_msg("--empty tree--\n");
    return;
   }
  for (i = 0; i <= __max_level; i++)
@@ -6941,15 +6992,15 @@ static void dmp2_btree(struct bt_t *btphdr, int32 level)
  */
 static void dmp_btnode(struct bt_t *btp, int32 level)
 {
- struct bt_t *btp1;  
+ struct bt_t *btp1;
  int32 first_time;
  char s1[RECLEN];
 
  if (__nd_level != level) return;
  if (btp->bttyp == BTFRNGE) strcpy(s1, "fringe");
  else strcpy(s1, "internal");
- 
- __outlinpos = 0; 
+
+ __outlinpos = 0;
  __dbg_msg("level %d %s node size %u:", level, s1, btp->btnfill);
  first_time = TRUE;
  for (btp1 = btp; btp1 != NULL; btp1 = btp1->btnxt)
@@ -6982,11 +7033,11 @@ extern void __free_btree(struct bt_t *btphdr)
  /* at bottom of tree this nodes and all right siblings fringe nodes */
  if (btphdr->bttyp == BTFRNGE)
   {
-    for (btp = btphdr; btp != NULL;) 
+    for (btp = btphdr; btp != NULL;)
      {
       btp2 = btp->btnxt;
       /* because freeing telp record, know contents freed */
-      /* events freed by just marking all of tev tab unused */ 
+      /* events freed by just marking all of tev tab unused */
       __free_telhdr_tevs(btp->ofsu.telp);
       __my_free((char *) btp->ofsu.telp, sizeof(struct telhdr_t));
       __my_free((char *) btp, sizeof(struct bt_t));
@@ -6994,9 +7045,9 @@ extern void __free_btree(struct bt_t *btphdr)
     }
    return;
   }
- /* if one node non fringe, all non fringe */  
+ /* if one node non fringe, all non fringe */
  for (btp = btphdr; btp != NULL;)
-  { 
+  {
    btp2 = btp->btnxt;
    __free_btree(btp->ofsu.btofs);
    __my_free((char *) btp, sizeof(struct bt_t));
@@ -7009,7 +7060,7 @@ extern void __free_btree(struct bt_t *btphdr)
  * free list of tevs - either btree node or timing wheel list
  *
  * normally add entire period's events to free list - this is for reset only
- * because when an event is processed guts (if any) freed so can link on 
+ * because when an event is processed guts (if any) freed so can link on
  * free list but here need to free guts too
  */
 extern void __free_telhdr_tevs(register struct telhdr_t *telp)
@@ -7020,7 +7071,7 @@ extern void __free_telhdr_tevs(register struct telhdr_t *telp)
   {
    tevp2i = __tevtab[tevpi].tenxti;
    __free_1tev(tevpi);
-   tevpi = tevp2i; 
+   tevpi = tevp2i;
   }
  /* this is needed for timing wheel since, telp not freed */
  telp->te_hdri = telp->te_endi = -1;
@@ -7037,7 +7088,7 @@ extern void __free_1tev(i_tev_ndx tevpi)
  word32 *wp;
  struct tev_t *tevp;
  struct tenbpa_t *tenbp;
- struct tedputp_t *tedp; 
+ struct tedputp_t *tedp;
  struct teputv_t *tepvp;
 
  tevp = &(__tevtab[tevpi]);
@@ -7050,7 +7101,7 @@ extern void __free_1tev(i_tev_ndx tevpi)
    /* for non #0 original freed here but no tenbpa - moved to new */
    if ((tenbp = tevp->tu.tenbpa) == NULL) break;
 
-   wp = tenbp->nbawp; 
+   wp = tenbp->nbawp;
    wlen = wlen_(tenbp->nbastp->st.spra.lhsx->szu.xclen);
    __my_free((char *) wp, 2*wlen*WRDBYTES);
    /* if needed to copy lhs expr., now free */
@@ -7074,10 +7125,10 @@ extern void __free_1tev(i_tev_ndx tevpi)
   case TE_VPICBDEL:
    break;
   default: __case_terr(__FILE__, __LINE__);
- } 
- 
+ }
+
  /* ** DBG remove --
- memset(tevp, 0, sizeof(struct tev_t)); 
+ memset(tevp, 0, sizeof(struct tev_t));
  __dbg_msg("--- free tev at %x\n", tevp);
  --- */
  __tevtab[tevpi].tenxti = __tefreelsti;

@@ -196,6 +196,7 @@ extern vpiHandle __bld_delay_expr_iter(struct h_t *);
 extern vpiHandle __bld_dig_attr_iter(struct h_t *);
 extern vpiHandle __bld_iodecl_stmt_iter(struct h_t *);
 extern vpiHandle __get_digattr_parent(struct h_t *);
+extern struct itree_t *__find_dfpbot_itp(struct dfparam_t *);
 
 extern char *__my_realloc(char *, int32, int32);
 extern struct systsk_t *__alloc_systsk(void);
@@ -253,8 +254,6 @@ extern char *__msg2_blditree(char *, struct itree_t *);
 extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
 extern void __dcelst_off(struct dceauxlst_t *);
 extern void __alloc_1instdce_prevval(struct dcevnt_t *);
-extern void __init_1instdce_prevval(struct dcevnt_t *);
-
 
 extern void __cv_msg(char *, ...);
 extern void __tr_msg(char *, ...);
@@ -3964,6 +3963,7 @@ static vpiHandle get_obj_side(struct h_t *rhp, int32 type)
  struct st_t *stp;
  struct task_t *tskp;
  struct dfparam_t *dfpp;
+ struct itree_t *itp;
  struct net_t *np;
 
  tskp = NULL;
@@ -4009,8 +4009,9 @@ static vpiHandle get_obj_side(struct h_t *rhp, int32 type)
     {
      /* left hand side is parameter (i.e. net) and can be task param */
      np = dfpp->targsyp->el.enp;   
-     ihref = __mk_handle(vpiParameter, (void *) np, dfpp->indfp_itp,
-      dfpp->dfptskp);
+     /* SJM - 05/26/05 - must search for bottom - splitting changes */
+     itp = __find_dfpbot_itp(dfpp);
+     ihref = __mk_handle(vpiParameter, (void *) np, itp, dfpp->dfptskp);
      return(ihref);  
     }
    /* SJM 01/27/04 - this no longer needs to be const for dependent dfps */ 
@@ -6113,6 +6114,7 @@ static vpiHandle bld_defparam_stmt_iterator(struct h_t *hp)
  int32 ndfps; 
  vpiHandle ihref;
  struct pviter_t *iterp;
+ struct itree_t *itp;
 
  if (hp == NULL) return(__nil_iter_err(vpiDefParam));
  if (hp->hrec->htyp != vpiModule)
@@ -6122,13 +6124,15 @@ static vpiHandle bld_defparam_stmt_iterator(struct h_t *hp)
 
  for (ndfps = 0, dfp = __dfphdr; dfp != NULL; dfp = dfp->dfpnxt)
   {
-   if (dfp->indfp_itp == hp->hin_itp) ndfps++;
+   itp = __find_dfpbot_itp(dfp);
+   if (itp == hp->hin_itp) ndfps++;
   }
  if (ndfps <= 0) return(NULL);
  iterp = __alloc_iter(ndfps, &ihref);
  for (dfi = 0, dfp = __dfphdr; dfp != NULL; dfp = dfp->dfpnxt)
   {
-   if (dfp->indfp_itp != hp->hin_itp) continue;
+   itp = __find_dfpbot_itp(dfp);
+   if (itp != hp->hin_itp) continue;
 
    hp2 = &(iterp->scanhtab[dfi]);
    hrp2 = hp2->hrec;

@@ -1512,13 +1512,40 @@ extern void __do_include(void)
 {
  register int32 idi;
  register char *cp;
- int32 inflen, plen;
+ int32 inflen, plen, space;
  FILE *f;
  struct incloc_t *ilp;
  char *chp, incfnam[RECLEN], incpth[RECLEN];
+ struct sy_t *syp;
 
  cp = __macwrkstr;
- if (*cp != '"')
+ /* AIV 06/27/05 -  handle the special `include `FILE case */
+ if (*cp == '`')
+  {
+   /* strip the white space at the end of the line */
+   plen = strlen(cp) - 1;
+   space = FALSE;
+   for (idi = plen; idi >= 0; idi--) 
+    {
+     if (cp[idi] == ' ') 
+      {
+       space = TRUE;
+       cp[idi] = '\0';
+      }
+     else if (space) break;
+    }
+    /* find `define variable to ge the file name */
+   if ((syp = __get_sym(cp, __pv_defsyms)) == NULL || !syp->sydecl)
+    {
+     __pv_fwarn(937,
+      "`include name - text macro %s undefined or possibly compiler directive for other tool - ignored", cp);
+     return;
+    }
+  /* set the file name pointer */
+  cp = syp->el.edfchp;
+ }
+ chp = cp;
+ if (*chp != '"')
   {
 bad_fnam:
    __pv_ferr(937,
@@ -1526,15 +1553,16 @@ bad_fnam:
    return;
   } 
  /* fill token to ending " - white space in file names ok */
- for (cp++;; cp++)
+ for (chp++;; chp++)
   { 
-   if (*cp == '\0') goto bad_fnam;
-   if (*cp == '"') break; 
+   if (*chp == '\0') goto bad_fnam;
+   if (*chp == '"') break; 
   } 
  /* replace ending quotes with \0 */
- *cp = '\0';
+ *chp = '\0';
+ /* cp now points file name skipping the first char (") */
  /* know not longer than 1024 because that is Verilog line length */
- strcpy(incfnam, &(__macwrkstr[1]));
+ strcpy(incfnam, &(cp[1]));
 
  if ((f = __tilde_fopen(incfnam, "r")) == NULL)
   {
@@ -3626,6 +3654,7 @@ static struct vkeywds_t vkeywds[] = {
  { "end", END },
  { "endcase", ENDCASE },
  { "endfunction", ENDFUNCTION },
+ { "endgenerate", ENDGENERATE },
  { "endmodule", ENDMODULE },
  { "endprimitive", ENDPRIMITIVE },
  { "endspecify", ENDSPECIFY },
@@ -3637,6 +3666,7 @@ static struct vkeywds_t vkeywds[] = {
  { "forever", FOREVER },
  { "fork", FORK },
  { "function", FUNCTION },
+ { "generate", GENERATE },
  { "highz0", HIGHZ0 },
  { "highz1", HIGHZ1 },
  { "if", IF },
@@ -3773,7 +3803,7 @@ done:
 
 /*
  * skip to 2 symbols - if not found only end module/primitive ends
- * est of module not checked
+ * rest of module not checked
  * return T if found targ1 else F
  */
 extern int32 __vskipto2_modend(int32 targ1, int32 targ2)
@@ -5656,7 +5686,7 @@ extern char *__to_dcenam(char *s, word32 dctyp)
  */
 
 /*
- * allocate a string from a big block
+ * allocate a string for use during elaboration - adds the ending \0
  * this must allocate the 1 char null string for `define as flag
  */
 extern char *__pv_stralloc(char *s)

@@ -169,7 +169,7 @@ extern void __reinit_tfrecs(void);
 extern void __reinit_vpi(void);
 extern void __reinit_sim(void);
 extern void __reinitialize_vars(struct mod_t *);
-extern void __reinitialize_dces(struct mod_t *);
+extern void __initialize_dces(struct mod_t *);
 extern void __set_init_gstate(struct gate_t *, int32, int32);
 extern void __set_nchgaction_bits(void);
 extern void __set_init_udpstate(struct gate_t *, int32, int32);
@@ -3127,6 +3127,14 @@ extern void __reset_to_time0(void)
      tevpi = tevp2i; 
     }
    __p0_te_hdri = __p0_te_endi = -1;  
+
+   for (tevpi = __nb_te_hdri; tevpi != -1;)
+    {
+     tevp2i = __tevtab[tevpi].tenxti;
+     __free_1tev(tevpi);
+     tevpi = tevp2i; 
+    }
+   __nb_te_hdri = __nb_te_endi = -1;
   }
 
  /* free pending strobes for this time slot - if none added does nothing */
@@ -3290,7 +3298,8 @@ static void reinit_vars_and_state(void)
    mdp->mod_hasdvars = FALSE;
 
    insts = mdp->flatinum;
-   __reinitialize_dces(mdp);
+   /* since can't init dces until cgen .bss .so linking done - same as init */
+   __initialize_dces(mdp);
    for (gi = 0; gi < mdp->mgnum; gi++)
     {
      gp = &(mdp->mgates[gi]);
@@ -3656,7 +3665,7 @@ static void wr_1ev_trace(int32 i, i_tev_ndx tevpi)
 static void fill_near_evtab(int32 ntevs, int32 tefilt)
 {
  register i_tev_ndx tevpi; 
- int32 evnum, osize, twi;
+ int32 evnum, osize, twi, added_pnd0s;
  word64 t1, t2;
  struct telhdr_t *ovfl_telp, *twp;
 
@@ -3681,6 +3690,7 @@ static void fill_near_evtab(int32 ntevs, int32 tefilt)
 
  /* first rest of current list */
  /* if not in pound 0's, first rest of current slot list */ 
+ added_pnd0s = FALSE;
  if (!__processing_pnd0s)
   {
    /* if cur tevp index set, 1st pending event must be next */
@@ -3690,18 +3700,31 @@ static void fill_near_evtab(int32 ntevs, int32 tefilt)
     {
      if (!try_add_wrkevtab(tevpi, ntevs, &evnum, tefilt)) return;
     }
-   tevpi = __p0_te_hdri;
+   /* add pnd0's or nb pnd0's if no pnd0s */
+   if (__p0_te_hdri != -1) { tevpi = __p0_te_hdri; added_pnd0s = TRUE; }
+   else tevpi = __nb_te_hdri;
   }
  else
   {
+   /* SJM - also add nb's if no pound 0's */
    if (__cur_tevpi != -1) tevpi = __tevtab[__cur_tevpi].tenxti;
-   else tevpi = __p0_te_hdri;
+   else if (__p0_te_hdri != -1) { added_pnd0s = TRUE; tevpi = __p0_te_hdri; }
+   else tevpi = __nb_te_hdri;
   }
  /* next try pound 0's */
  for (; tevpi != -1; tevpi = __tevtab[tevpi].tenxti)
   {
    if (!try_add_wrkevtab(tevpi, ntevs, &evnum, tefilt)) return;
+
+   /* if processing pnd0s and added pnd0's, must also add any nb pnd0s */
+   /* before moving forward in time */
+   if (tevpi == -1 && added_pnd0s)
+    {
+     added_pnd0s = FALSE;
+     tevpi = __nb_te_hdri;
+    }
   }
+ 
  /* t1 is one time unit afer now */
  t1 = __simtime + 1;
  /* first overflow q location must be set before processing wheel */
