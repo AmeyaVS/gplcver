@@ -4917,10 +4917,12 @@ emit_msg:
      __get_del(&lim2, tcp->tclim2_du, tcp->tc_delrep2);
      /* 2nd limit is hold part */
      lim1 = lim2;
-     if (diff < lim1) goto emit_msg;
+     /* AIV 09/15/04 - difference of 0 must not cause check - see hold */
+     if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     case TCHK_HOLD:
-     if (diff < lim1) goto emit_msg;
+     /* AIV 09/15/04 - difference of 0 must not cause check */
+     if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     case TCHK_WIDTH:
      /* opposite edge data event less than limit after 1st edge ref., err */

@@ -25,9 +25,9 @@
 
 #define VERS "GPLCVER_1"
 
-#define VERS2 ".10j"
+#define VERS2 ".10k"
 
-#define OFDT "07/13/04"
+#define OFDT "08/03/04"
 #define OUTLINLEN 71          /* length of output file line */
 #define DFLTIOWORDS 8         /* preallocated size for I/O and work values */
 #define MUSTFREEWORDS 64      /* for stk values wider free when done */

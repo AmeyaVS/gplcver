@@ -1538,8 +1538,8 @@ bad_fnam:
  if ((f = __tilde_fopen(incfnam, "r")) == NULL)
   {
    /* if file absolute, do not search incdir list */
-   if (incfnam[0] == '/' || incfnam[0] == '.' || incfnam[0] == '~')
-    goto nonrel_notfnd; 
+   /* AIV 09/15/04 - ./[name] form is relative not absolute */
+   if (incfnam[0] == '/' || incfnam[0] == '~') goto nonrel_notfnd; 
 
    if (__last_incdir >= 0)
     {

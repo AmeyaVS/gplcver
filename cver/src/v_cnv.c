@@ -1236,18 +1236,20 @@ xl_disp:
    if (valreal) __cnv_stk_fromreal_toreg32(xsp);
  }
 
+ /* SJM 08/03/04 - this code was wrongly trimmming leading 0s */
+ /* LRM requires keeping leading 0s */
  switch ((byte) fmtchar) {
   case 'h': case 'H': case 'x': case'X':
-   sdisph(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   sdisph(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'd': case 'D':
-   sdispd(xsp->ap, xsp->bp, xsp->xslen, TRUE, vsigned);
+   sdispd(xsp->ap, xsp->bp, xsp->xslen, FALSE, vsigned);
    break;
   case 'o': case 'O':
-   sdispo(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   sdispo(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'b': case 'B':
-   __sdispb(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   __sdispb(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'g': case 'G': case 'f': case 'F':
    sprintf(s1, "%g", d1);

@@ -250,3 +250,15 @@ Tue Jul 13 10:07:08 CDT 2004
 
 6. $removal timing check had the check failure test logic reversed so
    $removal timing check warnings were wrongly reported.
+
+
+Thu Sep 16 09:50:08 CDT 2004
+
+  Minor bug fix Release 1.10k.
+
+1. Fixed bug in hold and hold part of setuphold.  Was wrongly
+   emitting timing check for 0 width pulse.
+
+2. Fixed bug that caused "./[file]" form when used in `include directives 
+   to be treated as absolute path.  It is now correctly treated as
+   a relative path.

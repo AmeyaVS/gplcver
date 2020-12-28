@@ -3021,7 +3021,7 @@ static void do_giarr_splitting(void)
 
        /* because static src inst loc. has pnd params, if any gate must */
        /* try to set any gate range params */
-       /* AIV 07/12/04 - old checking and was wrong nad mark gia rng checks */
+       /* AIV 07/12/04 - old checking and was wrong and mark gia rng checks */
        if (!imdp->mgiarngdone)
         {
          mark_gia_rng_params(imdp);

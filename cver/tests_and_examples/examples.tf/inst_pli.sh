@@ -12,13 +12,14 @@ then
   exit;
 fi
 
-if test $OS != lnx
-then 
-  if test $OS != sparc-gcc
-   then 
+
+if [ "$OS" != "lnx" ]
+ then
+  if [ "$OS" != "sparc-gcc" ]
+   then
       echo "must specify an OS(lnx, sparc-gcc) on command line" 
       exit;
-   fi
+  fi
 fi
 
 make -f makefile.$OS probe.so
