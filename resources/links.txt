@@ -49,3 +49,7 @@ https://web.archive.org/web/*/http://www.pragmatic-c.com:80/gpl-cver/downloads/g
 https://web.archive.org/web/*/http://www.pragmatic-c.com:80/gpl-cver/downloads/gplcver-2.11a.osx.bin.tar.bz2.sign
 https://web.archive.org/web/*/http://www.pragmatic-c.com:80/gpl-cver/downloads/gplcver-2.11a.src.tar.bz2
 https://web.archive.org/web/*/http://www.pragmatic-c.com:80/gpl-cver/downloads/gplcver-2.11a.src.tar.bz2.sign
+
+# SourceForge
+http://sourceforge.net/projects/gplcver/files/gplcver/2.12a/gplcver-2.12a.src.tar.bz2
+
