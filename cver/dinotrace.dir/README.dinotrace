@@ -1,0 +1,24 @@
+
+NOTE SJM: I will add the licensing boiler plate
+
+Dinotrace is a free software waveform viewer that reads verilog value change 
+dump files. It has been included in the dinotrace.dir directory, and the 
+executable is included in the bin directory. There is a shell script that
+runs Cver, creates a dump file and loads it into Dinotrace in 
+tests_and_examples/examples.dino.
+
+Dinotrace runs on all platforms currently supported by Cver.  Dinotrace needs
+both, Motif or LessTIF (www.lesstif.org), and a X11 server (www.xfree86.org). 
+If it doesn't run properly on your system, cd to the dinotrace-*, and run 
+'./configure'. This builds a make file for a particular system, next type 'make' or 'make install'. There is Dinotrace documentation in the directory, or 
+you can go to www.veripool.com/dinotrace for the latest information or release.
+ 
+Dinotrace reads the 'verilog.dump' file which Cver creates, when $dumpvars is
+called.  See tests_and_examples/examples.dino/dmp.v or the LRM for different
+calls to create a dump file. Dinotrace can take a dumpfile from the command 
+line or can load them from the GUI.  It loads all signals which can be
+deleted from the display by chosing either 'Delete' or 'Select' from the 
+'Signals' menu.  An easier method would be to give the signal names to 
+$dumpvars(sig1, sig2, ....), which writes only these variables to the dump
+file, which can then be loaded into Dinotrace.
+  

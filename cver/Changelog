@@ -1,0 +1,252 @@
+
+Thu Jul 31 15:51:02 CDT 2003
+ 
+  Initial release of open source GPL Cver 1.10.  GPL Cver 1.10 is free
+software open source version of last Cver release from last year used
+as digital engine for Antrim Verilog-AMS simulator before Antrim assets
+were purchased by Cadence.
+
+Fri Sep 19 11:15:46 CDT 2003
+
+  Minor bug fix Release 1.10b
+
+1. Fixed bug in change recording that caused extra incorrect $monitor
+   change lines to appear (also sometimes effected PLI extra change
+   events).  Two identical $monitor lines were emitted even though there
+   were no variable changes.
+
+2. Fixed problem with zero width concatenate repeat constant expressions.   
+   Cver previously used 1 or core dumped.  Now the 0 width elements are
+   removed with a warning.  This is needed for parameterized cores.
+
+3. Fixed a number of minor bugs in vccdiff.  See Changelog in the
+   vcddiff directory.  Main change involved better initialization of
+   old values before $dumpvars starts in edge difference messages.
+
+Fri Nov 21 14:26:50 CST 2003
+
+  Another Minor bug fix Release 1.10c except vpi_user.h include file changed.
+  Most of these bug fixes solve minor problems when using with Xilinx
+  libraries.
+
+1. Fixed bug that caused core dump when -y [dir] used where [dir] contained
+   no files.  Now a warning is emitted and directory is ignored.
+
+2. Fixed a malloced memory corruption problem involving defparams.
+
+3. Fixed problems with SDF (SETUPHOLD timing checks not matching Verilog 
+   timing checks when they should.  Problem was that SDF and Verilog
+   setuphold terminal order is reversed but matching code sometimes was not
+   reversing terminals.
+
+4. Minor problem with printing tab and newline in strings fixed. 
+   Sometimes new line and tab were treated as non printing and replaced
+   by \0.
+
+5. Fixed bug in $readmem in which change event controls on memory cells
+   were sometimes not triggering when $readmem was executed.
+
+6. Changed vpi_user.h and cv_vpi_user.h to match files in P1364 2001
+   LRM.  The new version matches the 2001 LRM appendix except the
+   explicit int type names are not used yet.  A few mcd and file
+   handling vpi_ routines defined only in the P1364 2001 LRM have been added.
+   Change is first step toward adding new P1364 2001 standard features.
+
+   BEWARE: If you have previously moved the pli_incs directory somewhere
+   such as into /usr/include, you must replace the include files with the
+   ones in this release's pli_incs directory.  You can not run version
+   1.10b or earlier binaries with new pli_incs directory and make will
+   not work.
+
+7. Fixed problem with variable bit select indexing from parameters.
+   Verilog such as "if (p1[i] == 1) ..." now works where p1 is a parameter
+   and i is a variable.  
+
+8. Fixed problem with $random(seed) where argument was wrongly treated as
+   input.  Standard requires that the argument be inout.  Also fix systasks.1
+   man page.  We also changed to use the new random number generator that
+   is required by the new 2001 P1364 standard.
+
+9. Fixed problem with extra space being written to VCD files between # and 
+   the time value.  This caused some wave form viewers to not work.
+
+10. Fixed wrong syntax error when $recrem used in design.  Now $recrem is
+    read and ignored.  Fix is changed syntax error to warning, but 
+    $recrem and new 2001 P1364 timing checks do not yet work, i.e. the
+    checking for the unimplemented timing checks does not happen.
+
+Tue Dec 16 16:33:15 CST 2003
+
+  Another minor bug fix release 1.10d except change to 2001 LRM vpi_user.h
+  file 
+ 
+1.  Changed to new vpi_user.h file from IEEE P1364 2001 LRM.  There is 
+    now an explicit PLI_INT32 for int type.  Therefore old vpi_ models
+    will compile with warning messages if you do not change int to PLI_INT32,
+    but they will run fine.  
+  
+    It was necessary to change the user optional parameters in the 
+    struct t_vpi_systf_data routine call structure to () from 
+    PLI_BYTE8 * because the LRM must be incorrect because the user
+    argument can be either a pointer or a value.  We are reporting the 
+    problem to the IEEE P1364 working group.
+
+2.  Fixed wrong algorithm for case statements with real select or case
+    item values.  Previously, all reals were converted to int.  Now
+    the normal Verilog expression conversion rule is used so that if
+    any select or case item expressions are real, all are converted to real.
+    This is how other simulators handle the real case even though it is
+    not discussed in the LRM.
+
+3.  Fixed an SDF internal error involving (port SDF forms.
+
+4.  Added all 4 of the new P1364 2001 timing checks to internal tables,
+    but the timing checks are not yet supported.  If they are used either
+    in SDF files or in Verilog source they are parsed but ignored with
+    a warning message.
+
+Fri Jan 16 13:03:50 CST 2004
+
+  Another minor bug fix release 1.10e to fix a few problems with
+  parameterized Xilinx memories
+
+1. Fixed core dump when parameterized memory widths were set by
+   pound parameters using different pound parameters but the
+   pound parameter values were all the same.
+
+2. Fixed core dump when pound parameters changed vector widths in
+   some instances and specify section had timing checks but no
+   specparam declarations.
+
+Wed Jan 28 15:00:01 CST 2004
+
+  Another minor bug fix release 1.10f
+
+1. Added support for new 2001 P1364 timing checks $removal and $recrem.
+
+2. Fixed bug that caused dependent defparams to incorrectly inherit
+   values down the instance tree.  The defparam statement right hand
+   side expression was being evaluated too early.  If you are using
+   Altera FPGA libraries, you need to run 1.10f because some Altera
+   libraries fail because string parameters have the wrong value.
+
+3. Fixed bug in $random when no seed argument was passed.  Now seed is
+   initialized to 0 before simulation so random works with either passed
+   seed or no passed seed.
+
+Tue Mar  2 09:59:02 CST 2004
+
+  Another bug fix release 1.10g - also added Windows Cygwin support
+
+1. Rewrote the pound and defparam setting code to match new P1364 2001
+   LRM.  Algorithm now propagates parameters downward using final value
+   after re-evaluation of all right hand side parameters, i.e. parameters
+   are recalculated after instance tree is constructed.  Exception is that
+   original parameter value is used to determine ranges for arrays of
+   gates or arrays of instances.  Algorithm no longer matches original
+   XL (OviSim).
+
+2. Fixed vpi_ property error.  When scanning UDPs, vpiSeqPrim and
+   vpiCombPrim properties were reversed.
+       
+3. Added make files to demonstrate how to use the PLI on Cygwin.  For
+   more information see the README file in tests_and_examples/examples.vpi
+   and see the new cygwin.makefile in the src directory.
+
+   There is a minor problem with Cygwin that requires you to use Cygwin
+   release 1.5.5 or earlier if you are using the PLI.  If you are not
+   using the PLI, the latest release of Cygwin works.
+   
+Fri Mar 19 10:03:44 CST 2004
+
+  Release 1.10h fixes some interaction bugs resulting parameter algorithm
+  rewrite
+
+1. There were a few bugs introduced when we rewrote the pound and
+   defparam setting code in 1.10g.  Most of the bugs were related to
+   interactions between pound and defparams when width determining
+   parameters were used to set vector widths that resulted in different
+   bus widths in different modules.
+
+2. Fixed bug in PLI 1.0 acc_vcl_add routine when adding a vcl to an input
+   port.  Previously the port change operator was added to the loconn but
+   it should have been added to the hiconn.  This change required changes
+   to the expected output files in examples.acc.
+
+3. Fixed problem with acc_ and vpi_ get value calls incorrectly trimming 
+   strings.  This change required changes to the expected output files
+   in example.vpi.
+
+Thu May 27 16:06:09 CDT 2004
+
+  Another bug fix release 1.10i - also added two new vpi_ routines
+
+1. Now GPL Cver supports the vpi_put_userdata and vpi_get_userdata
+   routines for user vpi_ system tasks and function calls.
+
+2. Arrays of instances and gates part select connections that needed to be
+   split into scalar ports connections previously usually did not work.
+
+3. The $skew timing check produced the timing check error for too soon rather  
+   than correct data event too late violation.  The comment was right but
+   the test was backwards.
+
+4. Fixed problem with $dumpvars and vpi_.  When a cbValueChange callback
+   was placed on a wire and then $dumpvars was set up, the value change  
+   call back was sometimes incorrectly removed.
+
+5. Fixed core dump problem core dump when doing the analysis for XL
+   style port direction changing according to load and driver pattern.
+   Problem occurred when continuous assignment left hand select range
+   contained parameters.
+
+6. Fixed some warning message error locations.  Message printed the
+   wrong file and line number.
+
+7. Fixed bug that resulted in continuous assignment widening to widen
+   with x's instead of 0's when the continuous assignment right hand
+   side was a constant.
+
+8. Fixed bug that caused core dump when variable array index was out
+   of range and array or vector index was declared [low:high]
+
+9. Fixed memory leak in event queue.  Error occurred when the event
+   queue was alternative completely emptied and then filled.
+
+Known Problems in 110i we are working on but are hard to fix:
+
+1. There are problem with downward progation of parameters where the
+   overridden parameter value is used to set an array of instance or
+   array of gates index range.
+
+2. Overriding parameters where the original width is set from context
+   and the new width is wide follow old XL algorithm instead of new
+   algorithm, i.e. the parameter override uses a truncating assignment
+   instead of replacing the parameter's range with the wider range. 
+   Work around is to explicitly provide a range in the parameter statement
+   such as "Parameter [15:0] p1 = 4'b0010;"
+
+
+Tue Jul 13 10:07:08 CDT 2004
+
+  Another minor bug fix release 1.10j
+
+1. Array of instance port connection bug fix in 1.10i was not quite right 
+   because sometimes pound params used in instance/gate ranges were not
+   detected.
+
+2. Added realtime net type that has been in XL and is required for
+   Verilog 2001.  Following LRM, realtime is equivalent to real declaration.
+
+3. Fixed problem when ` define macros were used as part of sized and based
+   numbers.  It is now legal to code forms such as: 33'b `BITSTRING.  Where
+   `BITSTRING is defined as a sequence of bit values.
+
+4. Fixed bug in wide division and module.  Logic to compute number of bits
+   to normalize was sometimes wrong.
+
+5. Events associated with force/release of strength scalars were sometimes
+   missed, i.e. $monitor would not see the forces and releases.
+
+6. $removal timing check had the check failure test logic reversed so
+   $removal timing check warnings were wrongly reported.

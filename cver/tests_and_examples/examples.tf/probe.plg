@@ -1,0 +1,92 @@
+** now 0 assign x to param 1
+** now 0 assign x to param 2
+** now 0 assign x to param 3
+now 10 parameter 1 changed - reason paramvc_sync
+now 10 parameter 3 changed - reason paramvc_sync
+For time 5
+    value of parameter 1 = x
+    value of parameter 2 = x
+    value of parameter 3 = x
+now 10 misctf called for #0 reason_sync
+** now 10 assign 3 to param 1
+** now 10 assign x to param 2
+** now 10 assign 1 to param 3
+now 20 parameter 2 changed - reason paramvc_sync
+now 20 parameter 3 changed - reason paramvc_sync
+For time 10
+    value of parameter 1 = 3
+    value of parameter 2 = x
+    value of parameter 3 = 1
+now 20 misctf called for #0 reason_sync
+** now 20 assign 3 to param 1
+** now 20 assign 3 to param 2
+** now 20 assign 2 to param 3
+now 30 parameter 3 changed - reason paramvc_sync
+For time 15
+    value of parameter 1 = 3
+    value of parameter 2 = x
+    value of parameter 3 = 1
+now 30 misctf called for #0 reason_sync
+** now 30 assign 3 to param 1
+** now 30 assign 3 to param 2
+** now 30 assign 3 to param 3
+now 40 parameter 1 changed - reason paramvc_sync
+now 40 parameter 3 changed - reason paramvc_sync
+For time 20
+    value of parameter 1 = 3
+    value of parameter 2 = 3
+    value of parameter 3 = 2
+now 40 misctf called for #0 reason_sync
+** now 40 assign 21 to param 1
+** now 40 assign 3 to param 2
+** now 40 assign 9 to param 3
+now 50 parameter 2 changed - reason paramvc_sync
+now 50 parameter 3 changed - reason paramvc_sync
+For time 25
+    value of parameter 1 = 3
+    value of parameter 2 = 3
+    value of parameter 3 = 2
+now 50 misctf called for #0 reason_sync
+** now 50 assign 21 to param 1
+** now 50 assign 2c to param 2
+** now 50 assign 16 to param 3
+now 60 parameter 1 changed - reason paramvc_sync
+now 60 misctf called for #0 reason_sync
+** now 60 assign 1e to param 1
+** now 60 assign 2c to param 2
+** now 60 assign 16 to param 3
+now 70 parameter 1 changed - reason paramvc_sync
+now 70 parameter 2 changed - reason paramvc_sync
+now 70 parameter 3 changed - reason paramvc_sync
+For time 35
+    value of parameter 1 = 3
+    value of parameter 2 = 3
+    value of parameter 3 = 3
+now 70 misctf called for #0 reason_sync
+** now 70 assign 32 to param 1
+** now 70 assign c8 to param 2
+** now 70 assign 0 to param 3
+now 80 parameter 3 changed - reason paramvc_sync
+For time 40
+    value of parameter 1 = 21
+    value of parameter 2 = 3
+    value of parameter 3 = 9
+now 80 misctf called for #0 reason_sync
+** now 80 assign 32 to param 1
+** now 80 assign c8 to param 2
+** now 80 assign 63 to param 3
+now 90 parameter 2 changed - reason paramvc_sync
+now 90 misctf called for #0 reason_sync
+** now 90 assign 32 to param 1
+** now 90 assign 5a to param 2
+** now 90 assign 63 to param 3
+now 100 parameter 2 changed - reason paramvc_sync
+now 100 parameter 3 changed - reason paramvc_sync
+For time 50
+    value of parameter 1 = 21
+    value of parameter 2 = 2c
+    value of parameter 3 = 16
+now 100 misctf called for #0 reason_sync
+** now 100 assign 32 to param 1
+** now 100 assign b to param 2
+** now 100 assign 13 to param 3
