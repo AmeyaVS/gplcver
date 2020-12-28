@@ -23,11 +23,11 @@
  */
 
 
-#define VERS "GPLCVER_1"
+#define VERS "GPLCVER_2"
 
-#define VERS2 ".10k"
+#define VERS2 ".00b"
 
-#define OFDT "08/03/04"
+#define OFDT "06/19/04"
 #define OUTLINLEN 71          /* length of output file line */
 #define DFLTIOWORDS 8         /* preallocated size for I/O and work values */
 #define MUSTFREEWORDS 64      /* for stk values wider free when done */
@@ -79,6 +79,8 @@
 #define DVBUFSIZ 0x10000      /* 256k buffer for dumpvars output */
 #define MAX_ERRORS 32         /* error limit in one run */
 #define MAXEMSGNUM 4000       /* highest possible any type error num */
+
+#define MY_FOPEN_MAX 1024     /* guess at OS process max open stdio.h wrong */
 
 typedef unsigned long word;
 typedef unsigned long long word64;
@@ -339,56 +341,53 @@ typedef union {
 #define BOOLAND 47            /* && */
 #define BOOLOR 48             /* || */
 #define SHIFTL 49             /* << */
-#define SHIFTR 50             /* >> */
-#define FPTHCON 51            /* *> (full path conn spfy. op.) */
-#define PPTHCON 52            /* => (parallel path conn spfy. op.) */
-#define TCHKEVAND 53          /* &&& (timing check conditional event op.) */
+#define ASHIFTL 50            /* <<< - differenet operator but same as << */
+#define SHIFTR 51             /* >> */
+#define ASHIFTR 52             /* >>> */
+#define FPTHCON 53            /* *> (full path conn spfy. op.) */
+#define PPTHCON 54            /* => (parallel path conn spfy. op.) */
+#define TCHKEVAND 55          /* &&& (timing check conditional event op.) */
 /* real binary */
-#define REALPLUS 54
-#define REALTIMES 55
-#define REALDIV 56
-#define REALRELGT 57
-#define REALRELGE 58
-#define REALRELLT 59
-#define REALRELLE 60
-#define REALRELEQ 61
-#define REALRELNEQ 62
-#define REALBOOLAND 63
-#define REALBOOLOR 64
+#define REALPLUS 56
+#define REALTIMES 57
+#define REALDIV 58
+#define REALRELGT 59
+#define REALRELGE 60
+#define REALRELLT 61
+#define REALRELLE 62
+#define REALRELEQ 63
+#define REALRELNEQ 64
+#define REALBOOLAND 65
+#define REALBOOLOR 66
 /* notice logical non bit-wise and non-reduction 0.0 is F */
 
 /* special ops */
 /* special expression operators that do not correspond to read tokens */
-#define QUEST 65              /* binary ? part of ?: */
-#define QCOL 66               /* : part of ?: */
-#define PARTSEL 67            /* part select [ */
-#define CATCOM 68             /* concatenate comma (really list indicator) */
-#define CATREP 69             /* concatenate repeat form */
-#define FCALL 70              /* function call */
-#define FCCOM 71              /* func/task call , (really list indicator) */
-#define OPEVOR 72             /* event control or */
-#define OPPOSEDGE 73          /* posedge in delay ctrl expr. */
-#define OPNEGEDGE 74          /* negedge in delay ctrl expr. */
+#define QUEST 67              /* binary ? part of ?: */
+#define QCOL 68               /* : part of ?: */
+#define PARTSEL 69            /* part select [ */
+#define CATCOM 70             /* concatenate comma (really list indicator) */
+#define CATREP 71             /* concatenate repeat form */
+#define FCALL 72              /* function call */
+#define FCCOM 73              /* func/task call , (really list indicator) */
+#define OPEVOR 74             /* event control or */
+#define OPEVCOMMAOR 75        /* alternative to event ctrl or - sims same */
+#define OPPOSEDGE 76          /* posedge in delay ctrl expr. */
+#define OPNEGEDGE 77          /* negedge in delay ctrl expr. */
 /* real specials */
-#define REALREALQUEST 75      /* binary ?  part of ?: - all reals */ 
-#define REALREGQUEST 76       /* bin ? part of ?: - real cond : part reg */ 
-#define REGREALQCOL 77        /* binary : part of ?: - normal cond : real */
+#define REALREALQUEST 78      /* binary ?  part of ?: - all reals */ 
+#define REALREGQUEST 79       /* bin ? part of ?: - real cond : part reg */ 
+#define REGREALQCOL 80        /* binary : part of ?: - normal cond : real */
 
 /* global expression componnents */ 
-#define GLBREF 78             /* this is sort of ID and sort of expr. */    
-#define GLBPTH 79             /* this is global path as XMRID expr (list) */
-#define XMRID 80              /* ID node that is part of xmr (no sy) */
-#define XMRCOM 81
+#define GLBREF 81             /* this is sort of ID and sort of expr. */    
+#define GLBPTH 82             /* this is global path as XMRID expr (list) */
+#define XMRID 83              /* ID node that is part of xmr (no sy) */
+#define XMRCOM 84
 
-/* analog operator (pseudo system function) */
-#define ANALOG_OP 82
-#define POTATTR_OP 83
-#define FLOWATTR_OP 84
 /* special indicators */
 #define UNDEF 85              /* toktyp for no pushed back token */
 #define TEOF 86
-#define IOP_WPTR 87           /* for ioptgen malloced scheduling build exprs */
-#define IOP_DPTR 88
 
 /* notice unused token no. gap here for addition operators ? */
 
@@ -480,11 +479,11 @@ typedef union {
 #define PULL0 184
 #define PULL1 185
 #define REAL 186
-#define REALTIME 187
-#define REG 188
-#define RELEASE 189
-#define REPEAT 190
-#define SCALARED 191
+#define REG 187
+#define RELEASE 188
+#define REPEAT 189
+#define SCALARED 190
+#define SIGNED 191
 #define SPECIFY 192
 #define SPECPARAM 193
 #define SMALL 194
@@ -907,6 +906,24 @@ typedef union {
 #define FIO_FD 0x7fffffff
 #define FIO_STREAM_ST 3        /* first usable ver fio fd open file number */
 
+/* AIV 12/02/03 constants for cfg get token */
+/* FIXME ??? - needed here because cfg get tok in v ms but used in cver? */
+#define CFG_UNKNOWN 0
+#define CFG_ID 1
+#define CFG_COMMA 2
+#define CFG_SEMI 3
+#define CFG_EOF 4
+#define CFG_LIBRARY 5
+#define CFG_CFG 6
+#define CFG_INCLUDE 7
+#define CFG_DESIGN 8
+#define CFG_LIBLIST 9
+#define CFG_INSTANCE 10
+#define CFG_CELL 11
+#define CFG_USE 12
+#define CFG_ENDCFG 13
+#define CFG_DEFAULT 14
+
 /* SJM 07/31/01 - need system type def. include files for 64 bit types */
 #include <time.h>
 
@@ -977,6 +994,90 @@ struct vinstk_t {
  char *vichp_beg;             /* beginning of macro string */  
  int vichplen;                /* if not -1, len + 1 must be freed */
  char *vichp;                 /* macro string current char */
+};
+
+/* P1364 2001 cfg include structs */
+/* list of map files - uses map.lib in CWD if none from options */
+struct mapfiles_t {
+ char *mapfnam;
+ struct mapfiles_t *mapfnxt;
+};
+
+/* order list of config element names */
+struct cfgnamlst_t {
+ char *nam;
+ struct cfgnamlst_t *cnlnxt;
+};
+
+/* describes component of path during wild card expansion */
+struct xpndfile_t {
+ char *fpat;                  /* the original pattern per dir, split by '/' */
+ int nmatch;                  /* the number of matched files */
+ int level;                   /* current directory level */
+ unsigned wildcard: 2;        /* T=> if it contains a wild char, *, ? or ... */
+ unsigned incall : 1;         /* include the entire dir, ends in '/' */
+ struct xpndfile_t *xpfnxt;   /* next part of original pattern */
+};
+
+/* record for library element (after expand, all wild cards removed) */
+struct libel_t {
+ unsigned lbelsrc_rd : 1;     /* T => expanded lib file name src all read */
+ unsigned expanded : 1;       /* T => file has been expanded  */ 
+ char *lbefnam; 
+ struct libcellndx_t **lbcelndx; /* byte offset of cell names for seeking */
+ struct symtab_t *lbel_sytab; /* symbol table of cells in file */
+ struct libel_t *lbenxt;
+};
+
+/* cfg library record - sort of corresponds to -v/y data record */ 
+struct cfglib_t {
+ unsigned lbsrc_rd : 1;       /* T => lib src files already read */
+ unsigned sym_added : 1;      /* T => sym table has been read */
+ char *lbname;                /* library name */ 
+ struct libel_t *lbels;       /* list of library file path spec elements */
+ struct cfglib_t *lbnxt;      /* pointer to the next library */
+ char *cfglb_fnam;            /* location of library in src needed */
+ int cfglb_lno;
+ struct cfg_t *cfgnxt;
+};
+
+/* config body rule record */
+struct cfgrule_t {
+ unsigned rultyp : 8;         /* type - cfg symbol number */
+ unsigned use_rule_cfg : 1;   /* T => use clause config form */ 
+ unsigned matched : 1;        /* T => rule was bound at least once */ 
+ unsigned is_use : 1;         /* T => 'use' else 'liblist' */ 
+ char *objnam;                /* inst clause: [XMR inst path] */ 
+ char *libnam;                /* cell clause: <lib name>.[cell name] */
+ char *rul_use_libnam;        /* use <lib name.>[cell name][:config] */
+ char *rul_use_celnam;
+ char **inam_comptab;         /* table of inst clause XMR components */
+ int inam_comp_lasti;         /* number of components in XMR inst path */
+
+ struct cfgnamlst_t *rul_libs;/* liblist clause - just list of libraries */
+ int rul_lno;
+ struct cfgrule_t *rulnxt;
+};
+
+/* record for list of config design cell identifiers */
+struct cfgdes_t {
+ char *deslbnam;          /* name of config design library */
+ struct cfglib_t *deslbp;     /* ptr to config design library */
+ char *topmodnam;         /* name of top level cell (type) */
+ struct cfgdes_t *desnxt;  
+};
+
+/* record for each cfg block */
+struct cfg_t {
+ char *cfgnam;                /* name of the cfg */
+ struct cfgdes_t *cfgdeslist; /* list of config design [lib].[cell]s */
+
+ /* SJM 12/11/03 - notice preserving exact order of rules critical */
+ struct cfgrule_t *cfgrules;  /* ordered list of config rules */
+ struct cfgrule_t *cfgdflt;   /* default lib list if rules find no matches */
+ char *cfg_fnam;
+ int cfg_lno;
+ struct cfg_t *cfgnxt;
 };
 
 /* for debugger include file and last included place */
@@ -1151,6 +1252,7 @@ struct expr_t {
  unsigned sizdflt : 1;        /* T => '[base] form but no width */
  unsigned is_real : 1;        /* T => expr. value is real number */
  unsigned cnvt_to_real : 1;   /* T => non real operand of real expr */
+ unsigned unsgn_widen : 1;    /* T => for cases unsigned widen if needed */
  unsigned consubxpr : 1;      /* T => node will evaluate to number */
  unsigned consub_is : 1;      /* T => node will eval to IS number */
  unsigned folded : 1;         /* T => const. folded (also empty cat rep rem) */
@@ -1211,7 +1313,6 @@ struct dfparam_t {
  struct itree_t *indfp_itp;   /* for rooted, itree place rhs evaled in */ 
  struct task_t *dfptskp;      /* if non NULL, task target declared in */
 };
-
 
 /* per type delay storage - 1 array acess during scheduling */
 union del_u {
@@ -1417,6 +1518,7 @@ struct ncomp_t {
  unsigned p_locparam : 1;     /* T => local parameter (never # or def) */
  unsigned prngdecl : 1;       /* T => range declared in source */
  unsigned ptypdecl : 1;       /* T => type declared in source */
+ unsigned psigndecl : 1;      /* T => signed keyword declared in source */
  unsigned parm_srep : 4;      /* for parameter n_dels_u original expr rep */ 
  unsigned pbase : 3;          /* base of original rhs */
  unsigned pstring : 1;        /* T => if string appeared on original rhs */
@@ -1764,6 +1866,12 @@ struct for_t {
  struct st_t *forbody;
 };
 
+/* for Ver 2001 - implicit delay control var list in action stmt */
+struct evctlst_t {
+ struct net_t *evnp; 
+ int evi1, evi2;
+};
+
 /* normal separate delay control - but in case of rhs control contains st. */
 /* event expression allow events edges of events and oring of ev. exprs */
 struct delctrl_t {
@@ -1771,9 +1879,10 @@ struct delctrl_t {
  unsigned dc_iact : 1;        /* iact delay control */ 
  /* SJM 06/10/02 - distinguish non blocking from blocking event ctrls */  
  unsigned dc_nblking : 1;     /* T => delay control is non blocking form */
+ unsigned implicit_evxlst : 1;/* special all rhs's @(*) ev var-ndx list */ 
  unsigned dc_delrep : 5;      /* normal gca delay type */
  union del_u dc_du;           /* normal delay union (also used for ev ctrl) */
- struct expr_t *repcntx;      /* for rhs ev ctrl repeat form, repeat cnt expr */
+ struct expr_t *repcntx;      /* for rhs ev ctrl repeat form, rep cnt expr */
  i_tev_ndx *dceschd_tevs;     /* per inst. scheduled event ndxes */ 
  /* SJM 04/02/01 - need word down repeat counter with end when becomes 0 */ 
  word *dce_repcnts;           /* per inst. current ev rep down count val */
@@ -2032,12 +2141,11 @@ struct st_t {
  unsigned strb_seen_now : 1;  /* T => for checking strobe on list for now */
  unsigned lpend_goto : 1;     /* T => this is loopend goto */
  unsigned dctrl_goto : 1;     /* T => this is next after dctrl chain goto */ 
+ unsigned st_schd_ent : 1;    /* T => can be first stmt entered from schd */
  unsigned stfnam_ind : 16;
  int stlin_cnt;
  union st_u st;
  struct st_t *stnxt;
- /* 05/18/01 - SJM - for ithrd code - need start codp index */
- struct icod_t *st_beg_codp;  /* addr of first iop for this stmt */
 };
 
 /* contents of break point table */
@@ -2084,6 +2192,7 @@ struct task_t {
  unsigned thas_outs : 1;      /* T => task has outs that must be stored */ 
  unsigned thas_tskcall : 1;   /* T => task contains other task call */
  unsigned fhas_fcall : 1;     /* T => func contains non sys fcall */
+ unsigned tf_lofp_decl : 1;  /* T => t/f hdr list of port decl form */ 
  struct sy_t *tsksyp;         /* name symbol in module level table */
  int tsk_last_lini;           /* line no. of end (mabye in next file) */
  int tsk_last_ifi;            /* end file in case spans multiple files */
@@ -2288,6 +2397,7 @@ struct vpi_drv_t {
  struct dltevlst_t **softforce_putv_tedlst; /* per inst/bit pend ev lists */
 };
 
+
 struct net_t {
  unsigned ntyp : 4;
  unsigned iotyp : 3;          /* I/O direction */
@@ -2339,6 +2449,7 @@ struct sy_t {
  unsigned sytyp : 8;
  unsigned sydecl : 1;         /* symbol has been declared */
  unsigned syundefmod : 1;     /* undefined mod or udp */ 
+ unsigned cfg_needed : 1;     /* T => symbol is used in config */
  unsigned sy_impldecl : 1;    /* for wire, declared implicitly */
  unsigned sy_argsmac : 1;     /* macro symbol with arguments */
  unsigned sy_giabase : 1;     /* T => symbol is g/i array base */
@@ -2561,8 +2672,11 @@ struct mod_t {
  unsigned mod_has_mipds : 1;  /* T => mod has SDF or vpi_ only set mipds */  
  unsigned mod_parms_gd : 1;   /* T => all dependent and pound params right */
  unsigned mod_1bcas : 1;      /* T => contains 1 bit ca - special for vpi */
- unsigned mod_dfltntyp : 4;   /* T => for vpi, from directive net dflt type */ 
+ unsigned mod_lofp_decl : 1;  /* T => port decl uses list of ports form */ 
+ unsigned mod_dfltntyp : 4;   /* T => for vpi, from directive net dflt type */
  unsigned mod_uncdrv : 8;     /* for vpi, mod val of unc drive directive */ 
+ unsigned m_inconfig : 1;     /* T => module is from a config file */
+ unsigned cfg_scanned : 1;    /* T => module has been scanned by config */
  unsigned mhas_frcassgn : 1;  /* T => mod contains force/assign(s) */
 
  int flatinum;                /* num. of flattened instances of module */
@@ -2578,6 +2692,7 @@ struct mod_t {
  int mod_last_lini;           /* line no. of end (mabye in next file) */
  int mod_last_ifi;            /* and file in case spans multiple */
  struct symtab_t *msymtab;    /* symbol table for objects in module */
+ struct cfglib_t *mod_cfglbp; /* config lib this mod's cells bound using */
  struct mod_pin_t *mpins;     /* defined ports first list then arr. */
  struct gate_t *mgates;       /* array of gates, udps and assigns */
  struct giarr_t **mgarr;      /* parallel ptr array to mgates for gate arr. */
@@ -2618,8 +2733,6 @@ struct mod_t {
 
  struct gref_t *mgrtab;       /* list of xmr's appearing in this mod. */
  int mgrnum;                  /* number of grefs in module */
- struct icod_t *micodtab;     /* optimzing byte code table for module */
- int micodsiz;                /* and its size */ 
 
 };
 
@@ -2763,6 +2876,7 @@ struct fbel_t {
 };
 
 /* table of separate c funcs - usually only one unless too large */
+/* SJM ### ??? why is this not referenced? */
 struct cproc_t {
  int cpnum;                   /* number c proc name suffix */
  void (*funcptr)();           /* ptr to dlsym found c routine */ 
@@ -2812,6 +2926,10 @@ extern word *__wsupptab;      /* tab (1 bit/msg) for warn and iact suppress */
 extern char *__blnkline;      /* work blank line */
 extern char __pv_homedir[RECLEN]; /* home dir - . if HOME env. not set */
 extern struct mcchan_t __mulchan_tab[32];/* mc desc. tab (32 built in Ver) */ 
+extern struct fiofd_t **__fio_fdtab; /* array of ptrs to file io stream */
+extern char *__fiolp;         /* fio file input work string ptr */
+extern char *__fiofp;         /* fio file input work fmt string ptr */
+extern long __scanf_pos;      /* byte offset position of scanf in file */
 extern sighandler *__old_int_sig;  /* value of quit (^c) signal on entry */
 extern int __force_base;      /* for output force base if not BASENONE */
 extern struct vinstk_t **__vinstk;/* open file/macro list in stack form */
@@ -2837,6 +2955,20 @@ extern int __sdf_sav_maxerrs; /* saved max errors so won't stop */
 extern int __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
 extern int __sdf_active;      /* T => annotating SDF - for PLI erro code  */
 extern struct mod_t *__sdf_mdp; /* special sdf context mod */
+
+/* cfg variables */
+extern char *__cmdl_library;  /* library name to file off the command line */
+extern struct mapfiles_t *__map_files_hd; /* hdr of map files from cmd args */
+extern struct mapfiles_t *__map_files_tail; /* end of map file list */
+extern struct cfglib_t *__cfglib_hd; /* head of list of libs for cfg */
+extern struct cfglib_t *__cfglib_tail; /* and tail */
+extern struct cfg_t *__cfg_hd;/* head of list of cfgs */
+extern struct cfg_t *__cur_cfg;/* current cfg */
+extern struct mod_t *__cfg_mdp;/* SJM - remove me - why global */
+extern char **__bind_inam_comptab;/* during cfg binding, comp descent comps */ 
+extern int __siz_bind_comps;  /* current malloc size of table */
+extern int __last_bind_comp_ndx;/* last currently used comp end index */ 
+extern int __cfg_verbose;     /* T => emit cfg reading verbose messages */ 
 
 /* file variables */
 extern int __cur_infi;        /* index in in_fils of current file */
@@ -2919,8 +3051,6 @@ extern int __no_errs;         /* T => don't print error msgs */
 extern int __no_informs;      /* T => don't print inform msgs (dflt) */
 extern int __debug_flg;       /* T => turn on debugging output */
 extern int __opt_debug_flg;   /* T => turn on vm compiler debugging output */
-extern int __vm_trace_flg;    /* T => trace execution of vm insns */
-extern int __vm_profile_flg;   /* T => compute and dump dynamic profile */
 extern int __st_tracing;      /* T => trace statement execution */
 extern int __ev_tracing;      /* T => trace event schedules and processes */
 extern int __pth_tracing;     /* T => trace path delays in detail */
@@ -2966,7 +3096,7 @@ extern int __itoklen;         /* current number token bit length */
 extern int __itoksized;       /* T => token is sized */
 extern int __itokbase;        /* base constant for number token */
 extern int __itoksizdflt;     /* '[base] form with width (uses dflt.) */
-extern int __itok_isint;      /* T => for simple decimal number only */
+extern int __itok_signed;     /* T => token is signed number */
 extern double __itok_realval; /* actual scannoer double val */
 extern char *__strtoken;      /* growable token to hold string */
 extern int __strtok_wid;      /* current size of string token */    
@@ -2983,7 +3113,6 @@ extern char *__macwrkstr;     /* work string for macros */
 extern int __mac_line_len;    /* actual length of macro line in wrk str */   
 extern int __macwrklen;       /* allocated len of mac. work string */
 extern struct macarg_t *__macarg_hdr; /* hdr of list of format mac. args */
-extern int __macbs_flag;      /* T=> 8'h`DEFINE catch multiple bases errors */
 extern char *__attrwrkstr;    /* work string for attributes */
 extern int __attr_line_len;   /* actual length of attribute string */ 
 extern int __attrwrklen;      /* alloced len of attr work string - grows */
@@ -3012,7 +3141,7 @@ extern int __allow_scope_var; /* T => process systask arg can be scope */
 extern int __lastitokbase;
 extern int __lastitoksized;
 extern int __lastitoksizdflt;
-extern int __lastitok_isint;
+extern int __lastitok_signed;
 extern int __lastitoklen;
 extern word *__lastacwrk;  /* special malloced push back num value */
 extern word *__lastbcwrk; 
@@ -3031,7 +3160,7 @@ extern struct task_pin_t *__end_tpp; /* end of task port list */
 extern struct task_t *__end_tbp;/* end of top level task/functions/blocks */
 extern struct task_t *__cur_tsk;/* ptr. to current task */
 extern struct net_t *__end_paramnp; /* end of ordered parm decl. list */
-extern struct net_t *__end_impparamnp; /* end of ordered imprt parm decl list */
+extern struct net_t *__end_impparamnp; /* end of ordered imprt parm decl lst */
 extern struct net_t *__end_glbparamnp; /* end of ordered glb parm decl. lst */
 extern struct net_t *__end_tskparamnp; /* end of task param decl. list */
 extern struct ialst_t *__end_ialst; /* end of module initial/always list */
@@ -3045,6 +3174,10 @@ extern int __strenprop_chg;   /* during propagate pass at least one chged */
 extern int __splitting;       /* T => in process of splitting module */
 extern int __processing_pnd0s;/* T => in time unit, in end #0 region */
 extern struct dce_expr_t *__cur_dce_expr; /* glb for edge events eval expr */
+extern int __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
+extern struct exprlst_t *__impl_evlst_hd; /* hdr of impl @(*) ev expr list */
+extern struct exprlst_t *__impl_evlst_tail; /* and its tail */
+extern int __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
 
 /* variables for dumpvars */
 extern int __dv_seen;         /* dumpvars seen but not yet setup */

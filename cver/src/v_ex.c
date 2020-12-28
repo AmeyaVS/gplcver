@@ -123,6 +123,37 @@ static void exec_expr_schg(struct expr_t *);
 static void free_thd_subtree(struct thread_t *);
 static void suspend_curthd(struct st_t *);
 
+static unsigned fio_do_fopen(struct expr_t *, struct expr_t *);
+static unsigned fio_fopen(char *, char *);
+static int chk_cnvt_fd_modes(char *, char *);
+static void fio_do_fclose(struct expr_t *);
+static int chk_get_mcd_or_fd(struct expr_t *, int *);
+static void fio_fflush(struct expr_t *);
+static int fio_ungetc(struct expr_t *, struct expr_t *);
+static int chk_get_ver_fd(struct expr_t *);
+static int fio_fgets(struct expr_t *, struct expr_t *);
+static int fio_rewind(struct expr_t *);
+static int fio_fseek(struct expr_t *, struct expr_t *, struct expr_t *);
+static int fio_ferror(struct expr_t *, struct expr_t *);
+static void fio_swrite(struct expr_t *, int);
+static void fio_sformat(struct expr_t *);
+static int fio_fscanf(struct expr_t *);
+static int fio_sscanf(struct expr_t *);
+static int fio_exec_scanf(FILE *, struct expr_t *);
+static int fio_fread(struct expr_t *);
+static void fread_onto_stk(struct xstk_t *, byte *, int);
+static int fio_arr_fread(struct expr_t *, int, struct expr_t *,
+ struct expr_t *);
+static int scanf_getc(FILE *);
+static void scanf_ungetc(int, FILE *);
+static int chk_scanf_fmt(char *);
+static int collect_scanf_num(int *, FILE *, int, int, int);
+static int collect_scanf_realnum(double *, FILE *, int, int, int);
+static struct xstk_t *collect_ufmt_binval(FILE *, struct expr_t *, int);
+static struct xstk_t *collect_zfmt_binval(FILE *, struct expr_t *, int );
+static int cnvt_scanf_stnam_to_val(char *); 
+extern void __str_do_disp(struct expr_t *, int);
+extern word __inplace_lnegate(register word *, int);
 
 /* extern prototypes (maybe defined in this module) */
 extern int __comp_sigint_handler(void);
@@ -186,6 +217,11 @@ extern void __prt_src_lines(int, int, int);
 extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
 extern void __sizchgxs(struct xstk_t *, int);  
+extern void __narrow_to1wrd(register struct xstk_t *);
+extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __sgn_xtnd_wrd(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
 extern void __dmp_proc_assgn(FILE *, struct st_t *, struct delctrl_t *, int);
 extern void __trunc_exprline(int, int);
 extern void __dmp_nbproc_assgn(FILE *, struct st_t *, struct delctrl_t *);
@@ -264,7 +300,6 @@ extern void __wakeup_delay_ctrls(register struct net_t *, register int,
 extern void __dmp_all_thrds(void);
 extern double __cnvt_stk_to_real(struct xstk_t *, int);
 extern int __enum_is_suppressable(int);
-extern char *__to_sttyp(char *, unsigned);
 extern int __trim1_0val(word *, int);
 extern char *__vval_to_vstr(word *, int, int *);
 extern void __vstr_to_vval(word *, char *, int);
@@ -272,7 +307,15 @@ extern int __is_vdigit(int, int);
 extern void __to_dhboval(int, int);
 extern double __my_strtod(char *, char **, int *);
 
-
+extern struct expr_t *__disp_1fmt_to_exprline(char *, struct expr_t *);
+extern void __getarr_range(struct net_t *, int *, int *, int *);
+extern void __st_arr_val(union pck_u, int, int, int, register word *,
+ register word *);
+extern void __chg_st_arr_val(union pck_u, int, int, int, register word *,
+ register word *);
+extern int __fd_do_fclose(int);
+extern void __add_select_nchglst_el(register struct net_t *, register int,
+ register int);
 
 extern void __tr_msg(char *, ...);
 extern void __cv_msg(char *, ...);
@@ -310,7 +353,6 @@ word __masktab[] = {
 };
 
 extern double __dbl_toticks_tab[];
-
 
 /*
  * ROUTINES TO PROCESS PROCEDURAL EVENTS AND EXECUTE BEHAVIORAL STATEMENTS
@@ -368,7 +410,9 @@ extern void __process_thrd_ev(register struct tev_t *tevp)
      /* even if single stepping must not see iact threads */
      /* since this always either hits end of thread or suspends */
      if (__single_step && __cur_thd->th_hctrl == NULL)
-      step_exec_stmt(stp);
+      {
+       step_exec_stmt(stp);
+      }
      /* but batch tracing traces */
      else if (__st_tracing)
       {
@@ -610,7 +654,7 @@ static void exec_stmts(register struct st_t *stp)
      xsp = __eval_xpr(cntx);
      /* SJM 04/02/02 - real count must be converted to word/int */
      if (cntx->is_real) __cnv_stk_fromreal_toreg32(xsp);
-     if (xsp->xslen > WBITS) __sizchgxs(xsp, WBITS);
+     if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
      if (xsp->ap[1] != 0L)
       {
        __sgfwarn(645,
@@ -1025,7 +1069,7 @@ again:
    xsp = __eval_xpr(cntx);
    /* SJM 04/02/02 - real count must be converted to word/int */
    if (cntx->is_real) __cnv_stk_fromreal_toreg32(xsp);
-   if (xsp->xslen > WBITS) __sizchgxs(xsp, WBITS);
+   if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
 
    if (xsp->ap[1] != 0L)
     {
@@ -1288,7 +1332,14 @@ extern struct xstk_t *__eval_assign_rhsexpr(register struct expr_t *xrhs,
   { 
    /* handle rhs preparation of reals - then assign is just copy for reals */
    if (xrhs->is_real) __cnv_stk_fromreal_toreg32(xsp);
-   if (xsp->xslen != xlhs->szu.xclen) __sizchgxs(xsp, xlhs->szu.xclen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > xlhs->szu.xclen) __narrow_sizchg(xsp, xlhs->szu.xclen);
+   else if (xsp->xslen < xlhs->szu.xclen)
+    {
+     if (xrhs->has_sign) __sgn_xtnd_widen(xsp, xlhs->szu.xclen);
+     else __sizchg_widen(xsp, xlhs->szu.xclen);
+    }
   }
  return(xsp);
 }
@@ -1309,7 +1360,13 @@ static void eval_tskassign_rhsexpr(register struct xstk_t *xsp,
   { 
    /* handle rhs preparation of reals - then assign is just copy for reals */
    if (rhsreal) __cnv_stk_fromreal_toreg32(xsp);
-   if (xsp->xslen != lhswid) __sizchgxs(xsp, lhswid);
+
+   if (xsp->xslen > lhswid) __narrow_sizchg(xsp, lhswid);
+   else if (xsp->xslen < lhswid)
+    {
+     if (rhssign) __sgn_xtnd_widen(xsp, lhswid);
+     else __sizchg_widen(xsp, lhswid);
+    }
   }
 }
 
@@ -1935,10 +1992,25 @@ static struct st_t *exec_case(struct st_t *stp)
  /* compute the case type - determines operator to use */
  selxsp = __eval_xpr(stp->st.scs.csx);
 
+ /* if expression real, convert to 32 bit reg */
+ if (stp->st.scs.csx->is_real) __cnv_stk_fromreal_toreg32(selxsp);
+
  /* if result of selector is not as wide as needed widen */
  /* case needs w bits width but selector is wire < w */
- if (selxsp->xslen != (int) stp->st.scs.maxselwid)
-  __sizchgxs(selxsp, (int) stp->st.scs.maxselwid);
+ selxlen = stp->st.scs.maxselwid;
+ /* DBG remove -- */
+ if (selxsp->xslen > selxlen) __misc_terr(__FILE__, __LINE__);
+ /* --- */ 
+ /* SJM 09/29/03 - change for new sized but widen only */
+ if (selxsp->xslen < selxlen)
+  {
+   /* SJM 05/10/04 - LOOKATME - algorithm is that if any of the case match */
+   /* exprs are unsigned - case becomes unsigned */
+   if (stp->st.scs.csx->has_sign && !stp->st.scs.csx->unsgn_widen)
+    __sgn_xtnd_widen(selxsp, selxlen);
+   else __sizchg_widen(selxsp, selxlen);
+  }
+
  selxlen = selxsp->xslen; 
  if (__st_tracing) tr_case_st(selxsp, (stp->st.scs.csx->has_sign == 1));
  dflt_csip = stp->st.scs.csitems;
@@ -1977,7 +2049,15 @@ static struct st_t *exec_case(struct st_t *stp)
 
      /* SJM 12/12/03 - never can be real here using new all if any code */
 
-     if (selxlen != itemxsp->xslen) __sizchgxs(itemxsp, selxlen);
+     /* SJM 09/29/03 handle sign extension and separate cases */
+     if (itemxsp->xslen > selxlen) __narrow_sizchg(itemxsp, selxlen);
+     else if (itemxsp->xslen < selxlen)
+      {
+       if (xplp->xp->has_sign && !xplp->xp->unsgn_widen)
+        __sgn_xtnd_widen(itemxsp, selxlen);
+       else __sizchg_widen(itemxsp, selxlen);
+      }
+
      for (i = 0; i < selwlen; i++)
       {
        if (((selxsp->ap[i] ^ itemxsp->ap[i])
@@ -2002,6 +2082,8 @@ nxt_x:
  * SJM 12/12/03 - was converting real to word for cases with real but
  * think that is wrong (although 2001 LRM does not say exactly) so now
  * if any of case select or case item real, all compares real
+ * (following same rule, if any of select or match expr unsigned all)
+ * (widening unsigned - compares are for equal so only widening changes)
  */
 static struct st_t *exec_real_case(struct st_t *stp)
 {
@@ -2045,6 +2127,7 @@ static struct st_t *exec_real_case(struct st_t *stp)
       } 
      memcpy(&d2, itemxsp->ap, sizeof(double));
 
+     /* real == (near 0.0) */
      if ((d2 - d1) > -EPSILON && (d2 - d1) < EPSILON)
       { __pop_xstk(); __pop_xstk(); return(csip->csist); }
      __pop_xstk();
@@ -2086,9 +2169,18 @@ static struct st_t *exec_casex(struct st_t *stp)
 
  /* if result of selector is not as wide as needed widen */
  /* case needs w bits width but selector is wire < w */
- if (selxsp->xslen != (int) stp->st.scs.maxselwid)
-   __sizchgxs(selxsp, (int) stp->st.scs.maxselwid);
- selxlen = selxsp->xslen; 
+
+ selxlen = stp->st.scs.maxselwid;
+ /* DBG remove -- */
+ if (selxsp->xslen > selxlen) __misc_terr(__FILE__, __LINE__);
+ /* --- */ 
+ /* SJM 09/29/03 - change for new sized but widen only */
+ if (selxsp->xslen < selxlen)
+  {
+   if (stp->st.scs.csx->has_sign && !stp->st.scs.csx->unsgn_widen)
+    __sgn_xtnd_widen(selxsp, selxlen);
+   else __sizchg_widen(selxsp, selxlen);
+  }
  if (__st_tracing) tr_case_st(selxsp, (stp->st.scs.csx->has_sign == 1));
 
  dflt_csip = stp->st.scs.csitems;
@@ -2128,11 +2220,19 @@ static struct st_t *exec_casex(struct st_t *stp)
      itemxsp = __eval2_xpr(xplp->xp);
 
      /* SJM 12/12/03 - never can be real here using new all if any code */
+ 
+     /* SJM 09/29/03 handle sign extension and separate cases */
+     if (itemxsp->xslen > selxlen) __narrow_sizchg(itemxsp, selxlen);
+     else if (itemxsp->xslen < selxlen)
+      {
+       if (xplp->xp->has_sign && !xplp->xp->unsgn_widen)
+        __sgn_xtnd_widen(itemxsp, selxlen);
+       else __sizchg_widen(itemxsp, selxlen);
+      }
 
-     if (selxlen != itemxsp->xslen) __sizchgxs(itemxsp, selxlen);
      for (i = 0; i < selwlen; i++)
       {
-/* SJM 01/08/99 - WRONG - for wide if == 0 always matches first */
+       /* SJM 01/08/99 - WAS WRONG - for wide if == 0 always matches first */
        if ((((selxsp->ap[i] ^ itemxsp->ap[i])
         | (selxsp->bp[i] ^ itemxsp->bp[i]))
         & ~(selxsp->bp[i] | itemxsp->bp[i])) != 0) goto nxt_x;
@@ -2172,9 +2272,17 @@ static struct st_t *exec_casez(struct st_t *stp)
 
  /* if result of selector is not as wide as needed widen */
  /* case needs w bits width but selector is wire < w */
- if (selxsp->xslen != (int) stp->st.scs.maxselwid)
-  __sizchgxs(selxsp, (int) stp->st.scs.maxselwid);
- selxlen = selxsp->xslen; 
+ selxlen = stp->st.scs.maxselwid;
+ /* DBG remove -- */
+ if (selxsp->xslen > selxlen) __misc_terr(__FILE__, __LINE__);
+ /* --- */ 
+ /* SJM 09/29/03 - change for new sized but widen only */
+ if (selxsp->xslen < selxlen)
+  {
+   if (stp->st.scs.csx->has_sign && !stp->st.scs.csx->unsgn_widen)
+    __sgn_xtnd_widen(selxsp, selxlen);
+   else __sizchg_widen(selxsp, selxlen);
+  }
  if (__st_tracing) tr_case_st(selxsp, (stp->st.scs.csx->has_sign == 1));
 
  dflt_csip = stp->st.scs.csitems;
@@ -2213,10 +2321,17 @@ static struct st_t *exec_casez(struct st_t *stp)
     {
      itemxsp = __eval_xpr(xplp->xp);
 
-     /* convert if real */
      /* SJM 12/12/03 - never can be real here using new all if any code */
 
-     if (selxlen != itemxsp->xslen) __sizchgxs(itemxsp, selxlen);
+     /* SJM 09/29/03 handle sign extension and separate cases */
+     if (itemxsp->xslen > selxlen) __narrow_sizchg(itemxsp, selxlen);
+     else if (itemxsp->xslen < selxlen)
+      {
+       if (xplp->xp->has_sign && !xplp->xp->unsgn_widen)
+        __sgn_xtnd_widen(itemxsp, selxlen);
+       else __sizchg_widen(itemxsp, selxlen);
+      }
+
      for (i = 0; i < selwlen; i++)
       {
        mask = (selxsp->ap[i] | ~selxsp->bp[i]) & (itemxsp->ap[i]
@@ -3164,8 +3279,7 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
 {
  register struct xstk_t *xsp, *xsp2;
  register struct expr_t *fax;
- int ival;
- int 
+ int ival, fd, c;
  unsigned uval;
  word64 timval;
  double d1;
@@ -3173,14 +3287,120 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
 
  sfbp = fsyp->el.esyftbp;
  switch (sfbp->syfnum) {
-  /* SJM 09/08/03 - old fopen just for mcds */
+  /* functions that take exactly one argument */
   case STN_FOPEN:
+   /* AIV 09/08/03 - changed now can take one or 2 args for OS FILE * */
+   /* fd = $fopen([filen name]) or fd = $fopen([file name], [I/O mode]) */
    fax = ndp->ru.x->lu.x;
-   uval = mc_do_fopen(fax);
+   /* 2nd arg empty also must be interpreted as MCD open */
+   if (ndp->ru.x->ru.x != NULL && ndp->ru.x->lu.x->optyp != OPEMPTY)
+    {
+     uval = fio_do_fopen(fax, ndp->ru.x->ru.x->lu.x);
+    }
+   else uval = mc_do_fopen(fax);
+
    push_xstk_(xsp, WBITS);
    xsp->ap[0] = (word) uval;  
    xsp->bp[0] = 0L;
    break; 
+  /* AIV 09/08/03 - new fileio system functions */
+  case STN_FGETC:
+   /* c = $fgetc([fd expr]) */
+   /* on error, this sets errno OS state var */
+   if ((fd = chk_get_ver_fd(ndp->ru.x->lu.x)) == -1) c = -1;
+   else
+    {
+     /* on error, this return EOF (-1) and sets OS err number state var */
+     c = fgetc(__fio_fdtab[fd]->fd_s);
+    }
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) c;  
+   xsp->bp[0] = 0L;
+   break;
+  case STN_UNGETC:
+   /* c = $ungetc([put back ch], [fd expr]) */
+   /* know exactly 2 args or won't get here */
+   ival = fio_ungetc(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;  
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FGETS:
+   /* format: cnt = $fgets([lhs proc str expr], [fd expr]) */
+   /* know exactly 2 args or won't get here - returns 0 or num chs read */
+   ival= fio_fgets(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
+   push_xstk_(xsp, WBITS);
+   /* 0 on error esle number of chars read */
+   xsp->ap[0] = (word) ival;  
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FTELL:
+   /* format: fpos = $ftell([fd expr]) */
+   /* on error, this sets errno OS state var */
+   if ((fd = chk_get_ver_fd(ndp->ru.x->lu.x)) == -1) ival = -1;
+   else
+    {
+     /* on error, this return EOF (-1) and sets OS err number state var */
+     ival = ftell(__fio_fdtab[fd]->fd_s);
+    }
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+  case STN_REWIND:
+   /* format: fpos = $rewind([fd expr]) */
+   ival = fio_rewind(ndp->ru.x->lu.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FSEEK:
+   /* format: fpos = $fseek([fd expr], [ofs expr], [whence expr]) */
+   /* syntax error does not have 3 args caught during check (in v_fx3.c) */
+   ival = fio_fseek(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x,
+    ndp->ru.x->ru.x->ru.x->lu.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FERROR:
+   /* format: errnum = $ferror([fd expr], [lhs proc string]) */
+   ival = fio_ferror(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FREAD:
+   /* [num chars read] = $fread([lhs proc reg expr], [fd expr]) */
+   /* [num chars read] = $fread([mem name], [fd expr], [{starg}, {count}]) */
+   ival = fio_fread(ndp->ru.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+  case STN_FSCANF:
+   /* [num matched flds] = $fscanf([fd], [format], ...) */
+   ival = fio_fscanf(ndp->ru.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0L;
+   break;
+ case STN_SSCANF:
+   /* [num matched flds] = $sscanf([string expr], [format], ...) */
+   ival = fio_sscanf(ndp->ru.x);
+   push_xstk_(xsp, WBITS);
+   /* -1 becomes correct all unsigned all 1's until new signed added */
+   xsp->ap[0] = (word) ival;
+   xsp->bp[0] = 0;
+   break;
   case STN_STIME: 
   case STN_TIME:
    /* convert ticks to user time (maybe smaller) and return WBIT form */
@@ -3304,6 +3524,34 @@ conv_0:
    /* reuse expr. that know is WBITS */ 
    xsp->bp[0] = 0L;
    xsp->ap[0] = (word) ival;
+   break;
+  case STN_SIGNED:
+   /* this must eval its argument and then return its value */
+   /* signed is just marking expr - no bit pattern change */
+   fax = ndp->ru.x->lu.x;
+   xsp = __eval_xpr(fax);
+   /* 05/26/04 - may need size change here to mach fcall node size */
+   if (xsp->xslen != ndp->szu.xclen)
+    {
+     if (xsp->xslen < ndp->szu.xclen) __sgn_xtnd_wrd(xsp, ndp->szu.xclen);
+     else __narrow_sizchg(xsp, ndp->szu.xclen);
+    }
+   break;
+  case STN_UNSIGNED:
+   /* this must eval its argument and then return its value */
+   /* unsigned is just marking expr - no bit pattern change */
+   fax = ndp->ru.x->lu.x;
+   xsp = __eval_xpr(fax);
+
+   /* 05/26/04 - may need size change here to mach fcall node size */
+   /* but know result always unsigned */ 
+   if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+   
+   /* because function return value has exactly same width as arg - never */
+   /* need conversion */
+   /* DBG remove -- */
+   if (fax->szu.xclen != xsp->xslen) __misc_terr(__FILE__, __LINE__);
+   /* --- */
    break;
   case STN_RANDOM:
    __exec_sfrand(ndp);
@@ -3606,9 +3854,17 @@ static void exec_scanplusargs(struct expr_t *ndp)
     {
      rv = 1;
      xsp = __cstr_to_vval(&(chp[arglen + 1]));
+     /* move to next - assign to arg */
      fax = fax->ru.x;
+
+     /* SJM 05/10/04 - think this can be signed */
      if (xsp->xslen != fax->lu.x->szu.xclen)
-      __sizchgxs(xsp, fax->lu.x->szu.xclen);
+      {
+       if (xsp->xslen < fax->lu.x->szu.xclen && fax->lu.x->has_sign)
+        __sgn_xtnd_wrd(xsp, fax->lu.x->szu.xclen);
+       else __sizchgxs(xsp, fax->lu.x->szu.xclen);
+      }
+
      __exec2_proc_assign(fax->lu.x, xsp->ap, xsp->bp);
      __pop_xstk();
      break;
@@ -3758,7 +4014,13 @@ static void exec_transcendental_int(struct expr_t *ndp)
  xsp = __eval_xpr(fax);
  if (!fax->is_real)
   {
-   if (xsp->xslen != WBITS) __sizchgxs(xsp, WBITS);
+   if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
+   else
+    {
+     /* SJM 05/10/04 - old style convert to int - needs sign extension */
+     if (xsp->xslen < WBITS) __sgn_xtnd_wrd(xsp, fax->szu.xclen);
+    }
+
    if (xsp->bp[0] != 0) { xsp->ap[0] = ALL1W; xsp->bp[0] = ALL1W; }
    else 
     {
@@ -3833,7 +4095,8 @@ static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
      /* notice this uses hspice not Verilog conversion to int - matters not */
      ival = (int) d2;
      d4 = ival;
-     if (d4 != d2)
+     /* != real */
+     if ((d4 - d2) <= -EPSILON && (d4 - d2) >= EPSILON)
       {
        __sgfwarn(631,
         "$pow system function argument first argument %s negative and second argument %s non integral - returning 0.0", 
@@ -4310,7 +4573,15 @@ extern struct st_t *__exec_stsk(struct st_t *stp, struct sy_t *tsyp,
  switch (stbp->stsknum) {
   /* file manipulation - most functions */
   case STN_FCLOSE:
-   mcd_do_fclose(tkcp->targs);
+   /* AIV 09/08/03 - for P1364 2001 must handle both MCD and FILE closes */
+   fio_do_fclose(tkcp->targs);
+   break;
+  case STN_FFLUSH:
+   /* AIV 09/08/03 - for P1364 2001 new sys task - not in 1995 std */
+   /* SJM 09/09/03 - there is POSIX flush all that also flushes PLI */
+   /* and other(?) open files - PORTABILITY? - works on Linux */
+   if (tkcp->targs == NULL) fflush(NULL);
+   else fio_fflush(tkcp->targs->lu.x);
    break;
   /* display write to terminal */
   case STN_DISPLAY: base = BDEC; goto nonf_disp;
@@ -4331,7 +4602,7 @@ nonf_disp:
 nonf_write:
    __do_disp(tkcp->targs, base);
    /* if tracing to stdout need the new line just to stdout */
-   /* FIXME - should change to separate verilog.trace file ?? */
+   /* LOOKATME - could change to separate verilog.trace file ?? */
    /* NOTICE - this is not __tr_msg */
    if (__st_tracing && __tr_s == stdout) __cv_msg("\n");
    break;
@@ -4355,6 +4626,19 @@ f_write:
    /* if tracing need the new line */
    __fio_do_disp(tkcp->targs, base, __st_tracing, tsyp->synam);
    break;
+  case STN_SWRITE: base = BDEC; goto s_write;
+  case STN_SWRITEH: base = BHEX; goto s_write;
+  case STN_SWRITEB: base = BBIN; goto s_write;
+  case STN_SWRITEO: base = BOCT;
+   /* $swrite([output reg], ...) */
+s_write:
+   fio_swrite(tkcp->targs, base);
+   break;
+  case STN_SFORMAT: 
+   /* SJM 05/14/04 - LOOKATME - LRM is unclear and suggests that $sformat */
+   /* returns a val but it is called a system task in LRM */
+   fio_sformat(tkcp->targs);
+   break; 
   /* like display except write at end of current time */
   case STN_FSTROBE: case STN_FSTROBEH: case STN_FSTROBEB: case STN_FSTROBEO:
   case STN_STROBE: case STN_STROBEH: case STN_STROBEB: case STN_STROBEO:
@@ -4639,7 +4923,7 @@ no_key:
    stav = get_opt_starg(tkcp->targs, 1); 
    if (stav >= 1 || __verbose)
     {
-     /* FIXME - why am i needed - if (!__quiet_msgs) __cv msg("\n"); */
+     /* LOOKATME - why needed - if (!__quiet_msgs) __cv msg("\n"); */
      __cv_msg("Halted at location %s time %s from call to $finish.\n",   
       __bld_lineloc(__xs2, (unsigned) __sfnam_ind, __slin_cnt),
       __to_timstr(__xs, &__simtime));
@@ -5527,7 +5811,16 @@ done:
  push_xstk_(xsp, WBITS);
  xsp->ap[0] = (word) rv; 
  xsp->bp[0] = 0L;
- if (xsp->xslen != a2xp->szu.xclen) __sizchgxs(xsp, a2xp->szu.xclen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ /* know xsp WBITS but can widen or narow */
+ if (xsp->xslen > a2xp->szu.xclen) __narrow_sizchg(xsp, a2xp->szu.xclen);
+ else if (xsp->xslen < a2xp->szu.xclen)
+  {
+   if (a2xp->has_sign) __sgn_xtnd_widen(xsp, a2xp->szu.xclen);
+   else __sizchg_widen(xsp, a2xp->szu.xclen);
+  }
+
  __exec2_proc_assign(a2xp, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -5611,7 +5904,16 @@ done:
  push_xstk_(xsp, WBITS);
  xsp->ap[0] = (word) rv; 
  xsp->bp[0] = 0L;
- if (xsp->xslen != a4xp->szu.xclen) __sizchgxs(xsp, a4xp->szu.xclen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ /* know xsp WBITS but can widen or narow */
+ if (xsp->xslen > a4xp->szu.xclen) __narrow_sizchg(xsp, a4xp->szu.xclen);
+ else if (xsp->xslen < a4xp->szu.xclen)
+  {
+   if (a2xp->has_sign) __sgn_xtnd_widen(xsp, a4xp->szu.xclen);
+   else __sizchg_widen(xsp, a4xp->szu.xclen);
+  }
+
  __exec2_proc_assign(a4xp, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -5746,7 +6048,16 @@ done:
  push_xstk_(xsp, WBITS);
  xsp->ap[0] = (word) rv; 
  xsp->bp[0] = 0L;
- if (xsp->xslen != a4xp->szu.xclen) __sizchgxs(xsp, a4xp->szu.xclen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ /* know xsp WBITS but can widen or narow */
+ if (xsp->xslen > a4xp->szu.xclen) __narrow_sizchg(xsp, a4xp->szu.xclen);
+ else if (xsp->xslen < a4xp->szu.xclen)
+  {
+   if (a2xp->has_sign) __sgn_xtnd_widen(xsp, a4xp->szu.xclen);
+   else __sizchg_widen(xsp, a4xp->szu.xclen);
+  }
+
  __exec2_proc_assign(a4xp, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -5822,7 +6133,16 @@ static void do_q_remove(struct expr_t *argxp)
    push_xstk_(xsp, WBITS);
    xsp->ap[0] = (word) qjob_id; 
    xsp->bp[0] = 0L;
-   if (xsp->xslen != a2xp->szu.xclen) __sizchgxs(xsp, a2xp->szu.xclen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* know xsp WBITS but can widen or narow */
+   if (xsp->xslen > a2xp->szu.xclen) __narrow_sizchg(xsp, a2xp->szu.xclen);
+   else if (xsp->xslen < a2xp->szu.xclen)
+    {
+     if (a2xp->has_sign) __sgn_xtnd_widen(xsp, a2xp->szu.xclen);
+     else __sizchg_widen(xsp, a2xp->szu.xclen);
+    }
+
    __exec2_proc_assign(a2xp, xsp->ap, xsp->bp);
    __pop_xstk();
   }
@@ -5832,7 +6152,16 @@ static void do_q_remove(struct expr_t *argxp)
    push_xstk_(xsp, WBITS);
    xsp->ap[0] = (word) qinform_id; 
    xsp->bp[0] = 0L;
-   if (xsp->xslen != a3xp->szu.xclen) __sizchgxs(xsp, a3xp->szu.xclen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* know xsp WBITS but can widen or narow */
+   if (xsp->xslen > a3xp->szu.xclen) __narrow_sizchg(xsp, a3xp->szu.xclen);
+   else if (xsp->xslen < a3xp->szu.xclen)
+    {
+     if (a3xp->has_sign) __sgn_xtnd_widen(xsp, a3xp->szu.xclen);
+     else __sizchg_widen(xsp, a3xp->szu.xclen);
+    }
+
    __exec2_proc_assign(a3xp, xsp->ap, xsp->bp);
    __pop_xstk();
   }
@@ -5843,7 +6172,16 @@ done:
  push_xstk_(xsp, WBITS);
  xsp->ap[0] = (word) rv; 
  xsp->bp[0] = 0L;
- if (xsp->xslen != a4xp->szu.xclen) __sizchgxs(xsp, a4xp->szu.xclen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ /* know xsp WBITS but can widen or narow */
+ if (xsp->xslen > a4xp->szu.xclen) __narrow_sizchg(xsp, a4xp->szu.xclen);
+ else if (xsp->xslen < a4xp->szu.xclen)
+  {
+   if (a4xp->has_sign) __sgn_xtnd_widen(xsp, a4xp->szu.xclen);
+   else __sizchg_widen(xsp, a4xp->szu.xclen);
+  }
+
  __exec2_proc_assign(a4xp, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -5940,7 +6278,15 @@ push_cmp_tim:
  /* only assign result, lhs arg. passed */
  if (a3xp->optyp != OPEMPTY)
   {
-   if (xsp->xslen != a3xp->szu.xclen) __sizchgxs(xsp, a3xp->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   /* know xsp WBITS but can widen or narow */
+   if (xsp->xslen > a3xp->szu.xclen) __narrow_sizchg(xsp, a3xp->szu.xclen);
+   else if (xsp->xslen < a3xp->szu.xclen)
+    {
+     if (a3xp->has_sign) __sgn_xtnd_widen(xsp, a3xp->szu.xclen);
+     else __sizchg_widen(xsp, a3xp->szu.xclen);
+    }
+
    __exec2_proc_assign(a3xp, xsp->ap, xsp->bp);
   }
  __pop_xstk();
@@ -5951,7 +6297,16 @@ done:
  push_xstk_(xsp, WBITS);
  xsp->ap[0] = (word) rv; 
  xsp->bp[0] = 0L;
- if (xsp->xslen != a4xp->szu.xclen) __sizchgxs(xsp, a4xp->szu.xclen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ /* know xsp WBITS but can widen or narow */
+ if (xsp->xslen > a4xp->szu.xclen) __narrow_sizchg(xsp, a4xp->szu.xclen);
+ else if (xsp->xslen < a4xp->szu.xclen)
+  {
+   if (a4xp->has_sign) __sgn_xtnd_widen(xsp, a4xp->szu.xclen);
+   else __sizchg_widen(xsp, a4xp->szu.xclen);
+  }
+
  __exec2_proc_assign(a4xp, xsp->ap, xsp->bp);
  __pop_xstk();
 }
@@ -6437,5 +6792,1603 @@ extern void __emit_stsk_endmsg(void)
  /* notice must know current end time */
  __my_ftime(&__end_time, &__end_mstime);
  __prt_end_msg();
+}
+
+
+/* 
+ * ROUTINES TO IMPLEMENT FILE IO SYS TASKS AND FUNCS (INTERMIXED)
+ */
+
+/*
+ * open a OS file system and return the 32 bit file descriptor
+ * fd is OS file descriptor although using buffered read/write I/O
+ */
+static unsigned fio_do_fopen(struct expr_t *axp, struct expr_t *mode_xp)
+{
+ int slen, slen2;
+ unsigned rv;
+ char *chp, *chp2;
+
+ /* these always return something as a string - can never fail */ 
+ chp = __get_eval_cstr(axp, &slen);
+ chp2 = __get_eval_cstr(mode_xp, &slen2);
+ rv = fio_fopen(chp, chp2);
+
+ /* get eval cstr puts string into malloc memory, must free */
+ __my_free(chp, slen + 1);
+ __my_free(chp2, slen2 + 1);
+ return(rv);
+}
+
+/*
+ * file descriptor fopen and update fio used file table 
+ * returns 0 on error else file Verilog fd number (with high bit on)
+ *
+ * notice the verilog file I/O number may not match the OS one
+ */
+static unsigned fio_fopen(char *chp, char *fmode)
+{
+ int fd;
+ FILE *fd_s;
+ struct fiofd_t *fdtp;
+ char os_mode[RECLEN];
+
+ /* check the fmode string */
+ if (!chk_cnvt_fd_modes(os_mode, fmode)) { errno = EINVAL; return(0); }
+
+ /* notice if too many open files (use PLI plus Verilog fd open) this fails */
+ if ((fd_s = __tilde_fopen(chp, os_mode)) == NULL)
+  {
+   /* notice errno set by OS file open call */
+   return(0);
+  }
+ fd = fileno(fd_s);
+ /* SJM 09/08/03 - ??? can file name be "stdin" here - think not */
+ if (fd == -1 || fd < FIO_STREAM_ST) { errno = EBADF; return(0); }
+
+ /* SJM 08/09/03 - change so always uses OS file number as index */
+ /* internal error if same returned twice for open file */
+ if (__fio_fdtab[fd] != NULL)
+  {
+   /* not quite right since error really fd number in use */
+   errno = EEXIST;
+   __misc_terr(__FILE__, __LINE__);
+   return(0);
+  }
+
+ /* notice index with high bit on is the Verilog side file descriptor no. */
+ fdtp = (struct fiofd_t *) __my_malloc(sizeof(struct fiofd_t));
+ fdtp->fd_error = FALSE;
+ fdtp->fd_name = __pv_stralloc(chp);
+ /* notice can always get fd from stream using fileno C lib func */
+ fdtp->fd_s = fd_s;
+ __fio_fdtab[fd] = fdtp; 
+ 
+ return(fd | FIO_MSB);
+}
+
+/*
+ * check and convert the file modes (types for file descriptions) strings
+ * returns F on fail else T
+ *
+ * ending 'b' allowed but never used for unix  
+ * SJM 09/08/03 - must fix for other OSes
+ */
+static int chk_cnvt_fd_modes(char *os_mode, char *ver_mode)
+{
+ /* assume ver mode string and OS mode string same */ 
+ strcpy(os_mode, ver_mode); 
+
+ if (strcmp(ver_mode, "r") == 0) return(TRUE);
+ if (strcmp(ver_mode, "rb") == 0) { strcpy(os_mode, "r"); return(TRUE); }
+ if (strcmp(ver_mode, "w") == 0) return(TRUE);
+ if (strcmp(ver_mode, "wb") == 0) { strcpy(os_mode, "w"); return(TRUE); }
+ if (strcmp(ver_mode, "a") == 0) return(TRUE);
+ if (strcmp(ver_mode, "ab") == 0) { strcpy(os_mode, "a"); return(TRUE); }
+ if (strcmp(ver_mode, "r+") == 0) return(TRUE);
+ if (strcmp(ver_mode, "r+b") == 0) { strcpy(os_mode, "r+"); return(TRUE); }
+ if (strcmp(ver_mode, "rb+") == 0) { strcpy(os_mode, "r+"); return(TRUE); }
+ if (strcmp(ver_mode, "w+") == 0) return(TRUE);
+ if (strcmp(ver_mode, "w+b") == 0) { strcpy(os_mode, "w+"); return(TRUE); }
+ if (strcmp(ver_mode, "wb+") == 0) { strcpy(os_mode, "w+"); return(TRUE); }
+ if (strcmp(ver_mode, "a+") == 0) return(TRUE);
+ if (strcmp(ver_mode, "a+b") == 0) { strcpy(os_mode, "a+"); return(TRUE); }
+ if (strcmp(ver_mode, "ab+") == 0) { strcpy(os_mode, "a+"); return(TRUE); }
+ return(FALSE);
+}
+
+/*
+ * close either an mcd (all files - bits) or one file if fd passed
+ * this is sys task so just sets errno on error - no error return
+ *
+ * SJM 09/08/03 - FIXME ??? need to cancel pending f monits and strobes
+ */
+static void fio_do_fclose(struct expr_t *axp)
+{
+ int fd, is_mcd;
+
+ /* this sets error nunber */
+ if ((fd = chk_get_mcd_or_fd(axp->lu.x, &is_mcd)) == -1) return;
+
+ /* case close mcd */
+ if (is_mcd)
+  {
+   /* just have this re-eval mcd */
+   mcd_do_fclose(axp);
+   return;
+  }
+ 
+ /* notice $fclose does not return anything but vpi mcd fclose with fd does */
+ __fd_do_fclose(fd);
+}
+
+/*
+ * close a file descriptor and return 0 on success and 1 on error 
+ */
+extern int __fd_do_fclose(int fd)
+{
+ int slen;
+ FILE *f;
+
+ /* know fd in range but if not open error */ 
+ if (__fio_fdtab[fd] == NULL)
+  {
+   errno = EBADF;
+   /* SJM 09/23/03 - STRANGE but LRM says return open mcd numbers even here */
+   return(bld_open_mcd());
+  }
+ 
+ /* must save fd stream before freeing */
+ f = __fio_fdtab[fd]->fd_s;
+ slen = strlen(__fio_fdtab[fd]->fd_name);
+ __my_free(__fio_fdtab[fd]->fd_name, slen + 1); 
+ __my_free((char *) __fio_fdtab[fd], sizeof(struct fiofd_t)); 
+ __fio_fdtab[fd] = NULL;
+ __my_fclose(f);
+
+ return(0);
+}
+ 
+/*
+ * check and then convert mcd or fd expressions to int
+ * returns -1 on error else mcd or fd number (with high bit off)
+ * sets is_mcd arg to 1 if mcd to 0 for Unix fd 
+ *
+ * there is implied truncation to 32 bits so if wider with x's ok
+ */
+static int chk_get_mcd_or_fd(struct expr_t *fdxp, int *is_mcd)
+{
+ unsigned fd;
+ struct xstk_t *xsp;
+
+ /* assume new file descriptor passed */
+ *is_mcd = FALSE;
+ xsp = __eval_xpr(fdxp);
+ if (xsp->bp[0] != 0L) { errno = EBADF; __pop_xstk(); return(-1); }
+
+ fd = xsp->ap[0];
+ __pop_xstk();
+
+ /* if high bit 0, then know mcd */
+ if ((fd & FIO_FD) == 0)
+  {
+   *is_mcd = TRUE;
+   return(fd);
+  } 
+ /* turn off high bit for file descriptor */
+ fd &= ~(FIO_FD);
+ if (fd >= FOPEN_MAX) { errno = EBADF; return(-1); }
+ if (__fio_fdtab[fd] == NULL) { errno = EBADF; return(-1); } 
+ return(fd);
+}
+
+/*
+ * flush either an mcd (all bits on) or one fd file
+ */
+static void fio_fflush(struct expr_t *axp)
+{
+ register int i;
+ int fd, is_mcd;
+ word mcd;
+
+ /* this sets error nunber */
+ if ((fd = chk_get_mcd_or_fd(axp, &is_mcd)) == -1) return;
+
+ /* case close mcd */
+ if (is_mcd)
+  {
+   mcd = (word) fd;
+   /* SJM 09/09/03 - bit 31 now not used for mcds */   
+   for (i = 1; i < 30; i++)
+    {
+     if (((mcd >> i) & 1L) != 0L)
+      {
+       if (__mulchan_tab[i].mc_s == NULL)
+        {
+         __sgfinform(583,
+          "multi-channel descriptor bit %d on, but file not open",  i);
+        }
+       else fflush(__mulchan_tab[i].mc_s);
+      }
+    }
+   return;
+  }
+
+ /* know fd in range but if not open error */ 
+ if (__fio_fdtab[fd] == NULL) { errno = EBADF; return; }
+ fflush(__fio_fdtab[fd]->fd_s);
+}
+
+/* 
+ * get a character from stream with verilog file descripter expr fdxp
+ *
+ * SJM 08/09/03 - using literal -1 but maybe should be using EOF define?
+ * SJM 08/09/03 - LOOKATME - assuming OS will catch seeking on std[in,out,err]
+ * files
+ */
+static int fio_ungetc(struct expr_t *chxp, struct expr_t *fdxp)
+{
+ int c, fd, ival;
+ struct xstk_t *xsp;
+
+ /* implied assign to 8 bits - if b part non zero implied assign to 32 bits */
+ xsp = __eval_xpr(chxp); 
+ if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
+ /* this insures good char */ 
+ c = (int) (xsp->ap[0] & 0xff);
+ __pop_xstk();
+ 
+ /* fd is OS file number with high bit anded off */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(-1);
+
+ /* returns c if success else -1 */
+ ival = ungetc(c, __fio_fdtab[fd]->fd_s);
+ return(ival);
+}
+
+/*
+ * check and then convert fd expressions to int
+ * return -1 on error else fd number with high bit off (know positive or 0)
+ *
+ * there is implied truncation to 32 bits so if wider with x's ok
+ */
+static int chk_get_ver_fd(struct expr_t *fdxp)
+{
+ int fd;
+ struct xstk_t *xsp;
+
+ xsp = __eval_xpr(fdxp);
+ if (xsp->bp[0] != 0L) { errno = EBADF; __pop_xstk(); return(-1); }
+
+ fd = xsp->ap[0] & FIO_FD;
+ __pop_xstk();
+ if (fd >= FOPEN_MAX) { errno = EBADF; return(-1); }
+ if (__fio_fdtab[fd] == NULL) { errno = EBADF; return(-1); } 
+ return(fd);
+}
+
+/* 
+ * get a string from stream with verilog file descripter expr fdxp
+ *
+ * SJM 09/08/03 - assuming following C lib fgets new line included in string
+ */
+static int fio_fgets(struct expr_t *str_xp, struct expr_t *fdxp)
+{
+ int fd, slen, chlen;
+ struct xstk_t *xsp;
+ char *lp;
+ 
+ /* result string can't be empty "(, fd)" */
+ if (str_xp->optyp == OPEMPTY) { errno = EINVAL; return(0); }
+
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(0);
+ 
+ /* len rounds down if not div by 8 following LRM */
+ slen = str_xp->szu.xclen/8;
+ lp = __my_malloc(slen + 1);
+ /* fgets returns ptr to lp or nil not number of read chars */
+ if (fgets(lp, slen, __fio_fdtab[fd]->fd_s) == NULL)
+  {
+   __my_free(lp, slen + 1);
+   return(0);
+  }
+
+ /* SJM 10/20/03 - think fgets should return nil if at eof but check */ 
+ /* DBG remove -- */
+ if (*lp == '\0') __misc_terr(__FILE__, __LINE__);
+ /* --- */ 
+
+ chlen = strlen(lp);
+
+ xsp = __cstr_to_vval(lp);
+ /* now done with read c string must free */
+ __my_free(lp, slen + 1);
+
+ /* following verilog convention if not enough chars (EOF) zero fill */ 
+
+ /* 05/16/04 - Verilog strings can't be signed */
+ if (xsp->xslen != str_xp->szu.xclen) __sizchgxs(xsp, str_xp->szu.xclen);
+
+ __exec2_proc_assign(str_xp, xsp->ap, xsp->bp);
+ __pop_xstk();
+ /* notice num chars read my be differ than len of lhs assign to reg */
+ return(chlen);
+}
+
+/* 
+ * rewind within an OS stream - returns -1 on error 0 on success
+ *
+ * equivalent to C lib fseek(FILE *, 0, SEEK_SET) 
+ */
+static int fio_rewind(struct expr_t *fdxp)
+{
+ int fd;
+
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(-1);
+
+ fseek(__fio_fdtab[fd]->fd_s, 0L, SEEK_SET);
+ /* returns 0 on success */
+ return(0);
+}
+
+/* 
+ * seek within an OS stream - returns -1 on error and 0 on success
+ */
+static int fio_fseek(struct expr_t *fdxp, struct expr_t *ofs_xp,
+ struct expr_t *whence_xp)
+{
+ int fd, offset, whence, seek_typ;
+ struct xstk_t *xsp;
+
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(-1);
+
+ /* there is an implied convert to 32 bits here */
+ xsp = __eval_xpr(ofs_xp);
+ if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
+ /* offset can be negative */
+ offset = (int) xsp->ap[0];
+ __pop_xstk();
+
+ /* there is an implied convert to 32 bits here */
+ xsp = __eval_xpr(whence_xp);
+ if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
+ /* only 3 possibilities */
+ whence = (int) xsp->ap[0];
+ __pop_xstk();
+ /* check for legal whence seek type */ 
+ if (whence == 0) seek_typ = SEEK_SET;
+ else if (whence == 1) seek_typ = SEEK_CUR;
+ else if (whence == 2) seek_typ = SEEK_END;
+ else { errno = EINVAL; return(-1); }
+  
+ if (__fio_fdtab[fd] == NULL) { errno = EBADF; return(-1); } 
+ fseek(__fio_fdtab[fd]->fd_s, (long) offset, seek_typ);
+ /* returns 0 on success */
+ return(0);
+}
+
+/*
+ * get error status - verilog equivalent of strerror function
+ * return 0 on no error else set error number and copies err str to str xp
+ * 
+ * if user passes string narrower than 80 chars, silently truncates err str
+ * notice if this has error it overwrites the pending errno error
+ *
+ * SJM 08/09/03 - although LRM does not say it, returns -1 on error here
+ */
+static int fio_ferror(struct expr_t *fdxp, struct expr_t *str_xp)
+{
+ int fd, rv, stream_err;
+ char buf[RECLEN];
+ struct xstk_t *xsp;
+#if defined(__SVR4)
+ char *cp;
+#endif
+  
+ /* result string can't be empty "(, fd)" */
+ if (str_xp->optyp == OPEMPTY) { errno = EINVAL; return(-1); }
+  
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ /* notice if fails can change error number */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(-1);
+ 
+ if ((stream_err = ferror(__fio_fdtab[fd]->fd_s)) == 0)
+  {
+   rv = 0; 
+err_ret:
+   push_xstk_(xsp, str_xp->szu.xclen);
+   zero_allbits_(xsp->ap, xsp->xslen);
+   zero_allbits_(xsp->bp, xsp->xslen);	
+   __exec2_proc_assign(str_xp, xsp->ap, xsp->bp);
+   __pop_xstk();
+   return(rv);
+  }
+
+ /* use the reentrant posix form of str error function */
+#if defined(__SVR4)
+ if ((cp = strerror(stream_err)) == NULL) { rv = -1; goto err_ret; }
+ else strncpy(buf, cp, RECLEN);
+#else
+ if (strerror_r(stream_err, buf, RECLEN) == NULL) { rv = -1; goto err_ret; }
+#endif
+
+
+ /* know buf end with '\0' */
+ xsp = __cstr_to_vval(buf);
+ /* 05/16/04 - Verilog strings can't be signed */
+ if (xsp->xslen != str_xp->szu.xclen) __sizchgxs(xsp, str_xp->szu.xclen);
+
+ __exec2_proc_assign(str_xp, xsp->ap, xsp->bp);
+ __pop_xstk();
+ return(errno);
+}
+
+/* 
+ * fread data into reg or memory - only 0 or 1 can be read
+ * on error 0 else number of 8 bit chars read
+ *
+ * SJM 09/20/03 - LRM wrong for memories fread can't read addresses
+ */
+static int fio_fread(struct expr_t *ndp)
+{
+ int fd, vlen, nbytes, bufi;
+ byte *buf;
+ struct expr_t *lhsx, *fdxp, *startxp, *cntxp;
+ struct net_t *np;
+ struct xstk_t *xsp;
+
+ lhsx = ndp->lu.x;
+ /* result string can't be empty "(, fd)" */
+ if (lhsx->optyp == OPEMPTY) { errno = EINVAL; return(-1); }
+
+ fdxp = ndp->ru.x->lu.x;
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ if ((fd = chk_get_ver_fd(fdxp)) == -1) return(0);
+
+ startxp = cntxp = NULL; 
+ if (lhsx->optyp == ID || lhsx->optyp == GLBREF)
+  {
+   /* for array element, won't be ID */
+   np = lhsx->lu.sy->el.enp;
+   if (np->n_isarr)
+    {
+     if ((ndp = ndp->ru.x->ru.x) != NULL)
+      {
+       startxp = ndp->lu.x;
+       if ((ndp = ndp->ru.x) != NULL) cntxp = ndp->lu.x;
+      }
+     return(fio_arr_fread(lhsx, fd, startxp, cntxp));
+    }
+  }
+
+ /* case 1: read into reg - start and end args ignored if present */
+ /* len rounds down if not div by 8 following LRM */
+ /* SJM 09/20/03 LRM says round down but that doesn't make sense */ 
+ /* so round up following PLI implementation */
+ vlen = (lhsx->szu.xclen + 7)/8;
+
+ /* must store into stack value and then assign */ 
+ buf = (byte *) __my_malloc(vlen);
+
+ nbytes = fread(buf, 1, vlen, __fio_fdtab[fd]->fd_s);
+ /* if unable to read entire reg, return error and do not assign */
+ /* if part read and EOF, correct for reg to not be changed */
+ if (nbytes != vlen)
+  {
+   __my_free((char *) buf, vlen);
+   /* for short last section, reg not assigned and bytes in stream read */
+   /* returned - user must call ferror or feof system task to find error */
+   /* to mimic stdio lib beheavior - if error will probably be 0 */
+   return(nbytes);
+  }
+
+ push_xstk_(xsp, lhsx->szu.xclen);
+ /* 0 value so only need to turn 1 bits on */
+ zero_allbits_(xsp->ap, lhsx->szu.xclen);
+ zero_allbits_(xsp->bp, lhsx->szu.xclen);
+ bufi = vlen - 1;
+
+ fread_onto_stk(xsp, buf, bufi);
+
+ __my_free((char *) buf, vlen);
+ /* know xsp width exactly match lhs expr width */  
+ __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+ __pop_xstk();
+ return(0);
+}
+
+/*
+ * read one reg (also used for cell of array)
+ * can't fail
+ *
+ * know correct width location pushed onto x stack that is filled 
+ * also know that f read buf value big enough and bufi starts at high end byte
+ */
+static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int bufi)
+{
+ register int bi;
+ int hbused, hbi, wi, bi2;  
+ word bitval, bval;
+
+ /* know have char 0/1 value for every bit */
+ /* handle partially filled high byte as special case */
+ hbused = xsp->xslen % 8;
+ bi = xsp->xslen - 1;
+ if (hbused != 0)
+  {
+   bval = (word) buf[0];
+   for (hbi = hbused - 1; hbi >= 0; hbi--, bi--)
+    {
+     wi = get_wofs_(bi);
+     bi2 = get_bofs_(bi);
+     bitval = ((bval >> hbi) & 1) << bi2;
+     if (bitval != 0) xsp->ap[wi] |= bitval;  
+    }
+   bufi--;
+  }
+ /* handle simple all bits in all fread bytes used */
+ /* bi correct next high bit to set from read byte */ 
+ for (; bufi >= 0; bufi--)
+  {
+   bval = (word) buf[bufi];
+   for (hbi = 7; hbi >= 0; hbi--, bi--) 
+    {
+     /* DBG remove -- */
+     if (bi < 0) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+     wi = get_wofs_(bi);
+     bi2 = get_bofs_(bi);
+     bitval = ((buf[bufi] >> hbi) & 1) << bi2;
+     if (bitval != 0) xsp->ap[wi] |= bitval;  
+    }
+  }
+}
+
+/*
+ * fread into array (memory)
+ *
+ * fread of memory differs from read mem because no addresses in file   
+ * and can only read non x/z values
+ */
+static int fio_arr_fread(struct expr_t *lhsx, int fd,
+ struct expr_t *startxp, struct expr_t *cntxp)
+{
+ register int i, arri;
+ int ri1, ri2, arrwid, starti, cnt, nbytes, tot_bytes, nd_itpop, vlen;
+ byte *buf;
+ struct net_t *np;
+ struct xstk_t *xsp;
+ struct gref_t *grp;
+
+ np = lhsx->lu.sy->el.enp;
+ __getarr_range(np, &ri1, &ri2, &arrwid);
+
+ /* array elements stored h:0 normalized so index h to high */
+ /* but loading is from low to high array words */
+ starti = 0;
+ cnt = arrwid - 1;
+
+ /* ,,) form possible for start and count expressions */
+ if (startxp != NULL) 
+  {
+   if (startxp->optyp != OPEMPTY) 
+    {
+     /* can't use comp ndx here because value is just normal expr */
+     xsp = __eval_xpr(cntxp);
+     if (!vval_is0_(xsp->bp, xsp->xslen) ||
+      (xsp->xslen > WBITS && !vval_is0_(&(xsp->ap[1]), xsp->xslen - WBITS)))
+      {
+       __sgfwarn(588,
+        "array $fread of %s start value has x/z bits or wide - low a part used",
+        np->nsym->synam);
+      }
+     arri = (int) xsp->ap[0];
+     /* stsk arg. in Verilog source is actual index - must convert to h:0 */
+     starti = normalize_ndx_(arri, ri1, ri2); 
+     __pop_xstk();
+     if (starti < 0 || starti >= arrwid) 
+      {
+       errno = EINVAL;
+       return(0);
+      }
+    }
+  }
+ if (cntxp != NULL)
+  {
+   if (cntxp->optyp != OPEMPTY)
+    {
+     /* if count present but not start then use first addr in mem */
+     xsp = __eval_xpr(cntxp);
+     if (!vval_is0_(xsp->bp, xsp->xslen) ||
+      (xsp->xslen > WBITS && !vval_is0_(&(xsp->ap[1]), xsp->xslen - WBITS)))
+      {
+       __sgfwarn(588,
+        "array $fread of %s count value has x/z bits or wide - low a part used",
+        np->nsym->synam);
+      }
+     cnt = (int) xsp->ap[0];
+     if (cnt < 0 || starti + cnt >= arrwid) 
+      {
+       errno = EINVAL;
+       return(0);
+      }
+    }
+  }
+
+ nd_itpop = FALSE;
+ if (lhsx->optyp == GLBREF)
+  { grp = lhsx->ru.grp; __xmrpush_refgrp_to_targ(grp); nd_itpop = TRUE; }
+ push_xstk_(xsp, np->nwid);
+
+ /* round up so 1 bit memory still requires 1 byte per cell */
+ vlen = (arrwid + 7)/8;
+ buf = (byte *) __my_malloc(vlen);
+ tot_bytes = 0;
+ for (arri = starti, i = 0; i < cnt; i++, arri++)  
+  {
+   nbytes = fread(buf, 1, vlen, __fio_fdtab[fd]->fd_s);
+   tot_bytes += nbytes;
+   /* if unable to read entire reg, return error and do not assign */
+   /* if part read and EOF, correct for reg to not be changed */
+   if (nbytes != vlen) goto done;
+
+   /* 0 value so only need to turn 1 bits on */
+   zero_allbits_(xsp->ap, lhsx->szu.xclen);
+   zero_allbits_(xsp->bp, lhsx->szu.xclen);
+
+   fread_onto_stk(xsp, buf, vlen - 1);
+
+   /* SJM 03/15/01 - change to fields in net record */
+   if (np->nchg_nd_chgstore)
+    {
+     __chg_st_arr_val(np->nva, arrwid, np->nwid, arri, xsp->ap, xsp->bp);
+
+     /* SJM - 06/25/00 - lhs changed possible from change store */
+     /* and must only trigger change for right array index */
+     if (__lhs_changed) record_sel_nchg_(np, arri, arri);
+    }
+   else __st_arr_val(np->nva, arrwid, np->nwid, arri, xsp->ap, xsp->bp);
+  }
+done:
+ __my_free((char *) buf, vlen);
+ __pop_xstk();
+ if (nd_itpop) __pop_itstk();
+ return(tot_bytes);
+}
+ 
+/*
+ * implement the swrite to string (instead of file) Verilog formatted 
+ * print sys tasks
+ *
+ * easy since because of mcds formatting always goes into c string
+ * using the _expr line and cur sofs mechanism
+ */
+static void fio_swrite(struct expr_t *axp, int dflt_fmt)
+{
+ struct expr_t *str_xp; 
+ struct xstk_t *xsp;
+
+ str_xp = axp->lu.x;
+ axp = axp->ru.x;
+ __str_do_disp(axp, dflt_fmt);
+ xsp = __cstr_to_vval(__exprline);
+
+ /* now done with expr line */
+ __cur_sofs = 0;
+
+ /* do the assign to string after formatting into __expr line */
+ /* following verilog convention if not enough chars (EOF) zero fill */ 
+
+ /* 05/16/04 - Verilog strings can't be signed */
+ if (xsp->xslen != str_xp->szu.xclen) __sizchgxs(xsp, str_xp->szu.xclen);
+
+ __exec2_proc_assign(str_xp, xsp->ap, xsp->bp);
+ __pop_xstk();
+}
+
+/*
+ * implement $sformat version of $swrite that has only 1 format but can
+ * be variable unlike $swrite
+ *
+ * first arg is string to write into, 2nd arg is format that can be
+ * var so needs to be evaled - rest are the format args - error if
+ * too few format args and ignores extra (unlike $swrite that prints
+ * them with format)
+ */
+static void fio_sformat(struct expr_t *axp)
+{
+ int blen, flen;
+ struct expr_t *str_xp, *fmt_xp; 
+ struct xstk_t *xsp;
+ char *fmtstr;
+
+ /* lhs expr to store formatted string into */
+ str_xp = axp->lu.x;
+
+ /* evaluate the format into a Verilog string */
+ axp = axp->ru.x;
+ fmt_xp = axp->lu.x;
+
+ xsp = __eval_xpr(fmt_xp);
+ if (!vval_is0_(xsp->bp, xsp->xslen))
+  {
+   errno = EINVAL;
+   return;
+  }
+
+ /* trim high 0's of a part only */
+ blen = __trim1_0val(xsp->ap, xsp->xslen); 
+ if (blen == 0)
+  {
+   errno = EINVAL;
+   return;
+  }
+
+ /* this mallocs the input string to scan from */
+ fmtstr = __vval_to_vstr(xsp->ap, blen, &flen);
+ __pop_xstk();
+
+ /* assuming 8 bit bytes */
+ axp = __disp_1fmt_to_exprline(fmtstr, axp);
+ if (axp != NULL)
+  {
+   __sgfwarn(3133,
+    "$sformat extra unused arguments after format exhausted");
+  }
+
+ __my_free(fmtstr, flen);
+
+ xsp = __cstr_to_vval(__exprline);
+ /* now done with expr line */
+ __cur_sofs = 0;
+
+ /* do the assign to string after formatting into __expr line */
+ /* following verilog convention if not enough chars (EOF) zero fill */ 
+
+ /* 05/16/04 - Verilog strings can't be signed */
+ if (xsp->xslen != str_xp->szu.xclen) __sizchgxs(xsp, str_xp->szu.xclen);
+
+ __exec2_proc_assign(str_xp, xsp->ap, xsp->bp);
+ __pop_xstk();
+}
+
+/*
+ * implement $fscanf for now using old scin_s scanf code
+ */
+static int fio_fscanf(struct expr_t *ndp)
+{
+ int fd, blen, flen, rv;
+ char *fmtstr;
+ struct expr_t *fmt_xp;
+ struct xstk_t *xsp;
+
+ /* fd is OS file number with high bit anded off - on error OS err num set */
+ /* notice if fails can change error number */
+ if ((fd = chk_get_ver_fd(ndp->lu.x)) == -1) return(-1);
+
+ /* know fd in range but if not open error */ 
+ if (__fio_fdtab[fd] == NULL) { errno = EBADF; return(-1); }
+
+ ndp = ndp->ru.x;
+ fmt_xp = ndp->lu.x;
+ xsp = __eval_xpr(fmt_xp);
+ if (!vval_is0_(xsp->bp, xsp->xslen))
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+ /* trim high 0's of a part only */
+ blen = __trim1_0val(xsp->ap, xsp->xslen); 
+ if (blen == 0)
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+ fmtstr = __vval_to_vstr(xsp->ap, blen, &flen);
+ __fiofp = fmtstr; 
+
+ /* ndp now ptr to comma operator of first arg past fmt */
+ ndp = ndp->ru.x;
+ rv = fio_exec_scanf(__fio_fdtab[fd]->fd_s, ndp);
+ __my_free(fmtstr, flen);
+ __pop_xstk();
+ return(rv);
+}
+
+/*
+ * implement $sscanf for now using old scin_s scanf code
+ */
+static int fio_sscanf(struct expr_t *ndp)
+{
+ int blen, slen, flen, rv;
+ char *instr, *fmtstr;
+ struct expr_t *str_xp, *fmt_xp;
+ struct xstk_t *xsp;
+
+ /* first arg is string to read from */
+ str_xp = ndp->lu.x;
+ xsp = __eval_xpr(str_xp);
+ if (!vval_is0_(xsp->bp, xsp->xslen))
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+ /* trim high 0's of a part only */
+ blen = __trim1_0val(xsp->ap, xsp->xslen); 
+ if (blen == 0)
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+
+ /* this mallocs the input string to scan from */
+ instr = __vval_to_vstr(xsp->ap, blen, &slen);
+ /* implied global used for reading input char by char */ 
+ __fiolp = instr; 
+ __pop_xstk();
+
+ ndp = ndp->ru.x;
+ fmt_xp = ndp->lu.x;
+ xsp = __eval_xpr(fmt_xp);
+ if (!vval_is0_(xsp->bp, xsp->xslen))
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+ /* trim high 0's of a part only */
+ blen = __trim1_0val(xsp->ap, xsp->xslen); 
+ if (blen == 0)
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+
+ /* this mallocs the fmt string to scan from */
+ /* notice for new routines (especially input), only one format string */
+ fmtstr = __vval_to_vstr(xsp->ap, blen, &flen);
+ __fiofp = fmtstr; 
+ __pop_xstk();
+
+ /* AIV 09/29/03 - forgot to assign ndp to first arg past format */
+ ndp = ndp->ru.x;
+
+ rv = fio_exec_scanf(NULL, ndp);
+ /* free the version in malloced storage */
+ __my_free(instr, slen);
+ __my_free(fmtstr, flen);
+ return(rv);
+}
+
+/* SJM 09/24/03 - why need defines here? */
+/* SJM 09/24/03 - eliminated EOL since no significance of new line now */
+#define infmt() ((*__fiofp == '\0') ? EOF : *__fiofp++)
+
+/*
+ * execute the scan input system task 
+ * returns number of successfully read items 
+ *
+ * on entry axp points to arg list comma operator of first scan into arg
+ * if f nil, gets char from global file io work char ptr else read char
+ *
+ * know globals __fiolp points to string (for sscanf) and __fiofp always
+ * points to first char in format string on entry
+ *
+ * SJM 09/24/03 - seems that unlike c lib no \ escaping of % allowed - true?
+ * now must check format syntax correctness here because format can be var 
+ */
+static int fio_exec_scanf(FILE *f, struct expr_t *axp)
+{
+ register char *wchp;
+ register int c, fch, width;
+ int len, num_matched, base, signc, ival;
+ int retval, assgn_sup, stval, sav_sofs, lmatch; 
+ double d1;
+ struct expr_t *lhsx; 
+ struct xstk_t *xsp;
+ struct task_t *tskp;
+
+ /* if F, illegal format so return EOF */ 
+ if (!chk_scanf_fmt(__fiofp))
+  {
+   errno = EINVAL;
+   return(-1);
+  }
+
+ /* start by readin first input char - may push back */
+ /* axp always points to comma operator of next arg (maybe nil) */
+ retval = -1;
+
+ /* if EOF on input file before any matches return EOF */
+ if ((c = scanf_getc(f)) == EOF) return(-1);
+ for (lmatch = num_matched = 0;;)
+  {
+   if (f != NULL && lmatch != num_matched)
+    {
+     if ((__scanf_pos = ftell(f)) == -1) return(-1);
+    }
+   lmatch = num_matched;
+
+   /* at beginning of loop c is next input line char to process */
+   /* but fch is last processed format char */
+   if ((fch = infmt()) == EOF) break; 
+   if (fch != '%')
+    {
+     /* fmt white space matches optional any width input line white space */
+     if (isspace(fch))
+      {
+       while(isspace(c))
+        {
+         if ((c = scanf_getc(f)) == EOF) break;
+        }
+       if (c == EOF) break;
+       continue;
+      }
+     else if (c == fch)
+      {
+       c = scanf_getc(f);
+       continue;
+      }
+     /* mismatched input char - finished ret count of assigned */
+     retval = 0;  
+     break;
+    }
+   if ((fch = infmt()) == EOF) break;
+   /* check for format suppress char */
+   if (fch == '*') 
+    {
+     assgn_sup = TRUE;
+     if ((fch = infmt()) == EOF) break; 
+    }
+   else assgn_sup = FALSE;
+
+   /* find maximum field width */
+   width = 0;
+   while (isdigit(fch))
+    {
+     width *= 10;
+     width += fch - '0';
+     if ((fch = infmt()) == EOF) goto done;
+    }
+   if (width == 0) width = -1;
+
+   /* LOOKATME - possible portability problem since isspace of */ 
+   /* special -2 may or may be space - checking both */
+   /* consume input line white space unless special c format */
+   if (fch != 'c')
+    {
+     while (isspace(c)) { if ((c = scanf_getc(f)) == EOF) break; }
+    }
+
+   retval = 0;
+   switch (fch) {
+    case '%':
+     /* %% matches % - i.e. it is % escaping mechanism */
+     if (c != '%') goto done; 
+     break;
+    case 'd': base = BDEC; goto do_num;
+    case 'b': base = BBIN; goto do_num;
+    case 'o': base = BOCT; goto do_num;
+    case 'x': case 'h': base = BHEX;
+do_num: 
+     /* return F if no characters collected */
+     if (!collect_scanf_num(&signc, f, c, base, width)) goto done;
+     if (!assgn_sup)
+      {
+       num_matched++; 
+       if (axp == NULL) goto done;
+       lhsx = axp->lu.x;
+
+       /* also convert into ac/bc wrk globals */
+       /* conversion requires knowing arg expr width - can only do here */
+       __itoklen = lhsx->szu.xclen;
+       /* converted number converted to exactly lhs expr size */ 
+       /* use expr. width as imputed [num]' form - always succeeds */
+       __to_dhboval(base, FALSE);
+
+       /* try to correct value for minus sign */
+       if (signc == '-')
+        {
+         /* SJM 05/14/04 - must handle any width signed */
+         if (vval_is0_(__bcwrk, __itoklen))
+          {
+           if (__itoklen == WBITS)
+            { ival = (int) __acwrk[0]; __acwrk[0] = (word) -ival; }
+           else __inplace_lnegate(__acwrk, __itoklen);
+          }
+        }
+
+       /* know __acwrk and _bcwrk have right width number */
+       if (lhsx->optyp != OPEMPTY)
+        {
+         __exec2_proc_assign(lhsx, __acwrk, __bcwrk);
+        }
+       /* know c has 1 char after number */
+       axp = axp->ru.x;
+      }
+     break;
+    case 'f': case 'e': case 'g': case 't':
+     if (!collect_scanf_realnum(&(d1), f, c, width, fch)) goto done;
+     if (!assgn_sup)
+      {
+       if (axp == NULL) goto done;
+       lhsx = axp->lu.x;
+       axp = axp->ru.x;
+       num_matched++; 
+       if (lhsx->optyp != OPEMPTY)
+        {
+         push_xstk_(xsp, WBITS);
+         memcpy(xsp->ap, &d1, sizeof(double));
+         if (!lhsx->is_real)
+          {
+           __cnv_stk_fromreal_toreg32(xsp);
+
+           /* SJM 09/29/03 - chg to handle sign extend and separate types */
+           if (xsp->xslen > lhsx->szu.xclen)
+            __narrow_sizchg(xsp, lhsx->szu.xclen);
+           else if (xsp->xslen < lhsx->szu.xclen)
+            {
+             /* know always signed */
+             __sgn_xtnd_widen(xsp, lhsx->szu.xclen);
+            }
+          }
+
+         __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+         __pop_xstk();
+        }
+      }
+     /* know c has 1 char after number */
+     break;
+    case 'v':
+     wchp = __numtoken; 
+     /* know there is always look ahead char */ 
+     wchp[0] = c;
+     if ((c = scanf_getc(f)) == EOF) goto done;
+     wchp[1] = c;
+     if ((c = scanf_getc(f)) == EOF) goto done;
+     wchp[2] = c;
+     wchp[3] = '\0';
+     if ((stval = cnvt_scanf_stnam_to_val(wchp)) == 0) goto done;
+     if (!assgn_sup)
+      {
+       lhsx = axp->lu.x;
+       if (lhsx->optyp != OPEMPTY)
+        {
+         push_xstk_(xsp, 1);
+         /* SJM 09/25/03 - since can only assign to reg remove stren */ 
+         xsp->ap[0] = stval & 1;
+         xsp->bp[0] = (stval >> 1) & 1;
+
+         /* SJM 09/29/03 - since 1 bit rhs never signed - can only widen */
+         if (xsp->xslen != lhsx->szu.xclen)
+          __sizchg_widen(xsp, lhsx->szu.xclen);
+
+         __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+         __pop_xstk();
+        }
+      }
+     break;
+    case 'c':
+     /* SJM 09/24/03 - old sscanf multiple chars removed - now 1 char only */
+     /* SJM 03/20/00 - know never need to grow num token - f get used */
+     /* notice unlike clib, width can't be used for "string" of chars */
+     /* SJM 05/14/04 - know the char already read and in c */
+     /* must be one char left on input stream */
+     if (c == EOF) goto done;
+     wchp = __numtoken;
+     wchp[0] = (byte) c;
+     wchp[1] = '\0';
+     len = 1;
+     /* if past end of formats, no more assignments to do */
+     /* convert to pascal style string as Verilog value on stack */
+do_str_assign:
+     /* DBG remove ---
+     if (__debug_flg)
+      { __dbg_msg("read string [%s]\n", __numtoken); }
+     --- */
+     if (!assgn_sup)
+      {
+       num_matched++; 
+       if (axp == NULL) goto done;
+       lhsx = axp->lu.x;
+       axp = axp->ru.x;
+       push_xstk_(xsp, 8*len);
+       zero_allbits_(xsp->bp, xsp->xslen);
+       __vstr_to_vval(xsp->ap, __numtoken, 8*len);
+       if (lhsx->optyp != OPEMPTY)
+        {
+         /* size chg never needs sign extend - can narrow or widen */ 
+         if (xsp->xslen != lhsx->szu.xclen) __sizchgxs(xsp, lhsx->szu.xclen);
+
+         __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+        }
+       __pop_xstk();
+       /* c has next char to process */ 
+      }
+     break;
+    case 's': 
+     /* s is for white space delimited strings */
+     wchp = __numtoken;
+     /* notice works since added \0 to end of input line */
+     /* i.e. empty string ok */ 
+     for (len = 0;;)
+      {
+       *wchp++ = c;
+       len++;
+       c = scanf_getc(f);
+       if (width > 0 && --width == 0) break;
+       if (c == EOF || isspace(c)) break;
+      }
+     *wchp = '\0'; 
+     goto do_str_assign;
+    case 'u':
+     /* no way to detemine num words to read */
+     if (assgn_sup)
+      {
+       __sgferr(3417,
+        "scanf assignment suppression character illegal with %%u binary data format");
+       errno = EINVAL;
+       return(-1);
+      }
+     if (width != -1)
+      {
+       __sgfinform(3008,
+        "scanf field width meaningless with %%u binary data format - width ignored");
+      }      
+     if (axp == NULL) goto done;
+     lhsx = axp->lu.x;
+     xsp = collect_ufmt_binval(f, lhsx, c);
+     if (xsp == NULL) goto done;
+     axp = axp->ru.x;
+     /* since use scanf assign to reg arg for size - never need size chg */
+     __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+     __pop_xstk();
+     break;
+    case 'z':
+     /* no way to detemine num words to read */
+     if (assgn_sup)
+      {
+       __sgferr(3417,
+        "scanf assignment suppression character illegal with %%z binary data format");
+       errno = EINVAL;
+       return(-1);
+      }
+     if (width != -1)
+      {
+       __sgfinform(3008,
+        "scanf field width meaningless with %%z binary data format - width ignored");
+      }      
+     if (axp == NULL) goto done;
+     lhsx = axp->lu.x;
+     axp = axp->ru.x;
+     xsp = collect_zfmt_binval(f, lhsx, c);
+     if (xsp == NULL) goto done;
+
+     /* since use scanf assign to reg arg for size - never need size chg */
+     __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+     __pop_xstk();
+     break;
+    case 'm':
+     sav_sofs = __cur_sofs;
+     if (__cur_thd == NULL) tskp = __scope_tskp; 
+     else tskp = __getcur_scope_tsk();
+     __disp_itree_path(__inst_ptr, tskp);
+     /* use optional width field to truncate */
+     if (width > 1 && (__cur_sofs - sav_sofs) > width)
+      {
+       __cur_sofs = sav_sofs + width;
+       __exprline[__cur_sofs] = '\0';
+      }
+     len = __cur_sofs - sav_sofs;
+     if (!assgn_sup)
+      {
+       num_matched++; 
+       if (axp == NULL) { __cur_sofs = sav_sofs; goto done; }
+
+       lhsx = axp->lu.x;
+       axp = axp->ru.x;
+       push_xstk_(xsp, 8*len);
+       zero_allbits_(xsp->bp, xsp->xslen);
+       __vstr_to_vval(xsp->ap, __exprline, 8*len);
+       if (lhsx->optyp != OPEMPTY)
+        {
+         /* widening adds high 0 bits */
+         /* again can narrow or widen and neve need sign extend */
+         if (xsp->xslen != lhsx->szu.xclen) __sizchgxs(xsp, lhsx->szu.xclen);
+
+         __exec2_proc_assign(lhsx, xsp->ap, xsp->bp);
+        }
+       __pop_xstk();
+      }
+     /* c has next char to process */ 
+     continue;
+    default:
+     /* invalid format char after % */
+     errno = EINVAL;
+     goto done; 
+   }
+   /* SJM 05/14/04 - top of loop expects one ahead */
+   c = scanf_getc(f);
+  }
+ /* good exit from scan processing of fmt - but still read one too far */  
+ scanf_ungetc(c, f);
+
+ /* this is nothing read case */
+ if (retval == -1) return(-1);
+ return(num_matched);
+
+done:
+ if (f != NULL && __scanf_pos > 0)
+  {
+   if (fseek(f, __scanf_pos - 1, SEEK_SET) == -1) return(-1);
+  }
+ /* this is nothing read case */
+ if (retval == -1) return(-1);
+ return(num_matched);
+}
+
+/*
+ * version of getc that read from passed scanf input file or buf for sscanf
+ */
+static int scanf_getc(FILE *f)
+{
+ int c;
+
+ if (f == NULL)
+  {
+   if (*__fiolp == '\0') return(EOF);
+   return(*__fiolp++);
+  }
+ c = fgetc(f); 
+ return(c); 
+}
+
+/*
+ * version of ungetc that backup up buffer for string file io operations 
+ * BEWARE - can't call ungetc unless something read
+ */
+static void scanf_ungetc(int c, FILE *f)
+{
+ if (f == NULL) __fiolp--; else ungetc(c, f);
+}
+
+/*
+ * check new fileio $fscanf or $sscanf format string
+ *
+ * SJM 09/24/03 - now must check at run time each time called because
+ * format can be variable - also only check fmt not arg matching
+ *
+ * LOOKATME - could check only once for constant fmt string
+ */
+static int chk_scanf_fmt(char *fmt)
+{
+ register char *fp;
+ int fmt_pos, rv, has_width;
+
+ rv = TRUE;
+ fp = fmt;
+ fmt_pos = 0;
+ while (*fp != '\0')
+  {
+   /* just char in fmt to match */
+   if (*fp++ != '%') continue;
+  
+   /* %% is way to match % in input */ 
+   /* SJM 09/24/03 - assuming %[* and/or width digs]% illegal */
+   if (*fp == '%') { fp++; continue; }
+
+   /* assign suppress char legal */
+   if (*fp == '*') fp++;
+
+   /* possible %ddd[fmt letter] */
+   has_width = FALSE;
+   while (isdigit(*fp))
+    {
+     fp++;
+     if (*fp == '\0')
+      {
+       __sgferr(1186,
+         "end of format while reading maximum field width (pos. %d)",
+        fmt_pos);
+       rv = FALSE;
+       goto done;
+      }
+     has_width = TRUE;
+    }
+   fmt_pos++;
+   /* string formats must be multiple of 8 bits */
+   switch (*fp) {
+    case 'b': case 'o': case 'h': case 'x': case 'd':
+     break;
+    case 'f': case 'e': case 'g':
+     break;
+    case 'v':
+     break;
+    case 't':
+     break;
+    case 'c':
+     if (has_width)
+      {
+       __sgfwarn(3104,
+        "maximum field width used with %%c format (pos. %d) - width ignored",
+        fmt_pos);
+      }
+     break;
+    case 's':
+     break;
+    case 'u':
+     break;
+    case 'z':
+     break;
+    case 'm':
+     break;
+    default:
+     __sgferr(1274,
+      "$scanf %%%c (pos. %d) is not legal FILE IO format letter",
+      *fp, fmt_pos); 
+     rv = FALSE;
+   }
+   fp++;
+  }
+done:
+ return(rv);
+}
+
+/*
+ * collect a dhbo number from input into num token global 
+ * returns F on error - if so num token invalid 
+ */
+static int collect_scanf_num(int *signc, FILE *f, int c, int base, int width)
+{
+ register char *wchp;
+
+ wchp = __numtoken; 
+ /* collect number */
+ if (c == '-' || c == '+')
+  {
+   /* minus only legal for %d (and real) format(s) */
+   if (base != BDEC)
+    {
+     __sgfinform(3008,
+      "numeric non decimal (%%d) scanf format illegally begins with sign");
+     return(FALSE);
+    } 
+   *signc = c;
+   if (width > 0) --width;
+   c = scanf_getc(f);
+  }
+ else *signc = ' ';
+
+ for (;;)
+  {
+   if (isspace(c) || c == EOF) break;
+   /* skip _ space holder */
+   if (c != '_')
+    {
+     /* non number char ends number if not ended with white space */
+     if ((c = __is_vdigit(c, base)) < 0) break;
+
+     if (base == BDEC)
+      {
+       /* SJM 05/14/04 - decimal format ended by non beginning xz, i.e. */ 
+       /* it is assumed to be start of a string */
+       if ((c == 'x' || c == 'z') && wchp != __numtoken) break;  
+      }
+     *wchp++ = c;
+    }
+   c = scanf_getc(f);
+   if (width > 0 && --width == 0) break;
+  }
+ *wchp = '\0';
+ if (wchp == __numtoken) return(FALSE);
+ /* SJM 05/14/04 - if ends with non white space, need to start reading with */ 
+ /* ending char */
+ if (!isspace(c) && c != EOF) scanf_ungetc(c, f);
+
+ return(TRUE);
+}
+
+/*
+ * collect a ral (f,g, e, and t) real number from input into num token global 
+ * returns F on error - if so dret not changed
+ */
+static int collect_scanf_realnum(double *dret, FILE *f, int c, int width,
+ int fch)
+{
+ register char *wchp;
+ double d1;
+ int got_dot, got_e, signc, unit, errnum;
+ char *endp;
+
+ /* collect the string */
+ wchp = __numtoken; 
+ if (c == '-' || c == '+')
+  { signc = c; if (width > 0) --width; c = scanf_getc(f); }
+ else signc = ' ';
+ got_dot = got_e = 0;
+ for (;;)
+  {
+   if (isdigit(c)) *wchp++ = c;
+   else if (got_e && wchp[-1] == 'e' && (c == '-' || c == '+'))
+    *wchp++ = c;
+   else if (!got_e && (c == 'e' || c == 'E'))
+    { *wchp++ = 'e'; got_e = got_dot = 1; }
+   else if (c == '.' && !got_dot) { *wchp++ = c; got_dot = 1; }
+   else break;
+
+   if ((c = scanf_getc(f)) == EOF) break;
+   if (width > 0 && --width == 0) break;
+  }
+ *wchp = '\0';
+ /* terminate if no characters collected */
+ if (wchp == __numtoken) return(FALSE);
+
+ /* SJM 05/14/04 - if ends with non white space, need to start reading with */ 
+ /* ending char */
+ if (!isspace(c) && c != EOF) scanf_ungetc(c, f);
+
+ d1 = __my_strtod(__numtoken, &endp, &errnum);   
+ if (errnum != 0 || *endp != '\0') return(FALSE);
+ if (signc == '-') d1 = -d1;
+
+ /* SJM 09/24/03 - LOOKATME - maybe should only do if not suppresed */
+ if (fch == 't')
+  {
+   /* t format same as real except need to scale time format */ 
+   if (__inst_mod->mtime_units != __tfmt_units)
+    {
+     if (__inst_mod->mtime_units > __tfmt_units)
+      {
+       /* here d1 module ticks higher exp (more precision) - divide */  
+       unit = __inst_mod->mtime_units - __tfmt_units;
+       d1 /= __dbl_toticks_tab[unit];
+      }   
+     else
+      {
+       /* here d1 module ticks lower (less precision) - multiply */
+       unit = __tfmt_units - __inst_mod->mtime_units;
+       d1 *= __dbl_toticks_tab[unit];
+      }
+    }
+  }
+ *dret = d1;
+ return(TRUE);
+}
+
+/*
+ * collect 'u' format binary 0/1 one word values onto top of pushed xstk
+ */
+static struct xstk_t *collect_ufmt_binval(FILE *f, struct expr_t *lhsx, int c)
+{
+ register int wi;
+ register word wrd;
+ int b1, b2, b3, b4;
+ struct xstk_t *xsp;
+
+ push_xstk_(xsp, lhsx->szu.xclen);
+ /* b part always 0 */
+ zero_allbits_(xsp->bp, xsp->xslen);
+ for (wi = 0; wi < wlen_(lhsx->szu.xclen); wi++)
+  {
+   b1 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b2 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b3 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b4 = (word) c;
+#if (BYTE_ORDER == BIG_ENDIAN)
+   wrd = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
+    | ((b4 & 0xff) << 24);
+#else
+   wrd = (b4 & 0xff) | ((b3 & 0xff) << 8) | ((b2 & 0xff) << 16)
+    | ((b1 & 0xff) << 24);
+#endif
+   xsp->ap[wi] = wrd;
+  }
+ return(xsp);
+}
+
+/*
+ * collect 'z' format binary 4 value 2 word values onto top of pushed xstk
+ */
+static struct xstk_t *collect_zfmt_binval(FILE *f, struct expr_t *lhsx,
+ int c2)
+{
+ register int wi;
+ register word wrd, wrd2;
+ int c, b1, b2, b3, b4;
+ struct xstk_t *xsp;
+
+ push_xstk_(xsp, lhsx->szu.xclen);
+ for (wi = 0; wi < wlen_(lhsx->szu.xclen); wi++)
+  {
+   /* binary format by convention is a/b pairs following PLI t_vecval */
+   b1 = (word) c2;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b2 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b3 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b4 = (word) c;
+#if (BYTE_ORDER == BIG_ENDIAN)
+   wrd = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
+    | ((b4 & 0xff) << 24);
+#else
+   wrd = (b4 & 0xff) | ((b3 & 0xff) << 8) | ((b2 & 0xff) << 16)
+    | ((b1 & 0xff) << 24);
+#endif
+   xsp->ap[wi] = wrd;
+
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b1 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b2 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b3 = (word) c;
+   if ((c = scanf_getc(f)) == EOF) return(NULL);
+   b4 = (word) c;
+#if (BYTE_ORDER == BIG_ENDIAN)
+   wrd2 = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
+    | ((b4 & 0xff) << 24);
+#else
+   wrd2 = (b4 & 0xff) | ((b3 & 0xff) << 8) | ((b2 & 0xff) << 16)
+    | ((b1 & 0xff) << 24);
+#endif
+   xsp->bp[wi] = wrd2;
+  }
+ return(xsp);
+}
+
+/*
+ * convert scanf stren name to one byte stren value
+ * return byte value or 0 (impossible stren) on error
+ *
+ * since scanf can only assign to regs, stren has stren removed
+ * but must check for legal and then remove stren
+ */
+static int cnvt_scanf_stnam_to_val(char *s) 
+{
+ int stval, st0, st1;
+ char val;
+ char stren[RECLEN];
+
+ if (strcmp(s, "HiZ") == 0) return(2);
+
+ val = s[2];
+ strncpy(stren, s, 2);  
+ stren[2] = '\0';
+ if (strcmp(stren, "Su") == 0) st0 = st1 = ST_SUPPLY;
+ else if (strcmp(stren, "St") == 0) st0 = st1 = ST_STRONG;
+ else if (strcmp(stren, "Pu") == 0) st0 = st1 = ST_PULL;
+ else if (strcmp(stren, "La") == 0) st0 = st1 = ST_LARGE;
+ else if (strcmp(stren, "We") == 0) st0 = st1 = ST_WEAK;
+ else if (strcmp(stren, "Me") == 0) st0 = st1 = ST_MEDIUM;
+ else if (strcmp(stren, "Sm") == 0) st0 = st1 = ST_SMALL;
+ else return(-1);
+
+ /* only use of Z aready eliminated */
+ /* notice st1 and st0 must be same here */
+ switch(val) {
+  case '0':
+   stval = 0 | (st1 << 2) | (st0 << 5);
+   break; 
+  case '1':
+   stval = 1 | (st1 << 2) | (st0 << 5);
+   break;
+  case 'X':
+   stval = 3 | (st1 << 2) | (st0 << 5);
+   break;
+  case 'L':
+   stval = 3 | (st0 << 5); 
+   break;
+  case 'H':
+   stval = 3 | (st1 << 2); 
+   break;
+  default: return(0);
+ } 
+ return(stval);
 }
 

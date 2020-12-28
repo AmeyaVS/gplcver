@@ -7157,7 +7157,7 @@ static int chk_add_del_vclobj(char *rtnnam, struct h_t **hpp,
      *hpp = hp;
     }
    break;
-  case vpiRealVar: case vpiNamedEvent:
+   case vpiRealVar: case vpiNamedEvent:
    /* WRITEME */
    /* LOOKATME - does this work in vpi_ */
    __acc_err(1941, "%s: %s%s object not yet implemented", rtnnam,

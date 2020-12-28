@@ -29,15 +29,27 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+
+#if defined(__CYGWIN32__) || defined(__SVR4)
+#include <sys/stat.h>
+#endif
+
+#if defined(__SVR4) || defined(__hpux) || defined(__CYGWIN32__)
+#include <dirent.h>
+#else
+#include <sys/dir.h>
+#endif
 
 #ifdef __DBMALLOC__
 #include "../malloc.h"
 #endif
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
-#if defined(__sparc) && !defined(__SVR4)  
+#if defined(__SVR4) || defined(__hpux)
 extern int tolower(int);
 #endif
 
@@ -82,6 +94,67 @@ static int rd_tchk_selector(int *, struct expr_t **, struct expr_t **);
 static int rd_edges(int *);
 static struct sy_t *rd_notifier(void);
 static struct attr_t *chk_dup_attrs(struct attr_t *);
+static void rd1_cfg_file(FILE *);
+static void rd_cfg_library(FILE *);
+static struct libel_t *rd_cfg_fspec_list(FILE *, int);
+static void rd_cfg_cfg(FILE *);
+static int chk_libid(char *);
+static int chk_escid(char *);
+static void init_rule(struct cfgrule_t *);
+static int extract_design_nam(char *, char *, char *);
+static int bld_inst_xmr_comptab(char *);
+static void grow_bind_comps(void);
+static int extract_libcell_nam(char *, char *, char *);
+static int rd_use_clause(FILE *, char *, char *, int *);
+static int extract_use_nam(char *, char *, int *, char *);
+static struct cfgnamlst_t *rd_liblist(FILE *);
+
+static void init_cfglib(struct cfglib_t *);
+static void init_cfg(struct cfg_t *);
+static int cfg_skipto_semi(int, FILE *);
+static int cfg_skipto_comma_semi(int, FILE *);
+static int cfg_skipto_semi_endconfig(int, FILE *);
+static int cfg_skipto_eof(int, FILE *);
+
+static void expand_dir_pats(struct cfglib_t *, struct libel_t *, char *);
+static void expand_hier_files(struct cfglib_t *, struct libel_t *, 
+ struct xpndfile_t *);
+static void match_dir_pats(struct libel_t *, struct xpndfile_t *, char *, 
+ char *, int, int);
+static void movedir_match_dir_pats(struct libel_t *, struct xpndfile_t *); 
+static void find_hier(struct libel_t *, struct xpndfile_t *, char *, char *);
+static int match_hier_name(struct xpndfile_t *, char *);
+static int match_wildcard_str(char *, struct xpndfile_t *);
+static void expand_libel(struct libel_t *, char *);
+static int expand_single_hier(struct cfglib_t *, struct libel_t *, char *);
+static int has_wildcard(char *);
+static void prep_cfg_vflist(void);
+static void dump_config_info(void);
+static void dump_lib_expand(void);
+static int bind_cfg_design(struct cfg_t *, int);
+static struct cfglib_t *find_cfglib(char *);
+static void free_undef_list(void);
+static void bind_cells_in1mod(struct cfg_t *, struct cfglib_t *,
+ struct mod_t *);
+static int try_match_rule(struct cfglib_t *, struct cell_t *,
+ struct cfgrule_t *);
+static void build_rule_error(struct cfg_t *, struct cfglib_t *, 
+struct cfgrule_t *);
+static int bind_liblist_rule(struct cfg_t *, struct cell_t *,
+ struct cfgrule_t *);
+static int bind_use_rule(struct cfg_t *, struct cfglib_t *, struct cell_t *,
+ struct cfgrule_t *);
+static struct cfg_t *fnd_cfg_by_name(char *);
+static void bind_cells_inside(struct cfg_t *, struct cell_t *,
+ struct mod_t *, struct cfglib_t *);
+static struct mod_t *find_cell_in_cfglib(char *, struct cfglib_t *);
+static int open_cfg_lbfil(char *);
+static void rd_cfg_srcfil(struct libel_t *);
+static int init_chk_cfg_sytab(struct libel_t *, char *);
+static void free_unused_cfgmods(void);
+static void partially_free_mod(struct mod_t *);
+static void add_cfg_libsyms(struct cfglib_t *);
+static void add_cfgsym(char *, struct tnode_t *);
 
 /* extern prototypes (maybe defined in this module) */
 extern char *__pv_stralloc(char *);
@@ -121,7 +194,7 @@ extern int __fr_tcnam(char *);
 extern int __spec_vskipto_any(int);
 extern int __spec_vskipto2_any(int, int);
 extern int __spec_vskipto3_any(int, int, int);
-extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **);
+extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **, int);
 extern int __col_paramrhsexpr(void);
 extern int __col_connexpr(int);
 extern int __col_comsemi(int);
@@ -153,14 +226,28 @@ extern void __push_vinfil(void);
 extern void __rd_ver_mod(void);
 extern int __expr_has_glb(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
 extern void __sizchgxs(struct xstk_t *, int);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
 extern void __eval_param_rhs_tonum(struct expr_t *);
 extern int __cmp_xpr(struct expr_t *, struct expr_t *);
+extern FILE *__tilde_fopen(char *, char *);
+extern int __get_cfgtok(FILE *);
+extern int __vskipto_modend(int);
+extern void __grow_infils(int);
+extern int __rd_cfg(void);
+extern char *__to_cfgtoknam(char *, int);
+extern void __my_fclose(FILE *);
+extern void __expand_lib_wildcards(void);
+extern void __process_cdir(void);
+extern int __rd_moddef(struct symtab_t *, int);
+extern int __vskipto2_modend(int, int);
+extern char *__cfg_lineloc(char *s, char *, int);
+extern char *__schop(char *, char *);
+extern void __sym_addprims(void);
 
 extern void __cv_msg(char *s, ...);
+extern void __finform(int, char *, ...);
 extern void __pv_ferr(int, char *, ...);
 extern void __pv_fwarn(int, char *, ...);
 extern void __gfinform(int, unsigned, int, char *, ...);
@@ -173,8 +260,8 @@ extern void __arg_terr(char *, int);
 extern void __case_terr(char *, int);
 extern void __misc_terr(char *, int);
 extern void __misc_fterr(char *, int);
-
-extern word __masktab[];
+extern void __pv_err(int, char *, ...);
+extern void __pv_warn(int, char *, ...);
 
 /*
  * UDP PROCESSING ROUTINES
@@ -188,12 +275,13 @@ extern word __masktab[];
  *
  * primitive keyword read and reads endprimitive
  */
-extern int __rd_udpdef(void)
+extern int __rd_udpdef(struct symtab_t *cfg_sytab)
 {
  int retval, initlcnt, initsfnind;
  struct udp_t *udpp;
  struct tnode_t *tnp;
  struct sy_t *syp;
+ char *cp;
 
  initlcnt = 0;
  initsfnind = 0;
@@ -209,21 +297,37 @@ skip_end:
    __letendnum_state = FALSE;
    return(retval);
   }
- tnp = __vtfind(__token, __modsyms);
- if (__sym_is_new)
+ cp = __token;
+
+ if (cfg_sytab != NULL)
   {
+   tnp = __vtfind(__token, cfg_sytab);
+   /* dups already checked for */
+   /* DBG remove -- */
+   if (!__sym_is_new) __misc_terr(__FILE__, __LINE__);
+   /* --- */
    __add_sym(__token, tnp);
-   (__modsyms->numsyms)++;
+   (cfg_sytab->numsyms)++;
    syp = tnp->ndp;
   }
  else
   {
-   syp = tnp->ndp;
-   /* if previously guessed as module, will just change */
-   if (!__chk_redef_err(__token, syp, "udp", SYM_UDP)) goto skip_end;
-   /* chk fail means never in module undef list */
-  __remove_undef_mod(syp);
-  }
+   tnp = __vtfind(cp, __modsyms);
+   if (__sym_is_new)
+    {
+     __add_sym(__token, tnp);
+     (__modsyms->numsyms)++;
+     syp = tnp->ndp;
+    }
+   else
+    {
+     syp = tnp->ndp;
+     /* if previously guessed as module, will just change */
+     if (!__chk_redef_err(__token, syp, "udp", SYM_UDP)) goto skip_end;
+     /* chk fail means never in module undef list */
+     __remove_undef_mod(syp);
+    }
+  } 
  syp->sytyp = SYM_UDP;
  udpp = alloc_udp(syp);
  syp->el.eudpp = udpp;
@@ -449,7 +553,7 @@ again:
        if (__toktyp != ID)
         {
          __pv_ferr(1170, "udp input port name expected - %s read",
-	  __prt_kywrd_vtok());
+          __prt_kywrd_vtok());
 sync_in:
          if (__udp_vskipto2_any(COMMA, SEMI)) 
           {
@@ -459,7 +563,7 @@ sync_in:
           }
          if (__syncto_class == SYNC_FLEVEL) return(FALSE);
          else goto again;
-	}
+        }
        if ((syp = __get_sym(__token, __cur_udp->usymtab)) == NULL)
         {
 not_in_port:
@@ -468,11 +572,11 @@ not_in_port:
          goto nxt_port;
         }
        if (syp->sytyp != SYM_N)
-	{
+        {
 bad_sytab:
-	 /* udp symbol table inconsistent */
+         /* udp symbol table inconsistent */
          __misc_fterr(__FILE__, __LINE__);
-	}
+        }
        mpp = syp->el.empp;
        if (syp->sydecl || mpp->mptyp != IO_UNKN) goto not_in_port;
        mpp->mptyp = IO_IN;
@@ -1019,12 +1123,12 @@ static int chk_sequdpline(char *uline, struct udp_t *udpp,
        *chp = to_edgech(t1 & 0x7);
        __cur_utabsel = to_edgech((t1 >> 3) & 0x7);
        if ((__cur_utabsel == '0' && *chp == '0')
-	|| (__cur_utabsel == '1' && *chp == '1')
-	|| (__cur_utabsel == 'x' && *chp == 'x'))
-	{
- 	 __pv_ferr(1224,
-	 "sequential udp line edge (%c%c) (input %d) illegal - no transition",
-	  __cur_utabsel, *chp, __cur_ueipnum + 1);
+        || (__cur_utabsel == '1' && *chp == '1')
+        || (__cur_utabsel == 'x' && *chp == 'x'))
+        {
+         __pv_ferr(1224,
+          "sequential udp line edge (%c%c) (input %d) illegal - no transition",
+          __cur_utabsel, *chp, __cur_ueipnum + 1);
          return(FALSE);
         }
       }
@@ -1331,7 +1435,7 @@ specitem_resync:
           return(FALSE);
          case SYNC_SPECITEM:
           break;
- 	 /* if sync. to statement assume initial left out */
+         /* if sync. to statement assume initial left out */
          default: __case_terr(__FILE__, __LINE__);
         }
        }
@@ -1348,19 +1452,19 @@ specitem_resync:
          {
           __pv_ferr(1228,
            "system task %s illegal in specify section", __token);
-	  goto err_skip;
+          goto err_skip;
          }
         tchktyp = tmpi;
         __get_vtok();
         if (__toktyp != LPAR)
-	 {
-	  __pv_ferr(1231,
+         {
+          __pv_ferr(1231,
           "timing check %s argument list left parenthesis expected - %s read",
-  	   __to_tcnam(s1, tchktyp) , __prt_vtok());
+          __to_tcnam(s1, tchktyp) , __prt_vtok());
           goto err_skip;
-	 } 
+         } 
         /* specify system timing check tasks */
-	/* the routines fill cur tchk */
+        /* the routines fill cur tchk */
         switch ((byte) tchktyp) {
          case TCHK_SETUP: case TCHK_HOLD:
           if (!rd_setup_or_hold_tchk(tchktyp)) goto specitem_resync;
@@ -1393,9 +1497,9 @@ specitem_resync:
          default: __case_terr(__FILE__, __LINE__);
         }
         /* add to timing check list */
-	if (__end_tchks == NULL) __cur_spfy->tchks = __cur_tchk;
-	else __end_tchks->tchknxt = __cur_tchk;
-	__end_tchks = __cur_tchk;
+        if (__end_tchks == NULL) __cur_spfy->tchks = __cur_tchk;
+        else __end_tchks->tchknxt = __cur_tchk;
+        __end_tchks = __cur_tchk;
         break;
        }
       /* fall through to error since ID not specify item */
@@ -1459,7 +1563,7 @@ static int rd_specparamdecl(void)
  if (__toktyp == LSB)
   {
    /* also check to make sure ranges are non x/z 32 bit values */
-   if (!__rd_opt_param_vec_rng(&dx1, &dx2)) return(FALSE);
+   if (!__rd_opt_param_vec_rng(&dx1, &dx2, FALSE)) return(FALSE);
    if (dx1 == NULL || dx2 == NULL) goto rd_param_list;
 
    r1 = (int) __contab[dx1->ru.xvi];
@@ -1471,7 +1575,7 @@ static int rd_specparamdecl(void)
   }
 
 rd_param_list:
- for (;;)	
+ for (;;)
   {
    if (__toktyp != ID)
     {
@@ -1619,8 +1723,8 @@ nxt_sparam:
  * 02/04/00 - SJM change to move toward v2k LRM and match XL better
  * type determined from RHS - range allowed and used for width
  *
- * FIXME - still for signed negatives need to convert to real or will
- * not see negative in delay prep - how fix this 
+ * SJM 10/06/03 - signed keyword illegal and specparams never signed
+ * unless real
  */
 static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
  int prng_decl, int pwid)
@@ -1635,7 +1739,6 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
  /* case 1: range declaration - may need to convert value */
  if (prng_decl)
   {
-   /* FIXME - need to add signed keyword */
    /* convert declared param type real rhs to int/reg */
    if (ndp->is_real)
     {
@@ -1648,14 +1751,12 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
     }
    else
     {
-     /* xsp always right width for parameter net width */
      if (xsp->xslen != pwid) __sizchgxs(xsp, pwid);
 
      np->nu.ct->prngdecl = TRUE;
      np->nwid = xsp->xslen;
      np->ntyp = N_REG;
      if (np->nwid > 1) { np->n_isavec = TRUE; np->vec_scalared = TRUE; } 
-     if (ndp->has_sign) np->n_signed = TRUE;
      np->nu.ct->pbase = ndp->ibase;
     }
 
@@ -1668,22 +1769,8 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
    return;
   }
 
- /* FIXME - for now because no signed keyword, need to make signed int */
- /* FIXME - this must be wrong */
- /* into real if negative so negative values will work in timing checks */
- if (!ndp->is_real && xsp->xslen == WBITS)
-  {
-   /* if signed int and negative need to convert to real */
-   if (ndp->has_sign && xsp->bp[0] == 0L
-    && ((xsp->ap[0] & ~__masktab[31]) != 0L))
-    {
-     /* will not fit in int, convert to real (always signed) */
-     __cnv_stk_fromreg_toreal(xsp, (ndp->has_sign == 1));
-     ndp->is_real = TRUE;
-     ndp->has_sign = TRUE;
-     ndp->szu.xclen = REALBITS;
-    }
-   }
+ /* SJM 10/06/03 - since specparams never signed, interpret as unsigned */
+ /* even if rhs signed with sign bit on */
 
  /* case 2: type determined from constant expr */
  /* spec params either reg or real - by here if range decl ndp fixed */
@@ -1702,7 +1789,6 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
    np->nwid = xsp->xslen;
    np->ntyp = N_REG;
    if (np->nwid > 1) { np->n_isavec = TRUE; np->vec_scalared = TRUE; } 
-   if (ndp->has_sign) np->n_signed = TRUE;
    if (ndp->is_string) np->nu.ct->pstring = TRUE;
 
    np->nu.ct->pbase = ndp->ibase;
@@ -3151,13 +3237,10 @@ try_callback:
  */
 extern int __notokenize_skiplines(char *match_prefix)
 {
- register char *chp;
- int c;
- 
  if (__langstr == NULL) __langstr = __my_malloc(IDLEN + 1);
  for (;;)
   {
-   if ((c = __my_getlin(__langstr)) == EOF)
+   if (__my_getlin(__langstr) == EOF)
     {
      /* first try to pop some sort of outer nested thing */
      /* this sets line number to right outer line and no line here */
@@ -3179,7 +3262,7 @@ eof_error:
      return(TEOF);
     }
 
-   if ((chp = __match_cdir(__langstr, match_prefix)) != NULL)
+   if (__match_cdir(__langstr, match_prefix) != NULL)
     {
      __lin_cnt++;
      __total_rd_lines++;
@@ -3288,7 +3371,7 @@ extern int __exec_rdinserted_src(char *buf)
 }
 
 /*
- * VERILOG 2000 ATTRIBUTE READING ROUTINES
+ * VERILOG 2001 ATTRIBUTE READING ROUTINES
  */
 
 /*
@@ -3500,3 +3583,3051 @@ chk_nxt_attr:;
  return(new_attrhd);
 }
 
+/*
+ * ROUTINES TO READ CFG LIB.MAP INPUT FILE LIST
+ */
+
+/*
+ * read a cfg file - returns F on error else T
+ * reads both library mapping file and the config blocks
+ *
+ * may have list of config map library files (if none given using map.lib)
+ *
+ * if passed the command line, insrc = FALSE, and mapfile is the file name
+ * otherwise TRUE, NULL if in source
+ *
+ * SJM 11/29/03 - contrary to LRM but following NC, cfg can't appear in src
+ * but allowing list of lib.map files
+ */
+extern int __rd_cfg(void)
+{
+ int i, sav_ecnt, sav_lin_cnt;
+ FILE *fp;
+ struct mapfiles_t *mapfp;
+ char *sav_cur_fnam;
+
+ /* DBG remove -- */
+ if (__map_files_hd == NULL) __misc_terr(__FILE__, __LINE__);
+ /* --- */
+
+ /* initialize the instance clause rule binding XMR path component glb tab */
+ __siz_bind_comps = 50;
+ __bind_inam_comptab = (char **) __my_malloc(__siz_bind_comps*sizeof(char *)); 
+ __last_bind_comp_ndx = -1;
+ for (i = 0; i < __siz_bind_comps; i++) __bind_inam_comptab[i] = NULL;
+
+ /* SJM 01/15/04 - reading cfg does not use in fils buts must save as cntxt */
+ sav_lin_cnt = __lin_cnt;
+ sav_cur_fnam = __cur_fnam;
+
+ sav_ecnt = __pv_err_cnt; 
+ for (mapfp = __map_files_hd; mapfp != NULL; mapfp = mapfp->mapfnxt) 
+  {
+   /* must set cur file and line count for error messages */
+   __cur_fnam = __pv_stralloc(mapfp->mapfnam);
+   __lin_cnt = 1;
+   if ((fp = __tilde_fopen(__cur_fnam, "r")) == NULL)
+    {
+     __pv_err(3500, "cannot open config map library file %s - skipped",
+      __cur_fnam);
+     continue;
+    }
+   if (feof(fp))
+    {
+     __pv_warn(3121, "config map library file %s empty", __cur_fnam);
+     continue; 
+    }
+   rd1_cfg_file(fp);
+  }
+ /* and then put back */
+ __lin_cnt = sav_lin_cnt;
+ __cur_fnam = sav_cur_fnam;
+ 
+ if (__pv_err_cnt != sav_ecnt) return(FALSE);
+ return(TRUE);
+}
+
+/*
+ * read contents of one config file
+ */
+static void rd1_cfg_file(FILE *fp)
+{ 
+ register int ttyp;
+ int ttyp2, sav_lin_cnt;
+ FILE *incfp ;
+ char *sav_cur_fnam;
+
+ for (;;)
+  {
+   ttyp = __get_cfgtok(fp);
+   if (ttyp == CFG_INCLUDE)
+    {
+     if ((ttyp2 = __get_cfgtok(fp)) != CFG_ID)
+      {
+       __pv_ferr(3501,
+        "config map library include statement non wildcard file path name expected - %s read",
+        __to_cfgtoknam(__xs, ttyp2));
+       if (cfg_skipto_semi(ttyp2, fp) == CFG_EOF) return;  
+       continue;
+      }
+     if ((incfp = __tilde_fopen(__token, "r")) == NULL)
+      {
+       __pv_ferr(3502,
+        "cannot open config map library include file %s - skipped",
+        __token);
+       if (cfg_skipto_semi(ttyp2, fp) == CFG_EOF) return;  
+       continue;
+      }
+     if (feof(incfp))
+      {
+       __pv_warn(3121, "config map library file %s empty", __token);
+       goto skipto_semi;
+      }
+
+     /* SJM 01/15/04 - save ptr and malloc name for later err msgs */
+     sav_lin_cnt = __lin_cnt;
+     sav_cur_fnam = __cur_fnam;
+     __cur_fnam = __pv_stralloc(__token);
+     __lin_cnt = 1;
+
+     rd1_cfg_file(incfp); 
+
+     __cur_fnam = sav_cur_fnam;
+     __lin_cnt = sav_lin_cnt;
+
+skipto_semi:
+     ttyp = __get_cfgtok(fp);
+     if (ttyp != CFG_SEMI)
+      {
+       if (cfg_skipto_semi(ttyp2, fp) == CFG_EOF) return;  
+      }
+     continue;
+    }
+   if (ttyp == CFG_LIBRARY)
+    {
+     rd_cfg_library(fp);
+     continue;
+    }
+   if (ttyp == CFG_CFG) 
+    {
+     rd_cfg_cfg(fp);
+     continue;
+    }
+   if (ttyp == CFG_EOF) return;
+  }
+ /* -- DBG remove ---
+ dump_mod_info();
+ --- */ 
+}
+
+/*
+ * read a library map file library list
+ * expects library keyword to have been read and reads ending ; (or CFG_EOF)
+ *
+ * if no libraries specified and unresolved references after reading
+ * source files (either from config or from list of source files)
+ * elaboration will fail with unresolved lib refs
+ */
+static void rd_cfg_library(FILE *fp)
+{
+ int ttyp;
+ struct cfglib_t *lbp;
+ struct libel_t *lbep;
+
+ /* get the library name */
+ if ((ttyp =__get_cfgtok(fp)) != CFG_ID)
+  {
+   __pv_ferr(3503,
+    "library map file library description library name expected - %s read", 
+    __to_cfgtoknam(__xs, ttyp));
+   cfg_skipto_semi(ttyp, fp);
+   return;
+  }
+ lbp = (struct cfglib_t *) __my_malloc(sizeof(struct cfglib_t));
+ init_cfglib(lbp);
+ /* needed for expand error messages */
+ lbp->cfglb_fnam = __cur_fnam;
+ lbp->cfglb_lno = __lin_cnt;
+ lbp->sym_added = FALSE;
+
+ if (!chk_libid(__token))
+  { 
+   __pv_ferr(3504, "library name %s illegal simple Verilog identifier",
+    __token);
+  }
+ lbp->lbname = __pv_stralloc(__token);
+ lbep = rd_cfg_fspec_list(fp, FALSE);
+ lbp->lbels = lbep; 
+ if (__cfglib_tail == NULL) __cfglib_hd = __cfglib_tail = lbp; 
+ else
+  {
+   __cfglib_tail->lbnxt = lbp;
+   __cfglib_tail = lbp;
+  }
+}
+
+/*
+ * read a list of library file spec (wildcard) paths build and return list
+ * reads first element and reads ending EOF (for --incdir) or semi 
+ *
+ * SJM 12/11/03 - notice old config dir code was wrong - comma separated list
+ *
+ * LOOKATME - maybe should return nil on error
+ */
+static struct libel_t *rd_cfg_fspec_list(FILE *fp, int in_incdir)
+{
+ int ttyp, ttyp2, sav_lin_cnt;
+ struct libel_t *lbep, *lbep2, *lbep_hd, *last_lbep;
+ FILE *incfp;
+ char *sav_cur_fnam;
+
+ for (lbep_hd = last_lbep = NULL;;)
+  {
+   ttyp = __get_cfgtok(fp);
+   if (ttyp == CFG_SEMI || ttyp == CFG_EOF)
+    {
+     if (in_incdir)
+      {
+       if (ttyp == CFG_SEMI)
+        {
+         __pv_ferr(3507,
+          "config library description file path spec in -incdir ';' illegal");
+         cfg_skipto_eof(ttyp, fp);
+        }
+       break; 
+      }
+     if (ttyp == CFG_EOF)
+      {
+       __pv_ferr(3507,
+        "config library description file path spec in -incdir ';' illegal");
+         cfg_skipto_eof(ttyp, fp);
+       /* even if hit wrong early EOF return list build so far */
+      }
+     /* know correct sem read or error emitted */
+     break;
+    }
+
+   if (ttyp != CFG_ID)
+    {
+     __pv_ferr(3506,
+      "config library description file path spec expected - %s read",
+      __to_cfgtoknam(__xs, ttyp)); 
+
+     if ((ttyp2 = cfg_skipto_comma_semi(ttyp, fp)) == CFG_COMMA) continue;
+     if (in_incdir && ttyp2 == CFG_SEMI)
+      {
+       __pv_ferr(3507,
+        "config library description file path spec in -incdir ';' illegal");
+       cfg_skipto_eof(ttyp, fp);
+      }
+     return(NULL);
+    }
+   
+   /* -incdir [name of file contains comma separated lib list] */
+   /* can be nested */
+   /* case 1: -incdir file containg comma separated list but end with EOF */ 
+   if (strcmp(__token, "-incdir") == 0) 
+    {
+     /* read the config list from a file (comma separated) */
+     if ((ttyp2 = __get_cfgtok(fp)) != CFG_ID)
+      {
+       __pv_ferr(3501,
+        "config library description -incdir non wildcard file path name expected - %s read",
+        __to_cfgtoknam(__xs, ttyp2));
+inc_err_skip:
+       if (cfg_skipto_comma_semi(ttyp, fp) == CFG_COMMA) continue;
+       return(NULL);
+      }
+     if ((incfp = __tilde_fopen(__token, "r")) == NULL)
+      {
+       __pv_ferr(3502,
+        "cannot open config library description -incdir file %s - skipped",
+        __token);
+       goto inc_err_skip; 
+      }
+     if (feof(incfp))
+      {
+       __pv_fwarn(3121,
+        "config library description -incdir file %s empty", __token);
+       goto inc_err_skip;
+      }
+
+     /* SJM 01/15/04 - save ptr and malloc name for later err msgs */
+     sav_cur_fnam = __cur_fnam;
+     sav_lin_cnt = __lin_cnt;
+     __cur_fnam = __pv_stralloc(__token);
+     __lin_cnt = 1;
+
+     lbep = rd_cfg_fspec_list(incfp, TRUE);
+     if (lbep != NULL) 
+      {
+       /* link onto end and update last to end of new add (maybe long) list */
+       if (last_lbep == NULL) lbep_hd = lbep;
+       else last_lbep->lbenxt = lbep;
+
+       /* SJM 12/08/03 - think this is wrong ??? - need a last */
+       for (lbep2 = lbep; lbep2->lbenxt != NULL; lbep2 = lbep2->lbenxt) ; 
+       last_lbep = lbep2;
+      } 
+     __my_fclose(incfp); 
+
+     __cur_fnam = sav_cur_fnam;
+     __lin_cnt = sav_lin_cnt;
+    }
+   /* case 2: file spec - only other possibility */
+   lbep = (struct libel_t *) __my_malloc(sizeof(struct libel_t));
+   lbep->lbelsrc_rd = FALSE;
+   lbep->lbefnam = __pv_stralloc(__token);
+   lbep->lbcelndx = NULL;
+   lbep->lbel_sytab = NULL;
+   lbep->lbenxt = NULL;
+   lbep->expanded = FALSE;
+
+   if (last_lbep == NULL) lbep_hd = lbep; else last_lbep->lbenxt = lbep;
+   last_lbep = lbep;
+  }
+ return(lbep_hd);
+}
+
+/*
+ * read map library config block 
+ * know config keyword read and reads the endconfig keyword 
+ *
+ * idea is that the library lists are separate from the config blocks
+ */
+static void rd_cfg_cfg(FILE *fp)
+{
+ int ttyp, len, cfg_beg_lno, nbytes, expl_config;
+ struct cfgdes_t *desp, *des_hd, *des_tail;
+ struct cfg_t *cfgp;
+ struct cfgrule_t *rulp, *rule_beg, *rule_end;
+ struct cfgnamlst_t *lblp;
+ char objnam[IDLEN], libnam[IDLEN], celnam[IDLEN];
+ char cfgnam[IDLEN], s1[IDLEN], s2[IDLEN];
+
+ cfg_beg_lno = __lin_cnt;
+ /* get the config name */
+ if ((ttyp =__get_cfgtok(fp)) != CFG_ID)
+  {
+   __pv_ferr(3503, "config declaration config name expected - %s read", 
+    __to_cfgtoknam(__xs, ttyp));
+   if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+   strcpy(cfgnam, "**none**");
+  }
+ else
+  { 
+   strcpy(cfgnam, __token);
+   ttyp = __get_cfgtok(fp);
+  }
+ if (ttyp != CFG_SEMI)
+  {
+   __pv_ferr(3531,
+    "config declaration config name not followed by semicolon - %s read",
+    __to_cfgtoknam(__xs, ttyp));
+   if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+  }
+ /* config names may need to match cell type names so can be escaped */
+ if (!chk_libid(cfgnam))
+  {
+   if (chk_escid(cfgnam))
+    {
+     /* remove the leading escaping back slash and ending ' ' */
+     strcpy(s1, &(cfgnam[1]));
+     len = strlen(s1);
+     s1[len - 1] = '\0';
+     strcpy(cfgnam, s1);
+    }
+   else
+    {
+     __pv_ferr(3534,
+      "illegal config name %s - must be legal Verlog identifier", cfgnam);
+    }
+  }
+
+ cfgp = (struct cfg_t *) __my_malloc(sizeof(struct cfg_t));
+ init_cfg(cfgp);
+ cfgp->cfgnam = __pv_stralloc(cfgnam);
+ /* config location info for tracing and error msgs */
+ cfgp->cfg_fnam = __pv_stralloc(__cur_fnam); 
+ cfgp->cfg_lno = cfg_beg_lno;
+
+ ttyp = __get_cfgtok(fp);
+ /* config design statement must come first if used */
+ if (ttyp == CFG_DESIGN)
+  {
+   /* SJM 12/08/03 - as I read LRM, every top module needs separate config */ 
+   /* therefore only one design mod allowed - FIXME- text of LRM contradicts */
+
+   des_hd = des_tail = NULL;
+   for (;;)
+    {
+     ttyp =__get_cfgtok(fp);
+     if (ttyp == CFG_SEMI)
+      {
+       if (des_hd == NULL)
+        {
+         __pv_ferr(3532,
+          "config design statement requires at least one [lib name].[cell name]");
+        }
+       break;
+      }
+     /* get the design specifier [library].[mod name] */
+     if (ttyp != CFG_ID)
+      {
+       __pv_ferr(3533,
+        "config design statement design specifier expected - %s read", 
+        __to_cfgtoknam(__xs, ttyp));
+       if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+       /* here just leave objnam nil for none */
+      }
+     else
+      { 
+       /* library name required design cell name */ 
+       /* notice cell nam can be escaped and if so escapes removed */
+       if (!extract_design_nam(libnam, celnam, __token))
+        {
+         __pv_ferr(3535,
+          "config design statement [library identifier].[cell identifier] expected - %s illegal",
+          __to_cfgtoknam(__xs, ttyp));
+         /* skip on error */
+         continue;
+        }
+      desp = (struct cfgdes_t *) __my_malloc(sizeof(struct cfgdes_t)); 
+      desp->deslbnam = __pv_stralloc(libnam);
+      desp->deslbp = NULL;
+      desp->topmodnam = __pv_stralloc(celnam);
+      desp->desnxt = NULL;
+
+      if (des_hd == NULL) des_hd = des_tail = desp;
+      else
+       {
+        des_tail->desnxt = desp;
+        des_tail = desp;
+       }
+     }
+    }
+   cfgp->cfgdeslist = des_hd;
+
+   /* know ';' read to get here */
+   ttyp =__get_cfgtok(fp);
+  }
+ rule_beg = rule_end = NULL;
+ for (;;)
+  {
+   /* liblist or use clauses never start a config rule */
+   switch(ttyp) { 
+    case CFG_DEFAULT:
+     if (cfgp->cfgdflt != NULL)
+      {
+       __pv_ferr(3538, "config %s default clause repeated - new one replaces",
+       cfgp->cfgnam);
+      }
+   
+     /* format: default liblist [space sep list of library names]; */ 
+     /* may return nil */
+     if ((ttyp = __get_cfgtok(fp)) != CFG_LIBLIST) 
+      {
+       __pv_ferr(3537,
+        "config declaration default clause not followed by liblist keyword - %s read",
+        __to_cfgtoknam(__xs, ttyp));
+       if (cfg_skipto_semi_endconfig(ttyp, fp) != CFG_SEMI)
+        return;
+       continue;
+      }
+     if ((lblp = rd_liblist(fp)) != NULL)
+      {
+       if (cfgp->cfgdflt != NULL) 
+        {
+         /* SJM 12/19/03 - LOOKATME - what if repated */
+         __pv_ferr(3539, "config declaration default clause repeated - 2nd ignord"); 
+        }
+      }
+     else
+      {
+       __pv_fwarn(3127, "config declaration default clause liblist empty");
+      }
+     rulp = (struct cfgrule_t *) __my_malloc(sizeof(struct cfgrule_t));
+     init_rule(rulp);
+     rulp->rul_libs = lblp;
+     rulp->rultyp = CFG_DEFAULT;
+     cfgp->cfgdflt = rulp;
+     break;
+    case CFG_ENDCFG:
+     /* no semi after end config */
+     goto endcfg_read;
+    case CFG_INSTANCE:
+     /* format: instance [inst name] liblist [space sep lib name list]; */ 
+     /* format: instance [inst name] use [qualified mod type name]; */
+ 
+     /* instance name can be XMR but take apart later */
+     if ((ttyp = __get_cfgtok(fp)) != CFG_ID) 
+      {
+       __pv_ferr(3540,
+        "config instance clause instance named expected - %s read",
+          __to_cfgtoknam(__xs, ttyp));
+        if (cfg_skipto_semi_endconfig(ttyp, fp) != CFG_SEMI)
+         return;
+       continue;
+      }
+     /* save the instance name */
+     strcpy(objnam, __token);
+     /* check config XMR path and build malloced cfg nam list of components */
+     /* if return F, table not built */
+     if (!bld_inst_xmr_comptab(__token))
+      {
+       __pv_ferr(3540,
+        "config instance clause instance name %s illegal Verilog hierarchical name",
+       __token);
+       continue;
+      }  
+
+     lblp = NULL;
+     if ((ttyp = __get_cfgtok(fp)) == CFG_LIBLIST) 
+      {
+       /* case 1: liblist form - always reads ending ; */
+       if ((lblp = rd_liblist(fp)) == NULL)
+        {
+         __pv_fwarn(3129, "config instance clause liblist empty - ignored");
+         goto rd_nxt_tok;
+        }
+       rulp = (struct cfgrule_t *) __my_malloc(sizeof(struct cfgrule_t));
+       init_rule(rulp);
+       rulp->rultyp = CFG_INSTANCE;
+       /* just set the instance name and lib names are in lblp */
+       rulp->objnam = __pv_stralloc(objnam);
+       rulp->rul_libs = lblp;
+      }
+     else if (ttyp == CFG_USE) 
+      {
+       if (rd_use_clause(fp, s1, s2, &expl_config) == CFG_ENDCFG)
+        return;
+       /* on error s1 not set */
+       if (strcmp(s1, "") == 0 && strcmp(s2, "") == 0) goto rd_nxt_tok;
+
+       rulp = (struct cfgrule_t *) __my_malloc(sizeof(struct cfgrule_t));
+       init_rule(rulp);
+       rulp->rultyp = CFG_INSTANCE;
+       /* instance objnam use s1.s2 */
+       rulp->rul_use_libnam = __pv_stralloc(s1);
+       rulp->rul_use_celnam = __pv_stralloc(s2);
+       rulp->objnam = __pv_stralloc(objnam);
+       rulp->use_rule_cfg = expl_config;
+       rulp->is_use = TRUE; 
+      }
+     else
+      {
+       __pv_ferr(3548,
+        "config inst clause not followed by liblist or use clause - %s read",
+        __to_cfgtoknam(__xs, ttyp));
+       if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+       goto rd_nxt_tok;
+      }
+
+     /* SJM 01/14/03 - can't bld the inst XMR components tab until here */
+     nbytes = (__last_bind_comp_ndx + 1)*sizeof(char *);
+     rulp->inam_comptab = (char **) __my_malloc(nbytes);
+     memcpy(rulp->inam_comptab, __bind_inam_comptab, nbytes);
+     rulp->inam_comp_lasti = __last_bind_comp_ndx;
+     /* head of instance name must match config name a design cell name */
+     for (desp = cfgp->cfgdeslist; desp != NULL; desp = desp->desnxt)
+      {
+       if (strcmp(desp->topmodnam, rulp->inam_comptab[0]) == 0)
+        goto fnd_match;
+      }
+     __pv_ferr(3541,
+      "config instance clause hierachical path %s head does not match any design statement top level module name",
+      s1);
+
+fnd_match: 
+     /* add to end of list since must search in order of appearance */
+     if (rule_beg == NULL) cfgp->cfgrules = rule_beg = rule_end = rulp;
+     else
+      {
+       rule_end->rulnxt = rulp;
+       rule_end = rulp;
+      }
+     
+     break;
+    case CFG_CELL:
+     /* format: cell [<lib:>cell] liblist [space sep lib name list]; */ 
+     /* format: cell [<lib>:cell] use [qualified mod type name]; */
+     if ((ttyp = __get_cfgtok(fp)) != CFG_ID) 
+      {
+       __pv_ferr(3551,
+        "config cell clause [library].cell name expected - %s read",
+        __to_cfgtoknam(__xs, ttyp));
+       if (cfg_skipto_semi_endconfig(ttyp, fp) != CFG_SEMI) return;
+       continue;
+      }
+     if (!extract_libcell_nam(libnam, objnam, __token))
+      {
+       goto rd_nxt_tok;
+      }
+     lblp = NULL;
+     if ((ttyp = __get_cfgtok(fp)) == CFG_LIBLIST) 
+      {
+       /* AIV - LRM (pg 217) states lib.cell with liblist is an error */
+       /* if stmt will work because libnam init in extract_libcell  */
+       if (libnam[0] != '\0') 
+       {
+         __pv_ferr(3552,
+          "config cell clause library.cell (%s.%s) cannot be used with 'liblist' clause", libnam, objnam);
+        if (cfg_skipto_semi_endconfig(ttyp, fp) != CFG_SEMI) return;
+        goto rd_nxt_tok;
+       }
+
+       /* case 1: liblist form - always reads ending ; */
+       if ((lblp = rd_liblist(fp)) == NULL)
+        {
+         __pv_fwarn(3131, "config cell clause liblist empty - ignored");
+         goto rd_nxt_tok;
+        }
+       rulp = (struct cfgrule_t *) __my_malloc(sizeof(struct cfgrule_t));
+       init_rule(rulp);
+       rulp->rultyp = CFG_CELL;
+       /* libnam optional    libnam.objnam */
+       rulp->libnam = __pv_stralloc(libnam);
+       rulp->objnam = __pv_stralloc(objnam);
+       rulp->rul_libs = lblp;
+      }
+     else if (ttyp == CFG_USE) 
+      {
+       if (rd_use_clause(fp, s1, s2, &expl_config) == CFG_ENDCFG) return;
+       /* on error s1 not set */
+       if (strcmp(s1, "") == 0 && strcmp(s2, "") == 0) goto rd_nxt_tok;
+
+       rulp = (struct cfgrule_t *) __my_malloc(sizeof(struct cfgrule_t));
+       init_rule(rulp);
+       /* cell objnam use s1.s2 */
+       rulp->rul_use_libnam = __pv_stralloc(s1);
+       rulp->rul_use_celnam = __pv_stralloc(s2);
+       rulp->use_rule_cfg = expl_config;
+       /* objnam is the cell type to match */
+       rulp->objnam = __pv_stralloc(objnam);
+       rulp->libnam = __pv_stralloc(libnam);
+       rulp->rultyp = CFG_CELL;
+       rulp->is_use = TRUE; 
+      }
+     else
+      {
+       __pv_ferr(3559,
+        "config cell clause not followed by liblist or use keywords - %s read",
+        __to_cfgtoknam(__xs, ttyp));
+       if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+       goto rd_nxt_tok;
+      }
+
+     /* add to end of list since must search in order of appearance */
+     if (rule_beg == NULL) cfgp->cfgrules = rule_beg = rule_end = rulp;
+     else
+      {
+       rule_end->rulnxt = rulp;
+       rule_end = rulp;
+      }
+     break;
+    default:
+     __pv_ferr(3561,
+      "config declaration rule statement or endconfig expected - %s read",
+      __to_cfgtoknam(__xs, ttyp));
+     if (cfg_skipto_semi(ttyp, fp) == CFG_EOF) return;
+   }
+rd_nxt_tok:
+   ttyp =__get_cfgtok(fp);
+  }
+endcfg_read:
+   /* AIV add the config to the list */
+   if (__cfg_hd == NULL) __cfg_hd = __cur_cfg = cfgp;
+   else { __cur_cfg->cfgnxt = cfgp;  __cur_cfg = cfgp; }
+ return;
+}
+
+/*
+ * initialize a rule record
+ */
+static void init_rule(struct cfgrule_t *rulp)
+{
+ rulp->rultyp = CFG_UNKNOWN;
+ rulp->use_rule_cfg = FALSE;
+ rulp->objnam = NULL;
+ rulp->libnam = NULL;
+ rulp->rul_use_libnam = NULL; 
+ rulp->rul_use_celnam = NULL; 
+ rulp->inam_comptab = NULL;
+ rulp->inam_comp_lasti = -1;
+ rulp->rul_libs = NULL;
+ rulp->rulnxt = NULL;
+ /* AIV just set the line to current line  */
+ rulp->rul_lno =  __lin_cnt;
+ rulp->matched =  FALSE;
+ rulp->is_use =  FALSE;
+}
+
+/*
+ * extract a [lib].[cell] design name - format [lib].[cell] 
+ * lib ID lexical pattern is: [let or _]{let | num | $ | _}
+ *
+ * SJM 12/19/03 - LRM wrong since config can't be in Verilog source lib
+ * and cell names both required
+ *
+ * SJM 01/12/04 - library identifiers (names) can't be escaped
+ */
+static int extract_design_nam(char *libnam, char *celnam, char *desnam)
+{
+ register char *chp;
+ int len;
+ char s1[IDLEN], s2[IDLEN];
+
+ strcpy(libnam, "");
+ strcpy(celnam, "");
+
+ if ((chp = strchr(desnam, '.')) == NULL) return(FALSE);
+ strncpy(s1, desnam, chp - desnam);
+ s1[chp - desnam] = '\0';
+ if (!chk_libid(s1)) return(-1);
+ strcpy(libnam, s1);
+
+ chp++;
+ strcpy(s2, chp);
+ if (!chk_libid(s2))
+  {
+   if (chk_escid(s2))
+    {
+     /* remove the leading escaping back slash and ending ' ' */
+     strcpy(s1, &(s2[1]));
+     len = strlen(s1);
+     s1[len - 1] = '\0';
+    }
+   else
+    {
+     __pv_ferr(3534,
+      "illegal cell name %s - must be legal Verlog identifier", s2);
+    }
+   strcpy(celnam, s1);
+   return(TRUE);
+  }
+ strcpy(celnam, s2);
+ return(TRUE);
+}
+
+/*
+ * check and return T if library name is legal unescaped ID
+ */
+static int chk_libid(char *lbnam)
+{
+ register char *chp;
+
+ chp = lbnam;
+ if (!isalpha(*chp) && *chp != '_') return(FALSE);
+ for (++chp; *chp != '\0'; chp++)
+  {
+   if (!isalnum(*chp) && *chp!= '$' && *chp != '_') return(FALSE);
+  }
+ return(TRUE);
+}
+
+/*
+ * check and return T if path component or cell type name is legal escaped ID
+ */
+static int chk_escid(char *nam)
+{
+ int len;
+ char *chp;
+
+ chp = nam;
+ if (*chp != '\\') return(FALSE); 
+ len = strlen(nam);
+ if (nam[len - 1] != ' ') return(FALSE);
+ return(TRUE);
+}
+
+/*
+ * build table of ptrs to strings in global cfg bind table of instance comps
+ * return F on error
+ *
+ * grows global table - caller will copy to malloced memory
+ */
+static int bld_inst_xmr_comptab(char *inam)
+{
+ register int ci;
+ register char *chp, *chp2;
+ int len;
+ char s1[IDLEN], s2[IDLEN];
+
+ /* AIV need to reset the global, after it is copied */
+ __last_bind_comp_ndx = -1;
+ 
+ for (chp = inam;;)
+  {
+   if (*chp == '\\')
+    {
+     if ((chp2 = strchr(chp, ' ')) == NULL)
+      {
+bad_end:
+       for (ci = 0; ci <= __last_bind_comp_ndx; ci++)
+        {
+         __my_free(__bind_inam_comptab[ci],
+          strlen(__bind_inam_comptab[ci]) + 1);
+         __bind_inam_comptab[ci] = NULL;
+        }
+       return(TRUE);
+      }
+
+     strncpy(s1, chp, chp2 - chp);
+     s1[chp2 - chp] = '\0';
+     if (!chk_escid(s1)) goto bad_end;
+     strcpy(s2, &(s1[1]));
+     s2[chp2 - chp - 2] = '\0';
+     chp++;
+    }
+   else
+    {
+     if ((chp2 = strchr(chp, '.')) == NULL)
+      {
+       strcpy(s2, chp);
+       len = strlen(chp);
+       chp = &(chp[len]);
+      }
+     else
+      {
+       /* non escaped and non tail component */
+       strncpy(s2, chp, chp2 - chp);
+       s2[chp2 - chp] = '\0';
+       chp = chp2;
+      }
+    }
+   /* add malloced comp name to table - table copied so do not need to free */ 
+   if (++__last_bind_comp_ndx >= __siz_bind_comps) grow_bind_comps();
+   __bind_inam_comptab[__last_bind_comp_ndx] = __pv_stralloc(s2); 
+
+   if (*chp == '\0') break;
+   if (*chp != '.') goto bad_end;
+   chp++;
+  }
+ return(TRUE);
+}
+
+/*
+ * routine to grow global bind comp table
+ */
+static void grow_bind_comps(void)
+{
+ int osize, nsize;
+     
+ osize = __siz_bind_comps*sizeof(char *);
+ /* SJM 01/13/04 - maybe growing too fast */
+ __siz_bind_comps *= 2;
+ nsize = __siz_bind_comps*sizeof(char *);
+ __bind_inam_comptab = (char **) __my_realloc((char *) __bind_inam_comptab,
+  osize, nsize);
+}
+
+
+/*
+ * extract a <lib>.[cell] name where [lib] optional
+ *
+ * almost same as extracting design [lib].[cell] but there lib name required
+ */
+static int extract_libcell_nam(char *libnam, char *celnam, char *nam)
+{
+ register char *chp;
+ char s1[IDLEN], s2[IDLEN];
+
+ strcpy(libnam, "");
+ strcpy(celnam, "");
+
+ /* case 1: library omitted and escaped cell name */
+ if (*nam == '\\')
+  {
+   strcpy(s2, nam); 
+
+do_cell_tail:
+   if ((chp = strchr(nam, ' ')) == NULL) return(FALSE);
+   strncpy(celnam, nam, chp - nam);
+   celnam[chp - nam] = '\0';
+   /* checking esc ID but for now will never fail */
+   if (!chk_escid(s2)) return(FALSE); 
+   strncpy(s1, &(nam[1]), chp - nam - 2);
+   s1[chp - nam - 2] = '\0';
+   strcpy(celnam, s1);
+   chp++;
+   if (*chp != '\0') return(FALSE);
+   return(TRUE);
+  }
+ /* if lib name before '.' present, check and fill */
+ if ((chp = strchr(nam, '.')) != NULL)
+  { 
+   strncpy(s1, nam, chp - nam);
+   s1[chp - nam] = '\0';
+   if (!chk_libid(s1)) return(FALSE);
+   strcpy(libnam, s1);
+   chp++;
+   strcpy(s1, chp);
+  }
+ else strcpy(s1, nam);
+ 
+ /* case 3: lib name present and escaped ID */
+ if (*s1 == '\\') goto do_cell_tail;
+ 
+ /* case 4: lib name non escaped ID */
+ if (!chk_libid(s1)) { strcpy(libnam, ""); return(FALSE); }
+ strcpy(celnam, s1);
+ return(TRUE);
+}
+
+/*
+ * read a use clause and ending SEMI
+ *
+ * know use keyword read and reads ending SEMI unless error where resync 
+ * on error return F and set libnam and cell name to empty
+ */
+static int rd_use_clause(FILE *fp, char *libnam, char *celnam,
+ int *expl_config)
+{
+ int ttyp, ttyp2, has_cfg_suffix;
+
+ strcpy(libnam, "");
+ strcpy(celnam, "");
+
+ if ((ttyp = __get_cfgtok(fp)) != CFG_ID)
+  {
+   __pv_ferr(3542,
+    "config use clause not followed by use specifier - %s read",
+    __to_cfgtoknam(__xs, ttyp));
+   ttyp2 = cfg_skipto_semi_endconfig(ttyp, fp);
+   return(ttyp2);
+  }
+ /* this always sets has cfg suffix */  
+ if (!extract_use_nam(libnam, celnam, &has_cfg_suffix, __token))
+  {
+   __pv_ferr(3546,
+    "config use clause %s illegal - [lib].[cell] or [cell]:config allowed - P1364 disallows configs in library source files",
+    __token);
+  }
+ *expl_config = has_cfg_suffix;
+
+ if ((ttyp = __get_cfgtok(fp)) != CFG_SEMI)
+  {
+   __pv_ferr(3544,
+    "config use clause not followed by semicolon - %s read",
+    __to_cfgtoknam(__xs, ttyp));
+   ttyp = cfg_skipto_semi_endconfig(ttyp, fp);
+   return(ttyp);
+  }
+ return(SEMI);
+}
+
+/*
+ * extract a use clause cell identifier
+ * format: <lib name>[cell type name]<:config>
+ * 
+ * if lib name is omitted parent (current) cell's lib used
+ * if :config used, the use config matching [cell type name] for binding
+ */
+static int extract_use_nam(char *libnam, char *celnam, int *has_config,
+ char *use_spec)
+{
+ register char *chp;
+ char s1[IDLEN], s2[IDLEN];
+
+ strcpy(libnam, "");
+ strcpy(celnam, "");
+ *has_config = FALSE;
+
+ /* case 1: library omitted and escaped cell name */
+ if (*use_spec == '\\')
+  {
+   strcpy(s2, use_spec); 
+
+do_cell_tail:
+   if ((chp = strchr(use_spec, ' ')) == NULL) return(FALSE);
+   strncpy(celnam, use_spec, chp - use_spec);
+   celnam[chp - use_spec] = '\0';
+   /* checking esc ID but for now will never fail */
+   if (!chk_escid(s2)) return(FALSE); 
+   strncpy(s1, &(use_spec[1]), chp - use_spec - 2);
+   s1[chp - use_spec - 2] = '\0';
+   strcpy(celnam, s1);
+   chp++;
+   if (*chp == ':') 
+    {
+     if (strcmp(chp, ":config") != 0) return(FALSE);
+     /* SJM 05/18/04 - :config hierarchical config indirection indicator */ 
+     /* can't be used with library name since library are for Verilog src */
+     if (strcmp(libnam, "") != 0) return(FALSE);
+     *has_config = TRUE;
+    }
+   else 
+    {
+     if (*chp != '\0') return(FALSE);
+    }
+   return(TRUE);
+  }
+ /* if lib name before '.' present, check and fill */
+ if ((chp = strchr(use_spec, '.')) != NULL)
+  { 
+   strncpy(s1, use_spec, chp - use_spec);
+   s1[chp - use_spec] = '\0';
+   if (!chk_libid(s1)) return(FALSE);
+   strcpy(libnam, s1);
+   chp++;
+   strcpy(s1, chp);
+  }
+ else strcpy(s1, use_spec);
+ 
+ /* case 3: lib name present and escaped ID */
+ if (*s1 == '\\') goto do_cell_tail;
+ 
+ /* case 4: lib name non escaped ID */
+ if ((chp = strchr(s1, ':')) == NULL)
+  {
+   if (!chk_libid(s1)) { strcpy(libnam, ""); return(FALSE); }
+   strcpy(celnam, s1);
+   return(TRUE);
+  }
+ /* :config suffix present */
+ if (strcmp(chp, ":config") != 0) return(FALSE);
+
+ strncpy(s2, s1, chp - s1);
+ s2[chp - s1] = '\0';
+ if (!chk_libid(s2)) return(FALSE);
+ strcpy(celnam, s2);
+
+ /* SJM 05/18/04 - :config hierarchical config indirection indicator */ 
+ /* can't be used with library name since library are for Verilog src */
+ if (strcmp(libnam, "") != 0) return(FALSE);
+
+ *has_config = TRUE;
+ return(TRUE);
+}
+
+/*
+ * read a liblist non comma separated list of libraries
+ *
+ * know liblist keyword read and reads first libr and keeps reading lib
+ * names (no wildcards) until ending semicolon read (i.e. list ends with ;
+ * and no commas)
+ *
+ * library names are simple IDs
+ * even if error continues reading to ; or EOF
+ */
+static struct cfgnamlst_t *rd_liblist(FILE *fp)
+{
+ int ttyp;
+ struct cfgnamlst_t *lbp, *lbp_hd, *lbp_tail;
+
+ lbp_hd = lbp_tail = NULL;
+ for (;;)
+  {
+   ttyp = __get_cfgtok(fp);
+   if (ttyp == CFG_SEMI) break; 
+
+   if (ttyp != CFG_ID)
+    {
+     __pv_ferr(3562, "config liblist library name expected - %s read",
+      __to_cfgtoknam(__xs, ttyp));
+     cfg_skipto_semi(ttyp, fp);
+     return(NULL);
+    }
+   if (!chk_libid(__token))
+    {
+     __pv_ferr(3563,
+      "config liblist library name %s illegal - must be simple Verilog ID",
+      __token);
+    }
+   lbp = (struct cfgnamlst_t *) __my_malloc(sizeof(struct cfgnamlst_t)); 
+   lbp->nam = __pv_stralloc(__token);
+   lbp->cnlnxt = NULL; 
+   if (lbp_hd == NULL) lbp_hd = lbp_tail = lbp;
+   else { lbp_tail->cnlnxt = lbp;  lbp_tail = lbp; }
+  }
+ return(lbp_hd);
+}
+
+/*
+ * LOW LEVEL ROUTINES FOR CFG INITIALIZATION AND ERROR RECOVERY  
+ */
+
+/*
+ * initialize a cfg lib record
+ */
+static void init_cfglib(struct cfglib_t *lbp)
+{
+ lbp->lbsrc_rd = FALSE;
+ lbp->lbname = NULL;
+ lbp->lbels = NULL;
+ lbp->lbnxt = NULL;
+}
+
+/*
+ * initialize a cfg block record
+ */
+static void init_cfg(struct cfg_t *cfgp)
+{
+ cfgp->cfgnam = NULL;
+ cfgp->cfgdeslist = NULL;
+ cfgp->cfgrules = NULL;
+ cfgp->cfgdflt = NULL;
+ cfgp->cfg_fnam = NULL;
+ cfgp->cfg_lno = -1;
+ cfgp->cfgnxt = NULL;
+}
+
+/*
+ * cfg get token error recovery skip to semi
+ *
+ * notice config token number not related to source reading numbers
+ * but using __token global for names still
+ */
+static int cfg_skipto_semi(int ttyp, FILE *fp)
+{
+ for (;;) 
+  {
+   if (ttyp == CFG_SEMI || ttyp == CFG_EOF) break;
+   ttyp = __get_cfgtok(fp);
+  }
+ return(ttyp);
+}
+
+/*
+ * cfg get token error recovery skip to semi or comma
+ *
+ * notice config token number not related to source reading numbers
+ * but using __token global for names still
+ */
+static int cfg_skipto_comma_semi(int ttyp, FILE *fp)
+{
+ for (;;) 
+  {
+   if (ttyp == CFG_SEMI || ttyp == CFG_EOF) break;
+   ttyp = __get_cfgtok(fp);
+  }
+ return(ttyp);
+}
+
+/*
+ * cfg get token error recovery skip to semi or endconfig
+ *
+ * notice config token number not related to source reading numbers
+ * but using __token global for names still
+ */
+static int cfg_skipto_semi_endconfig(int ttyp, FILE *fp)
+{
+ for (;;) 
+  {
+   if (ttyp == CFG_SEMI || ttyp == CFG_ENDCFG || ttyp == CFG_EOF) break;
+   ttyp = __get_cfgtok(fp);
+  }
+ return(ttyp);
+}
+
+
+/*
+ * cfg get token error recovery skip 
+ *
+ * notice config token number not related to source reading numbers
+ */
+static int cfg_skipto_eof(int ttyp, FILE *fp)
+{
+ for (;;) 
+  {
+   if (ttyp == CFG_EOF) break;
+   ttyp = __get_cfgtok(fp);
+  }
+ return(ttyp);
+}
+
+/*
+ * ROUTINES TO EXPAND AND REPLACE LIBRARY WILDCARD FILE LISTS
+ */
+
+/* names for the special wildcard characters - see LRM */
+#define STAR 1
+#define QMARK 2
+#define HIER 3
+
+/*
+ * return TRUE if the string contains a wildcard
+ * '*', '?', '...', or ending in a / => TRUE
+ */
+static int has_wildcard(char *cp)
+{
+ int i, slen;
+
+ slen = strlen(cp);
+ /* if it ends in a slash return TRUE - include all case */
+ if (cp[slen -1] == '/') return(TRUE);
+ for (i = 0; i <= slen - 1; i++, cp++)
+  {
+   if (*cp == '*') return(TRUE);
+   if (*cp == '?') return(TRUE);
+   if (i < slen + 2 && strncmp(cp, "...", 3) == 0) return(TRUE);
+  }
+ return(FALSE);
+}
+
+/*
+ * expand all wild cards in library file name lists
+ *
+ * first step in cfg elaboration after all map and cfg files read
+ */
+extern void __expand_lib_wildcards(void)
+{
+ register struct cfglib_t *lbp;
+ register struct libel_t *lbep;
+ int sav_lin_cnt;
+ char *sav_cur_fnam, *cp;
+ FILE *fp;
+
+ /* expand for library */
+ for (lbp = __cfglib_hd; lbp != NULL; lbp = lbp->lbnxt)
+  {
+   sav_lin_cnt = __lin_cnt;
+   sav_cur_fnam = __cur_fnam;
+   __cur_fnam = lbp->cfglb_fnam;
+   __lin_cnt = lbp->cfglb_lno;
+
+   /* for each fspec in one library's fspec list, expand any wildcards */
+   for (lbep = lbp->lbels; lbep != NULL; lbep = lbep->lbenxt)
+    {
+     /* AIV mark the expanded so the pattern string is replaced */
+     lbep->expanded = FALSE;
+     cp = lbep->lbefnam;
+     /* if it doesn't contain a wildcard char must be a file so simple open */
+     if (!has_wildcard(cp))
+      {
+       /* if it returns NULL file no such file */
+       if ((fp = __tilde_fopen(cp, "r")) == NULL)
+        {
+         __pv_ferr(3564, "config library %s unable to match pattern %s\n",
+          lbp->lbname, cp); 
+        }
+       else 
+        {
+         /* no need to change the file name, just mark the flag as expanded */
+         lbep->expanded = TRUE;
+         /* close the open file */
+         __my_fclose(fp); 
+        }
+      }
+     else if (strcmp(cp, "...") == 0)
+      {
+       /* include all files below the current directory */
+       if (!expand_single_hier(lbp, lbep, NULL))
+        {
+         __pv_ferr(3564, "config library %s unable to match pattern %s\n",
+          lbp->lbname, cp); 
+        }
+      }
+     else 
+      {
+        /* match the pattern case */
+        expand_dir_pats(lbp, lbep, cp);
+      }
+   }
+   /* put back for further reading */
+   __lin_cnt = sav_lin_cnt;
+   __cur_fnam = sav_cur_fnam;
+  }
+}
+
+/*
+ * match a hier name with the given pattern name
+ */
+static int match_hier_name(struct xpndfile_t *xfp_hd, char *name) 
+{
+ char *cp, *last;
+ char str[RECLEN]; 
+ struct xpndfile_t *xfp;
+ 
+ /* skip past ./ meaningless */
+ if (name[0] == '.' && name[1] == '/') name += 2;
+ last = name;
+ xfp = xfp_hd; 
+ cp = strchr(name, '/');
+ if (cp == NULL)
+  {
+   /* Special case ../../\*.v  - last pattern and matches wildcard */
+   if (xfp->xpfnxt == NULL && match_wildcard_str(name, xfp)) return(TRUE);
+   /* Special case .../\*.v  */
+   else if (xfp->wildcard == HIER && xfp->xpfnxt->xpfnxt == NULL 
+    && match_wildcard_str(name, xfp->xpfnxt)) return(TRUE);
+  }
+ else
+  {
+   for (; xfp != NULL && cp != NULL; cp = strchr(cp, '/'))
+    {
+     /* check the string to the next '/' to match the pattern */
+     /* copy /string/ into str to check with pattern */
+     strncpy(str, last, cp - last); 
+     str[cp-last] ='\0';
+     /* if doesn't match pattern return */
+     if (!match_wildcard_str(str, xfp)) return(FALSE);
+     /* handle special ... case */
+     if (xfp->wildcard == HIER)
+      { 
+       /* no more patterns it is a match */
+       if (xfp->xpfnxt == NULL) return(TRUE);
+
+       /* match all the remaining patterns after .../ */
+       /* move pattern up one and get the next /string/ */
+hier:
+       xfp = xfp->xpfnxt;
+       for (; cp != NULL;  )
+        {
+         /* special case it is the last one */
+         if ((cp - last) == 0) strcpy(str, cp);
+         else
+          {
+           strncpy(str, last, cp - last); 
+           str[cp-last] ='\0';
+          }
+         /* if matches continue */
+         if (match_wildcard_str(str, xfp))
+          {
+           xfp = xfp->xpfnxt; 
+           if (xfp == NULL) return(TRUE);
+          }
+         last = ++cp;
+         /* last pattern in the string dir/dir2/lastpattern */
+         if ((cp = strchr(cp, '/')) == NULL)
+          {
+           /* if more patterns continue */
+           if (xfp->xpfnxt != NULL) return(FALSE); strcpy(str, last); 
+           /* match the lastpattern and gets here it is a match */
+           if (match_wildcard_str(str, xfp)) return(TRUE);
+          }
+        }
+      }
+     last = ++cp;
+
+     /* include all in the directory and the last in the char name */ 
+     if (xfp->incall && strchr(cp, '/') == NULL) return(TRUE);
+
+     /* if the last pattern and didn't match FALSE  */ 
+     xfp = xfp->xpfnxt; 
+     if (xfp == NULL)  return(FALSE);
+     if (xfp->wildcard == HIER && xfp->xpfnxt != NULL) goto hier;
+     /* try to match the last of the string */ 
+     if (*cp != '\0' && strchr(cp, '/') == NULL)
+      {
+       if (xfp->xpfnxt == NULL && match_wildcard_str(cp, xfp)) return(TRUE);
+       else return(FALSE);
+      }
+    }
+  }
+ return(FALSE);
+}
+
+/*
+ * match the special hierarchical wildcard in the pattern
+ * is recursive call which takes the parameters -
+ *
+ * xfp_hd - the start of the split pattern to match 
+ * bpath - the beginning part of the path (the non-wildcard start of the path) 
+ * path - the current path
+ *
+ * builds the strings to match according to attempt to match to the xfp list 
+ */
+static void find_hier(struct libel_t *lbep, struct xpndfile_t *xfp_hd, 
+ char *bpath, char *path)
+{
+ char str[RECLEN];
+ char str2[RECLEN];
+ char dirstr[RECLEN];
+ char *cp;
+ DIR *dp;
+ struct dirent *dir;
+#if defined(__CYGWIN32__) || defined(__SVR4)
+ struct stat sbuf;
+#endif
+  
+ /* start from the current directory */
+ if (path == NULL) { strcpy(str, "."); cp = str; }
+ else cp = path;
+
+ if ((dp = opendir(cp)) == NULL)
+  {
+   __pv_ferr(1368, "during config library expansion cannot open dir %s : %s\n",
+    cp, strerror(errno)); 
+  }
+ 
+ while ((dir = readdir(dp)) != NULL)
+  {
+   if (dir->d_ino == 0) continue;
+   if (strcmp(dir->d_name, ".") == 0) continue;
+   if (strcmp(dir->d_name, "..") == 0) continue;
+#if defined(__CYGWIN32__) || defined(__SVR4)
+   if (stat(dir->d_name, &sbuf) == -1) continue;
+   if ((S_IFMT & sbuf.st_mode) == S_IFDIR)
+#else
+   if (dir->d_type == DT_DIR)
+#endif
+    {
+     /* directory concat name and call recursively */
+     if (path == NULL) sprintf(dirstr, "./%s", dir->d_name);
+     else sprintf(dirstr, "%s/%s", path, dir->d_name);
+     find_hier(lbep, xfp_hd, bpath, dirstr);
+    }
+#if defined(__CYGWIN32__) || defined(__SVR4)
+   else if ((S_IFMT & sbuf.st_mode) == S_IFREG)
+#else
+   else if (dir->d_type == DT_REG)
+#endif
+    {
+     str[0] ='\0';
+     /* concat the file name to the directory */
+     if (path == NULL) strcpy(str, dir->d_name);
+     else sprintf(str, "%s/%s", cp, dir->d_name);
+     /* check if the name matches the xfp list */
+     if (match_hier_name(xfp_hd, str))
+      {
+       if (bpath != NULL)
+        {
+         sprintf(str2, "%s/%s", bpath, str);
+         expand_libel(lbep, str2);
+        }
+       else expand_libel(lbep, str);
+      }
+    }
+  }
+ if (dp != NULL) closedir(dp);
+}
+
+/*
+ * routine to actually do the hierarchical search 
+ * moves to the first wildcard xfp and does search 
+ */
+static void expand_hier_files(struct cfglib_t *lbp, struct libel_t *lbep,
+ struct xpndfile_t *xfp_hd)
+{
+ char dirstr[RECLEN];
+ char bpath[RECLEN];
+ char tmp[RECLEN];
+ int first;
+ 
+ /* if the first xfp has a wildcard do the search do search with current xfp */ 
+ if (xfp_hd->wildcard) 
+  {
+   find_hier(lbep, xfp_hd, NULL, NULL);
+   return;
+  }
+ first = TRUE;
+ /* save current dir */
+ getcwd(dirstr, RECLEN); 
+ strcpy(bpath, "");
+ while (!xfp_hd->wildcard && xfp_hd->incall != TRUE) 
+  {
+   if (chdir(xfp_hd->fpat) < 0)
+    {
+     if (first)
+      {
+       __pv_ferr(3564, "config library %s no such directory %s\n",
+       lbp->lbname, xfp_hd->fpat); 
+      }
+     else
+      {
+       __pv_ferr(3564, "config library %s no such directory %s/%s\n",
+        lbp->lbname, bpath, xfp_hd->fpat);
+       chdir(dirstr);
+       return;
+      }
+    }
+   /* move to non-wildcard dir and buld beginning path name */
+   if (first)
+    {
+     strcpy(bpath, xfp_hd->fpat);
+     first = FALSE;
+    }
+   else
+    {
+     strcpy(tmp, bpath);
+     sprintf(bpath, "%s/%s", tmp, xfp_hd->fpat);
+    }
+   xfp_hd = xfp_hd->xpfnxt;
+  }
+ /* do the search */
+ find_hier(lbep, xfp_hd, bpath, NULL);
+ /* go back to the original dir  */
+ chdir(dirstr);
+}
+
+/*
+ * routine to break up the original user pattern by '/' - xfp1/xfp2/xfpn
+ */
+static void expand_dir_pats(struct cfglib_t *lbp, struct libel_t *lbep,
+ char *pat)
+{
+ int slen, i, ndx, clevel, last_star;
+ int  wildcard, hier, cur_hier, last_hier, back_dir;
+ char str[RECLEN]; 
+ char *last, *cp;
+ struct xpndfile_t *xfp, *xfp2, *xfp_hd, *xfp_tail;
+
+ str[0] = '\0';
+ clevel = -1;
+ xfp_hd = xfp_tail = NULL;
+ slen = strlen(pat);
+ cp = last = pat;
+ last_star = last_hier = wildcard = FALSE;
+ back_dir = cur_hier = hier = FALSE;
+ /* ndx if current index of the string */
+ ndx = 0;
+ for (i = 0; i < slen; i++, ndx++, cp++)
+  {
+   /* split add a xfp to the list */
+   if (*cp == '/')
+    {
+     cur_hier = FALSE;
+     /* special verilog escape char */
+     if (i + 1 < slen && *(cp+1) == '/') 
+      {
+       /* LOOKATME FIXME - check if this works */
+       /* special espcaped char // read until next ' ' or end of str */
+       i++;
+       cp++;
+       for (; i < slen && *cp != ' '; i++, cp++) ;
+      }
+     /* skip a /./ since it doesn't do anything */
+     if (ndx == 1 &&  str[0] == '.') { last = (cp + 1); continue; }
+     str[ndx] = '\0'; 
+     if (ndx == 3 && strcmp(str, "...") == 0) 
+      {
+       /* if ... and so was the last skip this one */
+       if (last_hier)
+        {
+         __pv_warn(3124, "config can't have .../... - treating as only one\n");
+         ndx = -1;
+         continue;
+        }
+       cur_hier = hier = TRUE;
+      }
+     else if (ndx == 2 && back_dir && strcmp(str, "..") == 0)
+      {
+       __pv_warn(3125,
+        "Back directory '..' can only be used at the beginning of pattern string\n");
+      }
+      /* AIV 05/25/04 - on the first non '..' set back_dir to true */
+      /* there can be multilple ../.. prior to the pattern */
+     else if(ndx != 2 || strcmp(str, "..") != 0)
+            back_dir = TRUE;
+
+     xfp = (struct xpndfile_t *) __my_malloc(sizeof(struct xpndfile_t)); 
+     xfp->fpat = (char *) __my_malloc(strlen(str) + 1);
+     strcpy(xfp->fpat, str);
+     if (cur_hier) 
+      {
+       /* set the wildcar to hierarch */
+       xfp->wildcard = HIER;
+       last_hier = TRUE;
+      }
+     else
+      {
+       /* set the wildcar STAR or QMARK */
+       xfp->wildcard = wildcard;
+       last_hier = FALSE;
+      }
+     xfp->nmatch = 0; 
+     /* special case that ends in '/' inc all the files */
+     if (i + 1 == slen) xfp->incall = TRUE; 
+     else xfp->incall = FALSE; 
+     xfp->xpfnxt = NULL; 
+
+     /* set the current depth level */
+     xfp->level = ++clevel;
+     if (xfp_hd == NULL) xfp_hd = xfp_tail = xfp;
+     else { xfp_tail->xpfnxt = xfp;  xfp_tail = xfp; }
+
+     /* set the last char to one past the / */
+     if (i < slen) last = (cp + 1);
+     /* reset wildcard and last_star and string index */
+     wildcard = FALSE;
+     last_star = FALSE;
+     ndx = -1;
+    }
+   else if (*cp == '*')
+    {
+     /* previous chars was star as well so just set ndx back one to skip */
+     if (last_star) ndx--;
+     last_star = TRUE;
+     wildcard = STAR;
+     /* AIV 05/18/04 - can never be negative since last_star is a flag */
+     /* that can only be set when ndx > 0 */
+     str[ndx] = *cp;
+    }
+   else
+    {
+     /* star takes wildcard precedence over qmark - needed for pat matching */
+     if (*cp == '?' && wildcard != STAR) wildcard = QMARK;
+     last_star = FALSE;
+     str[ndx] = *cp;
+    }
+  } 
+ /* LOOKATME will /a still work */
+ /* add the last one this has to be a file or file pattern */
+ cur_hier = FALSE;
+ if (cp != last)
+  {
+   if (ndx == 1 && *(cp - 1) == '.') goto done;
+   str[ndx] = '\0'; 
+   if (strcmp(str, "...") == 0) 
+    {
+     /* just skip the last ... if there is two in a row */
+     if (last_hier) goto done; cur_hier = hier = TRUE;
+    }
+   xfp = (struct xpndfile_t *) __my_malloc(sizeof(struct xpndfile_t)); 
+   xfp->fpat = (char *)  __my_malloc(strlen(str) + 1);
+   strcpy(xfp->fpat, str);
+   if (cur_hier) xfp->wildcard = HIER;
+   else xfp->wildcard = wildcard;
+   xfp->nmatch = 0; 
+   xfp->xpfnxt = NULL; 
+   xfp->level = ++clevel;
+   if (xfp_hd == NULL) xfp_hd = xfp_tail = xfp;
+   else { xfp_tail->xpfnxt = xfp;  xfp_tail = xfp; }
+  }
+
+ /* DGB REMOVE */
+ if (xfp_hd == NULL) __misc_terr(__FILE__, __LINE__);
+
+done:
+ /* doesn't contain a hieracrh ... */
+ if (!hier)
+  {
+   /* if the first xfp contains a wildcard just call match overwise */
+   /* move to on wildcard dir and then match */ 
+   if (xfp_hd->wildcard) match_dir_pats(lbep, xfp_hd, NULL, NULL, FALSE, 0); 
+   else movedir_match_dir_pats(lbep, xfp_hd); 
+  }
+ else
+  {
+   /* match the hier case */
+   expand_hier_files(lbp, lbep, xfp_hd); 
+  }
+ /* free xfp list */
+ /* SJM 11/05/04 - need 2nd pointer since xpfnxt can't be accessed */
+ /* after freed */
+ for (xfp = xfp_hd ; xfp != NULL;)
+  {
+   xfp2 = xfp->xpfnxt;
+   __my_free((char *) xfp, sizeof(struct xpndfile_t ));
+   xfp = xfp2; 
+  }
+}
+
+/*
+ * move xfp_hd to the first wildcard to start the search
+ */
+static void movedir_match_dir_pats(struct libel_t *lbep, 
+ struct xpndfile_t *xfp_hd) 
+{
+ int level;
+ char dirstr[RECLEN]; 
+ char bpath[RECLEN]; 
+
+ level = 0;
+ /* save current directory */
+ getcwd(dirstr, RECLEN); 
+ while (!xfp_hd->wildcard && xfp_hd->incall != TRUE) 
+  {
+   if (chdir(xfp_hd->fpat) < 0)
+    {
+     /* SJM 05/11/04 - FIXME ### ??? - need way to locate these */
+     /* AIV 05/18/04 if the currect level print current pattern name */
+     if (level == 0)
+      { 
+       __pv_warn(3132, "no such directory %s\n", xfp_hd->fpat);
+      }
+     else
+      {
+      /* if lower level print all previous path and current pattern name */
+       __pv_warn(3132, "Error - no such directory path %s/%s\n",
+        bpath, xfp_hd->fpat);
+      }
+     chdir(dirstr);
+     return;
+    }
+   /* goto the next directory and inc the depth level */
+   if (level == 0) strcpy(bpath, xfp_hd->fpat);
+   else sprintf(bpath, "%s/%s", bpath, xfp_hd->fpat);
+   level++;
+   xfp_hd = xfp_hd->xpfnxt;
+  }
+ /* search directories */
+ match_dir_pats(lbep, xfp_hd, NULL, bpath, FALSE, level); 
+ /* do back to the current directory */
+ chdir(dirstr);
+}
+
+/*
+ * match the patterns for each xfp->fpat per directory
+ *
+ * xfp_hd - points to the first wildcard name1/ 
+ * bpath - start of path not containing a wildcard 
+ * path - points to all current path 
+ * incall - is the flag to include all the files in the dir, end in '/'
+ */
+static void match_dir_pats(struct libel_t *lbep, struct xpndfile_t *xfp_hd,
+char *path, char *bpath, int incall, int level) 
+{
+ char dirstr[RECLEN]; 
+ char str[RECLEN]; 
+ char str2[RECLEN]; 
+ char *cp; 
+ struct xpndfile_t *xfp;
+ struct dirent *dir;
+ DIR *dp;
+#if defined(__CYGWIN32__) || defined(__SVR4)
+ struct stat sbuf;
+#endif
+     
+ /* if it's null just add the ./ */
+ if (path == NULL) { strcpy(str, "./"); cp = str; }
+ else cp = path;
+
+ xfp = xfp_hd; 
+ dp = NULL;
+ for (; xfp != NULL; xfp = xfp->xpfnxt)
+  {
+   /* if the xfp->level is greater than the current level return */
+   if (xfp->level > level) return;
+   if ((dp = opendir(cp)) == NULL)
+    {
+     __pv_ferr(3569, "in config libary file %s cannot open dir %s : %s\n",
+      lbep->lbefnam, cp, strerror(errno)); 
+     return;
+    }
+   while ((dir = readdir(dp)) != NULL)
+    {
+     if (dir->d_ino == 0) continue;
+     if (strcmp(dir->d_name, ".") == 0) continue;
+     if (strcmp(dir->d_name, "..") == 0) continue;
+     /* handle directories */
+#if defined(__CYGWIN32__) || defined(__SVR4)
+     if (stat(dir->d_name, &sbuf) == -1) continue;
+     if ((S_IFMT & sbuf.st_mode) == S_IFDIR)
+#else
+     if (dir->d_type == DT_DIR)
+#endif
+      {
+       /* if not include all and it matches the wildcard go to next dir */
+       if (!incall && match_wildcard_str(dir->d_name, xfp))
+        {
+         /* path is null copy else concat dir name */
+         if (path == NULL) sprintf(dirstr, "%s", dir->d_name);
+         else sprintf(dirstr, "%s/%s", path, dir->d_name);
+         /* if include all (end's in /) include all files of dir */
+         if (xfp->incall)
+          {
+           match_dir_pats(lbep, xfp, dirstr, bpath, TRUE, level + 1);
+          }
+         else
+          {
+           match_dir_pats(lbep, xfp->xpfnxt, dirstr, bpath, incall,
+            level + 1);
+          }
+         /* if no wildcard and doesn't end in / return */
+         if (!xfp->wildcard && !xfp->incall) return;
+        }
+      }
+#if defined(__CYGWIN32__) || defined(__SVR4)
+     else if ((S_IFMT & sbuf.st_mode) == S_IFREG)
+#else
+     else if (dir->d_type == DT_REG)
+#endif
+      {
+       /* handle files */
+       /* if not include all in current directory */ 
+       if (!incall)
+        {
+         /* if another pattern to macth or pattern ends in / continue */ 
+         if (xfp->xpfnxt != NULL || xfp->incall) continue;
+ 
+         /* if doesn't match the wildcard continue */ 
+         if (!match_wildcard_str(dir->d_name, xfp)) continue;
+        }
+       /* if it gets here include the file */
+       if (path == NULL) sprintf(str, "%s", dir->d_name);
+       else sprintf(str, "%s/%s", cp, dir->d_name);
+       if (bpath != NULL)
+        {
+         sprintf(str2, "%s/%s", bpath, str);
+         expand_libel(lbep, str2);
+        }
+       else expand_libel(lbep, str);
+      }
+    }
+  }
+ if (dp != NULL) closedir(dp);
+}
+
+/*
+ * routine to return T if a wildcard pattern matches a file name 
+ * matches '...', '*', '?'
+ * or file name with any of the wild chars
+ */
+static int match_wildcard_str(char *file, struct xpndfile_t *xfp) 
+{
+ int fndx, pndx, flen, plen; 
+ int ondx, wildcard;
+ char *opat, *patp, *filep;
+
+ patp = xfp->fpat;
+ wildcard = xfp->wildcard;
+ /* if hier include all patterns */
+ if (wildcard == HIER || strcmp(patp, "*") == 0) return(TRUE);
+ 
+ /* if string is an exact match return true */
+ if (strcmp(file, patp) == 0) return(TRUE);
+ /* if it doesn't have a wildcard return */
+ if (!xfp->wildcard) return(FALSE);
+
+ flen = strlen(file);
+ plen = strlen(patp); 
+ 
+ /* special case if it has a star at the end match exact file - start */
+ if (wildcard == STAR && flen == plen - 1 && xfp->fpat[plen-1] == '*')
+  {
+   if (strncmp(file, xfp->fpat, flen) == 0) return(TRUE);
+  }
+ filep = file;
+ fndx = ondx = 0;
+ /* skip the regular characters */
+ while (*patp != '?' && *patp != '*') 
+  {
+   if (*filep != *patp) return(FALSE);
+   filep++;
+   patp++;
+   fndx++;
+   ondx++; 
+  }
+ 
+ /* reset used for * can to reset to location of last special char */
+ opat = patp;
+
+reset:
+ patp = opat;
+ pndx = ondx;
+ for (; fndx < flen && pndx < plen; fndx++, pndx++, filep++, patp++)
+  {
+   /* if strings are equal or '?' goto the next char */
+   if (*filep == *patp || *patp == '?') continue;
+   else if (*patp == '*')
+    {
+     /* special case the \*\*\?\?  */
+     if (*(patp + 1) == '?')
+      {
+       opat = (patp + 1);
+       ondx = pndx + 1;
+       patp++;
+       pndx++;
+       while (*patp == '?' && pndx < plen && fndx < flen)
+        { fndx++, pndx++, filep++, patp++; }
+       /* matching chars return */
+       if (pndx == plen) return(TRUE);
+       goto reset;
+      }
+     opat = patp; ondx = pndx;
+     /* if a star case just move pattern to next char */
+     while (*patp == '*' && pndx < plen)
+      { 
+       patp++; pndx++; 
+      }
+     if (pndx == plen) return(TRUE);
+
+     /* if a qmark just continue and match the next char */
+     if (*patp == '?') continue;
+
+     /* while not equal move file forward */
+     while (fndx < flen && *filep != *patp)
+      { filep++; fndx++; }
+     
+     /* reached the end without finding an equal char */
+     if (fndx == flen &&  *filep != *patp) return(FALSE);
+     if (*filep != *patp && fndx < flen){filep++; fndx++; goto reset; }
+    }
+   /* if not eq, '?', or '*' doesn't match*/
+   else if (fndx < flen && wildcard == STAR) goto reset;
+   else return(FALSE);
+  }
+ if (fndx < flen && wildcard == STAR) goto reset;
+ /* if string reaches the end it is a match */
+ if (flen == fndx)
+  {
+   if (pndx == plen) return(TRUE);
+   /* special case patp ends in the '*' */ 
+   else if (pndx == plen - 1 && *patp == '*') return(TRUE);
+  }
+ return(FALSE);
+} 
+
+/*
+ * expand the lib element
+ */
+static void expand_libel(struct libel_t *lbep, char *file)
+{
+ struct libel_t *newlbp;
+
+ /* if F replace the pattern name with the expanded file name */
+ if (!lbep->expanded)
+  {
+   /* only rename/free if it isn't the orginal string */
+   /* there is no wildcard so the same stays the same */
+   if (lbep->lbefnam != NULL)
+    {
+     __my_free(lbep->lbefnam, strlen(lbep->lbefnam) + 1);
+     lbep->lbefnam = (char *) __pv_stralloc(file);
+    }
+   lbep->expanded = TRUE;
+  }
+ else
+  {
+   /* link on a new expanded file name  */
+   newlbp = (struct libel_t *) __my_malloc(sizeof(struct libel_t));
+   memcpy(newlbp, lbep, sizeof(struct libel_t));
+   newlbp->lbefnam = (char *) __pv_stralloc(file);
+   lbep->lbenxt = newlbp;
+   lbep = newlbp;
+   lbep->expanded = TRUE;
+  }
+}
+
+/*
+ * return to expand all patterns underneath hierarchy
+ *
+ * if pattern is only '...' return all files below the current path
+ * recursively calls itself returning all files
+ */
+static int expand_single_hier(struct cfglib_t *lbp, struct libel_t *lbep,
+ char *path)
+{
+ int count;
+ char str[RECLEN];
+ char dirstr[RECLEN];
+ char *cp;
+ DIR *dp;
+ struct dirent *dir;
+#if defined(__CYGWIN32__) || defined(__SVR4)
+ struct stat sbuf;
+#endif
+
+ if (path == NULL) { strcpy(str, "."); cp = str; }
+ else cp = path;
+
+ count = 0;
+ if ((dp = opendir(cp)) == NULL)
+  {
+   __pv_ferr(3569, "in config libary %s cannot open dir %s : %s\n",
+    lbp->lbname, cp, strerror(errno)); 
+   return(0);
+  }
+ while ((dir = readdir(dp)) != NULL)
+  {
+   if (dir->d_ino == 0) continue;
+   if (strcmp(dir->d_name, ".") == 0) continue;
+   if (strcmp(dir->d_name, "..") == 0) continue;
+#if defined(__CYGWIN32__) || defined(__SVR4)
+   if (stat(dir->d_name, &sbuf) == -1) continue;
+   if ((S_IFMT & sbuf.st_mode) == S_IFDIR)
+#else
+   if (dir->d_type == DT_DIR)
+#endif
+    {
+     if (path == NULL) sprintf(dirstr, "./%s", dir->d_name);
+     else sprintf(dirstr, "%s/%s", path, dir->d_name);
+     expand_single_hier(lbp, lbep, dirstr);
+    }
+#if defined(__CYGWIN32__) || defined(__SVR4)
+   else if ((S_IFMT & sbuf.st_mode) == S_IFREG)
+#else
+   else if (dir->d_type == DT_REG)
+#endif
+    {
+     str[0] ='\0';
+     if (path == NULL) sprintf(str, "%s", dir->d_name);
+     else sprintf(str, "%s/%s", cp, dir->d_name);
+     count++;
+     expand_libel(lbep, str);
+    }
+  }
+ if (dp != NULL) closedir(dp);
+ return(count);
+}
+
+/*
+ * ROUTINES TO READ CFG LIBRARY SPECIFIED VERILOG SOURCE
+ */
+
+/*
+ * read and bind cells as directed by previously read  config block
+ *
+ * reads cfg design statement and then read libraries according to cfg rules
+ * user must not give and .v files on command line
+ */
+extern void __rd_ver_cfg_src(void)
+{
+ register struct cfg_t *cfgp;
+ 
+ /* SJM 05/18/04 - LOOKATME - why doesn't this test work? */
+ /* ### if (__last_inf != __cmd_ifi) __misc_terr(__FILE__, __LINE__); */
+
+ prep_cfg_vflist();
+
+ if (__cfg_verbose) dump_config_info();
+
+ for (cfgp = __cfg_hd; cfgp != NULL; cfgp = cfgp->cfgnxt)
+  {
+   if (__cfg_verbose)
+       __cv_msg("BINDING RULES IN CONFIG %s \n",  cfgp->cfgnam);
+   bind_cfg_design(cfgp, FALSE);
+  }
+
+ /* AIV 05/24/04 - free and link out of mod list all cfg lib modules */
+ /* that are in scanned files but never instantiated */
+ free_unused_cfgmods();
+}
+
+/*
+ * cfg verbose routine to dump names of expanded library files
+ */
+static void dump_lib_expand(void)
+{
+ struct cfglib_t *lbp;
+ struct libel_t *lbep;
+
+ __cv_msg("  Library expasion file names:\n");
+ for (lbp = __cfglib_hd; lbp != NULL; lbp = lbp->lbnxt)
+  {
+   __cv_msg("  Libname %s\n", lbp->lbname);
+   for (lbep = lbp->lbels; lbep != NULL; lbep = lbep->lbenxt)
+    {
+     __cv_msg("    %s\n", lbep->lbefnam);
+    }
+  }
+}
+
+static void dump_config_info(void)
+{
+ char typ[RECLEN];
+ struct cfg_t *cfgp;
+ struct cfgdes_t *desp;
+ struct cfgrule_t *rulp;
+ struct cfgnamlst_t *cnlp;
+
+ __cv_msg("\n  DUMPING CONFIG INFORMAION:\n");
+ dump_lib_expand();
+ for (cfgp = __cfg_hd; cfgp != NULL; cfgp = cfgp->cfgnxt)
+  {
+   __cv_msg("    Config %s in %s lineno %d \n", cfgp->cfgnam, cfgp->cfg_fnam, 
+    cfgp->cfg_lno);
+
+   /* dump design info */
+   for (desp = cfgp->cfgdeslist; desp != NULL; desp = desp->desnxt)
+    {
+     __cv_msg("      Design %s \n", desp->deslbnam); 
+    }
+
+   /* dump rule default info */
+   if (cfgp->cfgdflt != NULL) __cv_msg("    Default rule:\n"); 
+   rulp = cfgp->cfgdflt;
+   for (cnlp = rulp->rul_libs; cnlp != NULL; cnlp = cnlp->cnlnxt)
+    {
+     __cv_msg("      %s \n", cnlp->nam); 
+    }
+
+   /* dump rule info */
+   for (rulp = cfgp->cfgrules; rulp != NULL; rulp = rulp->rulnxt)
+    {
+     __cv_msg("    Rule \n"); 
+     if (rulp->rultyp == CFG_INSTANCE)
+        strcpy(typ, "Instance");
+     else
+        strcpy(typ, "Cell");
+     if (rulp->use_rule_cfg)
+       __cv_msg("      %s %s using hierarchical config : %s\n", 
+         typ, rulp->objnam, rulp->rul_use_celnam); 
+     else if (rulp->is_use)
+        __cv_msg("      %s %s use %s.%s\n", rulp->objnam, 
+          typ, rulp->rul_use_libnam, rulp->rul_use_celnam); 
+     else
+      {
+       __cv_msg("      %s %s liblist:\n", typ, rulp->objnam); 
+       for (cnlp = rulp->rul_libs; cnlp != NULL; cnlp = cnlp->cnlnxt)
+        {
+         __cv_msg("       %s \n", cnlp->nam); 
+        }
+      }
+    }
+  }
+ __cv_msg("  END CONFIG DUMP\n\n");
+}
+
+/*
+ * prepare the cfg input file stack - never more than one cfg lib file 
+ *
+ * but macro expansions and `include put on top of stack so still needed
+ * this puts one open file struct on tos and inits vinstk  
+ */
+static void prep_cfg_vflist(void)
+{
+ register int fi;
+
+ __last_lbf = __last_inf;
+ /* set open file/macro exp./include stack to empty */
+ for (fi = 0; fi < MAXFILNEST; fi++) __vinstk[fi] = NULL;
+ __vin_top = -1;
+ __lasttoktyp = UNDEF;
+ __last_attr_prefix = FALSE;
+ /* this builds the empty top of stack entry */
+ __push_vinfil();
+ __cur_infi = __last_inf;
+}
+
+/*
+ * build error message if the module didn't match any in the
+ * given library
+ */ 
+static void build_rule_error(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp, 
+ struct cfgrule_t *rulp)
+{
+     
+ /* if this didn't match there is no such instance */
+ if (rulp->rultyp == CFG_INSTANCE)
+  {
+   __pv_err(3576, "config %s at %s: unable to bind rule - no such module %s",
+    cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno), 
+    rulp->objnam);
+  }
+ else if (rulp->rultyp == CFG_CELL)
+  {
+   if (rulp->libnam != NULL)
+    {
+     /* no such library cell */ 
+     __pv_err(3576,
+      "config %s at %s: unable to bind rule - no such cell %s",
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno), 
+      rulp->objnam);
+    } 
+  }
+}
+
+/*
+ * read source of and parse all cells in a design 
+ *
+ * SJM 01/09/04 FIXME ??? - must allow more than one top level design mod 
+ */
+static int bind_cfg_design(struct cfg_t *cfgp, int is_hier)
+{
+ register struct cfgdes_t *desp;
+ register struct cfgrule_t *rulp;
+ struct cfglib_t *lbp;
+ struct mod_t *mdp;
+
+ if (is_hier)
+  {
+   if (cfgp->cfgdeslist == NULL || cfgp->cfgdeslist->desnxt != NULL)
+    {
+     __pv_err(3571,
+      "hierarchical config %s at %s - only one design statement allowed", 
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno));
+     return(FALSE);
+    }
+  }
+
+ for (desp = cfgp->cfgdeslist; desp != NULL; desp = desp->desnxt)
+  {
+   if (desp->deslbnam == NULL)
+    {
+     /* SJM 01/09/04 - FIXME - need to use default rule */
+     __pv_err(3571, "config %s at %s: design library name missing",
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno));
+
+     /* --- DBG remove -- */
+     __misc_terr(__FILE__, __LINE__);
+     /* --- */
+    }
+
+   if ((lbp = find_cfglib(desp->deslbnam)) == NULL)
+    {
+     __pv_err(3572, "config %s at %s: unable to find design library %s", 
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      desp->deslbnam);
+     continue;
+    }
+   desp->deslbp = lbp;
+ 
+   /* find the top level module in library lbp and parse source of file it */ 
+   /* is in - normally will be in file by itself */
+
+   /* SJM 01/13/04 - may not be top mod but from config view work down */
+   /* design modules can be non top mods (instantiated somewhere) but */   
+   /* that just works because sub tree just gets bound */
+   /* SJM 01/13/04 - FIXME - but that means inst and type names must be same */
+   if (desp->topmodnam == NULL)
+    {
+     __pv_err(3573,
+      "config %s at %s: top level design module name missing - for design lib %s", 
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      desp->deslbnam);
+     continue;
+    }
+
+   if ((mdp = find_cell_in_cfglib(desp->topmodnam, lbp)) == NULL)
+    {
+     __pv_err(3574,
+      "config %s at %s: unable to find design top level module %s in library %s", 
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      desp->topmodnam, desp->deslbnam);
+     continue;
+    }
+
+   /* can't use undef hd list because only undef inst mod types from */
+   /* the one design top mod added - rest of the mods must be read and */
+   /* parsed but there cells can't be added to undef list */
+ 
+   /* free undef list added from reading one config top level module */
+   free_undef_list();
+ 
+   __last_bind_comp_ndx = 0;
+   __bind_inam_comptab[0] = __pv_stralloc(mdp->msym->synam);
+
+   /* SJM 05/18/04 - binding of mdp uses current cfg library */
+   mdp->mod_cfglbp = lbp;
+   
+   /* AIV rare case with instance/cell rules but no undefined mods */
+   /* that means rules are not matched */
+   if (mdp->mcells == NULL)
+    {
+     for (rulp = cfgp->cfgrules; rulp != NULL; rulp = rulp->rulnxt)
+      {
+       /* just warn because no cells need mapping */
+       /* AIV LOOKATME message can msym be NULL here ?? */
+       __pv_warn(3122,
+        "config %s at %s: unable to bind rule - no modules to map in design %s module %s",
+        cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno),
+        desp->deslbnam, mdp->msym != NULL ? mdp->msym->synam : "undefined");
+      }
+    }
+   else
+    {
+     bind_cells_in1mod(cfgp, desp->deslbp, mdp);
+     /* emit errors for hierarchical paths in rules that do not exist */
+     for (rulp = cfgp->cfgrules; rulp != NULL; rulp = rulp->rulnxt)
+      {
+       if (!rulp->matched)
+        {
+         build_rule_error(cfgp, desp->deslbp, rulp);
+        }
+      }
+    } 
+   /* DBG remove -- */
+   if (__last_bind_comp_ndx > 0) __misc_terr(__FILE__, __LINE__);
+   /* -- */
+   __my_free(__bind_inam_comptab[0], strlen(__bind_inam_comptab[0]) + 1);
+   __last_bind_comp_ndx = -1;
+  }
+ return(TRUE);
+}
+
+/*
+ * build a **<file>(<line. no.) reference for config where in fils not used
+ * this chops file name so know will fit
+ * s must be at least RECLEN wide
+ */
+extern char *__cfg_lineloc(char *s, char *fnam, int fnlcnt)
+{
+ char s1[RECLEN];
+
+ sprintf(s, "**%s(%d)", __schop(s1, fnam), fnlcnt);
+ return(s);
+}
+
+/*
+ * find a library by name
+ */
+static struct cfglib_t *find_cfglib(char *lbnam)
+{
+ struct cfglib_t *lbp;
+
+ for (lbp = __cfglib_hd; lbp != NULL; lbp = lbp->lbnxt) 
+  {
+   if (strcmp(lbp->lbname, lbnam) == 0) return(lbp);
+  }
+ return(NULL);
+}
+
+/*
+ * free (empty) undef list
+ *
+ * because config file reading requires parsing all modules in any file
+ * read, can't use undef hd list - must scan cells and resolve
+ * from mcells whose mod type symbol is syundefmod
+ */
+static void free_undef_list(void)
+{
+ struct undef_t *undefp, *undefp2;
+
+ /* final step is to free temp undef list */
+ for (undefp = __undefhd; undefp != NULL;) 
+  {
+   undefp2 = undefp->undefnxt;
+   __my_free((char *) undefp, sizeof(struct undef_t)); 
+   undefp = undefp2;
+  }
+ __undefhd = NULL;
+}
+
+/*
+ * ROUTINES TO BIND CELLS
+ */
+
+/*
+ * bind all cells inside one already bound module
+ */
+static void bind_cells_in1mod(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
+ struct mod_t *mdp)
+{
+ register struct cfgrule_t *rulp;
+ register struct libel_t *lbep;
+ int cell_matched;
+ struct cell_t *cp;
+ struct sy_t *msyp, *lbsyp;
+ char *mnp;
+ 
+ mdp->cfg_scanned = TRUE;
+ for (cp = mdp->mcells; cp != NULL; cp = cp->cnxt)
+  {
+   if (!cp->cmsym->syundefmod) continue;
+   cell_matched = FALSE;
+   for (rulp = cfgp->cfgrules; rulp != NULL; rulp = rulp->rulnxt)  
+    {
+     if (!try_match_rule(cntxt_lbp, cp, rulp)) continue; 
+  
+     if (__cfg_verbose)
+      {
+       __cv_msg("  ** Rule matched for instance: %s (%s:%s) for rule config file: %s at line %d.\n\n",   
+        cp->csym->synam, __in_fils[cp->cmsym->syfnam_ind], 
+        mdp->msym->synam, cfgp->cfg_fnam, rulp->rul_lno);
+      }
+    
+     if (cell_matched)
+      {
+       __pv_warn(3123, "config %s at %s: overriding previous defined matching rule(s)", 
+        cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno));
+      }
+
+     /* SJM 05/18/04 - cells inside bound to this lib (for %l) */
+     mdp->mod_cfglbp = cntxt_lbp;
+    
+     cell_matched = TRUE;
+     /* if it gets here the module exists so mark as TRUE */
+     rulp->matched = TRUE; 
+     if (!rulp->is_use)
+      {
+       if (!bind_liblist_rule(cfgp, cp, rulp))
+        {
+         /* AIV 06/01/04 - FIXME should print out the entire liblist */ 
+         /* unable to match type of the ins mod in the specified library */
+         __pv_err(3577,
+          "config %s at %s: unable to bind instance rule - module type (%s) never found in liblist (line number %d)",
+          cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno),
+          cp->cmsym->synam, rulp->rul_lno);
+        }
+      }
+     else if (!bind_use_rule(cfgp, cntxt_lbp, cp, rulp))
+      {
+       /* Unable to match the use type of the mod in the specified lib */
+       __pv_err(3578, "config %s at %s: unable to bind use rule - module type (%s) never found in library (%s)",
+       cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, rulp->rul_lno),
+       cp->cmsym->synam, rulp->objnam);
+      }
+      goto nxt_cell;
+    }
+ 
+   /* AIV if a file read via a rule, and in the file it contains mod 'foo' */
+   /* it must also bind the 'foo' in the file without a rule */
+   /* AIV LOOKATME ### ??? - is there a better way to do this */
+   /* get the current file name */
+   if (mdp->mod_last_ifi == - 1) goto nxt_cell; 
+   mnp = __in_fils[mdp->mod_last_ifi]; 
+   for (lbep = cntxt_lbp->lbels; lbep != NULL; lbep = lbep->lbenxt)
+    {
+     /* match the name of the expanded library file name */
+     if (strcmp(lbep->lbefnam, mnp) == 0)
+      {
+       /* find the symbol to be bound in the library symbol table */
+       if ((lbsyp = __get_sym(cp->cmsym->synam, lbep->lbel_sytab)) != NULL) 
+        {
+         /* SJM 05/28/04 - WRONG ??? ### ---
+         if ((msyp = __get_sym(lbsyp->synam, __modsyms)) != NULL)
+          {
+           __misc_terr(__FILE__, __LINE__);
+          }
+          ---*/
+
+         /* bind the cell symbols */
+         cp->cmsym = lbsyp;
+         cp->cmsym->cfg_needed = TRUE;
+
+         if (__cfg_verbose)
+          {
+           __cv_msg("  ++ Bound in config: %s\n      instance: %s (%s:%s) bound to cell: %s in module: %s from file: %s in library: %s (SCANNED).\n\n",  
+            cfgp->cfgnam, cp->csym->synam, __in_fils[cp->csym->syfnam_ind], 
+            cp->cmsym->synam, lbsyp->synam, mdp->msym->synam,
+            mnp, cntxt_lbp->lbname);
+           }
+          /* cells inside bound to this lib (for %l) */
+          cp->cmsym->el.emdp->mod_cfglbp = cntxt_lbp;
+
+          /* if a module the unconnected module could have mods */
+          /* that need to be connected as well  */
+          /* if the connecting cell hasn't been sanned and is mod check it */
+          if (!cp->cmsym->el.emdp->cfg_scanned && cp->cmsym->sytyp == SYM_M
+           && mdp->mcells != NULL)
+           {
+            if (__cfg_verbose)
+             {
+              __cv_msg("Binding cells in module: %s in file: %s.\n",
+               mdp->msym->synam, mnp);
+             }
+            if (++__last_bind_comp_ndx >= __siz_bind_comps) grow_bind_comps();
+            __bind_inam_comptab[__last_bind_comp_ndx] = 
+            __pv_stralloc(cp->csym->synam);
+
+            /* bind cells in this one passing lib used to bind this one */
+            bind_cells_in1mod(cfgp, cntxt_lbp, cp->cmsym->el.emdp);
+           
+            __my_free(__bind_inam_comptab[__last_bind_comp_ndx],
+            strlen(__bind_inam_comptab[__last_bind_comp_ndx]) + 1);
+            __last_bind_comp_ndx--;
+           }
+          goto nxt_cell;
+         }
+       }
+     }
+
+   /* must match rules in order */
+   if ((rulp = cfgp->cfgdflt) != NULL)
+    {
+     /* notice default is always liblist form rule - never use form */
+     if (bind_liblist_rule(cfgp, cp, rulp)) goto nxt_cell;
+    }
+   /* error message if cound not bind cell */
+   __pv_err(3575,
+    "config %s at %s: unable to bind cell %s (instance %s) (current lib %s in file %s:%d) - no rule matches",
+    cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+    cp->cmsym->synam, cp->csym->synam, cntxt_lbp->lbname,
+     __in_fils[cp->csym->syfnam_ind], cp->csym->sylin_cnt); 
+
+   nxt_cell:;
+  } 
+}
+
+/*
+ * routine to attempt to match one rule and return T if matches
+ * does not bind
+ */
+static int try_match_rule(struct cfglib_t *cntxt_lbp, struct cell_t *cp,
+ struct cfgrule_t *rulp)
+{
+ register int ci;
+     
+ if (rulp->rultyp == CFG_INSTANCE)
+  {
+   /* match inst */
+   if (!cp->c_named) return(FALSE);
+
+   if (strcmp(cp->csym->synam, rulp->inam_comptab[rulp->inam_comp_lasti])
+    != 0) return(FALSE);
+
+   /* if instance path length from config design root different */
+   /* then can't match */
+   if (__last_bind_comp_ndx + 1 != rulp->inam_comp_lasti) return(FALSE);
+
+   for (ci = __last_bind_comp_ndx; ci >= 0; ci--)
+    {
+     if (strcmp(__bind_inam_comptab[ci], rulp->inam_comptab[ci]) != 0)
+      return(FALSE);
+    }
+   return(TRUE);
+  }
+ else if (rulp->rultyp == CFG_CELL)
+  {
+   if (rulp->libnam != NULL && rulp->libnam[0] != '\0')
+    {
+     if (strcmp(rulp->libnam, cntxt_lbp->lbname) != 0) return(FALSE);
+    }
+   if (strcmp(cp->cmsym->synam, rulp->objnam) == 0) return(TRUE);
+  }
+ return(FALSE);
+}
+
+/*
+ * bind instance rule with liblist clause - return T if succeeds else F
+ */
+static int bind_liblist_rule(struct cfg_t *cfgp, struct cell_t *cp,
+ struct cfgrule_t *rulp)
+{
+ struct cfgnamlst_t *cnlp;
+ struct cfglib_t *lbp;
+ struct mod_t *bind_mdp;
+ char s1[RECLEN];
+
+ /* match every lib in lib list in order until find match or fail */
+ for (cnlp = rulp->rul_libs; cnlp != NULL; cnlp = cnlp->cnlnxt)
+  {
+   /* find the current lib */
+   if ((lbp = find_cfglib(cnlp->nam)) == NULL)
+    {
+     if (rulp->rultyp == CFG_DEFAULT)
+       strcpy(s1, "default");
+     else
+       strcpy(s1, rulp->objnam);
+
+     __pv_err(3571,
+      "config %s at %s: binding object %s lib list clause library %s not found",
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      s1, cnlp->nam);
+     continue;
+    }
+
+   /* attempt to bind - cp is cell containing */
+   if ((bind_mdp = find_cell_in_cfglib(cp->cmsym->synam, lbp)) == NULL)
+    continue;
+   
+   /* AIV 05/18/04 - binding of mdp uses current cfg library */
+   bind_mdp->mod_cfglbp = lbp;
+
+   /* this does the binding */
+   cp->cmsym = bind_mdp->msym;
+   cp->cmsym->cfg_needed = TRUE;
+
+   if (__cfg_verbose)
+    {
+     if (rulp->rultyp == CFG_DEFAULT)
+       strcpy(s1, "default");
+     else
+       strcpy(s1, rulp->objnam);
+      __cv_msg("  ++ Bound in config: %s\n      instance: %s (%s:%s) bound to cell: %s in library: %s (%s) (LIBLIST %s).\n\n",  
+         cfgp->cfgnam, cp->csym->synam, __in_fils[cp->cmsym->syfnam_ind], 
+         cp->cmsym->synam, bind_mdp->msym->synam,  lbp->lbname, 
+         __in_fils[bind_mdp->msym->syfnam_ind], s1);
+    }
+
+   /* bind cells inside */
+   bind_cells_inside(cfgp, cp, bind_mdp, lbp);
+   return(TRUE);
+  } 
+ return(FALSE);
+}
+
+/*
+ * bind use rule
+ *
+ * use clause - easy because [lib].cell explicitly given
+ * SJM 01/14/03 - WRITEME - handle different cfg (:config)
+ */
+static int bind_use_rule(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
+ struct cell_t *cp, struct cfgrule_t *rulp)
+{
+ struct cfg_t *use_replace_cfgp;
+ struct cfglib_t *lbp;
+ struct mod_t *bind_mdp;
+ struct sy_t *msyp;
+
+ /* if use clause heirarchical config form find the config to use */ 
+ if (rulp->use_rule_cfg)
+  {
+   if ((use_replace_cfgp = fnd_cfg_by_name(rulp->rul_use_celnam)) == NULL)
+    {
+     __pv_err(3579,
+      "config %s at %s: hierichical use clause config name %s undefined - config not changed",
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      rulp->rul_use_celnam);
+    }
+
+   if (bind_cfg_design(use_replace_cfgp, TRUE))
+    {
+     /* SJM 05/18/04 - BEWARE - assuming (and must check) only one */
+     /* design statement for hierarchical sub configs */
+     if ((msyp = __get_sym(use_replace_cfgp->cfgdeslist->topmodnam,
+      __modsyms)) != NULL) 
+      cp->cmsym = msyp;
+     cp->cmsym->cfg_needed = TRUE;
+     if (__cfg_verbose)
+      {
+       __cv_msg("  ++ Bound in config: %s using hierarchical config: %s\n      binding instance: %s (%s:%s) bound to cell: %s (%s) (USE CLAUSE).\n\n",  
+       cfgp->cfgnam, use_replace_cfgp->cfgnam, cp->csym->synam, 
+       __in_fils[cp->cmsym->syfnam_ind], cp->cmsym->synam, msyp->synam,
+        __in_fils[msyp->syfnam_ind]);
+      }
+    }
+   return(TRUE);
+  }
+
+ if (rulp->rul_use_libnam == NULL || rulp->rul_use_libnam[0] == '\0') 
+  {
+   lbp = cntxt_lbp;
+  }
+ else
+  { 
+   if ((lbp = find_cfglib(rulp->rul_use_libnam)) == NULL)
+    {
+     __pv_err(3571,
+      "config %s at %s: object %s use clause %s:%s library %s not found",
+      cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+      rulp->objnam, rulp->rul_use_libnam, rulp->rul_use_celnam,
+      rulp->rul_use_libnam);
+     return(FALSE);
+    }
+  }
+
+ /* use the rul_use ins name 'use lib.rul_use_celnam' */
+ if ((bind_mdp = find_cell_in_cfglib(rulp->rul_use_celnam, lbp)) == NULL)
+  {
+    __pv_err(3573, "config %s at %s: object %s use clause %s.%s cell %s not found",
+     cfgp->cfgnam, __cfg_lineloc(__xs, cfgp->cfg_fnam, cfgp->cfg_lno),
+     rulp->objnam, lbp->lbname, rulp->rul_use_celnam,
+     rulp->rul_use_celnam);
+    return(FALSE);
+   }
+
+ /* bind the library name (%l) */
+ bind_mdp->mod_cfglbp = lbp;
+
+ /* found cell */
+ cp->cmsym = bind_mdp->msym;
+ cp->cmsym->cfg_needed = TRUE;
+ if (__cfg_verbose)
+  {
+   __cv_msg("  ++ Bound in config: %s \n       binding instance: %s (%s:%s) bound to cell: %s in library: %s (%s) (USE CLAUSE).\n\n",  
+   cfgp->cfgnam, cp->csym->synam, __in_fils[cp->cmsym->syfnam_ind], 
+   cp->csym->synam, bind_mdp->msym->synam, lbp->lbname, 
+   __in_fils[bind_mdp->msym->syfnam_ind]);
+  }
+
+ /* bind cells inside */
+ bind_cells_inside(cfgp, cp, bind_mdp, lbp);
+ return(TRUE);
+}
+
+/*
+ * find a config given a cfg name
+ */
+static struct cfg_t *fnd_cfg_by_name(char *confnam)
+{
+ register struct cfg_t *cfgp;
+
+ for (cfgp = __cfg_hd; cfgp != NULL; cfgp = cfgp->cfgnxt)
+  {
+   if (strcmp(cfgp->cfgnam, confnam) == 0)
+    {
+     return(cfgp);
+    }
+  }
+ return(NULL);
+}
+
+/*
+ * after binding one cell bind cells depth first inside it
+ */
+static void bind_cells_inside(struct cfg_t *cfgp, struct cell_t *cp,
+ struct mod_t *bind_mdp, struct cfglib_t *lbp)
+{
+ if (++__last_bind_comp_ndx >= __siz_bind_comps) grow_bind_comps();
+ __bind_inam_comptab[__last_bind_comp_ndx] = __pv_stralloc(cp->csym->synam);
+
+ /* bind cells in this one passing library used to bind this one */
+ bind_cells_in1mod(cfgp, lbp, bind_mdp);
+           
+ __my_free(__bind_inam_comptab[__last_bind_comp_ndx],
+   strlen(__bind_inam_comptab[__last_bind_comp_ndx]) + 1);
+ __last_bind_comp_ndx--;
+}
+
+/*
+ * ROUTINE TO FIND A CFG CELL IN A LIBRARY AND FIRST PASS READ SRC 
+ */
+
+/*
+ * find a cell in a config library list of cells
+ *
+ * if config library file compiled, find pre-fixup d.s module (cell)
+ * else read all source in file and search for cell
+ *
+ * keeps reading until finding cell or reaching end of library file list
+ * if any part of file is read all cells in file are read and put in
+ * lib el's symbol table with ptr to mod pre-fixup d.s. 
+ */
+static struct mod_t *find_cell_in_cfglib(char *celnam, struct cfglib_t *lbp)
+{
+ register struct libel_t *lbep;
+ struct sy_t *msyp;
+
+ for (lbep = lbp->lbels; lbep != NULL; lbep = lbep->lbenxt)
+  {
+   if (!lbep->lbelsrc_rd)
+    {
+     /* move keep adding files read into in fils for error locations */
+     if (++__last_lbf >= __siz_in_fils) __grow_infils(__last_lbf);
+     __in_fils[__last_lbf] = __pv_stralloc(lbep->lbefnam);
+
+     /* returns F and emits error if can't open llb file */
+     if (!open_cfg_lbfil(lbp->lbname)) continue;
+
+     rd_cfg_srcfil(lbep);
+     lbep->lbelsrc_rd = TRUE;
+    }
+
+   /* AIV - 05/24/04 - the rare case there is no symbol table */
+   /* if the source only contains `define, `tiemscale, etc, continue */
+   if (lbep->lbel_sytab == NULL) continue;
+   if ((msyp = __get_sym(celnam, lbep->lbel_sytab)) != NULL) 
+   {
+    return(msyp->el.emdp); 
+   }
+  }
+ return(NULL);
+}
+
+/*
+ * try to open the config library file and repl. top of stack with its info
+ *
+ * except for includes and macros size of vinstk will always be 1
+ * file must be openable and have contents
+ * return F on fail
+ * in fils of last lbf must be filled with file name
+ * since know last_lbf > last_inf - on EOF get_vtok will resturn to caller
+ */
+static int open_cfg_lbfil(char *lbnam)
+{
+ char dirstr[RECLEN]; 
+
+ /* know called with last_lbf index of file to process */
+ __cur_fnam = __in_fils[__last_lbf];
+ /* AIV PUTBACK print directory for now - for debugging */
+ if ((__in_s = __tilde_fopen(__cur_fnam, "r")) == NULL)
+  {
+   __pv_err(710, "cannot open config library %s file %s in dir : %s - skipped",
+    lbnam, __cur_fnam,  getcwd(dirstr, RECLEN)); 
+   return(FALSE);
+  }
+ if (feof(__in_s))
+  {
+   __pv_warn(512, "config library %s file %s empty", lbnam, __cur_fnam);
+   return(FALSE);
+  }
+ /* whenever open new file must discard pushed back */
+ __lasttoktyp = UNDEF;
+ __visp->vi_s = __in_s;
+ __visp->vifnam_ind = __last_lbf;
+ __cur_fnam_ind = __last_lbf;
+ __cur_fnam = __in_fils[__cur_fnam_ind];
+ __lin_cnt = 1;
+ __file_just_op = TRUE;
+ if (__cfg_verbose)
+  {
+   __cv_msg("  Parsing config library %s file \"%s\".\n", lbnam, __cur_fnam);
+  }
+ return(TRUE);
+}
+
+/*
+ * read cfg source file to find and elaborate current module
+ *
+ * read src and to lbel symbol table for every module in library
+ */
+static void rd_cfg_srcfil(struct libel_t *lbep)
+{
+ __get_vtok();
+ if (__toktyp == TEOF)
+  {
+   __pv_fwarn(609, "config library file %s contains no tokens",
+    lbep->lbefnam);
+   /* since empty, mark so not re-read */
+   lbep->lbelsrc_rd = TRUE;
+   return;
+  }
+
+ for (;;)
+  {
+   /* may be a compiler directive */
+   if (__toktyp >= CDIR_TOKEN_START && __toktyp <= CDIR_TOKEN_END)
+    {
+     __process_cdir();
+     goto nxt_tok;
+    }
+   switch ((byte) __toktyp) {
+    case TEOF: return;
+    case MACROMODULE:
+     __get_vtok();
+     __finform(423,
+      "macromodules in config library not expanded - %s translated as module",
+      __token);
+     goto chk_name;
+    case MODULE:
+     __get_vtok();
+chk_name:
+     if (__toktyp != ID)
+      {
+       __pv_ferr(707, "config library file module name expected - %s read",
+        __prt_vtok());
+       /* since error, just try to resynchronize */
+       __vskipto_modend(ENDMODULE);
+       goto nxt_tok;
+      }
+     if (!init_chk_cfg_sytab(lbep, "module"))
+      {
+       __vskipto_modend(ENDMODULE);
+       goto nxt_tok;
+      }
+
+     /* know error here will cause skipping to file level thing */
+     /* this adds mod name to lbel one file's symbol table */
+     if (!__rd_moddef(lbep->lbel_sytab, TRUE)) goto nxt_tok;
+
+     /* when reading source this was set only if in cell define region */
+     /* now turn on (maybe again) if all library modules are cells */
+     /* dummy itstk empty here but if good module read mark as cell */
+     if (__lib_are_cells && __last_libmdp != NULL)
+      {
+       __last_libmdp->m_iscell = TRUE;
+       __design_has_cells = TRUE;
+      }
+     __last_libmdp = NULL;
+     /* know to get here 1 more resolved */
+     break;
+
+    case PRIMITIVE:
+     __get_vtok();
+     if (__toktyp != ID)
+      {
+       __pv_ferr(708,
+        "config library file udp primitive name expected - %s read",
+        __prt_vtok());
+       /* since err, just try to skip to end primitive */
+       __letendnum_state = TRUE;
+       __vskipto_modend(ENDPRIMITIVE);
+       __letendnum_state = FALSE;
+       goto nxt_tok;
+      }
+     if (!init_chk_cfg_sytab(lbep, "udp primitive"))
+      {
+       __vskipto_modend(ENDPRIMITIVE);
+       goto nxt_tok;
+      }
+
+     if (!__rd_udpdef(lbep->lbel_sytab)) goto nxt_tok;
+     break;
+    default:
+     __pv_ferr(709,
+     "config library file module, primitive or directive expected - %s read",
+      __prt_vtok());
+     /* here just ignores extra semicolons */
+     if (__toktyp != SEMI) __vskipto2_modend(ENDMODULE, ENDPRIMITIVE);
+   }
+nxt_tok:
+   /* why checking this twice */
+   if (__toktyp == TEOF)
+    {
+chk_ifdef:
+     if (__in_ifdef_level != 0)
+      {
+       __pv_err(924, "last `ifdef unterminated in config libary file %s",
+        __cur_fnam);
+      }
+     break;
+    }
+   __get_vtok();
+   if (__toktyp == TEOF) goto chk_ifdef;
+  }
+}
+
+/*
+ * check module/udp name and alloc lib el symbol table if needed
+ * returns F on error
+ */
+static int init_chk_cfg_sytab(struct libel_t *lbep, char *celtyp)
+{
+ struct sy_t *syp;
+
+ /* if first mod in file, build the lbel's symbol table */ 
+ if (lbep->lbel_sytab == NULL) lbep->lbel_sytab = __alloc_symtab(FALSE);
+
+ /* check to see if name repeated in this library file */
+ if ((syp = __get_sym(__token, lbep->lbel_sytab)) != NULL) 
+  {
+   __pv_ferr(3474,
+    "%s %s repeated in config library file %s - previous at %s",
+    celtyp, syp->synam, lbep->lbefnam,
+    __bld_lineloc(__xs, syp->syfnam_ind, syp->sylin_cnt));
+   return(FALSE);
+  }
+
+ if (__lib_verbose)
+  {
+   __cv_msg("  Scanning config library %s %s (%s).\n",
+    lbep->lbefnam, celtyp, __token);
+  } 
+ return(TRUE);
+}
+
+/*
+ * ROUTINES TO FREE COMPILED LIBRARY MODULE NEVER INSTANTIATED
+ */
+static void add_cfgsym(char *libnam, struct tnode_t *tnp)
+{
+ struct tnode_t *ntnp;
+ char s1[RECLEN];
+
+  if (tnp == NULL) return;
+  add_cfgsym(libnam, tnp->lp);
+
+  // AIV FIXME ??? sprintf(s1, "%s.%s", libnam, tnp->ndp->synam);
+  if (tnp->ndp->cfg_needed)
+   {
+    strcpy(s1, tnp->ndp->synam);
+    ntnp = __vtfind(s1, __modsyms);
+   //AIV FIXME ###
+    if (!__sym_is_new)
+     {
+      __fterr(305,
+       "Sorry - config code to rename module with same name from different libraries not implemented yet.");
+     }
+    __add_sym(s1, ntnp);
+    ntnp->ndp = tnp->ndp;
+    strcpy(ntnp->ndp->synam, s1);
+    ntnp->ndp->sydecl = TRUE;
+    (__modsyms->numsyms)++;
+   }
+  add_cfgsym(libnam, tnp->rp);
+}
+
+
+/* 
+ * add all the used symbols from a config to __modsyms
+ */
+static void add_cfg_libsyms(struct cfglib_t *cfgp)
+{
+ struct libel_t *lbp;
+ struct symtab_t *symt;
+ struct tnode_t *tnp;
+ struct tnode_t *cur;
+ char *cp;
+ int i;
+
+
+ for (lbp = cfgp->lbels; lbp != NULL; lbp = lbp->lbenxt)
+  {
+   if ((symt = lbp->lbel_sytab) == NULL) continue;
+   if (symt->stsyms != NULL)
+    {
+     for (i = 0; i < symt->numsyms; i++)
+      {
+       if (!symt->stsyms[i]->cfg_needed) continue;
+       cp = symt->stsyms[i]->synam;
+       tnp = __vtfind(cp, __modsyms);
+      //AIV FIXME ###
+       if (!__sym_is_new)
+        {
+         __fterr(305,
+          "Sorry - config code to rename module with same name from different libraries not implemented yet.");
+        }
+       __add_sym(cp, tnp);
+       (__modsyms->numsyms)++;
+       tnp->ndp = symt->stsyms[i];
+      }
+    }
+   else
+    {
+       add_cfgsym(cfgp->lbname, symt->n_head);
+    }
+  }
+}
+
+
+/* 
+ * removes all modules that were scanned in from config libraries 
+ * but are never needed remove from the __modhdr list
+ */
+static void free_unused_cfgmods(void)
+{
+ struct mod_t *mdp, *mdp2, *last_mdp; 
+ long sav_mem_use;
+
+//AIV FIXME ### need to free
+ __modsyms = NULL;
+ __modsyms = __alloc_symtab(FALSE);
+ __sym_addprims();
+ sav_mem_use = __mem_use;
+ last_mdp = NULL;
+ for (mdp = __modhdr; mdp != NULL;)
+  {
+   mdp2 = mdp->mnxt;
+
+   /* if module is from a config and hasn't been linked to a library rm */
+   if (mdp->m_inconfig && mdp->mod_cfglbp == NULL)
+    {
+     /* SJM 05/28/04 FIXME ### ??? - need to do some freeing of libs */
+     /* partially_free_mod(mdp); */
+
+     if (last_mdp != NULL) last_mdp->mnxt = mdp2;
+     mdp = mdp2;
+     continue;
+    }
+   if (!mdp->mod_cfglbp->sym_added)
+   {
+     add_cfg_libsyms(mdp->mod_cfglbp);
+     mdp->mod_cfglbp->sym_added = TRUE;
+   }
+   last_mdp = mdp;
+   mdp = mdp2;
+  }
+ /* AIV 05/31/05 - FIXME ### if not freeing no need to print message */
+ /*
+ if (__cfg_verbose)
+  {
+   __cv_msg(
+   "  Config freeing most memory in unused library modules - %ld bytes freed\n",
+    sav_mem_use - __mem_use);
+  }
+  */
+}
+
+/* 
+ * partially free a module (just the larger parts such as stmts and cells)
+ *
+ * for now freeing most of the inisdes of modules that were parsed during
+ * config library loading - eventually will moved to precompiled lib scheme
+ * so this will be removed
+ *
+ * not free mdp but now nothing points to it
+ *
+ * SJM 05/26/04 - LOOKATME - since only free large d.s. in modules there is
+ * quite a bit of memory leakage here
+ */
+static void partially_free_mod(struct mod_t *mdp)
+{
+ register struct cell_t *cp, *cp2;
+ struct ialst_t *ialp;
+ struct task_t *tskp;
+
+ for (cp = mdp->mcells; cp != NULL; )
+  {
+   cp2 = cp->cnxt;
+   __my_free((char *) cp, sizeof(struct cell_t));
+   cp = cp2;
+  }
+
+ /* SJM 05/26/04 - LOOKATME ??? ### can't free stmt until fixup ---
+ for (ialp = mdp->ialst; ialp != NULL; ialp = ialp->ialnxt) 
+  {
+   __free_stlst(ialp->iastp);
+  }
+
+ for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+  {
+   __free_stlst(tskp->tskst);
+  }
+ --- */
+
+}

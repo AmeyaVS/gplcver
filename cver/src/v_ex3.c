@@ -166,6 +166,8 @@ extern void __cp_sofs_wval(register word *, register word *, register int,
 extern void __chg_lhspsel(register word *, register int, register word *,
  register int);
 extern void __sizchgxs(register struct xstk_t *, int);
+extern void __narrow_to1bit(register struct xstk_t *);
+extern void __narrow_to1wrd(register struct xstk_t *);
 extern void __fix_widened_tozs(struct xstk_t *, int);
 extern void __fix_widened_toxs(register struct xstk_t *, int);
 extern void __strenwiden_sizchg(struct xstk_t *, int);
@@ -1467,10 +1469,7 @@ static void do_qc2_wirestore(struct net_t *np, struct qcval_t *qcvalp,
    /* SJM 11/14/00 slightly better to just pass a part as sbp */
    /* notice if vector for wire know lhs bi always non zero */
    if (np->n_isavec) __chg_st_bit(np, qcvalp->qclhsbi, (word) sbp[0], 0L); 
-   /* AIV 07/09/04 - was calling macro but macro never checked record nchg */
-   /* notice for non stren case was calling chg st as needed */ 
-   else __chg_st_val(np, (word *) sbp, 0L); 
-
+   else chg_st_strenscal_(np->nva.bp, sbp);
    __pop_xstk();
   }
  else 
@@ -1857,7 +1856,7 @@ extern int __match_push_targ_to_ref(unsigned xmrtyp, struct gref_t *grp)
    if (__debug_flg)
     {
      __dbg_msg(
-      "== uprel glb drive/load of %s (in %s) no matching uprel inst\n",
+      "== uprel glb %s drive/load of %s (in %s) no matching uprel inst\n",
        grp->gnam, grp->gin_mdp->msym->synam, __msg2_blditree(__xs,
        __inst_ptr));
     }
@@ -4353,6 +4352,9 @@ extern void __assign_to_arr(struct net_t *np, struct expr_t *idndp,
     __to_idnam(idndp));
    return;
   }
+ /* SJM DBG REMOVEME --- */
+ if (arri == -2) __misc_terr(__FILE__, __LINE__);
+ /* --- */
  arrwid = __get_arrwide(np);
  nd_itpop = FALSE;
  /* notice for xmr - symbol points to right wire - trick is to make */
@@ -5020,13 +5022,16 @@ extern void __sizchgxs(register struct xstk_t *xsp, int nblen)
    /* case 1c: wider needs bigger area */
    if (nwlen > xsp->xsawlen)
     {
+     /* SJM 05/16/04 - 9-29 sign change was wrong - need to copy low parts */ 
+     /* of a and b separately */
      wpna = (word *) __my_malloc(2*WRDBYTES*nwlen);
      memcpy(wpna, xsp->ap, WRDBYTES*xsp->xsawlen);
      wpnb = &(wpna[nwlen]);
      memcpy(wpnb, xsp->bp, WRDBYTES*xsp->xsawlen);
+
      __my_free((char *) xsp->ap, 2*WRDBYTES*xsp->xsawlen);
      xsp->ap = wpna;
-     xsp->bp = wpnb;
+     xsp->bp = &(wpna[nwlen]);
      xsp->xsawlen = nwlen;
     }
    else
@@ -5065,6 +5070,288 @@ extern void __sizchgxs(register struct xstk_t *xsp, int nblen)
  xsp->ap[nwlen - 1] &= __masktab[nubits];
  xsp->bp[nwlen - 1] &= __masktab[nubits];
 done:
+ xsp->xslen = nblen;
+}
+
+/*
+ * zero widen a stack value (only for rhs exprs) - not for sign extend
+ * know need to widen or will not be called
+ * this may need to widen stack value width (alloc-free) 
+ * also if widens zeros all bits (not for sign extend widening)
+ */
+extern void __sizchg_widen(register struct xstk_t *xsp, int nblen)
+{
+ register int wi;
+ register word *wpna, *wpnb, *wpob;
+ int nwlen, nubits, stkwlen, xtrabits;
+
+ /* case 1: widening */
+ if (nblen <= WBITS) { xsp->xslen = nblen; return; }
+ nwlen = wlen_(nblen);
+ /* case 2: multiword but into same number of words - does nothing */
+ stkwlen = wlen_(xsp->xslen);
+ if (nwlen == stkwlen) { xsp->xslen = nblen; return; }
+ nubits = ubits_(nblen);
+ /* case 1c: wider needs bigger area */
+ if (nwlen > xsp->xsawlen)
+  {
+   /* SJM 05/16/04 - 9-29 sign change was wrong - need to copy low parts */ 
+   /* of a and b separately */
+   wpna = (word *) __my_malloc(2*WRDBYTES*nwlen);
+   memcpy(wpna, xsp->ap, WRDBYTES*xsp->xsawlen);
+   wpnb = &(wpna[nwlen]);
+   memcpy(wpnb, xsp->bp, WRDBYTES*xsp->xsawlen);
+
+   __my_free((char *) xsp->ap, 2*WRDBYTES*xsp->xsawlen);
+   xsp->ap = wpna;
+   xsp->bp = wpnb;
+   xsp->xsawlen = nwlen;
+  }
+ else
+  { 
+   /* case 1d: wider by adjusting loc in region of b part and copying */
+   wpob = xsp->bp;
+   wpnb = &(xsp->ap[nwlen]);
+   /* must copy high to low to preserve high old */ 
+   for (wi = stkwlen - 1; wi >= 0; wi--) wpnb[wi] = wpob[wi]; 
+   xsp->bp = wpnb; 
+  }
+ /* 0 wide new high bits */
+ xtrabits = (nblen - WBITS*stkwlen);
+ zero_allbits_(&(xsp->ap[stkwlen]), xtrabits);
+ zero_allbits_(&(xsp->bp[stkwlen]), xtrabits);
+ xsp->xslen = nblen;
+}
+
+/*
+ * widen a stack using signed extension (narrow case handled in other routine)
+ *
+ * know need widening (maybe within one word) - checks and extends sign
+ * if needed
+ *
+ * this may need to widen stack value width (alloc-free) but never pops/pushes
+ * also routine does not work for strens
+ */
+extern void __sgn_xtnd_widen(struct xstk_t *xsp, int nblen)
+{
+ register int wi, osgn_bofs;
+ register word mask;
+ word *wpna, *wpnb, *wpob;
+ int nwlen, stkwlen, widen_amt, xtra_wbits;
+
+ /* case 1: stays in one word */ 
+ if (nblen <= WBITS)
+  {
+   osgn_bofs = xsp->xslen - 1;
+   /* if signed, sign extend, otherwise nothing to do */
+   if ((xsp->ap[0] & (1 << (osgn_bofs))) != 0)
+    {
+     mask = __masktab[nblen - osgn_bofs + 1] << (osgn_bofs + 1);
+     xsp->ap[0] |= mask;
+     /* if x/z x/z extend */
+     if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0) xsp->bp[0] |= mask;
+    }
+   else
+    {
+     if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0)
+      {
+       /* since sign bit off, 0 extend a part but if z, z extend b part */
+       mask = __masktab[nblen - osgn_bofs + 1] << (osgn_bofs + 1);
+       if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0) xsp->bp[0] |= mask;
+      }
+    }
+   xsp->xslen = nblen;
+   return;
+  }
+ nwlen = wlen_(nblen);
+ /* case 2: multiword but into same number of words */
+ stkwlen = wlen_(xsp->xslen);
+
+ if (nwlen == stkwlen)
+  {
+   osgn_bofs = get_bofs_(xsp->xslen - 1);
+
+   /* if signed, sign extend, otherwise nothing to do */
+   /* notice nwlen and stkwlen same */
+   if ((xsp->ap[nwlen - 1] & (1 << osgn_bofs)) != 0)
+    {
+     mask = ((__masktab[ubits_(nblen) - osgn_bofs + 1]) << (osgn_bofs + 1));
+     xsp->ap[nwlen] |= mask;
+     /* if x/z x/z extend */
+     if ((xsp->bp[nwlen] & (1 << (osgn_bofs))) != 0)
+      xsp->bp[nwlen] |= mask;
+    }
+   else
+    {
+     if ((xsp->bp[0] & (1 << (osgn_bofs))) != 0)
+      {
+       mask = ((__masktab[ubits_(nblen) - osgn_bofs + 1]) << (osgn_bofs + 1));
+       xsp->bp[nwlen] |= mask;
+      }
+    }
+   xsp->xslen = nblen;
+  }
+
+ /* case 3: wider - first create the larger area */
+ if (nwlen > xsp->xsawlen)
+  {
+   /* SJM 05/16/04 - 9-29 sign change was wrong - need to copy low parts */ 
+   /* of a and b separately */
+   wpna = (word *) __my_malloc(2*WRDBYTES*nwlen);
+   memcpy(wpna, xsp->ap, WRDBYTES*xsp->xsawlen);
+   wpnb = &(wpna[nwlen]);
+   memcpy(wpnb, xsp->bp, WRDBYTES*xsp->xsawlen);
+
+   __my_free((char *) xsp->ap, 2*WRDBYTES*xsp->xsawlen);
+   xsp->ap = wpna;
+   xsp->bp = &(wpna[nwlen]);
+   xsp->xsawlen = nwlen;
+  }
+ else
+  { 
+   /* case 1d: wider by adjusting loc in region of b part and copying */
+   wpob = xsp->bp;
+   wpnb = &(xsp->ap[nwlen]);
+   /* must copy high to low to preserve high old */ 
+   for (wi = stkwlen - 1; wi >= 0; wi--) wpnb[wi] = wpob[wi]; 
+   xsp->bp = wpnb; 
+  }
+
+ /* widen amount is number of bits to set to 1 (sign extend into) */
+ widen_amt = nblen - xsp->xslen; 
+ /* this is position in old narrower value */
+ osgn_bofs = get_bofs_(xsp->xslen - 1);
+ /* xtra bits is bit num bits with high bits of sign words subtracted */
+ xtra_wbits = widen_amt - (WBITS - osgn_bofs - 1);
+
+ /* now can set new widened size */
+ xsp->xslen = nblen;
+
+ /* sign extend if sign bit on, x/z extend if sign bit x/z, else 0 extend */
+ if ((xsp->ap[stkwlen - 1] & (1 << osgn_bofs)) != 0)
+  {
+   mask = __masktab[WBITS - osgn_bofs - 1] << (osgn_bofs + 1);
+   /* one high bits of this word */
+   xsp->ap[stkwlen - 1] |= mask;
+   /* then all bits of rest */
+   one_allbits_(&(xsp->ap[stkwlen]), xtra_wbits);
+
+   /* if x/z x/z extend */
+   if ((xsp->bp[stkwlen - 1] & (1 << osgn_bofs)) != 0)
+    {
+     xsp->bp[stkwlen - 1] |= mask;
+     one_allbits_(&(xsp->bp[stkwlen]), xtra_wbits);
+    } 
+   /* know high bits of high old size word 0, but 0 all new words */
+   else zero_allbits_(&(xsp->bp[stkwlen]), xtra_wbits);
+   return;
+  }
+ /* a part sign bit off, 0 all high a part words */
+ zero_allbits_(&(xsp->ap[stkwlen]), xtra_wbits);
+ if ((xsp->bp[stkwlen - 1] & (1 << osgn_bofs)) != 0)
+  {
+   mask = __masktab[WBITS - osgn_bofs - 1] << (osgn_bofs + 1);
+   xsp->bp[stkwlen - 1] |= mask;
+   one_allbits_(&(xsp->bp[stkwlen]), xtra_wbits);
+   return;
+  }
+ /* 0 wide new high bits */
+ zero_allbits_(&(xsp->bp[stkwlen]), xtra_wbits);
+}
+
+/*
+ * sign extend widen within one word
+ */
+extern void __sgn_xtnd_wrd(register struct xstk_t *xsp, int nblen)
+{
+ register int oubits;
+ register word mask;
+
+ oubits = xsp->xslen;
+ /* if signed, sign extend, otherwise nothing to do */
+ if ((xsp->ap[0] & (1 << (oubits - 1))) != 0)
+  {
+   mask = (__masktab[WBITS - oubits]) << oubits;
+   xsp->ap[0] |= mask;
+   /* if x/z x/z extend */
+   if ((xsp->bp[0] & (1 << (oubits - 1))) != 0) xsp->bp[0] &= mask;
+  }
+ else
+  {
+   mask = (__masktab[WBITS - oubits]) << oubits;
+   if ((xsp->bp[0] & (1 << (oubits - 1))) != 0)
+    xsp->bp[0] |= mask;
+  }
+ xsp->xslen = nblen;
+}
+
+/*
+ * special case narrow to 1 routine 
+ */
+extern void __narrow_to1bit(register struct xstk_t *xsp)
+{
+ register int stkwlen;
+
+ stkwlen = wlen_(xsp->xslen);
+ /* case 1: narrowing within one word */
+ if (stkwlen == 1) { xsp->ap[0] &= 1; xsp->bp[0] &= 1; }
+ else
+  {
+   /* case 2: wide to 1 bit narrow */
+   xsp->ap[0] &= 1; 
+   xsp->ap[1] = xsp->bp[0] & 1;
+   xsp->bp = &(xsp->ap[1]); 
+  }
+ xsp->xslen = 1;
+}
+
+/*
+ * special case narrow to WBITS routine 
+ */
+extern void __narrow_to1wrd(register struct xstk_t *xsp)
+{
+ register int stkwlen;
+
+ stkwlen = wlen_(xsp->xslen);
+ /* DBG remove -- */
+ if (stkwlen == 1) __misc_terr(__FILE__, __LINE__);
+ /* --- */
+ xsp->ap[1] = xsp->bp[0];
+ xsp->bp = &(xsp->ap[1]); 
+ xsp->xslen = WBITS;
+}
+
+/*
+ * narrow a stack value (only for rhs exprs)
+ * know need to narrow or will not be called
+ */
+extern void __narrow_sizchg(register struct xstk_t *xsp, int nblen)
+{
+ register int wi;
+ register word *wpnb, *wpob;
+ int nwlen, nubits, stkwlen;
+
+ /* know cannot be 1 bit to start */
+ nwlen = wlen_(nblen);
+ nubits = ubits_(nblen);
+ stkwlen = wlen_(xsp->xslen);
+ /* case 2b: narrowing where narrower same number of words */
+ if (stkwlen == nwlen)
+  {
+   xsp->ap[nwlen - 1] &= __masktab[nubits];
+   xsp->bp[nwlen - 1] &= __masktab[nubits];
+   xsp->xslen = nblen;
+   return;
+  }
+ /* case 2c: general narrowing */
+ wpnb = &(xsp->ap[nwlen]);
+ wpob = xsp->bp;
+ /* need loop because must make sure copy low first */
+ /* this insures a/b parts contiguous */ 
+ for (wi = 0; wi < nwlen; wi++) wpnb[wi] = wpob[wi];
+ xsp->bp = wpnb;
+ xsp->ap[nwlen - 1] &= __masktab[nubits];
+ xsp->bp[nwlen - 1] &= __masktab[nubits];
  xsp->xslen = nblen;
 }
 
@@ -5383,13 +5670,13 @@ static void eval_wide_gate(struct gate_t *gp, struct xstk_t *xsp)
  switch (gp->gmsym->el.eprimp->gateid) {
   case G_BITREDAND: /* and */
    __lunredand(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
    break;
   case G_NAND: /* nand */
    __lunredand(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
 invert:
@@ -5397,25 +5684,25 @@ invert:
    return;
   case G_BITREDOR: /* or */
    __lunredor(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
    break;
   case G_NOR: /* nor */
    __lunredor(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
    goto invert;
   case G_BITREDXOR: /* xor */
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
    break;
   case G_REDXNOR: /* xnor */
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, nins);
-   __sizchgxs(xsp, 1);
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta;
    xsp->bp[0] = (word) rtb;
    goto invert;

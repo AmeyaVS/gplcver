@@ -67,7 +67,7 @@ static double stdnorm_dev(int *);
 static double gamma_dev(double, int *);
 static int poisson_dev(int, int *);
 static double log_gamma(double);
-static void lxqcol(register struct xstk_t *, register struct xstk_t *, register struct xstk_t *, int);
+static void lxqcol(register struct xstk_t *, register struct xstk_t *, register struct xstk_t *, int, int, int);
 static void eval_unary(struct expr_t *);
 static void eval_wide_unary(register struct expr_t *,
  register struct xstk_t *);
@@ -78,6 +78,7 @@ static void bitmwrshift(register word *, register int, register int);
 static void bitmwlshift(register word *, register int, register int);
 static void wrdmwrshift(register word *, register int, register int);
 static void wrdmwlshift(register word *, register int, register int);
+static int sgn_linc(register word *, int);
 static int accmuladd32(word *, word *, word, word *, int);
 static void mpexpr_zdiv(word *, word *, word *, int, word *, int);
 static int ztrim(word *, int);
@@ -143,19 +144,29 @@ extern void __exec_sreadmem(struct expr_t *, int);
 extern void __exec_sfrand(struct expr_t *);
 extern void __ld_addr(word **, word **, register struct net_t *);
 extern void __luminus(word *, word *, int);
+extern int __is_lnegative(word *, int); 
+extern word __cp_lnegate(word *, register word *, int);
+extern word __inplace_lnegate(register word *, int);
 extern void __lunredand(int *, int *, word *, word *, int);
 extern void __lunredor(int *, int *, word *, word *, int);
 extern void __lunredxor(int *, int *, word *, word *, int);
 extern void __mwrshift(word *, unsigned, int);
+extern void __arith_mwrshift(word *, unsigned, int);
 extern void __mwlshift(word *, unsigned, int);
 extern int __cvt_lngbool(word *, word *, int); 
 extern int __do_widecmp(int *, register word *, register word *,
+ register word *, register word *, int);
+extern int __do_sign_widecmp(int *, register word *, register word *,
  register word *, register word *, int);
 extern int __do_xzwidecmp(register word *, register word *, register word *,
  register word *, int);
 extern void __ladd(word *, word *, word *, int);
 extern void __lmult(register word *, register word *, register word *, int);
+extern void __sgn_lmult(register word *, register word *, register word *,
+ int);
 extern void __ldivmod(word *, word *, word *, int, int);
+extern void __sgn_ldivmod(register word *, register word *, register word *,
+ int, int);
 extern void __ldivmod2(word *, word *, word *, word *, int);
 extern void __by16_ldivmod(word *, word *, word *, word, int);
 
@@ -170,16 +181,19 @@ extern void __lhsbsel(register word *, register int, word);
 extern void __cp_sofs_wval(register word *, register word *, register int,
  register int);
 extern void __getarr_range(struct net_t *, int *, int *, int *);
-extern void __getwir_range(struct net_t *, int *, int *);
 extern void __my_fclose(FILE *);
 extern void __to_dhboval(int, int);
 extern void __sizchgxs(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __narrow_to1bit(register struct xstk_t *);
+
 extern int __wide_vval_is0(register word *, int);
 extern int __trim1_0val(word *, int);
 extern void __lhspsel(register word *, register int, register word *,
  register int);
 extern int __vval_is1(register word *, int);
-extern int __count_leading_zeros(register word);
 extern int __get_eval_word(struct expr_t *, word *);
 extern void __exec2_proc_assign(struct expr_t *, register word *,
  register word *);
@@ -213,7 +227,6 @@ extern void __st_arr_val(union pck_u, int, int, int, register word *,
  register word *);
 extern void __chg_st_arr_val(union pck_u, int, int, int, register word *,
  register word *);
-
 
 extern void __cvsim_msg(char *, ...);
 /* SJM - not used -extern void __pv_err(int, char *, ...); */
@@ -399,6 +412,7 @@ extern void __start_fmonitor(struct st_t *stp)
  struct dceauxlst_t *sav_dclp;
  struct dcevnt_t *dcep;
  struct monaux_t *mauxp;
+ struct net_t *np;  
 
  tkcp = &(stp->st.stkc);
  /* ignore first mc channel descripter since not involved in monitoring */
@@ -512,10 +526,12 @@ extern void __prep_insrc_monit(struct st_t *stp, int fmon_type)
  
  if (fmon_type) strcpy(s1, "$fmonitor"); else strcpy(s1, "$monitor");
 
- /* $monitor/$fmonitor with no args - no preparation needed */
- /* SJM 05/14/04 - monitor without any args turns off monitoring */
- if (alxp == NULL) return;
-
+ /* $monitor/$fmonitor with no args - does nothing - ignore with warn */
+ if (alxp == NULL)
+  {
+   /* SJM - 05/14/04 - monitor with no args turns off monitor - no warn */
+   return;
+  } 
  /* DBG remove -- */
  if (tkcp->tkcaux.mauxp == NULL || tkcp->tkcaux.mauxp->argisvtab == NULL)
   __arg_terr(__FILE__, __LINE__);
@@ -713,7 +729,7 @@ static void linkon_monit_dce(struct net_t *np, int biti, int bitj,
    /* since no dce, no loads, and no dmpvars must always turn chg store on */
    if (!dcep->dce_np->nchg_nd_chgstore)
     {
-     /* this also regens all mod entire procedural iops since net */
+     /* this also causes regen of all mod entire procedural iops since net */
      /* need to be compiled with change form on everywhere */
      __dce_turn_chg_store_on(__inst_mod, dcep, TRUE);  
     }
@@ -1477,7 +1493,7 @@ extern int __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
 {
  register word *rap;
  register word *wp;
- int biti, ri1, ri2, biti2, obwid;
+ int biti, ri1, ri2, biti2, obwid, wlen;
  struct net_t *xnp;
  struct xstk_t *xsp2;
 
@@ -2121,7 +2137,14 @@ extern void __do_rm_reading(FILE *f, int base, struct net_t *np,
      nbytes = WRDBYTES*wlen_(__itoklen); 
      memcpy(xsp->ap, __acwrk, nbytes);
      memcpy(xsp->bp, __bcwrk, nbytes);
-     __sizchgxs(xsp, np->nwid);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > np->nwid) __narrow_sizchg(xsp, np->nwid);
+     else if (xsp->xslen < np->nwid)
+      {
+       if (np->n_signed) __sgn_xtnd_widen(xsp, np->nwid);
+       else __sizchg_widen(xsp, np->nwid);
+      }
 
      if (np->nchg_nd_chgstore)
       {
@@ -2408,7 +2431,14 @@ static int rm_getc(FILE *f)
      /* must trim away high 0's since will cause leading \0 at start */
      blen = __trim1_0val(xsp->ap, xsp->xslen);
      blen = ((blen + 7)/8)*8;
-     if (blen != xsp->xslen) __sizchgxs(xsp, blen);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > blen) __narrow_sizchg(xsp, blen);
+     else if (xsp->xslen < blen)
+      {
+       if (__srm_xp->has_sign) __sgn_xtnd_widen(xsp, blen);
+       else __sizchg_widen(xsp, blen);
+      }
 
      /* notice this is actual Pascal style string len, no ending \0 */
      __srm_strp_beg = __vval_to_vstr(xsp->ap, xsp->xslen, &__srm_strp_len);
@@ -2581,7 +2611,15 @@ static void do_srm_xtrct(struct expr_t *xp, int base, struct net_t *np,
  /* must trim away high 0's since will cause leading \0 at start */
  blen = __trim1_0val(xsp->ap, xsp->xslen);
  blen = ((blen + 7)/8)*8;
- if (blen != xsp->xslen) __sizchgxs(xsp, blen);
+
+ /* SJM 09/29/03 - change to handle sign extension and separate types */
+ if (xsp->xslen > blen) __narrow_sizchg(xsp, blen);
+ else if (xsp->xslen < blen)
+  {
+   if (__srm_xp->has_sign) __sgn_xtnd_widen(xsp, blen);
+   else __sizchg_widen(xsp, blen);
+  }
+
  __srm_strp_beg = __vval_to_vstr(xsp->ap, xsp->xslen, &__srm_strp_len);
  __srm_strp = __srm_strp_beg;
  __pop_xstk();
@@ -2654,7 +2692,15 @@ static void do_srm_xtrct(struct expr_t *xp, int base, struct net_t *np,
      nbytes = WRDBYTES*wlen_(__itoklen); 
      memcpy(xsp->ap, __acwrk, nbytes);
      memcpy(xsp->bp, __bcwrk, nbytes);
-     __sizchgxs(xsp, np->nwid);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     /* SJM 05/19/04 - notice read into memory can be signed - need net wid */ 
+     if (xsp->xslen > np->nwid) __narrow_sizchg(xsp, np->nwid);
+     else if (xsp->xslen < np->nwid)
+      {
+       if (np->n_signed) __sgn_xtnd_widen(xsp, np->nwid);
+       else __sizchg_widen(xsp, np->nwid);
+      }
 
      if (np->nchg_nd_chgstore)
       {
@@ -3654,13 +3700,16 @@ extern void __eval_qcol(register struct expr_t *ndp)
    xsp1 = __eval_xpr(ndp->ru.x->lu.x);
    xsp2 = __eval_xpr(ndp->ru.x->ru.x);
    /* xspq overwritten with x case (i.e. 2 down from top) */
-   lxqcol(xspq, xsp1, xsp2, ndp->szu.xclen);
+   /* SJM 09/30/03 - select self determined so may or may not be signed */
+   /* : operands either both signed or neither signed */
+   lxqcol(xspq, xsp1, xsp2, ndp->szu.xclen, ndp->lu.x->has_sign,
+    ndp->ru.x->lu.x->has_sign);
    /* pop top 2 arguments leaving result that is always down 2 */
    __pop_xstk();
    __pop_xstk();
    return;
   }
- /* case 2: non x/z selcctor */
+ /* case 2: non x/z selector */
  /* case 2a: non 0 is true - only evaluate first for non x/z selector */
  if (!vval_is0_(xspq->ap, xspq->xslen))
   {
@@ -3668,8 +3717,14 @@ extern void __eval_qcol(register struct expr_t *ndp)
    __pop_xstk();
    /* evaluate expression 1 */ 
    xsp1 = __eval_xpr(ndp->ru.x->lu.x);
+
    /* need to change width to widest if 1 and 2 differ */
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
+   /* SJM 09/30/03 - widen only but can be sign extend */
+   if (xsp1->xslen != ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
    return;
   }
  /* case 2b: 0 is FALSE - only evaluate first for non x/z selector */
@@ -3678,7 +3733,14 @@ extern void __eval_qcol(register struct expr_t *ndp)
  /* evaluate expression 2 */ 
  xsp1 = __eval_xpr(ndp->ru.x->ru.x);
  /* need to change width to widest if 1 and 2 differ */
- if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
+
+ /* need to change width to widest if 1 and 2 differ */
+ /* SJM 09/30/03 - widen only but can be sign extend */
+ if (xsp1->xslen < ndp->szu.xclen)
+  {
+   if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+   else __sizchg_widen(xsp1, ndp->szu.xclen);
+  }
 }
 
 /*
@@ -3747,7 +3809,14 @@ extern void __eval_realregqcol(struct expr_t *ndp)
    /* evaluate expression 1 */ 
    xsp = __eval_xpr(ndp->ru.x->lu.x);
    /* need to change width to widest if 1 and 2 differ */
-   if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+
+   /* need to change width to widest if 1 and 2 differ */
+   /* SJM 09/30/03 - widen only but can be sign extend */
+   if (xsp->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+     else __sizchg_widen(xsp, ndp->szu.xclen);
+    }
    return;
   }
  /* case 2b: 0 is FALSE - only evaluate first for non x/z selector */
@@ -3756,7 +3825,12 @@ extern void __eval_realregqcol(struct expr_t *ndp)
  /* evaluate expression 2 */ 
  xsp = __eval_xpr(ndp->ru.x->ru.x);
  /* need to change width to widest if 1 and 2 differ */
- if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+ /* SJM 09/30/03 - widen only but can be sign extend */
+ if (xsp->xslen < ndp->szu.xclen)
+  {
+   if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+   else __sizchg_widen(xsp, ndp->szu.xclen);
+  }
 }
 
 /*
@@ -3817,9 +3891,12 @@ extern void __eval_regrealqcol(register struct expr_t *ndp)
  * notice this overwrites conditional but works because once know any x's
  * in conditional, then value obtained purely from combination of args.
  * LOOKATME - one word form could be more efficient but used for all
+ *
+ * SJM 09/30/03 - need different widen if signed - : operand either both
+ * signed or both no signed
  */
 static void lxqcol(register struct xstk_t *xspq, register struct xstk_t *xsp1,
- register struct xstk_t *xsp2, int opbits)
+ register struct xstk_t *xsp2, int opbits, int sel_sign, int col_sign)
 {
  register int wi;
  word *resap, *resbp;
@@ -3834,9 +3911,28 @@ static void lxqcol(register struct xstk_t *xspq, register struct xstk_t *xsp1,
   { if ((xspq->ap[wi] & ~xspq->bp[wi]) != 0) goto true_has_1bit; }
 
  wlen = wlen_(opbits);
- if (xsp1->xslen != opbits) __sizchgxs(xsp1, opbits);
- if (xsp2->xslen != opbits) __sizchgxs(xsp2, opbits);
- if (xspq->xslen != opbits) __sizchgxs(xspq, opbits);
+ 
+ /* SJM 09/30/03 - widen only but can be sign extend - know : opands same */
+ if (xsp1->xslen < opbits)
+  {
+   if (col_sign) __sgn_xtnd_widen(xsp1, opbits);
+   else __sizchg_widen(xsp1, opbits);
+  }
+ if (xsp2->xslen < opbits)
+  {
+   if (col_sign) __sgn_xtnd_widen(xsp2, opbits);
+   else __sizchg_widen(xsp2, opbits);
+  }
+
+ /* SJM 05/21/04 - if select is wider need to narrow it - the : arms */ 
+ /* can only be widened because max width set in return val node */
+ if (xspq->xslen > opbits) __narrow_sizchg(xspq, opbits);
+ else if (xspq->xslen < opbits)
+  {
+   if (sel_sign) __sgn_xtnd_widen(xspq, opbits);
+   else __sizchg_widen(xspq, opbits);
+  }
+
  resap = xspq->ap; resbp = xspq->bp;
  for (wi = 0; wi < wlen; wi++)
   {
@@ -3901,7 +3997,14 @@ static void eval_unary(struct expr_t *ndp)
    /* only if operand value too wide, need mask to narrow */
    if (op1b == 0L)
     {
+     if (ndp->has_sign && ndp->lu.x->szu.xclen != WBITS)
+      {
+       /* SJM 06/01/04 - may need to sign extend operand */
+       if ((op1a & (1 << (ndp->lu.x->szu.xclen - 1))) != 0) 
+        op1a |= ~(__masktab[ndp->lu.x->szu.xclen]);
+      } 
      /* convert to signed 32 bit then copy back to unsigned */
+     /* works because narrower than 32 signed extended already */
      ida = (int) op1a;
      xsp->ap[0] = ((word) -ida) & __masktab[ndp->szu.xclen];
     }
@@ -3987,14 +4090,29 @@ static void eval_wide_unary(register struct expr_t *ndp,
    __misc_terr(__FILE__, __LINE__);
    return;
   case /* - */ MINUS:
-   /* think size change can never happen */
-   if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+   /* SJM 05/10/04 FIXME - since sign extended, do not need signed l uminus */
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > ndp->szu.xclen) __narrow_sizchg(xsp, ndp->szu.xclen);
+   else if (xsp->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+     else __sizchg_widen(xsp, ndp->szu.xclen);
+    }
+
    __luminus(xsp->ap, xsp->bp, ndp->szu.xclen);
    /* must fix since stack exchanged */
    xsp->xslen = ndp->szu.xclen;
    return;
   case /* ~ */ BITNOT:
-   if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+   /* SJM 05/10/04 FIXME - since sign extended, do not need signed l bitnot */
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > ndp->szu.xclen) __narrow_sizchg(xsp, ndp->szu.xclen);
+   else if (xsp->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+     else __sizchg_widen(xsp, ndp->szu.xclen);
+    }
+
    __lunbitnot(xsp->ap, xsp->bp, ndp->szu.xclen);
    /* know bit not in place and size changed already */
    return;
@@ -4006,26 +4124,30 @@ static void eval_wide_unary(register struct expr_t *ndp,
      if (vval_is0_(xsp->ap, xsp->xslen)) rta = 1L; else rta = 0L;
     }
    else rta = rtb = 1L;
-   __sizchgxs(xsp, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp);
    xsp->ap[0] = rta;
    xsp->bp[0] = rtb;
    break;
   case /* & */ BITREDAND:
    /* this changes tos to 1 bit value */
    __lunredand(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
-   __sizchgxs(xsp, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta; 
    xsp->bp[0] = (word) rtb;
    break;
   case /* | */ BITREDOR:
    __lunredor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
-   __sizchgxs(xsp, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta; 
    xsp->bp[0] = (word) rtb;
    break;
   case /* ^ */ BITREDXOR:
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
-   __sizchgxs(xsp, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta; 
    xsp->bp[0] = (word) rtb;
    break;
@@ -4033,7 +4155,8 @@ static void eval_wide_unary(register struct expr_t *ndp,
    /* truth table is logical not of bit wire reducing */ 
    /* odd numer of 1 bits value 1, else value 0 */
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
-   __sizchgxs(xsp, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp);
    xsp->ap[0] = (word) rta; 
    xsp->bp[0] = (word) rtb;
    if (rtb == 0L) xsp->ap[0] = (word) !rta;
@@ -4064,7 +4187,8 @@ extern void __lunbitnot(word *op1ap, word *op1bp, int opwid)
 /*
  * unary minus (0 - value)
  * know op1ap and op1bp are just pointers to tos values
- * if < 32 can be signed
+ *
+ * SJM 09/30/03 - signed just works because 2's complement
  */
 extern void __luminus(word *op1ap, word *op1bp, int opbits)
 {
@@ -4248,23 +4372,24 @@ extern void __lunredxor(int *rta, int *rtb, word *op1ap, word *op1bp,
  * evaluate a binary operator
  * know all high (unused) bits set to zero - and left as zero
  * evaluates 2 operands and places result on tos (i.e. stack shrinks by 1)
+ *
+ * SJM 10/22/03 - the signed narrower than 32 bits consistently wrong
+ * because sign bit not in bit 32 as was case when only 32 bit ints
+ * could be signed - now either sign extend or use signed magnitude operation
+ *
+ * notice are tmps that can be changed during evaluation
  */
 static void eval_binary(struct expr_t *ndp)
 {
  register word rta, rtb;
  register word op1a, op1b, op2a, op2b, mask;
- int tmp1, tmp2, nd_signop;
- sword id1, id2, ir;
+ int tmp1, tmp2, nd_signop, opwid, has_sign;
  double d1, d2;
  struct xstk_t *xsp1, *xsp2;
  struct expr_t *lx, *rx;
 
  xsp1 = __eval2_xpr(ndp->lu.x);
  xsp2 = __eval2_xpr(ndp->ru.x);
- /* set during checking - result has sign if < WBITS and not 1 bit */
- /* and one or both operaads have sign */
- if (ndp->has_sign || ndp->rel_ndssign) nd_signop = TRUE;
- else nd_signop = FALSE;
 
  /* need to separate off wide case */
  /* notice this code depends on real width == W BITS */
@@ -4275,19 +4400,38 @@ static void eval_binary(struct expr_t *ndp)
    eval_wide_binary(ndp, xsp1, xsp2);
    return;
   }
+ opwid = ndp->szu.xclen;
+ /* set during checking - result has sign if < WBITS and not 1 bit */
+ /* and one or both operaads have sign */
+ if (ndp->has_sign || ndp->rel_ndssign) nd_signop = TRUE;
+ else nd_signop = FALSE;
+
  op1a = xsp1->ap[0]; op1b = xsp1->bp[0];
  op2a = xsp2->ap[0]; op2b = xsp2->bp[0];
+ mask = __masktab[ubits_(opwid)];
 
  /* this is result operator not operands width */
- mask = __masktab[ubits_(ndp->szu.xclen)];
  rta = rtb = 0L;
  switch ((byte) ndp->optyp) {
   case /* + */ PLUS:
    if (op1b == 0L && op2b == 0L)
     {
-     rtb = 0L;
-     /* if carry, silently truncate */
-     rta = (op1a + op2a) & mask;
+     rtb = 0;
+     /* SJM 09/30/03 - need signed for c signed add (hardware sign xtnd) */
+     if (!nd_signop) rta = (op1a + op2a) & mask;
+     else
+      {
+       if (opwid !=  WBITS)
+        {
+         /* complex narrower than 32 bit signed case - sign extend to c int */ 
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
+          op1a |= ~(__masktab[xsp1->xslen]);
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0) 
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       /* mask even if 32 bits */
+       rta = (word) ((((sword) op1a) + ((sword) op2a)) & mask);    
+      }
     }
    else rta = rtb = mask;
    break;
@@ -4312,7 +4456,26 @@ static void eval_binary(struct expr_t *ndp)
    if (op1b == 0L && op2b == 0L)
     {
      rtb = 0L;
-     rta = (op1a - op2a) & mask;
+     /* SJM 09/30/03 - need signed for c signed - (hardware sign xtnd) */
+     if (!nd_signop)
+      {
+       rta = op1a + op2a;
+       rta = (op1a - op2a) & mask;
+      }
+     /* since know 32 bits, no need to mask */
+     else
+      {
+       if (opwid != WBITS)
+        {
+         /* complex narrower than 32 bit signed case - sign extend to c int */ 
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
+          op1a |= ~(__masktab[xsp1->xslen]);
+         if ((op1b & (1 << (xsp2->xslen - 1))) != 0) 
+          op1a |= ~(__masktab[xsp2->xslen]);
+        }
+       /* then mask result */
+       rta = (word) ((((sword) op1a) - ((sword) op2a)) & mask);    
+      }
     }
    else rta = rtb = mask;
    break;
@@ -4333,10 +4496,39 @@ static void eval_binary(struct expr_t *ndp)
    if (op1b != 0L || op2b != 0L) rta = rtb = mask;
    else
     {
-     rtb = 0L;
-     /* notice high half of double length result not available in Verilog */
-     rta = (op1a * op2a) & mask;
-    }
+     /* SJM 09/30/03 - need ints for c signed op to work */
+     if (!nd_signop) rta = (op1a * op2a) & mask;
+     /* never need to mask for 32 bits */
+     else if (opwid == WBITS) rta = (word) (((sword) op1a) * ((sword) op2a));  
+     else
+      {
+       /* SJM 10/22/03 - LOOKATME - think this must use sign/magnitude */
+       /* complex narrower than 32 bit signed case */ 
+       has_sign = FALSE; 
+       /* 2's complement makes positive if needed */
+       if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+        {
+         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
+         op1a |= ~(__masktab[xsp1->xslen]);
+         op1a = (word) (-((sword) op1a)); 
+         has_sign = TRUE;
+        }
+       if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+        {
+         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
+         op2a |= ~(__masktab[xsp2->xslen]);
+         op2a = (word) (-((sword) op2a));
+         has_sign = !has_sign;
+        }
+
+       /* know op1a and op2a positive */
+       rta = op1a * op2a;
+       if (has_sign) rta = (word) (-((sword) rta));
+       /* must mask so product fits in widest operand size */  
+       rta &= mask;
+      }
+     rtb = 0;
+    } 
    break;
   case /* * real */ REALTIMES:
    lx = ndp->lu.x;
@@ -4353,14 +4545,43 @@ static void eval_binary(struct expr_t *ndp)
    __pop_xstk();
    return;
   case /* / */ DIV:
-   /* divide by zero is x */
    if (op1b != 0L || op2b != 0L || op2a == 0L) rta = rtb = mask;
-   else
+   /* case 1: unsigned */
+   else if (!nd_signop) rta = op1a / op2a;
+   else if (opwid == WBITS)
     {
-     if (!nd_signop) rta = op1a / op2a;
-     else
-      { id1 = (sword) op1a; id2 = (sword) op2a; ir = id1/id2; rta = (word) ir; }
-     /* think value narrower but needed for signed */
+     /* case 2 signed but int so can use c casts */
+     rta = (word) ((sword) op1a / (sword) op2a);
+     rtb = 0L;
+     /* SJM 05/13/04 - no need to mask since know WBITS */
+    }
+   else 
+    {
+     /* SJM 10/22/03 - must extract signs (sign of result from 1st) */
+     /* and do operation unsigned and then put back sign */
+     if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+      {
+       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       op1a = op1a | ~(__masktab[xsp1->xslen]);
+       op1a = (word) (-((sword) op1a)); 
+       has_sign = TRUE;
+      }
+     else has_sign = FALSE; 
+
+     /* for mod, first operand determines sign of result */
+     if ((op2a & (1 <<( xsp2->xslen - 1))) != 0)
+      {
+       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       op2a = op2a | ~(__masktab[xsp2->xslen]);
+       op2a = (word) (-((sword) op2a)); 
+       /* sign combination rules for div same as mult */
+       has_sign = !has_sign;
+      }
+
+     /* know op1a and op2a positive */
+     rta = op1a / op2a;
+     /* if result signed, first comp WBITS signed - */
+     if (has_sign) rta = (word) (-((sword) rta));
      rta &= mask;
      rtb = 0L;
     }
@@ -4381,19 +4602,41 @@ static void eval_binary(struct expr_t *ndp)
    return;
   case /* % */ MOD:
    if (op1b != 0L || op2b != 0L || op2a == 0L) rta = rtb = mask;
-   else
+   /* case 1: unsigned */
+   else if (!nd_signop) rta = op1a % op2a;
+   else if (opwid == WBITS)
     {
-     if (!nd_signop) rta = op1a % op2a;
-     else
-      {
-       id1 = (sword) op1a;
-       id2 = (sword) op2a;
-       ir = id1 % id2;
-       rta = (word) ir;
-      }
+     /* case 2 signed but int so can use c casts */
+     /* case 2 signed but int so can use c casts */
+     rta = (word) ((sword) op1a % (sword) op2a);
      rtb = 0L;
      /* think value narrower but needed for signed */
      rta &= mask;
+    }
+   else 
+    {
+     /* SJM 10/22/03 - must extract signs (sign of result from 1st) */
+     /* and do operation unsigned and then put back sign */
+     if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+      {
+       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       op1a = op1a | ~(__masktab[xsp1->xslen]);
+       has_sign = TRUE;
+      }
+     else has_sign = FALSE; 
+
+     /* for mod, first operand determines sign of result */
+     if ((op2a & (1 <<( xsp2->xslen - 1))) != 0)
+      {
+       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       op2a = op2a | ~(__masktab[xsp2->xslen]);
+      }
+
+     /* know op1a and op2a positive */
+     rta = op1a % op2a;
+     if (has_sign) rta = (word) (-((sword) rta));
+     rta &= mask;
+     rtb = 0L;
     }
    break;
   case /* & */ BITREDAND:
@@ -4432,7 +4675,21 @@ static void eval_binary(struct expr_t *ndp)
      rtb = 0L;
      /* C result for true is always 1 */
      if (nd_signop)
-      { id1 = (sword) op1a; id2 = (sword) op2a; rta = id1 >= id2; }
+      {
+       /* SJM 10/22/03 - easiest here to just sign extend - does it work? */
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       rta = (word) (((sword) op1a) >= ((sword) op2a));
+      }
      else rta = op1a >= op2a;
     }
    else rta = rtb = 1L;
@@ -4454,7 +4711,21 @@ static void eval_binary(struct expr_t *ndp)
     {
      rtb = 0L;
      if (nd_signop)
-      { id1 = (sword) op1a; id2 = (sword) op2a; rta = id1 > id2; }
+      {
+       /* SJM 10/22/03 - easiest here to just sign extend - does it work? */
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       rta = (word) (((sword) op1a) > ((sword) op2a));
+      }
      else rta = op1a > op2a;
     }
    else rta = rtb = 1L;
@@ -4474,7 +4745,21 @@ static void eval_binary(struct expr_t *ndp)
     {
      rtb = 0L;
      if (nd_signop)
-      { id1 = (sword) op1a; id2 = (sword) op2a; rta = id1 <= id2; }
+      { 
+       /* SJM 10/22/03 - easiest here to just sign extend - does it work? */
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       rta = (word) (((sword) op1a) <= ((sword) op2a));
+      }
      else rta = op1a <= op2a;
     }
    else rta = rtb = 1L;
@@ -4494,7 +4779,21 @@ static void eval_binary(struct expr_t *ndp)
     {
      rtb = 0L;
      if (nd_signop)
-      { id1 = (sword) op1a; id2 = (sword) op2a; rta = id1 < id2; }
+      {
+       /* SJM 10/22/03 - easiest here to just sign extend - does it work? */
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       rta = (word) (((sword) op1a) < ((sword) op2a));
+      } 
      else rta = op1a < op2a;
     }
    else rta = rtb = 1L;
@@ -4512,14 +4811,53 @@ static void eval_binary(struct expr_t *ndp)
    rtb = 0L; 
    break;
   case /* != */ RELNEQ:
-   if ((op1b | op2b) == 0L)
-    { rtb = 0L; rta = (op1a != op2a); break; }
 
-   /* SJM 06/16/00 - wrong for x cases because if non equal where both */
+   if ((op1b | op2b) == 0L)
+    {
+     if (nd_signop)
+      {
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+      }
+     rtb = 0L;
+     rta = (op1a != op2a);
+     break;
+    }
+
+   /* SJM 06/16/00 - was wrong for x cases because if non equal where both */
    /* operands non x/z, should be 0 not unknown */
    /* new algorithm - if compare with a parts all x/z bits set to 1 */
    /* not equal then x/z bits can not effect not equal result */
    /* know at least one bit x/z to get here */
+
+   if (nd_signop)
+    {
+     /* SJM 05/13/04 - width is opand not result width */
+     if (xsp1->xslen < WBITS)
+      {
+       if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+        op1a |= ~(__masktab[xsp1->xslen]);
+       /* if any x/z bits must x/z extned if signed */
+       if ((op1b & (1 << (xsp1->xslen - 1))) != 0)
+        op1b |= ~(__masktab[xsp1->xslen]);
+      }
+     if (xsp2->xslen < WBITS)
+      {
+       if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+        op2a |= ~(__masktab[xsp2->xslen]);
+       if ((op2b & (1 << (xsp2->xslen - 1))) != 0)
+        op2b |= ~(__masktab[xsp2->xslen]);
+      }
+    }
    if ((op1a | (op1b | op2b)) != (op2a | (op1b | op2b)))
     { rtb = 0L; rta = 1L; }
    else rta = rtb = 1L;
@@ -4540,13 +4878,52 @@ static void eval_binary(struct expr_t *ndp)
    break;
   case /* == */ RELEQ:
    /* relation true in C is always 1 */
-   if ((op1b | op2b) == 0L) { rtb = 0L; rta = (op1a == op2a); break; }
+   if ((op1b | op2b) == 0L)
+    {
+     if (nd_signop)
+      {
+       /* SJM 05/13/04 - width is opand not result width */
+       if (xsp1->xslen < WBITS)
+        {
+         if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+          op1a |= ~(__masktab[xsp1->xslen]);
+        }
+       if (xsp2->xslen < WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+      }
+     rtb = 0L;
+     rta = (op1a == op2a);
+     break;
+    }
 
    /* SJM 06/16/00 - wrong for x cases because if non equal where both */
    /* operands non x/z, should be 0 not unknown */
    /* new algorithm - if compare with a parts all x/z bits set to 1 */
    /* not equal then x/z bits can not effect not equal result */
    /* know at least one bit x/z to get here */
+
+   if (nd_signop)
+    {
+     /* SJM 05/13/04 - width is opand not result width */
+     if (xsp1->xslen < WBITS)
+      {
+       if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+        op1a |= ~(__masktab[xsp1->xslen]);
+       /* if any x/z bits must x/z extned if signed */
+       if ((op1b & (1 << (xsp1->xslen - 1))) != 0)
+        op1b |= ~(__masktab[xsp1->xslen]);
+      }
+     if (xsp2->xslen < WBITS)
+      {
+       if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+        op2a |= ~(__masktab[xsp2->xslen]);
+       if ((op2b & (1 << (xsp2->xslen - 1))) != 0)
+        op2b |= ~(__masktab[xsp2->xslen]);
+      }
+    }
 
    if ((op1a | (op1b | op2b)) != (op2a | (op1b | op2b)))
     { rtb = 0L; rta = 0L; }
@@ -4565,11 +4942,51 @@ static void eval_binary(struct expr_t *ndp)
    rtb = 0L; 
    break;
   case /* === */ RELCEQ:
+
+   if (nd_signop)
+    {
+     /* SJM 05/13/04 - width is opand not result width */
+     if (xsp1->xslen < WBITS)
+      {
+       if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+        op1a |= ~(__masktab[xsp1->xslen]);
+       /* if any x/z bits must x/z extned if signed */
+       if ((op1b & (1 << (xsp1->xslen - 1))) != 0)
+        op1b |= ~(__masktab[xsp1->xslen]);
+      }
+     if (xsp2->xslen < WBITS)
+      {
+       if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+        op2a |= ~(__masktab[xsp2->xslen]);
+       if ((op2b & (1 << (xsp2->xslen - 1))) != 0)
+        op2b |= ~(__masktab[xsp2->xslen]);
+      }
+    }
    rtb = 0L;
    /* works without masking since semantics requires 0 extending */
    rta = (0L == ((op1a ^ op2a) | (op1b ^ op2b)));
    break;
   case /* !== */ RELCNEQ:
+
+   if (nd_signop)
+    {
+     /* SJM 05/13/04 - width is opand not result width */
+     if (xsp1->xslen < WBITS)
+      {
+       if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
+        op1a |= ~(__masktab[xsp1->xslen]);
+       /* if any x/z bits must x/z extned if signed */
+       if ((op1b & (1 << (xsp1->xslen - 1))) != 0)
+        op1b |= ~(__masktab[xsp1->xslen]);
+      }
+     if (xsp2->xslen < WBITS)
+      {
+       if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
+        op2a |= ~(__masktab[xsp2->xslen]);
+       if ((op2b & (1 << (xsp2->xslen - 1))) != 0)
+        op2b |= ~(__masktab[xsp2->xslen]);
+      }
+    }
    rtb = 0L;
    /* works without masking since semantics requires 0 extending */
    rta = (0L != ((op1a ^ op2a) | (op1b ^ op2b)));
@@ -4618,20 +5035,87 @@ static void eval_binary(struct expr_t *ndp)
    rtb = 0L; 
    break;
   case /* << */ SHIFTL:
-   /* if shift length wider than op1, result is 0 */
+  case /* <<< */ ASHIFTL:
+   /* SJM 09/30/03 - notice new arithmetic lshift same as logical */
+   /* if shift amt x/z, result is 0 */ 
    if (op2b != 0L) rtb = rta = mask;
+
+   /* if shift length wider than op1, result is 0 */
    /* 2nd shift width operand is interpreted as range index (unsigned) */
    else if (op2a > (unsigned) ndp->szu.xclen) rtb = rta = 0L;
+
    /* op1a is context determined which is width of shift expr node */
    else { rtb = (op1b << op2a) & mask; rta = (op1a << op2a) & mask; }
    break;
   case /* >> */ SHIFTR:
-   /* if shift length wider than op1, result is 0 */
+   /* SJM 09/30/03 - logical shift right stays same even if sign bit 1 */
+   /* if shift amt x/z, result is 0 */ 
    if (op2b != 0L) rtb = rta = mask;
-   /* 2nd shift width operand is interpreted as range index (unsigned) */
-   else if (op2a > (unsigned) ndp->szu.xclen) rtb = rta = 0L;
-   /* notice no need to mask since 0's injected into high bits */
-   else { rtb = op1b >> op2a; rta = op1a >> op2a; }
+   else if (op2a > (unsigned) ndp->szu.xclen)
+    {
+     /* if shift length wider than op1, result is 0 */
+     /* 2nd shift width operand is interpreted as range index (unsigned) */
+     rtb = rta = 0L;
+    }
+   else
+    {
+     /* notice no need to mask since 0's injected into high bits */
+     rtb = op1b >> op2a;
+     rta = op1a >> op2a;
+     }
+   break;
+  case /* >>> */ ASHIFTR:
+   /* SJM 09/30/03 - arithmetic shift right inserts sign bit if on not 0 */
+   /* if shift amt x/z, result is 0 */ 
+   if (op2b != 0L)
+    {
+     rtb = rta = mask;
+    }
+   else if (op2a > (unsigned) ndp->szu.xclen)
+    { 
+     /* 2nd shift width operand is interpreted as range index (unsigned) */
+     /* notice if unsigned, no sign bit */
+     if (nd_signop)
+      {
+       if ((op1a & (1 << (ndp->szu.xclen - 1))) != 0)
+        {
+         /* since shift amount wider than var, if sign bit on */ 
+         /* 1's shifted into each bit position, else 0 */
+         rta = mask;
+         rtb = 0;
+        }
+       else rta = rtb = 0;
+      }
+     else rtb = rta = 0L;
+    }
+   else
+    {
+     /* notice no need to mask since 0's injected into high bits */
+     if (nd_signop)
+      {
+       /* SJM 05/10/04 - could use c signed arithmetic shift for WBITS wide */
+       /* SJM for word arithmetic right shift use c arithmetic shift */
+       if ((op1a & (1 << (ndp->szu.xclen - 1))) != 0)
+        {
+         /* first shift as if 0 bits then or in the bits shifted in from */
+         /* injected sign bits */
+         rta = (word) (op1a >> op2a);
+         rtb = (word) (op1b >> op2a);
+         rta |= (__masktab[op2a] << (ndp->szu.xclen - op2a));
+        }
+       else
+        {
+         /* if sign bit off - same as logical right shift */
+         rta = (word) (op1a >> op2a);
+         rtb = (word) (op1b >> op2a);
+        }
+      }
+     else
+      {
+       rtb = op1b >> op2a;
+       rta = op1a >> op2a;
+      }
+    }
    break;
   default: __case_terr(__FILE__, __LINE__);
  }
@@ -4680,9 +5164,22 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
   case /* * */ TIMES:
   case /* / */ DIV:
   case /* % */ MOD:
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
-   if (xsp2->xslen != ndp->szu.xclen) __sizchgxs(xsp2, ndp->szu.xclen);
-   /* know both operands wider than WBITS */
+   /* SJM 09/30/03 - change to handle sign extension and separate types */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     /* if any signed all will be */
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+   if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
+   else if (xsp2->xslen < ndp->szu.xclen)
+    {
+     /* if any signed all will be */
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
+     else __sizchg_widen(xsp2, ndp->szu.xclen);
+    }
+
    if (__set_binxresult(xsp1->ap, xsp1->bp, xsp1->bp, xsp2->bp,
      ndp->szu.xclen))
     {
@@ -4702,6 +5199,7 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
    /* in routine will fill all of xspr with value - no need to init */
    push_xstk_(xspr, ndp->szu.xclen);
    /* add/sub to accumulator */
+   /* SJM 09/30/03 - since using sign mult and div others 2 complement work */
    switch ((byte) ndp->optyp) {
     case /* + */ PLUS:
      __ladd(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen);
@@ -4710,13 +5208,22 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
      __lsub(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen);
      break;
     case /* * */ TIMES:
-     __lmult(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen);
+     /* SJM 09/30/03 - need wapper for signed since wide needs positive */
+     if (ndp->has_sign)
+      __sgn_lmult(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen);
+     else __lmult(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen);
      break;
     case /* / */ DIV:
-     __ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, TRUE);
+     /* SJM 09/30/03 - need wapper for signed since wide needs positive */
+     if (ndp->has_sign)
+      __sgn_ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, TRUE);
+     else __ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, TRUE);
      break;
     case /* % */ MOD:
-     __ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, FALSE);
+     /* SJM 09/30/03 - need wapper for signed since wide needs positive */
+     if (ndp->has_sign)
+      __sgn_ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, FALSE);
+      else __ldivmod(xspr->ap, xsp1->ap, xsp2->ap, xspr->xslen, FALSE);
      break;
     default: __case_terr(__FILE__, __LINE__);
    }
@@ -4728,11 +5235,21 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
    __pop_xstk();
    break;
   case /* << */ SHIFTL:
+  case /* >>> */ ASHIFTL:
   case /* >> */ SHIFTR:
    /* this replaces top 2 args with shifted result replacing 2nd down */
    /* if shift width has any x/z's, even if will be truncated, result x */
    /* need to widen from context before shift - need overflow bits */
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
+
+   /* SJM 09/29/03 - change to handle sign extension but left arithmetic */
+   /* shift same as left logical shift (only change is signed widening) */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+
    if (!vval_is0_(xsp2->bp, xsp2->xslen))
     {
      one_allbits_(xsp1->ap, xsp1->xslen);
@@ -4740,7 +5257,7 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
     }
    else
     {
-     /* if op is 0 or shift amount wider than op */
+     /* if op value is 0 or shift amount wider than op */
      /* SJM 12/28/98 - this was wrongly checking first word of long */  
      /* SJM 03/28/03 - for shift of case with only z's in op1 was wrong */
      /* because if a part 0 but b part 1 (z in val) wrongly setting to 0 */ 
@@ -4755,7 +5272,7 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
         { 
          if (vval_is0_(xsp1->bp, xsp1->xslen)) isxz = FALSE;
          else isxz = TRUE;
-         if (ndp->optyp == SHIFTL)
+         if (ndp->optyp != SHIFTR)
           {
            __mwlshift(xsp1->ap, shiftamt, xsp1->xslen);
            if (isxz) __mwlshift(xsp1->bp, shiftamt, xsp1->xslen);
@@ -4770,28 +5287,138 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
     }
    __pop_xstk();
    break;
+  case /* <>> */ ASHIFTR:
+   /* SJM 05/11/04 - split arithmetic right shift off */ 
+   /* main different is that if sign bit on, need to shift in 1's for both */
+   /* a and b parts */
+   /* SJM 05/11/04 - notice that shift amount always treated as unsigned, */
+   /* i.e. no minus opposite direction shifts */
+   if (!vval_is0_(xsp2->bp, xsp2->xslen))
+    {
+     one_allbits_(xsp1->ap, xsp1->xslen);
+     one_allbits_(xsp1->bp, xsp1->xslen);
+     goto ashift_pop; 
+    }
+   if (vval_is0_(xsp1->ap, xsp1->xslen) && vval_is0_(xsp1->bp, xsp1->xslen)) 
+    {
+     /* opand 1 value 0 - shift can't change */
+     memset(xsp1->ap, 0, 2*WRDBYTES*wlen_(xsp1->xslen)); 
+     goto ashift_pop; 
+    }
+   if ((xsp2->xslen > WBITS && !vval_is0_(&(xsp2->ap[1]),
+    xsp2->xslen - WBITS)) || xsp2->ap[0] >= (unsigned) xsp1->xslen) 
+    {
+     int bi, wlen;
+
+     /* shift amount wider than value */
+     bi = get_bofs_(xsp1->xslen);
+     wlen = wlen_(xsp1->xslen);
+       
+     if ((xsp1->ap[wlen - 1] & (1 << bi)) != 0)
+      {
+       /* since shift amount wider than var, if sign bit on */ 
+       /* 1's shifted into each bit position, i.e. set all bits to 1 */
+       one_allbits_(xsp1->ap, xsp1->xslen);
+      }
+     else memset(xsp1->ap, 0, 2*WRDBYTES*wlen); 
+
+     /* if b part high bit on, all bits become x/z */
+     if ((xsp1->ap[2*wlen - 1] & (1 << bi)) != 0)
+      {
+       one_allbits_(xsp1->ap, xsp1->xslen);
+      }
+     else memset(xsp1->ap, 0, 2*WRDBYTES*wlen); 
+     goto ashift_pop; 
+    }
+   if ((shiftamt = xsp2->ap[0]) != 0) 
+    { 
+     if (vval_is0_(xsp1->bp, xsp1->xslen)) isxz = FALSE; else isxz = TRUE;
+     
+     if (ndp->has_sign || ndp->rel_ndssign)
+      {
+       __arith_mwrshift(xsp1->ap, shiftamt, xsp1->xslen);
+       if (isxz) __arith_mwrshift(xsp1->bp, shiftamt, xsp1->xslen);
+      }
+     else
+      {
+       /* arithmetic right shift for unsigned same as logical */
+       __mwrshift(xsp1->ap, shiftamt, xsp1->xslen);
+       if (isxz) __mwrshift(xsp1->bp, shiftamt, xsp1->xslen);
+      }
+    }
+ashift_pop:
+   __pop_xstk();
+   break;
   /* binary of these is bit by bit not reducing and ndp width is needed */
   case /* & */ BITREDAND:
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
-   if (xsp2->xslen != ndp->szu.xclen) __sizchgxs(xsp2, ndp->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+   if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
+   else if (xsp2->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
+     else __sizchg_widen(xsp2, ndp->szu.xclen);
+    }
+
    __lbitand(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* | */ BITREDOR:
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
-   if (xsp2->xslen != ndp->szu.xclen) __sizchgxs(xsp2, ndp->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+   if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
+   else if (xsp2->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
+     else __sizchg_widen(xsp2, ndp->szu.xclen);
+    }
+
    __lbitor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* ^ */ BITREDXOR:
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
-   if (xsp2->xslen != ndp->szu.xclen) __sizchgxs(xsp2, ndp->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+   if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
+   else if (xsp2->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
+     else __sizchg_widen(xsp2, ndp->szu.xclen);
+    }
+
    __lbitxor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
   case /* ^~ */ REDXNOR:
-   if (xsp1->xslen != ndp->szu.xclen) __sizchgxs(xsp1, ndp->szu.xclen);
-   if (xsp2->xslen != ndp->szu.xclen) __sizchgxs(xsp2, ndp->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp1->xslen > ndp->szu.xclen) __narrow_sizchg(xsp1, ndp->szu.xclen);
+   else if (xsp1->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp1, ndp->szu.xclen);
+     else __sizchg_widen(xsp1, ndp->szu.xclen);
+    }
+   if (xsp2->xslen > ndp->szu.xclen) __narrow_sizchg(xsp2, ndp->szu.xclen);
+   else if (xsp2->xslen < ndp->szu.xclen)
+    {
+     if (ndp->has_sign) __sgn_xtnd_widen(xsp2, ndp->szu.xclen);
+     else __sizchg_widen(xsp2, ndp->szu.xclen);
+    }
+
    __lbitxnor(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp, xsp1->xslen);
    __pop_xstk();
    break;
@@ -4801,13 +5428,25 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
    /* less pessimistic not equal */
    /* LOOKATME - this is complex - can it be simplified? */
 
-   /* widen narrower to be same as wider */
-   if (xsp1->xslen > xsp2->xslen) __sizchgxs(xsp2, xsp1->xslen);
-   else if (xsp2->xslen > xsp1->xslen) __sizchgxs(xsp1, xsp2->xslen);
+   /* widen narrower to be same as wider - may need sign xtnd */
+   /* SJM 05/13/04 - was wrongly using the 1 bit result not other opand */
+   if (xsp1->xslen > xsp2->xslen)
+    {
+     /* SJM 05/13/04 - since result 1 bit unsigned but operand cmp signed */
+     if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp2, xsp1->xslen);
+     else __sizchg_widen(xsp2, xsp1->xslen);
+    }
+   else if (xsp2->xslen > xsp1->xslen)
+    {
+     if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp1, xsp2->xslen);
+     else __sizchg_widen(xsp1, xsp2->xslen);
+    }
 
    /* result goes into 1 bit tos and know ndp xclen is 1 here */
-   cmpval = __do_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap,
-    xsp2->bp, xsp1->xslen);
+   /* SJM 05/13/04 - compare can't be signed since eq */
+   cmpval = __do_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp,
+     xsp1->xslen);
+
    rtb = 0;
    if (isxz)
     {
@@ -4824,12 +5463,33 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
   case /* > */ RELGT:
   case /* <= */ RELLE:
   case /* < */ RELLT:
-   /* widen narrower to be same as wider */
-   if (xsp1->xslen > xsp2->xslen) __sizchgxs(xsp2, xsp1->xslen);
-   else if (xsp2->xslen > xsp1->xslen) __sizchgxs(xsp1, xsp2->xslen);
+   /* widen narrower to be same as wider - may need sign xtnd */
+   /* SJM 05/13/04 - was wrongly using the 1 bit result not other opand */
+   if (xsp1->xslen > xsp2->xslen)
+    {
+     /* SJM 05/13/04 - since result 1 bit unsigned but operand cmp signed */
+     if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp2, xsp1->xslen);
+     else __sizchg_widen(xsp2, xsp1->xslen);
+    }
+   else if (xsp2->xslen > xsp1->xslen)
+    {
+     if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp1, xsp2->xslen);
+     else __sizchg_widen(xsp1, xsp2->xslen);
+    }
+
    /* result goes into 1 bit tos and know ndp xclen is 1 here */
-   cmpval = __do_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap,
-    xsp2->bp, xsp1->xslen);
+   /* AIV 05/27/04 - must be nd sign not res node has sign since res 1 bit */ 
+   if (ndp->rel_ndssign)
+    {
+     /* SJM 05/10/04 - wide sign compare casts to int on not == */
+     cmpval = __do_sign_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap,
+      xsp2->bp, xsp1->xslen);
+    }
+   else
+    {
+     cmpval = __do_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap,
+      xsp2->bp, xsp1->xslen);
+    }
    if (isxz) { rtb = rta = 1L; goto make_1bit; }
    rta = rtb = 0L;
 
@@ -4841,7 +5501,8 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
    }
 make_1bit:
    /* this is need because a and b parts must be kept contiguous */
-   if (xsp1->xslen != 1)__sizchgxs(xsp1, 1);
+   /* SJM 09/30/03 - can use simpler narrow to 1 bit */
+   __narrow_to1bit(xsp1);
    xsp1->ap[0] = rta;
    xsp1->bp[0] = rtb;
    xsp1->xslen = 1;
@@ -4849,8 +5510,19 @@ make_1bit:
    break;
   case /* === */ RELCEQ:
   case /* !== */ RELCNEQ:
-   if (xsp1->xslen > xsp2->xslen) __sizchgxs(xsp2, xsp1->xslen);
-   else if (xsp2->xslen > xsp1->xslen) __sizchgxs(xsp1, xsp2->xslen);
+   /* SJM 09/29/03 - only widen - can be signed */
+   if (xsp1->xslen > xsp2->xslen)
+    { 
+     /* only signed if both signed */
+     if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp2, xsp1->xslen);
+     else __sizchg_widen(xsp2, xsp1->xslen);
+    }
+   else if (xsp2->xslen > xsp1->xslen)
+    {
+     if (ndp->lu.x->has_sign) __sgn_xtnd_widen(xsp1, xsp2->xslen);
+     else __sizchg_widen(xsp1, xsp2->xslen);
+    }
+
    /* returns 1 if not equal, 0 if equal */
    cmpval = __do_xzwidecmp(xsp1->ap, xsp1->bp, xsp2->ap, xsp2->bp,
     xsp1->xslen);
@@ -5076,8 +5748,76 @@ extern void __mwrshift(word *valwp, unsigned shiftval, int blen)
 }
 
 /*
+ * arithmetic right shift multiword value into new valune
+ * - shift value <1m (1 word)
+ * know shiftval <= lwlen
+ * 
+ * arithmetic (signed) version of multi-word right shit - if sign 1,
+ * then set area to 1's not 0
+ */
+extern void __arith_mwrshift(word *valwp, unsigned shiftval, int blen)
+{
+ register int wlen, wi, bi;
+ int shwords, shbits, new_signbi, apart_signed, bpart_signed;
+
+ wlen = wlen_(blen);
+ bi = get_bofs_(blen - 1);
+
+ /* DBG remove --- */
+ if (__debug_flg)
+  __dbg_msg("---> mw right shift of %d low word was %lx", shiftval, valwp[0]);
+ /* --- */
+  
+ if ((valwp[wlen - 1] & (1 << bi)) != 0) apart_signed = TRUE;
+ else apart_signed = FALSE;
+ if ((valwp[2*wlen - 1] & (1 << bi)) != 0) bpart_signed = TRUE;
+ else bpart_signed = FALSE;
+
+ shwords = get_wofs_(shiftval);
+ /* notice ubits and get_bofs macros are the same */
+ shbits = get_bofs_(shiftval);
+ /* do normal shift */
+ if (shwords != 0) wrdmwrshift(valwp, shwords, wlen);
+ if (shbits != 0) bitmwrshift(valwp, shbits, wlen);
+
+ new_signbi = blen - shiftval - 1;
+
+ /* set 1 bits for wi+1 to end and high bits in wi word */
+ bi = get_bofs_(new_signbi + 1);
+ wi = get_wofs_(new_signbi + 1); 
+
+ /* notice value here is 0-31 */
+ shbits = ubits_(shiftval);
+ if (apart_signed)
+  {
+   if (bi == 0) one_allbits_(&(valwp[wi]), shiftval);
+   else
+    {
+     one_allbits_(&(valwp[wi + 1]), shiftval - (WBITS - bi));
+     valwp[wi] |= ~(__masktab[WBITS - bi]);
+    }
+  }
+ if (bpart_signed)
+  {
+   wlen = wlen_(blen); 
+   if (bi == 0) one_allbits_(&(valwp[wlen + wi]), shiftval);
+   else
+    {
+     one_allbits_(&(valwp[wlen + wi + 1]), shiftval - (WBITS - bi));
+     valwp[wlen + wi] |= ~(__masktab[WBITS - bi]);
+    }
+  }
+
+ /* DBG remove -- */
+ if (__debug_flg) __dbg_msg("after low word is %lx\n", valwp[0]);
+ /* - */
+}
+
+/*
  * wide left shift - know value will not be wider than WBITS
  * for left shift must mask off high bits
+ *
+ * SJM 10/01/03 - for wide left shift arithmetic is same
  */
 extern void __mwlshift(word *valwp, unsigned shiftval, int blen)
 {
@@ -5138,7 +5878,7 @@ static void bitmwlshift(register word *wp, register int k, register int lwlen)
   {
    cy = ((wp[i] >> (WBITS - k)) & __masktab[k]);
    wp[i + 1] |= cy;
-   /* C language right shift of unsigned defined to shift in 0's */
+   /* C language left logical shift of unsigned defined to shift in 0's */
    wp[i] <<= k;
   }
 }
@@ -5171,8 +5911,7 @@ static void wrdmwlshift(register word *wp, register int kwrds,
 {
  register int swi, wi;
 
- for (swi = lwlen - 1; swi >= kwrds; swi--)
-  wp[swi] = wp[swi - (hsword) kwrds];
+ for (swi = lwlen - 1; swi >= kwrds; swi--) wp[swi] = wp[swi - kwrds];
  for (wi = 0; wi < kwrds; wi++) wp[wi] = 0L;
 }
 
@@ -5314,6 +6053,52 @@ extern int __do_widecmp(int *isx, register word *op1ap, register word *op1bp,
 }
 
 /*
+ * compare signed wide first with second - know widths the same
+ *
+ * set isx if either has x or z, else -1 <, 0 = , 1 >
+ * not for === or !== sincd non x even if x's or z's
+ *
+ * know size change made so both same no. words and high bits of narrow now 0 
+ */
+extern int __do_sign_widecmp(int *isx, register word *op1ap,
+ register word *op1bp, register word *op2ap, register word *op2bp, int opwid)
+{
+ register int i, i1, i2;
+ int wlen;
+
+ *isx = TRUE;
+ if (!vval_is0_(op1bp, opwid)) return(0);
+ if (!vval_is0_(op2bp, opwid)) return(0);
+
+ *isx = FALSE;
+ /* wi is index of high word */
+ wlen = wlen_(opwid);
+ 
+ /* if op1 is negative */
+ if ((op1ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0)
+  {
+   /* if op1 is negative and op2 is positive */
+   if (!(op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0) return(-1);
+  }
+ /* op1 is positive and op2 is negative */
+ else if ((op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0) return(1);
+
+ /* here both will have the same sign (especially high word) */
+ /* know unused parts of high words will both be zero */
+ for (i = wlen_(opwid) - 1; i >= 0; i--)
+  {
+   if (op1ap[i] != op2ap[i])
+    {
+     i1 = (sword) op1ap[i];    
+     i2 = (sword) op2ap[i];
+     if (i1 < i2) return(-1);
+     else return(1);
+    }
+  }
+ return(0);
+}
+
+/*
  * compare known x/z wide values and return T if not equal when x/z bits
  * ignored
  *
@@ -5394,6 +6179,8 @@ extern int __do_xzwidecmp(register word *op1ap, register word *op1bp,
  *
  * result and operands can't be same
  * LOOKATME - think not worth converting to word 64 array
+ *
+ * SJM 09/30/03 - for signed just works because of 2's complement  
  */
 extern void __ladd(word *res, word *u, word *v, int blen)
 {
@@ -5441,12 +6228,13 @@ extern void __ladd(word *res, word *u, word *v, int blen)
 /*
  * wide subtract
  * know u and v same width and resp wide enough and zeroed
- * >WBITS always unsigned
  * also res can be same as u or v (needed for ldiv2)
  * can get by with 32 bit arithmetic here
  * since mask any unused high bits - can borrow from unused
  *
  * LOOKATME - think not worth converting to word 64 array
+ * SJM 09/28/03 - 2's complement means signed just interpretation
+ * i.e. if sign bit on then negative
  */
 extern word __lsub(word *res, word *u, word *v, int blen)
 {
@@ -5471,6 +6259,141 @@ extern word __lsub(word *res, word *u, word *v, int blen)
 } 
 
 /*
+ * multiple 2 multi-word signed numbers
+ *
+ * wrapper that use normal unsigned lmult on absolute values
+ * since no x/z part (already handled) no x/z extension
+ * BEWARE - this depends on fact that xstk ap/bp parts contiguous
+ */
+extern void __sgn_lmult(register word *res, register word *u,
+ register word *v, int blen)
+{
+ int wlen, usign, vsign;
+ word *wrku, *wrkv;
+ struct xstk_t *uxsp, *vxsp;
+
+ wlen = wlen_(blen);
+ usign = vsign = 1;
+ uxsp = vxsp = NULL;
+ if (__is_lnegative(u, blen))
+  {
+   push_xstk_(uxsp, wlen*WBITS/2);
+   usign = -1;
+   /* ignoring carry */
+   __cp_lnegate(uxsp->ap, u, blen);
+   wrku = uxsp->ap;
+  }
+ else wrku = u;
+ if (__is_lnegative(v, blen))
+  {
+   push_xstk_(vxsp, wlen*WBITS/2);
+   vsign = -1;
+   /* ignoring carry */
+   __cp_lnegate(vxsp->ap, v, blen);
+   wrkv = vxsp->ap;
+  }
+ else wrkv = v;
+
+ __lmult(res, wrku, wrkv, blen);
+ if ((usign*vsign) == -1)
+  {
+   __inplace_lnegate(res, blen);
+  }
+ if (uxsp != NULL) __pop_xstk();
+ if (vxsp != NULL) __pop_xstk();
+}
+
+/*
+ * routine to determine if signed val negative by checking sign bit
+ * 
+ * FIXME - this should be macro
+ */
+extern int __is_lnegative(word *u, int blen) 
+{
+ register int wi, bi;
+
+ blen--;
+ wi = get_wofs_(blen);
+ bi = get_bofs_(blen);
+ if ((u[wi] & (1 << bi)) != 0) return(TRUE);
+ return(FALSE);
+}
+
+/*
+ * in place routine to compute 2's complement negation of signed wide number
+ * formula is ~(value) + 1
+ * return carry if any but not used for now
+ * in place
+ *
+ * LOOKATME - copy version - maybe in place better
+ */
+extern word __inplace_lnegate(register word *u, int blen)
+{
+ register int wi, ubits;
+ int wlen;
+ word cy;
+ 
+ wlen = wlen_(blen);
+ for (wi = 0; wi < wlen; wi++) u[wi] = ~(u[wi]);
+ ubits = ubits_(blen); 
+ u[wlen - 1] &= __masktab[ubits]; 
+ cy = sgn_linc(u, ubits);
+ return(cy);
+}
+
+/*
+ * copy routine to compute 2's complement negation of signed wide number
+ * formula is ~(value) + 1
+ * return carry if any but not used for now
+ * in place
+ *
+ * LOOKATME - copy version - maybe in place better
+ */
+extern word __cp_lnegate(word *u, register word *v, int blen)
+{
+ register int wi, ubits;
+ word cy;
+ int wlen;
+ 
+ wlen = wlen_(blen);
+ for (wi = 0; wi < wlen; wi++, v++) u[wi] = ~(*v);
+ ubits = ubits_(blen); 
+ u[wlen - 1] &= __masktab[ubits]; 
+
+ cy = sgn_linc(u, blen);
+ return(cy);
+}
+
+/*
+ * inc (add 1) in place to wide signed value
+ */
+static int sgn_linc(register word *u, int blen)
+{
+ register int wi, ubits;
+ register int wlen;
+
+ wlen = wlen_(blen);
+ /* done when no carry - special case speed up attmpt */ 
+ if (++(u[0]) != 0) return(0); 
+
+ /* enter loop with cy */
+ for (wi = 1; wi < wlen; wi++)
+  {
+   /* add the carry from last one */
+   if (++(u[wi]) != 0)
+    {
+     if (wi != wlen - 1) return(0);
+     ubits = ubits_(blen);
+     u[wi] &= __masktab[ubits];
+     return(1);
+    }
+  }
+ /* value was all 1's and fills high word, no mask but return cy */
+ /* 2's complement of 0 is 0 plus carry */
+ return(1);
+}
+
+/*
  * multiply two multi-word numbers to obtain the double len product
  *
  * notice res must not be same addr as u or v
@@ -5479,6 +6402,9 @@ extern word __lsub(word *res, word *u, word *v, int blen)
  * this does not use mpexpr recursive 1.6 power multiply since Verilog
  * numbers rarely wider than 300 bits - algorithm is simple distributed
  * accumulate
+ *
+ * SJM 09/28/03 - must multply with absolute values so there is sign  
+ * handling wrapper for signed wide multiply
  */
 extern void __lmult(register word *res, register word *u, register word *v,
  int blen)
@@ -5571,6 +6497,65 @@ static int accmuladd32(word *a, word *b, word c, word *d, int wlen)
 }
 
 /*
+ * interfact to signed long div and mod (keep rem) that select needed result
+ *
+ * wrapper that use normal unsigned on absolute values then adjusts signs
+ * since no x/z part (already handled) no x/z extension
+ * BEWARE - this depends on fact that xstk ap/bp parts contiguous
+ */
+extern void __sgn_ldivmod(register word *res, register word *u,
+ register word *v, int blen, int nd_quot)
+{
+ int wlen, usign, vsign;
+ word *wrku, *wrkv;
+ struct xstk_t *uxsp, *vxsp, *tmpxsp; 
+
+ /* always need unused tmp area for unused of mod/div results */
+ wlen = wlen_(blen);
+ push_xstk_(tmpxsp, wlen*WBITS/2);
+
+ wlen = wlen_(blen);
+ usign = vsign = 1;
+ uxsp = vxsp = NULL;
+ /* div/mod routine assumes both operands positive */
+ if (__is_lnegative(u, blen))
+  {
+   push_xstk_(uxsp, wlen*WBITS/2);
+   usign = -1;
+   /* ignoring carry */
+   __cp_lnegate(uxsp->ap, u, blen);
+   wrku = uxsp->ap;
+  }
+ else wrku = u;
+ if (__is_lnegative(v, blen))
+  {
+   push_xstk_(vxsp, wlen*WBITS/2);
+   vsign = -1;
+   /* ignoring carry */
+   __cp_lnegate(vxsp->ap, v, blen);
+   wrkv = vxsp->ap;
+  }
+ else wrkv = v;
+
+ /* separate into div/mod and adjust sign according to different rules */
+ if (nd_quot)
+  {
+   __ldivmod2(res, tmpxsp->ap, wrku, wrkv, blen);
+   /* for div sign negative if one but not both negative */
+   if ((usign*vsign) == -1) __inplace_lnegate(res, blen);
+  }
+ else
+  {
+   __ldivmod2(tmpxsp->ap, res, wrku, wrkv, blen);
+   /* for mod sign same as sign of first but must do unsigned wide div/mod */
+   if (usign == -1) __inplace_lnegate(res, blen);
+  }
+ if (uxsp != NULL) __pop_xstk();
+ if (vxsp != NULL) __pop_xstk();
+ __pop_xstk();
+}
+
+/*
  * interfact to long div and mod (keep rem) that select needed result
  */
 extern void __ldivmod(word *res, word *u, word *v, int blen, int nd_quot)
@@ -5595,12 +6580,14 @@ extern void __ldivmod(word *res, word *u, word *v, int blen, int nd_quot)
  *
  * blen is width of both u and z (one widened if needed from Ver semantics)
  * fills blen wide result
+ *
+ * SJM 09/30/03 - wrapper insures operands here are positive  
  */
 extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
 {
  register word *uwp, *vwp;
  word r0;
- int ublen, vblen, uwlen, vwlen, wlen, normdist, ubits;
+ int ublen, vblen, uwlen, vwlen, wlen, normdist;
  struct xstk_t *xsp;
 
  /* set rem and quotient to zero */
@@ -5643,9 +6630,7 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
  /* need long division */
  /* normalizing divisor (bottom)(v) first */ 
  /* high bit of divisor (v) must be 1 - compute number of leading 0s */
- /* AIV 06/25/04 - only nomalize if not multiple of WBITS */
- ubits = ubits_(vblen);
- normdist = (ubits == 0) ? 0 : WBITS - ubits;
+ if (vblen == WBITS) normdist = 0; else normdist = WBITS - ubits_(vblen);
 
  /* since must shift, need copy of if stacked v (divisor) can be changed */
  /* could just shift */

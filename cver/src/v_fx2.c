@@ -53,7 +53,7 @@ static void reset_dfp_targsyps(void);
 static void reset_1dfp_targsyp(struct dfparam_t *);
 static void reassign2_itnums(struct itree_t *);
 static void set2_poundparams(struct itree_t *);
-static void assgn_is_param(struct net_t *, struct xstk_t *, int, int);
+static void assgn_is_param(struct net_t *, struct xstk_t *, int, int, int);
 static void replace_param_rhs_expr(struct net_t *, word *, struct mod_t *);
 static void set_1defparam(struct dfparam_t *);
 static void recalc_1mod_params(struct mod_t *);
@@ -158,6 +158,14 @@ static void chk_stmts(void);
 static void chk_1stmt(struct st_t *);
 static void chk_case(struct st_t *);
 static void chk_dctrl(struct delctrl_t *);
+static void bld_stlst_evxlst(struct st_t *);
+static void bld_stmt_evxlst(struct st_t *);
+static void bld_case_evxlst(struct st_t *);
+static void bld_tskenable_evxlst(struct st_t *);
+static void bld_rhs_impl_evxlst(struct expr_t *);
+static void bld_lhs_impl_evxlst(struct expr_t *);
+static int xp_in_evxlst(struct expr_t *); 
+static struct expr_t *bld_evlst_comma_expr(void);
 static void chk_qclvalue(struct expr_t *, unsigned, int *);
 static void set_qc_frcassgn_net(struct expr_t *);
 static int nd_qcreg(struct expr_t *);
@@ -195,7 +203,10 @@ extern void __my_free(char *, int);
 extern void __mark_widdet_params(struct mod_t *);
 extern void __do_mdsplit(struct mod_t *);
 extern void __dmp_itree(struct itree_t *); 
-extern void __sizchgxs(struct xstk_t *, int);
+extern void __sizchgxs(struct xstk_t *, int);  
+extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
 extern void __grow_xstk(void);
 extern void __chg_xstk_width(struct xstk_t *, int);
 extern int __wide_vval_is0(register word *, int);
@@ -254,7 +265,7 @@ extern int __is_const_expr(struct expr_t *);
 extern int __xpr_has_param(struct expr_t *);
 extern void __bld_flat_itree(void);
 extern void __free_flat_itree(void);
-
+extern int __cmp_xpr(struct expr_t *, struct expr_t *);
 
 extern void __cv_msg(char *, ...);
 extern void __gfwarn(int, unsigned, int, char *, ...);
@@ -826,10 +837,10 @@ static void find_mustsplit_dfps(void)
 	    "+++ mark module %s to split defparam %s (mast of equiv class) width determining.\n",
             imdp->msym->synam, np->nsym->synam);
           }
+         /* --- */
          /* SJM 03/21/04 - because all are in same destination inst */
          /* equivalence class, once know that the master split can stop */
          dfpp->dfp_mustsplit = TRUE;
-         break;
         }
       }
     }
@@ -847,6 +858,7 @@ static void find_mustsplit_dfps(void)
         }
        /* --- */
        dfpp->dfp_mustsplit = TRUE;
+       /* AIV 02/04/04 - was wrongly breaking so did not process all defps */
       }
     }
   }
@@ -1091,6 +1103,8 @@ static void reset_dfp_targsyps(void)
 
    if (!dfpp->dfp_has_idents) { reset_1dfp_targsyp(dfpp); continue; }
 
+   /* SJM 03/16/04 - LOOKATME - could just go through lists ignoring */
+   /* idntmastdfp */
    /* master included on this list */
    for (dfpp2 = dfpp; dfpp2 != NULL; dfpp2 = dfpp2->idntnxt)
     reset_1dfp_targsyp(dfpp2);
@@ -1389,8 +1403,8 @@ extern void __set_1inst_pound_params(struct itree_t *itp, int is_giarr)
    /* IS param case (was or newly converted to IS) */
    sprintf(s1, "%s (per instance pound param)", __msg2_blditree(__xs, itp));
    __cnvt_param_stkval(xsp, pxp, modnp, s1);
-   assgn_is_param(modnp, xsp, itp->itip->imsym->el.emdp->flatinum,  
-    itp->itinum);
+   assgn_is_param(modnp, xsp, pxp->has_sign,
+    itp->itip->imsym->el.emdp->flatinum, itp->itinum);
 
    /* update paramter value but leave original expr. - needed if user */
    /* wants different parameter assign algorithm */
@@ -1458,8 +1472,8 @@ extern void __assgn_nonis_param(struct net_t *np, struct expr_t *xrhs,
 /*
  * assign new value to IS parameter
  */
-static void assgn_is_param(struct net_t *np, struct xstk_t *xsp, int ninsts,
- int iti)
+static void assgn_is_param(struct net_t *np, struct xstk_t *xsp,
+ int rhs_sign, int ninsts, int iti)
 {
  register int ii;
  int owlen, nwlen;
@@ -1518,8 +1532,16 @@ static void assgn_is_param(struct net_t *np, struct xstk_t *xsp, int ninsts,
  else
   {
    /* if new narrower, widen */
-   if (xsp->xslen < np->nwid) __sizchgxs(xsp, np->nwid);
+   /* use net's signedness since if param declared sign will be on in net */
+   if (xsp->xslen < np->nwid)
+    {
+     /* SJM 05/13/04 - rhs expr signedness determines if sign extend needed */ 
+     /* was wrongly using lhs */
+     if (rhs_sign) __sgn_xtnd_widen(xsp, np->nwid);
+     else __sizchgxs(xsp, np->nwid);
+    }
   }
+
  /* finally change this inst one */
  wp = &(np->nva.wp[2*owlen*iti]);
  memcpy(wp, xsp->ap, 2*owlen*WRDBYTES); 
@@ -1682,7 +1704,8 @@ static void set_1defparam(struct dfparam_t *dfpp)
    /* can be either IS or non IS form */ 
    if (np->srep == SR_PISNUM)
     { 
-     assgn_is_param(np, xsp, imdp->flatinum, itp->itinum);
+     assgn_is_param(np, xsp, dfpp->dfpxrhs->has_sign, imdp->flatinum,
+      itp->itinum);
     }
    else __assgn_nonis_param(np, dfpp->dfpxrhs, xsp);
 
@@ -1752,7 +1775,13 @@ extern void __cnvt_param_stkval(struct xstk_t *xsp, struct expr_t *xrhs,
       np->nsym->synam, innam, xsp->xslen, np->nwid); 
 
      /* SJM 05/24/00 - now never narrow always use widest */
-     if (np->nwid > xsp->xslen) __sizchgxs(xsp, np->nwid);
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     /* never narrow */
+     if (xsp->xslen < np->nwid)
+      {
+       if (xrhs->has_sign) __sgn_xtnd_widen(xsp, np->nwid);
+       else __sizchg_widen(xsp, np->nwid);
+      }
     }
   }
 }
@@ -1761,7 +1790,7 @@ extern void __cnvt_param_stkval(struct xstk_t *xsp, struct expr_t *xrhs,
  * recalculate all parameters with other params on rhs 
  * needed in case rhs params, changed from def or pound setting
  * 
- * SJM 02/28/02 - fixes bug not match LRM when pound/def set rhs expr param
+ * SJM 02/28/04 - fixes bug not match LRM when pound/def set rhs expr param
  * LOOKATME - handling all cases although think some impossible
  *
  * LOOKATME - algorithm uses whatever net type is although strictly
@@ -2061,31 +2090,6 @@ static int xpr_has_is_param(struct expr_t *ndp)
 }
 
 /*
- * set param value (nva) for P IS NUM net from one expr 
- */
-static void set_parmval_from_isxpr(struct net_t *np, struct expr_t *xp,
- struct mod_t *mdp)
-{
- register int ii;
- int wlen;
- word *wp;
- struct xstk_t *xsp;
-
- wlen = wlen_(np->nwid);
- for (ii = 0; ii < mdp->flatinum; ii++)
-  {
-   __push_itstk(mdp->moditps[ii]);
-   /* need to re-eval for every inst */
-   xsp = __eval_xpr(xp);
-   if (np->nwid != xsp->xslen) __sizchgxs(xsp, np->nwid);
-   wp = &(np->nva.wp[ii*2*wlen]);
-   memcpy(wp, xsp->ap, 2*wlen*WRDBYTES);
-   __pop_xstk();
-   __pop_itstk();
-  }
-}
-
-/*
  * return T all paramters known in modules that use pound params to set
  * params in this module 
  *
@@ -2109,6 +2113,38 @@ static int all_parent_mods_recalced(struct mod_t *mdp)
    if (!itp->up_it->itip->imsym->el.emdp->mod_parms_gd) return(FALSE);
   }
  return(TRUE);
+}
+
+/*
+ * set param value (nva) for P IS NUM net from one expr 
+ */
+static void set_parmval_from_isxpr(struct net_t *np, struct expr_t *xp,
+ struct mod_t *mdp)
+{
+ register int ii;
+ int wlen;
+ word *wp;
+ struct xstk_t *xsp;
+
+ wlen = wlen_(np->nwid);
+ for (ii = 0; ii < mdp->flatinum; ii++)
+  {
+   __push_itstk(mdp->moditps[ii]);
+   /* need to re-eval for every inst */
+   xsp = __eval_xpr(xp);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > np->nwid) __narrow_sizchg(xsp, np->nwid);
+   else if (xsp->xslen < np->nwid)
+    {
+     if (xp->has_sign) __sgn_xtnd_widen(xsp, np->nwid);
+     else __sizchg_widen(xsp, np->nwid);
+    }
+
+   wp = &(np->nva.wp[ii*2*wlen]);
+   memcpy(wp, xsp->ap, 2*wlen*WRDBYTES);
+   __pop_xstk();
+   __pop_itstk();
+  }
 }
 
 /*
@@ -2318,7 +2354,7 @@ static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
  biti2 = (int) xsp->ap[0];
  __pop_xstk();
 
- /* SJM 04/07/03 - nx1 may not be set for nets decl from implicit connect */
+ /* SJM 04/07/23 - nx1 may not be set for nets decl from implicit connect */
  if (np->nu.ct->nx1 == NULL || np->nu.ct->nx2 == NULL)
   {
    biti = -1;
@@ -2358,17 +2394,15 @@ static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
  */
 static int is_nonis_const_expr(struct expr_t *ndp)
 {
- int wid;
  struct net_t *np;
 
- wid = 0;
+ np = NULL;
  if (__isleaf(ndp))
   {
    if (ndp->optyp == ID)
     {
      if (ndp->lu.sy->sytyp != SYM_N) return(FALSE);
      np = ndp->lu.sy->el.enp;
-     wid = np->nwid;
      if (!np->n_isaparam) return(FALSE);
     }
    if (ndp->optyp == GLBREF) return(FALSE);
@@ -2379,7 +2413,10 @@ static int is_nonis_const_expr(struct expr_t *ndp)
    /* expr checking - only for parameters expr size not yet set */
    /* therefore set it to parameter width here as kludge - value will be */
    /* right but will be set again later */
-   if (ndp->optyp == ID && ndp->szu.xclen == 0) ndp->szu.xclen = wid;
+   if (ndp->optyp == ID && ndp->szu.xclen == 0)
+    {
+     ndp->szu.xclen = np->nwid;
+    }
 
    return(TRUE);
   }
@@ -2640,52 +2677,52 @@ static int port_expr_has_wrong_dir_drvr(struct expr_t *xp, int pdir, int ri1,
   }
  /* arithmetic/logic operators exprs or fcalls can't have drivers */
  switch ((byte) xp->optyp) {
-   /* for selects, ignore select expr. */
-   case LSB:
-    /* if not lvalue, never need to change */
-    if (!__is_const_expr(xp->ru.x)) return(FALSE);
-    /* if port is input, any driver (even outside bsel) still need dir chg */  
-    if (pdir == IO_IN) ri1 = -1;
-    else
-     {
-      np = xp->lu.x->lu.sy->el.enp;
-      ri1 = comp_pre_elab_norm_con_ndx(np, xp->ru.x, fnind, flcnt);
-      /* SJM 07/07/03 - if illegal neg rng - treat as right dir */
-      if (ri1 == -2) return(FALSE);
-     }
-    if (port_expr_has_wrong_dir_drvr(xp->lu.x, pdir, ri1, ri1, fnind,
-     flcnt)) return(TRUE);
-    return(FALSE);
-   case PARTSEL:
-    /* if port is input, any driver (even outside sel) still need dir chg */  
-    if (pdir == IO_IN) ri1 = ri2 = -1;
-    else
-     {
-      np = xp->lu.x->lu.sy->el.enp;
-      ri1 = comp_pre_elab_norm_con_ndx(np, xp->ru.x->lu.x, fnind, flcnt);
-      ri2 = comp_pre_elab_norm_con_ndx(np, xp->ru.x->ru.x, fnind, flcnt);
-      /* SJM 07/07/03 - if illegal neg rng - treat as right dir */
-      if (ri1 == -2 || ri2 == -2) return(FALSE);
-     }
-    if (port_expr_has_wrong_dir_drvr(xp->lu.x, pdir, ri1, ri2, fnind, flcnt))
-     return(TRUE);
-    return(FALSE);
-   case LCB:
-    /* if any component has drivers and all are decl lvals, then T */
-    has_drvrs = FALSE;
-    elem_lval = TRUE;
-    for (catndp = xp->ru.x; catndp != NULL; catndp = catndp->ru.x)
-     {
-      /* if any expr has drivers and no regs, then concat can have drvrs */
-      if (port_expr_has_wrong_dir_drvr(catndp->lu.x, pdir, -1, -1, fnind,
-       flcnt)) has_drvrs = TRUE;
-      /* if not decl lvalue, concat can't be decl lvalue either */
-      if (!expr_decl_lvalue(catndp->lu.x)) elem_lval = FALSE;
-     }
-    if (has_drvrs && elem_lval) return(TRUE);
-    break;
-   default: break;
-  }
+  /* for selects, ignore select expr. */
+  case LSB:
+   /* if not lvalue, never need to change */
+   if (!__is_const_expr(xp->ru.x)) return(FALSE);
+   /* if port is input, any driver (even outside bsel) still need dir chg */  
+   if (pdir == IO_IN) ri1 = -1;
+   else
+    {
+     np = xp->lu.x->lu.sy->el.enp;
+     ri1 = comp_pre_elab_norm_con_ndx(np, xp->ru.x, fnind, flcnt);
+     /* SJM 07/07/03 - if illegal neg rng - treat as right dir */
+     if (ri1 == -2) return(FALSE);
+    }
+   if (port_expr_has_wrong_dir_drvr(xp->lu.x, pdir, ri1, ri1, fnind,
+    flcnt)) return(TRUE);
+   return(FALSE);
+  case PARTSEL:
+   /* if port is input, any driver (even outside sel) still need dir chg */  
+   if (pdir == IO_IN) ri1 = ri2 = -1;
+   else
+    {
+     np = xp->lu.x->lu.sy->el.enp;
+     ri1 = comp_pre_elab_norm_con_ndx(np, xp->ru.x->lu.x, fnind, flcnt);
+     ri2 = comp_pre_elab_norm_con_ndx(np, xp->ru.x->ru.x, fnind, flcnt);
+     /* SJM 07/07/03 - if illegal neg rng - treat as right dir */
+     if (ri1 == -2 || ri2 == -2) return(FALSE);
+    }
+   if (port_expr_has_wrong_dir_drvr(xp->lu.x, pdir, ri1, ri2, fnind, flcnt))
+    return(TRUE);
+   return(FALSE);
+  case LCB:
+   /* if any component has drivers and all are decl lvals, then T */
+   has_drvrs = FALSE;
+   elem_lval = TRUE;
+   for (catndp = xp->ru.x; catndp != NULL; catndp = catndp->ru.x)
+    {
+     /* if any expr has drivers and no regs, then concat can have drvrs */
+     if (port_expr_has_wrong_dir_drvr(catndp->lu.x, pdir, -1, -1, fnind,
+      flcnt)) has_drvrs = TRUE;
+     /* if not decl lvalue, concat can't be decl lvalue either */
+     if (!expr_decl_lvalue(catndp->lu.x)) elem_lval = FALSE;
+    }
+   if (has_drvrs && elem_lval) return(TRUE);
+   break;
+  default: break;
+ }
  /* if not an lvalue, can't be changed to inout */
  return(FALSE);
 }
@@ -5981,7 +6018,6 @@ static void chk_1tsk(struct task_t *tskp)
  * expression here can be numbers with IS form so need to check
  * all instances in that case
  * this frees cell_pin_t since not used after here
- *
  */
 static void chk_inst_conns(void)
 {
@@ -7860,12 +7896,16 @@ static void chk_1stmt(struct st_t *stp)
 
 /*
  * check a case statement
+ *
+ * SJM 05/10/04 - new algorithm turns off sign bit for widening if needed
+ * for * every expression if select expr unsigned, if select expr signed
+ * then compares are signed if match signed else unsigned
  */
 static void chk_case(struct st_t *stp)
 {
  register struct csitem_t *csip;
  register struct exprlst_t *xplp;
- int xwid, maxselwid, nd_realcnv;
+ int xwid, maxselwid, nd_realcnv, nd_unsgn_widen;
  struct csitem_t *dflt_csip;
 
  dflt_csip = stp->st.scs.csitems;
@@ -7905,26 +7945,44 @@ static void chk_case(struct st_t *stp)
  /* must set the real bits after do all other checking */
  /* one pass sets the flag if any expr real (select or case item) */
  csip = dflt_csip->csinxt;
+ nd_unsgn_widen = FALSE;
  for (nd_realcnv = FALSE; csip != NULL; csip = csip->csinxt)
   {
    /* check each expression in possible list */
    for (xplp = csip->csixlst; xplp != NULL; xplp = xplp->xpnxt)
     {
      if (xplp->xp->is_real) nd_realcnv = TRUE;
+     if (!xplp->xp->has_sign) nd_unsgn_widen = TRUE;
     }
   }
  if (stp->st.scs.csx->is_real) nd_realcnv = TRUE;
- if (!nd_realcnv) return;
+ if (stp->st.scs.csx->has_sign) nd_unsgn_widen = TRUE;
+
+ if (!nd_realcnv && !nd_unsgn_widen) return;
 
  for (csip = dflt_csip->csinxt; csip != NULL; csip = csip->csinxt)
   {
    /* check each expression in possible list */
    for (xplp = csip->csixlst; xplp != NULL; xplp = xplp->xpnxt)
     {
-     if (!xplp->xp->is_real) xplp->xp->cnvt_to_real = TRUE;
+     if (nd_realcnv)
+      {
+       if (!xplp->xp->is_real) xplp->xp->cnvt_to_real = TRUE;
+      }
+     if (nd_unsgn_widen)
+      {
+       if (xplp->xp->has_sign) xplp->xp->unsgn_widen = TRUE;
+      }
     }
   }
- if (!stp->st.scs.csx->is_real) stp->st.scs.csx->cnvt_to_real = TRUE;
+ if (nd_realcnv)
+  {
+   if (!stp->st.scs.csx->is_real) stp->st.scs.csx->cnvt_to_real = TRUE;
+  } 
+ if (nd_unsgn_widen)
+  {
+   if (stp->st.scs.csx->has_sign) stp->st.scs.csx->unsgn_widen = TRUE;
+  } 
 }
 
 /*
@@ -7932,11 +7990,18 @@ static void chk_case(struct st_t *stp)
  */
 static void chk_dctrl(struct delctrl_t *dctp)
 {
+ int sav_ecnt;
  struct paramlst_t *dhdr;
 
  /* even if error keeep checking - also know list has exactly 1 element */
  if (dctp->dctyp == DC_EVENT || dctp->dctyp == DC_RHSEVENT)
-  __chk_evxpr(dctp->dc_du.pdels->plxndp);
+  {
+   /* SJM 06/01/04 - if implicit list form "@(*)" no expr to check */
+   if (!dctp->implicit_evxlst)
+    {
+     __chk_evxpr(dctp->dc_du.pdels->plxndp);
+    }
+  }
  /* pound form normal rhs expression checked here */
  /* notice delay controls even if numbers scaled at execution time */
  /* always only and at least 1 value */  
@@ -7959,9 +8024,391 @@ static void chk_dctrl(struct delctrl_t *dctp)
     }
   }
 
+ sav_ecnt = __pv_err_cnt;
  /* for RHS delay control know is assign, else can be spliced up list */
+ /* algorithm here is bottom up because this may process implicit @* forms */
  if (dctp->actionst != NULL) __chk_lstofsts(dctp->actionst);
+
+ /* final step (must be done after statement checking) build the */ 
+ /* all rhs form evxpr list */ 
+ if (dctp->implicit_evxlst)
+  {
+   /* if errors in stmts can't build this list - make it empty */
+   if (sav_ecnt > __pv_err_cnt)
+    {
+     __sgfwarn(3134, "implicit @(*) event control action statement has syntax errors - can't build implicit change list");
+     __bld_unc_expr();
+     dctp->dc_du.pdels->plxndp = __root_ndp;
+     return;
+    }
+   if (dctp->actionst == NULL) 
+    {
+     __sgfwarn(3135, "implicit @(*) event control no action statement - no implicit change list");
+     __bld_unc_expr();
+     dctp->dc_du.pdels->plxndp = __root_ndp;
+     return;
+    }
+
+   /* if nothing in list - expr become op empty and no triggers */
+   __impl_evlst_hd = __impl_evlst_tail = NULL; 
+   bld_stlst_evxlst(dctp->actionst);
+   if (__impl_evlst_hd != NULL)
+    {
+     dctp->dc_du.pdels->plxndp = bld_evlst_comma_expr();
+     __impl_evlst_hd = __impl_evlst_tail = NULL; 
+
+     /* check new ev comma or expr - think needed for folding */
+     /* SJM 06/01/04 - FIXME ### ??? maybe only need for debugging */
+     /* DBG remove -- */
+     if (dctp->dc_du.pdels->plxndp == NULL) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+
+      __chk_evxpr(dctp->dc_du.pdels->plxndp);
+    }
+  }
 }
+
+/*
+ * bld the list of change ev xpr lists - check for duplicates
+ */
+static void bld_stlst_evxlst(struct st_t *hdstp)
+{
+ register struct st_t *stp;
+
+ /* notice legal empty statement list just does nothing here */
+ for (stp = hdstp; stp != NULL; stp = stp->stnxt)
+  {
+   bld_stmt_evxlst(stp);
+  }
+}
+
+/*
+ * build the evxprlist for the action stmt for one @(*) implicit ev ctrl
+ *
+ * this must be run after the action stmt is checked for syntax errors
+ * this must be run before pass 3 v prp because of for loops
+ */
+static void bld_stmt_evxlst(struct st_t *stp)
+{
+ switch ((byte) stp->stmttyp) {
+  case S_NULL: case S_STNONE: break;
+  case S_PROCA: case S_FORASSGN: case S_RHSDEPROCA: case S_NBPROCA:
+   /* know if lhs IS form bit or array select - will be split */
+   bld_lhs_impl_evxlst(stp->st.spra.lhsx);
+   bld_rhs_impl_evxlst(stp->st.spra.rhsx);
+   break;
+  case S_IF:
+   bld_rhs_impl_evxlst(stp->st.sif.condx);
+   bld_stlst_evxlst(stp->st.sif.thenst);
+   if (stp->st.sif.elsest != NULL) bld_stmt_evxlst(stp->st.sif.elsest);
+   break;
+  case S_CASE:
+   /* case is special case because selection and case item expressions */ 
+   /* need to be added to list */
+   bld_case_evxlst(stp);
+   break;
+  case S_WAIT:
+   bld_stlst_evxlst(stp->st.swait.lpst);
+   break;
+  case S_FOREVER:
+   bld_stlst_evxlst(stp->st.swh.lpst);
+   break;
+  case S_REPEAT:
+   if (stp->st.srpt.repx != NULL)
+    {
+     bld_rhs_impl_evxlst(stp->st.srpt.repx);
+    }
+   bld_stlst_evxlst(stp->st.srpt.repst);
+   break;
+  case S_WHILE:
+   if (stp->st.swh.lpx != NULL)
+    {
+     bld_rhs_impl_evxlst(stp->st.swh.lpx);
+    }
+   bld_stlst_evxlst(stp->st.swh.lpst);
+   break;
+  case S_FOR:
+   {
+    struct for_t *frs;
+
+    /* notice for statement must use temporaries of right width */
+    frs = stp->st.sfor;
+    bld_stmt_evxlst(frs->forassgn);
+    if (frs->fortermx != NULL) bld_rhs_impl_evxlst(frs->fortermx);
+    bld_stmt_evxlst(frs->forinc);
+    bld_stlst_evxlst(frs->forbody);
+   }
+   break;
+  case S_DELCTRL:
+   /* notice if implicit @(*) form event ctrl - implicit expr list */
+   /* already built - but this needs to also add to any containing */
+   /* list is union of all contained implicit dctrl lists */
+   if (stp->st.sdc->actionst != NULL)
+    {
+     bld_stlst_evxlst(stp->st.sdc->actionst);
+    }
+   break;
+  case S_NAMBLK:
+   bld_stlst_evxlst(stp->st.snbtsk->tskst);
+   break;
+  case S_UNBLK:
+   bld_stlst_evxlst(stp->st.sbsts);
+   break;
+  case S_UNFJ:
+   {
+    register int fji;
+    struct st_t *fjstp;
+
+    /* 1 sub stmt only, for unnamed begin-end will be unnamed block */ 
+    for (fji = 0;; fji++)
+     {
+      if ((fjstp = stp->st.fj.fjstps[fji]) == NULL) break;
+      /* SJM 09/24/01 - this can be 2 stmts for for (for assgn then for) */
+      bld_stlst_evxlst(fjstp);
+     }
+   }
+   break;
+  case S_TSKCALL:
+   /* task enable out ports are lhs exprs (but sel ndx needs to go in list) */
+   /* does nothing for system tasks */
+   bld_tskenable_evxlst(stp);
+   break;
+  case S_QCONTA: case S_QCONTDEA:
+   /* SJM 06/01/04 - LOOKATME - think quasi-cont stmts can't cause triggers */
+   /* because rhs changes outside of proc time */
+   break;
+  case S_DSABLE: case S_CAUSE:
+   /* SJM 06/01/04 - LOOKATME - think cause is lhs expr here */
+   break;
+   default: __case_terr(__FILE__, __LINE__);
+  }
+}
+
+/*
+ * build case stmt evx lst - tricky because both select and case item 
+ * expr must be added
+ */
+static void bld_case_evxlst(struct st_t *stp)
+{
+ register struct csitem_t *csip;
+ register struct exprlst_t *xplp;
+ struct csitem_t *dflt_csip;
+
+ /* first build expr list element for case select */
+ bld_rhs_impl_evxlst(stp->st.scs.csx);
+
+ dflt_csip = stp->st.scs.csitems;
+ csip = dflt_csip->csinxt;
+ for (;csip != NULL; csip = csip->csinxt)
+  {
+   /* then expr list element for each case item expr */
+   /* usually will be constants so none will be added */
+   for (xplp = csip->csixlst; xplp != NULL; xplp = xplp->xpnxt)
+    {
+     bld_rhs_impl_evxlst(xplp->xp);
+    }
+  }
+
+ /* now check expression using max. width context */
+ for (csip = dflt_csip->csinxt; csip != NULL; csip = csip->csinxt)
+  {
+   /* check each expression in possible list */
+   for (xplp = csip->csixlst; xplp != NULL; xplp = xplp->xpnxt)
+    {
+     bld_rhs_impl_evxlst(xplp->xp);
+    }
+   bld_stlst_evxlst(csip->csist);
+   /* this must be a statement (at least null) */
+  }
+ if (dflt_csip->csist != NULL) bld_stlst_evxlst(dflt_csip->csist);
+}
+
+/*
+ * build task enable stmt evx lst - output ports are lhs exprs here
+ */
+static void bld_tskenable_evxlst(struct st_t *stp)
+{
+ struct expr_t *xp;
+ struct tskcall_t *tkcp;
+ struct sy_t *syp;
+ struct task_t *tskp;
+ struct task_pin_t *tpp;
+
+ tkcp = &(stp->st.stkc);
+ syp = tkcp->tsksyx->lu.sy;
+ /* SJM 06/01/04 - think system task rhs should not go in sensitivity list */
+ if (syp->sytyp == SYM_STSK) return;
+
+ tskp = tkcp->tsksyx->lu.sy->el.etskp;
+ tpp = tskp->tskpins;
+ for (xp = tkcp->targs; xp != NULL; xp = xp->ru.x, tpp = tpp->tpnxt)
+  {
+   /* output port connections are lvalues but must trigger on any indices */
+   if (tpp->trtyp == IO_OUT) bld_lhs_impl_evxlst(xp->lu.x);
+   else bld_rhs_impl_evxlst(xp->lu.x);
+  }
+}
+
+/*
+ * build rhs impl event expr list - all vars, bsel and psels go in list
+ *
+ * SJM 06/01/04 ### ??? FIXME - right to assume not including XMRs
+ */
+static void bld_rhs_impl_evxlst(struct expr_t *rhsx)
+{
+ struct expr_t *evxp;
+ struct exprlst_t *xplp;
+ struct expr_t *ndp2;
+
+ switch ((byte) rhsx->optyp) {
+  case ID:
+   /* DBG remove -- */
+   if (rhsx->lu.sy->el.enp->n_isaparam) __misc_terr(__FILE__, __LINE__);
+   /* --- */
+   goto add_expr;
+  case LSB: case PARTSEL:
+add_expr:
+   evxp = __copy_expr(rhsx);
+   if (!xp_in_evxlst(evxp)) 
+    {
+     xplp = (struct exprlst_t *) __my_malloc(sizeof(struct exprlst_t));
+     xplp->xp = evxp;
+     xplp->xpnxt = NULL; 
+     if (__impl_evlst_hd == NULL) __impl_evlst_hd = __impl_evlst_tail = xplp;
+     else { __impl_evlst_tail->xpnxt = xplp; __impl_evlst_tail = xplp; }
+    }
+   break;
+  case GLBREF:
+   /* assuming XMR not in sensitivity list */
+   break;
+  case NUMBER: case ISNUMBER: case OPEMPTY:
+  case REALNUM: case ISREALNUM:
+   break;
+  case QUEST:
+   bld_rhs_impl_evxlst(rhsx->lu.x);
+   bld_rhs_impl_evxlst(rhsx->ru.x->ru.x);
+   bld_rhs_impl_evxlst(rhsx->ru.x->lu.x);
+   break;
+  case FCALL:
+   /* this is func call side */
+   for (ndp2 = rhsx->ru.x; ndp2 != NULL; ndp2 = ndp2->ru.x)
+    {
+     bld_rhs_impl_evxlst(ndp2->lu.x);
+    }
+   break; 
+  case LCB:
+   /* know by here concatenates only one level */
+   for (ndp2 = rhsx->ru.x; ndp2 != NULL; ndp2 = ndp2->ru.x)
+    {
+     bld_rhs_impl_evxlst(ndp2->lu.x);
+    }
+   break; 
+  default:
+   /* handle unary or binary operators */
+   /* DBG remove -- */
+   if (rhsx->lu.x == NULL) __misc_terr(__FILE__, __LINE__);
+   /* --- */
+   bld_rhs_impl_evxlst(rhsx->lu.x);
+   if (rhsx->ru.x != NULL) bld_rhs_impl_evxlst(rhsx->ru.x);
+ }
+}
+
+/*
+ * build lhs impl event expr list
+ *
+ * only variable bit select are rhs expr that need to go in list
+ * must handle concats - otherwise only needs to look at bsel/arrsel 
+ *
+ * know all expr checking and folding completed before here
+ */
+static void bld_lhs_impl_evxlst(struct expr_t *lhsx)
+{
+ register struct expr_t *ndp2;
+
+ switch ((byte) lhsx->optyp) {
+  case ID: case GLBREF: case OPEMPTY: break;
+  case LSB:
+   /* only need to add variable selects of bit select or array select */
+   if (lhsx->ru.x->optyp == NUMBER || lhsx->ru.x->optyp == ISNUMBER)
+    break;
+   /* DBG remove -- */
+   if (__is_const_expr(lhsx->ru.x)) __misc_terr(__FILE__, __LINE__);
+   /* --- */
+   bld_rhs_impl_evxlst(lhsx->ru.x);
+   break;
+  case PARTSEL:
+   /* know ranges are constant */
+   break;
+  case LCB:
+   /* know lhs concatenates never nested */
+   for (ndp2 = lhsx->ru.x; ndp2 != NULL; ndp2 = ndp2->ru.x)
+    {
+     bld_lhs_impl_evxlst(ndp2->lu.x);
+    }
+   break;
+  default: __case_terr(__FILE__, __LINE__);
+ }
+}
+
+/*
+ * return T if expr already in the ev xpr list  
+ */
+static int xp_in_evxlst(struct expr_t *evxp) 
+{
+ register struct exprlst_t *xplp;
+
+ for (xplp = __impl_evlst_hd; xplp != NULL; xplp = xplp->xpnxt)
+  {
+   /* SJM 06/01/04 - ### ??? LOOKATME - is this expr compare right */ 
+   if (__cmp_xpr(evxp, xplp->xp)) return(TRUE);
+  }
+ return(FALSE);
+}
+
+/*
+ * build implicit ev list comma expr from expr list
+ *
+ * notice needs to left associate and edges never appear
+ */
+static struct expr_t *bld_evlst_comma_expr(void)
+{
+ register struct exprlst_t *xplp;
+ struct expr_t *rootndp, *ndp;
+ struct exprlst_t *xplp2;
+ int first_time;
+
+ first_time = TRUE;
+ ndp = NULL;
+ for (xplp = __impl_evlst_hd; xplp != NULL; xplp = xplp->xpnxt)
+  {
+   if (first_time)
+    {
+     rootndp = xplp->xp;
+     first_time = FALSE;
+     continue;
+    }
+   ndp = __alloc_newxnd();
+   ndp->optyp = OPEVCOMMAOR;
+   ndp->lu.x = rootndp; 
+   ndp->ru.x = xplp->xp;
+   rootndp = ndp; 
+  }
+ /* DBG remove -- */
+ if (__debug_flg) __dbg_msg(__msgexpr_tostr(__xs, rootndp));
+ /* -- */
+ /* free the expr list but not the contained exprs */
+ for (xplp = __impl_evlst_hd; xplp != NULL;)
+  {
+   xplp2 = xplp->xpnxt;
+   __my_free((char *) xplp, sizeof(struct exprlst_t));
+   xplp = xplp2;
+  }
+ return(rootndp);
+}
+
+/*
+ * STMT CHECKING ROUTINES FOR QC STMTS
+ */
 
 /*
  * check a quasi continous assign/deassign reg. or force wire or reg

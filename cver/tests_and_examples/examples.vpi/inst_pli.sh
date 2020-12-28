@@ -12,14 +12,13 @@ then
   exit;
 fi
 
-
-if [ "$OS" != "lnx" ]
- then
-  if [ "$OS" != "sparc-gcc" ]
-   then
+if test $OS != lnx
+then 
+  if test $OS != sparc-gcc
+   then 
       echo "must specify an OS(lnx, sparc-gcc) on command line" 
       exit;
-  fi
+   fi
 fi
 
 make -f makefile.$OS async.so

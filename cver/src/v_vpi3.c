@@ -296,8 +296,10 @@ extern void __bit1_vpi_or_tran_wireforce(struct net_t *, word *, word *, int,
  int, int, char *);
 extern struct tenp_t *__bld_portbit_netbit_map(struct mod_pin_t *);
 extern int __trim1_0val(word *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
 
-
+extern int __fd_do_fclose(int);
 
 extern void __my_fprintf(FILE *, char *, ...);
 extern void __tr_msg(char *, ...);
@@ -792,7 +794,6 @@ extern void __set_vpi_time(struct t_vpi_time *vpitimp, word64 *timp,
 
 /*
  * set delays
- * FIXME ??? MAY NEED TO REGEN IOPS FROM HERE - BUILD LIST
  */
 extern void vpi_put_delays(vpiHandle object, p_vpi_delay delay_p)
 {
@@ -2310,7 +2311,16 @@ static void get_vpiconta_drv_valuep(struct h_t *hp, p_vpi_value value_p,
    if (cap->ca_drv_wp.wp == NULL)
     {
      xsp = __eval2_xpr(cap->rhsx);
-     if (blen != xsp->xslen) __sizchgxs(xsp, blen);
+     if (xsp->xslen != blen)
+      {
+       if (xsp->xslen < blen)
+        {
+         /* SJM 05/10/04 - if widening and signed, must sign extend */
+         if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp, blen);
+         else __sizchg_widen(xsp, blen);
+        }
+       else __sizchgxs(xsp, blen);
+      }
     }
    else
     {
@@ -2606,6 +2616,7 @@ static void fill_valuep(p_vpi_value value_p, struct xstk_t *xsp,
 dispstr_fmt:
     /* convert real to reg */
     if (vwtyp == N_REAL) __cnv_stk_fromreal_toreg32(xsp);
+
     /* AIV 03/12/04 - changed so does not trim to match XL */
     __regab_disp(xsp->ap, xsp->bp, vwid, dispfmt, FALSE, has_sign);
     slen = __cur_sofs - sav_sofs;
@@ -3532,7 +3543,6 @@ set_vec_used:
   }
  /* --- */
 
-
  /* build the driver handle */
  hp2 = (struct h_t *) __mk_handle(vpiNetDriver, (void *) npp, hp->hin_itp,
   NULL);
@@ -3670,7 +3680,6 @@ set_bit_used:
     mdp->msym->synam, np->nsym->synam, bi);
   }
  /* --- */
-
 
  /* build the driver handle - always bith ndx form */
  hp2 = (struct h_t *) __mk_handle(vpiNetBitDriver, (void *) npp, hp->hin_itp,
@@ -3891,7 +3900,17 @@ static void chg_net_to_multfi(struct net_t *np, struct mod_t *mdp)
         {
          __push_itstk(mdp->moditps[ii]);
          xsp = __eval_xpr(cap->rhsx);
-         if (xsp->xslen != lhslen) __sizchgxs(xsp, lhslen);
+         if (xsp->xslen != lhslen)
+          {
+           if (xsp->xslen < lhslen)
+            {
+             /* SJM 05/10/04 - if widening and signed, must sign extend */
+             if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp, lhslen);
+             else __sizchg_widen(xsp, lhslen);
+            }
+           else __sizchgxs(xsp, lhslen);
+          }
+
          __st_perinst_val(cap->ca_drv_wp, lhslen, xsp->ap, xsp->bp);
          __pop_xstk();
          __pop_itstk();
@@ -4074,6 +4093,7 @@ static struct xstk_t *push_vpi_valuep(p_vpi_value value_p, int vwid,
     /* SJM 07/11/01 - put value of c style string needs to be supported */
     xsp = __cstr_to_vval(value_p->value.str);
     /* SJM 07/30/01 - must change to vwid (net's width) - trunc or 0 fill */
+    /* SJM 05/10/04 - vpi strings can't be signed */
     if (vwid != xsp->xslen) __sizchgxs(xsp, vwid);
     break;
    case vpiBinStrVal:
@@ -4174,6 +4194,7 @@ do_xtract:
       xsp->ap[0] = (word) (timval & WORDMASK_ULL);
       xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL);  
       xsp->bp[0] = xsp->bp[1] = 0L;
+      /* SJM 05/10/04 - time can't be signed */
       if (vwid != 64) __sizchgxs(xsp, vwid);
       break;
      }
@@ -5781,6 +5802,10 @@ extern PLI_UINT32 vpi_mcd_open(PLI_BYTE8 *filename)
  */
 extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 {
+ if ((mcd & FIO_FD) != 0)
+  {
+   return(__fd_do_fclose(mcd & ~FIO_FD));
+  }
  return(__close_mcd(mcd, TRUE));
 }
 
@@ -5790,6 +5815,13 @@ extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 extern PLI_BYTE8 *vpi_mcd_name(PLI_UINT32 mcd)
 {
  register int i;
+ int fd;
+
+ if ((mcd & FIO_FD) != 0)
+  {
+   fd = mcd & ~(FIO_FD);
+   return(__fio_fdtab[fd]->fd_name);
+  }
  for (i = 2; i < 31; i++)
   {
    if (((mcd >> i) & 1L) == 0L) continue;
@@ -5817,7 +5849,17 @@ extern PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, PLI_BYTE8 *format, ...)
 {
  va_list va, va2;
  register int i;
+ int fd;
  PLI_INT32 numch_prtfed = 0;
+
+ if ((mcd & FIO_FD) != 0)
+  {
+   fd = mcd & ~(FIO_FD);
+   va_start(va, format);
+   numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, va);
+   va_end(va);
+   return(numch_prtfed);
+  }
 
  /* SJM 03/26/00 - mcd 1 (bit 0) know both stdout and std log if open */
  /* may be other mcd bits on (files open) too */
@@ -5911,11 +5953,20 @@ extern int vpi_vprintf(char *format, va_list ap)
  *
  * must print to string buffer since do not have
  */
-extern int vpi_mcd_vprintf(unsigned int mcd, char *format, va_list ap)
+extern PLI_INT32 vpi_mcd_vprintf(PLI_UINT32 mcd, PLI_BYTE8 *format,
+ va_list ap)
 {
  char buf[RDBUFSIZ];
  register int i;
- int numch_prtfed = 0;
+ int fd;
+ PLI_INT32 numch_prtfed = 0;
+
+ if ((mcd & FIO_FD) != 0)
+  {
+   fd = mcd & ~(FIO_FD);
+   numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, ap);
+   return(numch_prtfed);
+  }
 
  /* assume at least one mcd or fd open */
  numch_prtfed = vsnprintf(buf, RDBUFSIZ, format, ap);
@@ -5967,6 +6018,23 @@ extern PLI_INT32 vpi_flush(void)
 extern PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 {
  register int i;
+ int fd;
+
+ if ((mcd & FIO_FD) == 0)
+  {
+   fd = mcd & ~(FIO_FD);
+   /* know fd in range but if not open error */ 
+   if (__fio_fdtab[fd] == NULL)
+    {
+     __vpi_err(1896, vpiError,
+      "vpi_mcd_vprintf: new 2001 style file descriptor %d - file not open",
+      fd);
+     return(1);
+    }
+      
+   fflush(__fio_fdtab[fd]->fd_s);
+   return(0);
+  } 
 
  /* SJM 09/09/03 - bit 31 now not used for mcds */   
  for (i = 1; i < 30; i++)
@@ -5995,7 +6063,7 @@ extern PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
  * OS process image save mechanism much better and no need to explicitly
  * save anything
  */
-extern int vpi_get_data(PLI_INT32 id, PLI_BYTE8 *dataLoc,
+extern PLI_INT32 vpi_get_data(PLI_INT32 id, PLI_BYTE8 *dataLoc,
  PLI_INT32 numOfBytes)
 {
  __vpi_err(1801, vpiError,
@@ -6003,7 +6071,8 @@ extern int vpi_get_data(PLI_INT32 id, PLI_BYTE8 *dataLoc,
  return(0);
 }
 
-extern int vpi_put_data(int id, char *dataLoc, int numOfBytes)
+extern PLI_INT32 vpi_put_data(PLI_INT32 id, PLI_BYTE8 *dataLoc,
+ PLI_INT32 numOfBytes)
 {
  __vpi_err(1801, vpiError,
   "new P1364 2001 vpi_put_data routine unsupported because $save/$restart not implemented - use OS save/restart");
@@ -6022,7 +6091,7 @@ extern void *vpi_get_userdata(vpiHandle obj)
  struct tskcall_t *tkcp;
 
  /* notice can't get or put user data in compile tf cb - need elab. n.l. */
- if (__run_state != SS_RESET && __run_state != SS_SIM)
+ if (__run_state == SS_RESET || __run_state == SS_SIM)
   {
    __sim_notbegun_err("vpi_get_userdata");
    return(NULL);
@@ -6052,7 +6121,7 @@ extern PLI_INT32 vpi_put_userdata (vpiHandle obj, void *userdata)
  struct tskcall_t *tkcp;
 
  /* notice can't get or put user data in compile tf cb - need elab. n.l. */
- if (__run_state != SS_RESET && __run_state != SS_SIM)
+ if (__run_state == SS_RESET || __run_state == SS_SIM)
   {
    __sim_notbegun_err("vpi_put_userdata");
    return(0);

@@ -55,9 +55,10 @@ static struct st_t *rd_wireassign(int);
 static struct st_t *rd_wiredeassign(int);
 static struct st_t *rd_taske_or_proc_assign(void);
 static struct st_t *rd_dctrl_st(void);
-static struct expr_t *rd_delctrl(int *);
+static struct expr_t *rd_delctrl(int *, int *);
 static int col2_lval(void);
 static int col_dctrl_xmr(void);
+static int col_evctrlexpr(void);
 static void init_gref(struct gref_t *, char *);
 static struct expr_t *parse_qcexpr(void);
 static void xskip_toend(void);
@@ -1260,7 +1261,7 @@ skp_end:
  */
 static struct st_t *rd_taske_or_proc_assign(void)
 {
- int dtyp, is_nb, slcnt, sfnind;
+ int dtyp, is_nb, slcnt, sfnind, is_evctl_impl;
  struct st_t *stp, *dcstp;
  struct expr_t *lhsndp, *rhsndp, *delxndp, *repcntx;
  struct delctrl_t *dctp;
@@ -1349,7 +1350,15 @@ try_parsing:
  if (__toktyp == SHARP || __toktyp == AT)
   {
    /* know this reads one past end of delay control */
-   if ((delxndp = rd_delctrl(&dtyp)) == NULL) goto bad_assgn;
+   if ((delxndp = rd_delctrl(&dtyp, &is_evctl_impl)) == NULL)
+    {
+     if (dtyp == DC_EVENT && is_evctl_impl)
+      {
+       __pv_ferr(3427,
+        "right hand side event control implicit form @(*) illegal");
+      }
+     goto bad_assgn;
+    }
    if (dtyp == DC_EVENT) dtyp = DC_RHSEVENT;
    else if (dtyp == DC_DELAY) dtyp = DC_RHSDELAY;
   }
@@ -1607,7 +1616,7 @@ done:
  */
 static struct st_t *rd_dctrl_st(void)
 {
- int dtyp, slcnt, sfnind;
+ int dtyp, slcnt, sfnind, is_evctl_impl;
  struct st_t *dcstp, *stp;
  struct expr_t *delxndp;
  struct delctrl_t *dctp;
@@ -1615,9 +1624,14 @@ static struct st_t *rd_dctrl_st(void)
 
  slcnt = __lin_cnt;
  sfnind = __cur_fnam_ind;
+ is_evctl_impl = FALSE;
  /* this reads one past one control or one past ending ) */
  /* only NULL error if cannot sync to following stmt */
- if ((delxndp = rd_delctrl(&dtyp)) == NULL) return(NULL);
+ if ((delxndp = rd_delctrl(&dtyp, &is_evctl_impl)) == NULL)
+  {
+   /* SJM 06/01/04 - @(*) or @* forms - have nil delxndp but still bld */
+   if (!is_evctl_impl) return(NULL);
+  }
  dcstp = __alloc_stmt(S_DELCTRL);
  /* fix up so statement location starts with delay control not action stmt */
  dcstp->stlin_cnt = slcnt;
@@ -1630,6 +1644,8 @@ static struct st_t *rd_dctrl_st(void)
  pmp->plxndp = delxndp; 
  dctp->dc_du.pdels = pmp;
  dctp->dceschd_tevs = NULL;
+ /* SJM 06/01/04 - in this case del xndp nil - build ev list during fixup */
+ dctp->implicit_evxlst = is_evctl_impl; 
 
  /* if begin-end block will return statement list */
  if ((stp = __rd_stmt()) == NULL) return(NULL);
@@ -1645,17 +1661,28 @@ static struct st_t *rd_dctrl_st(void)
  *
  * this must have skipped past delay control to stmt if possible 
  */
-static struct expr_t *rd_delctrl(int *dtyp)
+static struct expr_t *rd_delctrl(int *dtyp, int *ev_impl)
 {
  struct expr_t *ndp;
 
+ *ev_impl = FALSE;
  /* read one after except for non parenthesized ID because there need to */
  /* read one ahead to see if xmr */
- if (__toktyp == SHARP) *dtyp = DC_DELAY; else *dtyp = DC_EVENT;
+ if (__toktyp == SHARP) *dtyp = DC_DELAY;
+ else
+  {
+   *dtyp = DC_EVENT;
+   __canbe_impl_evctrl = TRUE; 
+  }
  __get_vtok();
+
  if (__toktyp == LPAR)
   {
+   /* if @(* that looks like attribute to scanner - glb canbe impl evctrl */
+   /* on will prevent seeing as atrribute since attrs illegal here */
    __get_vtok();
+   __canbe_impl_evctrl = FALSE;
+
    if (*dtyp == DC_DELAY)
     {
      /* undeclared names treated as wires - maybe changed to event later */
@@ -1668,6 +1695,7 @@ static struct expr_t *rd_delctrl(int *dtyp)
      if (!__col_parenexpr(0))
       {
        __pv_ferr(1278, "delay control expression error");
+
        __vskipto_any(RPAR);
        if (__syncto_class == SYNC_TARG || __syncto_class == SYNC_STMT) 
         {
@@ -1685,8 +1713,25 @@ bad_dctrl:
     }
    else
     {
+     if (__toktyp == TIMES) 
+      {
+       __get_vtok();
+       if (__toktyp != RPAR)
+        {
+         __pv_ferr(3428, "implicit @(*) event control form illegal - %s read",
+          __prt_vtok());
+         __vskipto_any(RPAR);
+         if (__syncto_class == SYNC_TARG || __syncto_class == SYNC_STMT) 
+          return(NULL);
+         else { __get_vtok(); return(NULL); }
+        }
+       *ev_impl = TRUE;
+       __get_vtok();
+       return(NULL);
+      }  
+
      /* event control cannot have added surrounding () because of evor */
-     if (!__col_parenexpr(-1))
+     if (!col_evctrlexpr())
       {
        __pv_ferr(1087, "event control expression error");
        /* if possible, now ready to read statement */
@@ -1702,6 +1747,9 @@ bad_dctrl:
   }
  else
   {
+   /* turn off glb to prevent seeing @(* as scanner attribute */
+   __canbe_impl_evctrl = FALSE;
+
    /* simple case can be one name form */
    /* should really check to see if next token can start stmt */
    __last_xtk = -1;
@@ -1922,6 +1970,67 @@ bad_end:
 }
 
 /*
+ * collect event expr - for new VER 2001 , as alternative to evor legal
+ * same as collect paren expr except commas allowed and special
+ * ev or comma token substituted
+ *
+ * expects 1st expr. token to have been read (after '(') reads end token
+ *
+ * know implicit @* and @(*) never seen here
+ * need to reuse or move nodes here to tree
+ */
+static int col_evctrlexpr(void)
+{
+ int parlevel, catlevel;
+
+ __last_xtk = -1;
+ /* this is illegal () case */
+ if (__toktyp == RPAR)
+  {
+   __pv_ferr(1089, "empty parentheses ending expression illegal");
+bad_end:
+   /* notice cannot free here since in __exprtab (links just overwritten) */
+   /* also make look like empty expr. */
+   __set_xtab_errval();
+   return(FALSE);
+  }
+ parlevel = catlevel = 0;
+ if (__toktyp == LPAR) parlevel++;
+
+ for (;;)
+  {
+   /* SJM 06/01/04 - this is unusual ',' just like event "or" but different */
+   /* expr node op typ */
+   /* bld expnode can't see comma because mashes error recovery */
+   if (__toktyp == COMMA && catlevel == 0) __toktyp = OPEVCOMMAOR;
+   if (!__bld_expnode()) goto bad_end;
+
+   __get_vtok();
+   switch ((byte) __toktyp) {
+    case LCB: catlevel++; break;
+    case RCB: catlevel--; break;
+    case LPAR: parlevel++; break;
+    case RPAR:
+     /* only non nested rpar can cause correct exit */
+     if (parlevel > 0) { parlevel--; break; }
+     goto done;
+    default:
+     if (__toktyp == TEOF || __toktyp == SEMI)
+      {
+       if (__pv_err_cnt <= __saverr_cnt)
+        {
+         __pv_ferr(1090, "illegal token %s in parenthesis ending expression",
+          __prt_vtok());
+        }
+       goto bad_end;
+      }
+    } 
+  }
+done:
+ return(TRUE);
+}
+
+/*
  * collect a range expression
  * expects first token ([) to have been read and reads ending ] token
  * includes ] in expression
@@ -2130,6 +2239,64 @@ bad_end:
 }
 
 /*
+ * ver 2001 #(list of param decls) form format collect param rhs expr
+ *
+ * expects 1st token of assignment rhs expr to have been read
+ * and reads one past end , or )
+ *
+ * for mismatched nesting parse will catch error
+ */
+extern int __col_lofp_paramrhsexpr(void)
+{
+ int parlevel, catlevel;
+ struct expr_t *ndp;
+
+ __last_xtk = -1; 
+ ndp = __alloc_exprnd();
+ ndp->optyp = LPAR;
+ for (parlevel = 0, catlevel = 0;;)
+  {
+   switch ((byte) __toktyp) {
+    case LPAR: parlevel++; break;
+    case LCB: catlevel++; break;
+    case RCB: catlevel--; break;
+    case RPAR:
+     if (parlevel <= 0 && catlevel <= 0) goto chk_empty;
+     else parlevel--;
+     break;
+    case COMMA:
+     if (parlevel <= 0 && catlevel <= 0)
+      {
+chk_empty:
+       /* empty = ) form illegal */
+       if (__last_xtk == -1) 
+        {
+         __pv_ferr(1106, "right hand side expression missing");
+         goto bad_end;
+        }
+       ndp = __alloc_exprnd(); 
+       ndp->optyp = RPAR;
+       return(TRUE);
+      }
+     break;
+    case TEOF: case SEMI:
+     if (__pv_err_cnt <= __saverr_cnt)
+      __pv_ferr(1093,
+       "illegal token %s in parameter right hand side expression",
+       __prt_vtok());
+     goto bad_end;
+   }
+   if (!__bld_expnode()) goto bad_end;
+   __get_vtok();
+  }
+
+bad_end:
+ /* replace entire expression with 1 bit x - not op empty */
+ __set_xtab_errval();
+ return(FALSE);
+}
+
+/*
  * collect an lvalue (all but procedural assign lhs)
  * expects 1st token of assignment lhs expr to have been read and reads
  * trailing =
@@ -2318,17 +2485,19 @@ extern int __bld_expnode(void)
   case NEGEDGE:
    ndp->optyp = OPNEGEDGE;
    break;
+  case OPEVCOMMAOR:
+   ndp->optyp = OPEVCOMMAOR; 
+   break;
   case NUMBER:
    /* notice scanner only returns number */  
    ndp->optyp = NUMBER;
    ndp->szu.xclen = __itoklen;
-   if (__itoksized) { ndp->unsiznum = FALSE; ndp->has_sign = FALSE; }
-   else
-    {
-     ndp->unsiznum = TRUE;
-     /* only true for decimal without 'd even 'd[num] is unsigned */
-     if (__itok_isint) ndp->has_sign = TRUE;
-    }
+   if (__itoksized) ndp->unsiznum = FALSE; else ndp->unsiznum = TRUE;
+
+   /* only true for decimal without 'd even 'd[num] is unsigned */
+   /* SJM 10/02/03 - scanner sets if signed - depends on new 2001 LRM rules */ 
+   if (__itok_signed) ndp->has_sign = TRUE;
+
    ndp->ibase = (unsigned) __itokbase;
    ndp->sizdflt = (__itoksizdflt) ? TRUE : FALSE;
    /* Verilog values are really unsigned bit patterns */
@@ -2587,7 +2756,7 @@ extern void __grow_rlcontab(int ndreals)
 /*
  * operator table
  * SPECOP means requires separate case entry and special processing
- * this table requires operator number k to be on row k
+ * BEWARE - this table requires operator number k to be on row k
  */
 struct opinfo_t __opinfo[] = {
  /* place holders since using token number used as index into op table */
@@ -2653,7 +2822,9 @@ struct opinfo_t __opinfo[] = {
  { BINOP, REALOP, PTHOP, WIDONE, "||" },        /* || BOOLOR */
  { BINOP, NOTREALOP, NOTPTHOP, WIDLEFT, "<<" }, /* << SHIFTL */
  /* 50 */
+ { BINOP, NOTREALOP, NOTPTHOP, WIDLEFT, "<<<" }, /* <<< ASHIFTL */
  { BINOP, NOTREALOP, NOTPTHOP, WIDLEFT, ">>" }, /* >> SHIFTR */
+ { BINOP, NOTREALOP, NOTPTHOP, WIDLEFT, ">>>" }, /* >>> ASHIFTR */
  { BINOP, NOTREALOP, NOTPTHOP, WIDONE, "*>" },  /* *> FPTHCON */
  { BINOP, NOTREALOP, NOTPTHOP, WIDONE, "=>" },  /* => PPTHCON */
  { BINOP, NOTREALOP, NOTPTHOP, WIDONE, "&&&" }, /* TCHK &&& (cond. event) */
@@ -2661,9 +2832,9 @@ struct opinfo_t __opinfo[] = {
  { RBINOP, REALOP, NOTPTHOP, WIDMAX, "*" },     /* * REALTIMES */ 
  { RBINOP, REALOP, NOTPTHOP, WIDMAX, "/" },     /* / REALDIV */ 
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, ">" },   /* > REALRELGT */
+ /* 60 */
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, ">=" },  /* >= REALRELGE */
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, "<" },   /* < REALRELLT */
- /* 60 */
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, "<=" },  /* <= REALRELLE */
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, "==" },  /* == REALRELEQ */
  { RBINOP, REALOP, NOTPTHOP, WIDENONE, "!=" },  /* != REALRELEQ */
@@ -2675,33 +2846,29 @@ struct opinfo_t __opinfo[] = {
  { SPECOP, REALOP, PTHOP, WIDMAX, "?" },        /* ? QUEST (lhs part of ?:) */
  { SPECOP, NOTREALOP, PTHOP, WIDMAX, "?:" },    /* : QCOL (rhs part of ?:)  */
  { SPECOP, NOTREALOP, PTHOP, WIDSELF, "PARTSEL" },/* [ PARTSEL (2 val sel) */
+ /* 70 */
  { BINOP, NOTREALOP, PTHOP, WIDSUM, "CATCOMMA" }, /* , part of { } */
  /* probably should have real quad op. for these */
  { BINOP, NOTREALOP, PTHOP, WIDSELF, "CATREP" },  /* [num]{ } concat repeat */
- /* 70 */
  { BINOP, NOTREALOP, NOTPTHOP, WIDSELF, "FCALL OP" }, /* function call */
  { BINOP, NOTREALOP, NOTPTHOP, WIDSELF, "LIST COMMA" },/* , of fcall () list*/
  /* only legal in event expressions */
  { SPECOP, NOTREALOP, NOTPTHOP, WIDONE, "or" },   /* OR event or */
+ { SPECOP, NOTREALOP, NOTPTHOP, WIDONE, "," },    /* , event or as comma */
  /* these are normal unaries except semantics only operand of evor */
  { UNOP, NOTREALOP, NOTPTHOP, WIDONE, "posedge " }, /* OPPOSEDGE ev prefix */
  { UNOP, NOTREALOP, NOTPTHOP, WIDONE, "negedge " }, /* OPNEGEDGE ev prefix */
  /* this do not use table - handle in code */
  { SPECOP, REALOP, NOTPTHOP, WIDMAX, "?" },     /* REALREALQUEST (lhs of ?:) */
  { SPECOP, REALOP, NOTPTHOP, WIDMAX, "?" },     /* REALREGQUEST (lhs of ?:) */
+ /* 80 */
  { SPECOP, REALOP, NOTPTHOP, WIDMAX, "?:" },    /* REGREALQCOL (rhs of ?:) */
  { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "rmE" }, /* GLBREF */
  { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "rmE" }, /* GLBPATH */
- /* 80 */
  { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "XMR ID" }, /* XMRID */
  { BINOP, NOTREALOP, NOTPTHOP, WIDSELF, "XMR LIST COMMA" },/* XMR comma */
- { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "ANALOG OP FUNC" }, /* ANALOG_OP */
- { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "POT ATTR OP" }, /* pot attr */
- { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "FLOW ATTR OP" }, /* flow attr */
  { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "EXPR END" },
  { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "TEOF" },
- { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "IOPT_WPTR" }, /* iop alloc wptr */
- { NOTANOP, NOTREALOP, NOTPTHOP, WIDNONE, "IOPT_DPTR" } /* iop alloc dptr */
 };
 
 /*
@@ -3070,7 +3237,8 @@ static struct expr_t *parse_shop(void)
  ndp = __exprtab[__xndi];
  for (;;)
   {
-   if (ndp->optyp == SHIFTL || ndp->optyp == SHIFTR)
+   if (ndp->optyp == SHIFTL || ndp->optyp == SHIFTR
+    || ndp->optyp == ASHIFTL || ndp->optyp == ASHIFTR)
     {
      savi = __xndi;
      __xndi++;
@@ -4341,7 +4509,7 @@ static struct expr_t *parse_evexpr(void)
  ndp = __exprtab[__xndi];
  for (;;)
   {
-   if (ndp->optyp == OPEVOR)
+   if (ndp->optyp == OPEVOR || ndp->optyp == OPEVCOMMAOR)
     {
      ndp2 = alloc_xtnd(__xndi);
      __xndi++;
@@ -4521,6 +4689,7 @@ extern void __init_xnd(struct expr_t *ndp)
  ndp->sizdflt = FALSE;
  ndp->is_real = FALSE;
  ndp->cnvt_to_real = FALSE;
+ ndp->unsgn_widen = FALSE;
  ndp->consubxpr = FALSE;
  ndp->consub_is = FALSE;
  ndp->folded = FALSE;

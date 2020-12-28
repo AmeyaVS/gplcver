@@ -511,7 +511,7 @@ extern vpiHandle vpi_register_systf(p_vpi_systf_data systf_data_p)
 
 /*
  * check a user passed systf structure
- * LOOKATME - also maybe warning for real func that has sizet?
+ * LOOKATME - also maybe warning for real func that has size_t?
  *
  * here error message is not vpi_ error since impossible to se
  *
@@ -806,7 +806,6 @@ extern void __chkbld_vpi_systf_func(struct expr_t *fcallx)
 
  /* if has vpi registered systf compiletf, must put on list so can call */
  /* just before end of compile (when vpi_ d.s. built) point */  
-
  if (stfdp->compiletf != NULL)
   {
    vstfp = (struct vpisystf_t *) __my_malloc(sizeof(struct vpisystf_t));
@@ -1652,7 +1651,6 @@ static void linkon_cb_dce(struct net_t *np, int biti, int bitj,
  __alloc_1instdce_prevval(dcep);
  __init_1instdce_prevval(dcep);
  dcep->dceu.dce_cbp = cbp;
-
 
  /* then link on cb undo/chg list - need if remove called */
  dclp = (struct dceauxlst_t *) __my_malloc(sizeof(struct dceauxlst_t));

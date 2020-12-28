@@ -1,6 +1,5 @@
 /* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
 
-
 /*
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -133,7 +132,6 @@ static void emit_pthdst_bit_informs(struct mod_t *);
 static void free_dctrl(struct delctrl_t *, int);
 static void free_csitemlst(register struct csitem_t *);
 static void cmp_xform_delay(int, union del_u);
-static void free_stlst(register struct st_t *);
 static void cmp_xform_ports(void);
 static void cmp_xform_ialst(void);
 static struct st_t *cmp_xform_lstofsts(register struct st_t *);
@@ -258,6 +256,7 @@ extern void __misc_sgfterr(char *, int);
 extern void __misc_gfterr(char *, int, unsigned, int);
 extern void __sgfterr(int, char *, ...);
 extern void __my_fprintf(FILE *, char *, ...);
+extern void __free_stlst(register struct st_t *);
 
 extern word __masktab[];
 
@@ -3032,7 +3031,7 @@ extern struct st_t *__prep_lstofsts(struct st_t *hdrstp, int nd_endgoto,
      dctp = stp->st.swait.wait_dctp;
      /* must turn on iact bit so linkon dce adds to free list when done */ 
      if (__iact_state) dctp->dc_iact = TRUE;
-     /* wait is simple expression - EVOR illegal - edge illegal state dep. */
+     /* wait is simple expression - EV OR illegal - edge illegal state dep. */
      bld_evxpr_dces(stp->st.swait.lpx, dctp, FALSE);
      /* wait @ event triggers on loop exp and executes wait to evaluate */
      /* the loop expression */
@@ -3496,15 +3495,16 @@ static void prep_event_dctrl(struct delctrl_t *dctp)
  __my_free((char *) pmp, sizeof(struct paramlst_t));
  dctp->dc_du.d1x = evx;
  dctp->dc_delrep = DT_1X;
- if (evx->optyp != OPEVOR) { bld_ev_dces(evx, dctp); return; }
+ if (evx->optyp != OPEVOR && evx->optyp != OPEVCOMMAOR)
+  { bld_ev_dces(evx, dctp); return; }
  /* notice evor tree must associate left to right - i.e. evor chain */
  /* extends down left links */
  for (xp = evx;;) 
   {
    bld_ev_dces(xp->ru.x, dctp);
-   if (xp->lu.x->optyp != OPEVOR)
+   if (xp->lu.x->optyp != OPEVOR && xp->lu.x->optyp != OPEVCOMMAOR)
     {
-     /* left bottom of tree */
+     /* left is bottom of tree */
      bld_ev_dces(xp->lu.x, dctp);
      break;
     }
@@ -3732,6 +3732,7 @@ static void linkon_dce(struct net_t *np, int biti, int bitj,
  * initialize dceps 
  * 
  * expects inst mod to be set to module where net declared in
+ * SJM 01/14/03 - LOOKATME - think there is reason need to pass grp
  */
 static void init_linkedon_dce(struct dcevnt_t *dcep, struct delctrl_t *dctp,
  struct gref_t *grp)
@@ -3780,7 +3781,7 @@ static void init_linkedon_dce(struct dcevnt_t *dcep, struct delctrl_t *dctp,
    /* since no dce, no loads, and no dmpvars must always turn chg store on */
    if (!np->nchg_nd_chgstore)
     {
-     /* this also regen net's decl iops from dce if -O on */
+     /* this also turn regen of net's decl iops from dce if -O on */
      __dce_turn_chg_store_on(__inst_mod, dcep, TRUE);  
     }
    /* SJM 04/14/04 - even if need chg store if dumpvars in future but that */
@@ -3963,7 +3964,7 @@ static struct dcevnt_t *linkon2_dce(struct net_t *np, int biti, int bitj,
 
 /*
  * routine to turn chg store on when new dce added but previously chg store
- * off because no dces, and no loads, and not dmpvars 
+ * off because no dces, and no loads, and not dumpvars 
  *
  * SJM 02/08/03 - for -O this only regens any needed proc insns but
  * caller must regen the net with the new dces added - proc regen
@@ -5017,7 +5018,7 @@ static void prep_tchks(void)
        break;
       default: __case_terr(__FILE__, __LINE__);
      }
-    /* no delay preparation for added hold of setuphold or rem of recrem */
+    /* no delay preparation for added hold of setuphold */
     if (tcp->tc_supofsuphld || tcp->tc_recofrecrem) continue;
 
     /* first set &&& conditional fields net still acessed from t event */
@@ -5474,7 +5475,7 @@ static int bldchk_pb_pthdsts(struct spcpth_t *pthp)
  *
  * for cases with mulitple source for 1 path only add first time
  * here special indirect npp that allows indexing by bit and comparison
- * LOOKATME
+ *
  * if non empty or separate bit lists make sense
  * best is to put in pass that checks to see if needed and adds after here
  */
@@ -5823,8 +5824,8 @@ extern void __free_1stmt(struct st_t *stp)
    break;
   case S_IF:
    __free_xtree(stp->st.sif.condx);
-   free_stlst(stp->st.sif.thenst);
-   free_stlst(stp->st.sif.elsest);
+   __free_stlst(stp->st.sif.thenst);
+   __free_stlst(stp->st.sif.elsest);
    break;
   case S_CASE:
    __free_xtree(stp->st.scs.csx);
@@ -5838,17 +5839,17 @@ extern void __free_1stmt(struct st_t *stp)
    if (stp->st.srpt.reptemp != NULL)
     __my_free((char *) stp->st.srpt.reptemp,
      __inst_mod->flatinum*sizeof(word *));
-   free_stlst(stp->st.srpt.repst);
+   __free_stlst(stp->st.srpt.repst);
    break;
   case S_FOREVER:
   case S_WHILE:
    __free_xtree(stp->st.swh.lpx);
-   free_stlst(stp->st.swh.lpst);
+   __free_stlst(stp->st.swh.lpst);
    break;
   case S_WAIT:
    __free_xtree(stp->st.swait.lpx);
    /* free statement list since del. ctrl. points to wait itself */
-   free_stlst(stp->st.swait.lpst);
+   __free_stlst(stp->st.swait.lpst);
    /* do not free action statement which is wait itself */
    free_dctrl(stp->st.swait.wait_dctp, FALSE);
    break;
@@ -5857,18 +5858,18 @@ extern void __free_1stmt(struct st_t *stp)
    /* notice for assign already freed */
    __free_xtree(frp->fortermx);
    __free_1stmt(frp->forinc);
-   free_stlst(frp->forbody);
+   __free_stlst(frp->forbody);
    __my_free((char *) frp, sizeof(struct for_t));
    break;
   case S_DELCTRL: free_dctrl(stp->st.sdc, TRUE); break;
   case S_UNBLK:
-   free_stlst(stp->st.sbsts);
+   __free_stlst(stp->st.sbsts);
    break;
   case S_UNFJ:
    for (fji = 0;; fji++)
     {
      if ((fjstp = stp->st.fj.fjstps[fji]) == NULL) break;
-     free_stlst(fjstp); 
+     __free_stlst(fjstp); 
     }
    __my_free((char *) stp->st.fj.fjstps, (fji + 1)*sizeof(struct st_t *)); 
    __my_free((char *) stp->st.fj.fjlabs, (fji + 1)*sizeof(int)); 
@@ -5924,7 +5925,7 @@ static void free_dctrl(struct delctrl_t *dctp, int free_action)
   __my_free((char *) dctp->dceschd_tevs,
    __inst_mod->flatinum*sizeof(struct tev_t *));
  dctp->dceschd_tevs = NULL;
- if (free_action) free_stlst(dctp->actionst);
+ if (free_action) __free_stlst(dctp->actionst);
  __my_free((char *) dctp, sizeof(struct delctrl_t));
 }
 
@@ -5941,7 +5942,7 @@ static void free_csitemlst(register struct csitem_t *csip)
    /* nil expr list always nil for default */
    if (csip->csixlst != NULL) __free_xprlst(csip->csixlst);
    /* if no default, stmt of first nil */
-   if (csip->csist != NULL) free_stlst(csip->csist);
+   if (csip->csist != NULL) __free_stlst(csip->csist);
    __my_free((char *) csip, sizeof(struct csitem_t));
    csip = csip2;
   }
@@ -5950,7 +5951,7 @@ static void free_csitemlst(register struct csitem_t *csip)
 /*
  * free a list of statements - i.e. next fields connect to make block list
  */
-static void free_stlst(register struct st_t *stp)
+extern void __free_stlst(register struct st_t *stp)
 {
  register struct st_t *stp2;
 
@@ -6865,6 +6866,7 @@ static void cmp_xform_specify(void)
  /* copy these because needed at run time for timing check error msgs */
  for (tcp = __inst_mod->mspfy->tchks; tcp != NULL; tcp = tcp->tchknxt)
   {
+
    if (tcp->startxp != NULL) tcp->startxp = mv1_expr_totab(tcp->startxp);
 
    if (tcp->startcondx != NULL)
@@ -6874,7 +6876,7 @@ static void cmp_xform_specify(void)
 
    if (tcp->chkcondx != NULL) tcp->chkcondx = mv1_expr_totab(tcp->chkcondx);
 
-   /* both sides of setuphold determined from hold half and both sides of*/
+   /* both sides of setuphold determined from hold half */
    /* recrem determined removal half */
    if (tcp->tc_supofsuphld || tcp->tc_recofrecrem) continue;
 

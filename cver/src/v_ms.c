@@ -97,6 +97,7 @@ static int get_vkeywrd(register char *);
 static int set_syncto_tokclass(byte);
 static int set_specitem_class(void);
 static int set_udpsyncto(byte);
+static int get_cfgkeywrd(char *);
 static int get_cmdcomment(FILE *);
 static void one_rot(struct tnode_t *, struct tnode_t *, struct tnode_t *);
 static void two_rot(struct tnode_t *, struct tnode_t *, struct tnode_t *);
@@ -308,7 +309,7 @@ extern void __get_vtok(void)
      __itokbase = __lastitokbase;
      __itoksized = __lastitoksized;
      __itoksizdflt = __lastitoksizdflt;
-     __itok_isint = __lastitok_isint;
+     __itok_signed = __lastitok_signed;
      __itoklen = __lastitoklen;
 
      /* used malloc to save const value, now need to restore and free */
@@ -324,7 +325,7 @@ extern void __get_vtok(void)
      __itokbase = __lastitokbase;
      __itoksized = __lastitoksized;
      __itoksizdflt = __lastitoksizdflt;
-     __itok_isint = __lastitok_isint;
+     __itok_signed = __lastitok_signed;
      __itoklen = __lastitoklen;
      __itok_realval = __lastitok_realval;
     }
@@ -1158,7 +1159,7 @@ static char *remchk_macdef_coms(char *mchp)
           }
          if (*chp == '/' && chp[1] == '*')
           {
-	   __pv_fwarn(622, "nested /* in macro body /* style comment");
+           __pv_fwarn(622, "nested /* in macro body /* style comment");
           }
          /* skip any escaped chars - can not end comment */ 
          if (*chp == '\\') { chp++; chp++; }
@@ -1538,8 +1539,8 @@ bad_fnam:
  if ((f = __tilde_fopen(incfnam, "r")) == NULL)
   {
    /* if file absolute, do not search incdir list */
-   /* AIV 09/15/04 - ./[name] form is relative not absolute */
-   if (incfnam[0] == '/' || incfnam[0] == '~') goto nonrel_notfnd; 
+   if (incfnam[0] == '/' || incfnam[0] == '.' || incfnam[0] == '~')
+    goto nonrel_notfnd; 
 
    if (__last_incdir >= 0)
     {
@@ -1552,7 +1553,7 @@ bad_fnam:
          chp = __my_malloc(plen);
          strcpy(chp, __incdirs[idi]); 
          strcat(chp, incfnam);
-	 __pv_fwarn(571,
+         __pv_fwarn(571,
           "`include file +incdir+ path name %s too long (%d) - ignored", chp,
            RECLEN); 
          __my_free(chp, plen);
@@ -1693,13 +1694,13 @@ static int cskip_ifdef_section(FILE *f, int begtok)
      if (level == 0)
       {
        if (begtok == CDIR_ELSE)
-	{
+        {
          __pv_ferr(1011,
           "`else line %s - followed by same nesting level `else",
           __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
          /* keep looking for `endif */
          continue;
-	}
+        }
        __ifdef_skipping = FALSE;
        return(CDIR_ELSE);
       }
@@ -1895,6 +1896,11 @@ again2:
   case '#': return(SHARP);
   case '(':
    if ((c1 = my_getc(f)) != '*') { my_ungetc_(c1, f); return(LPAR); }
+
+   /* SJM 06/01/04 - for new @(*) form can't be attr - need to check */
+   /* spaces possible because something like @(`star ) is possible */
+   if (__canbe_impl_evctrl) { my_ungetc_(c1, f); return(LPAR); }
+
    /* collect attribute into global string */
    rd_attribute(f);
    goto again;
@@ -1962,12 +1968,24 @@ again2:
    return(RELCNEQ);
   case '>':
    if ((c1 = my_getc(f)) == '=') return(RELGE);
-   else if (c1 == '>') return(SHIFTR);
+   else if (c1 == '>')
+    {
+     /* SJM 10/01/03 - add >>> arithmetic right shift */
+     if ((c1 = my_getc(f)) == '>') return(ASHIFTR);
+     my_ungetc_(c1, f);
+     return(SHIFTR);
+    }
    my_ungetc_(c1, f);
    return(RELGT);
   case '<':
    if ((c1 = my_getc(f)) == '=') return(RELLE);
-   else if (c1 == '<') return(SHIFTL);
+   else if (c1 == '<')
+    {
+     /* SJM 10/01/03 - add <<< arithmetic left shift */
+     if ((c1 = my_getc(f)) == '<') return(ASHIFTL);
+     my_ungetc_(c1, f);
+     return(SHIFTL);
+    }
    my_ungetc_(c1, f);
    return(RELLT);
   case '\\':
@@ -1984,10 +2002,10 @@ again2:
      if (++len >= IDCHARS - 1)
       {
        if (!toolong)
-	{
+        {
          __pv_ferr(942,
-	  "Verilog escaped identifier too many characters (%d)", IDCHARS - 2);
-         toolong = TRUE;
+          "Verilog escaped identifier too many characters (%d)", IDCHARS - 2);
+          toolong = TRUE;
         }
       }
      else *cp++ = c;
@@ -2102,9 +2120,9 @@ more_comment:
       {
        if ((c2 = my_getc(f)) == '*')
         {
-	 __pv_fwarn(622, "nested /* in /* style comment");
-	 continue;
-	}
+         __pv_fwarn(622, "nested /* in /* style comment");
+         continue;
+        }
        c = c2;
       }
      if (c == EOF)
@@ -2387,7 +2405,7 @@ static int vgetstr(FILE *f)
        if (!toolong)
         {
          __pv_ferr(946, "string token has too many characters (%d)",
-	  MAXNUMBITS - 1);
+   MAXNUMBITS - 1);
          toolong = TRUE;
        }
       }
@@ -2452,7 +2470,7 @@ static int try_chg_tononesc(void)
          if (strcmp(__token, "\\ ") == 0)
           {
            __pv_ferr(942,
-	    "Verilog escaped identifier empty - at least one non white space character required");
+     "Verilog escaped identifier empty - at least one non white space character required");
            return(FALSE);
           }
 
@@ -2567,7 +2585,7 @@ extern void __unget_vtok(void)
    __lastitokbase = __itokbase;
    __lastitoksized = __itoksized;
    __lastitoksizdflt = __itoksizdflt;
-   __lastitok_isint = __itok_isint;
+   __lastitok_signed = __itok_signed;
    __lastitoklen = __itoklen;
     
    /* must malloc to save in rare pushed back case */
@@ -2584,7 +2602,7 @@ extern void __unget_vtok(void)
    __lastitokbase = __itokbase;
    __lastitoksized = __itoksized;
    __lastitoksizdflt = __itoksizdflt;
-   __lastitok_isint = __itok_isint;
+   __lastitok_signed = __itok_signed;
    __lastitoklen = __itoklen;
    __lastitok_realval = __itok_realval;
   }
@@ -2605,7 +2623,7 @@ static int rd_num(FILE *f, int c1)
 {
  register char *chp;
  register int c;
- int len, toolong, isreal, errnum, blen, unit_suffix, has_exp, nsize;
+ int len, toolong, isreal, errnum, blen, nsize;
  word v;
  double d1;
  char *endp;
@@ -2615,13 +2633,11 @@ static int rd_num(FILE *f, int c1)
  __itokbase = BDEC;
  __itoksized = FALSE;
  __itoksizdflt = FALSE;
- __itok_isint = FALSE;
+ __itok_signed = FALSE;
  __itoklen = WBITS;
  strcpy(nwidtoken, "");
 
  /* read the possible decimal size value or unsized unbased number */
- unit_suffix = FALSE;
- has_exp = FALSE;
  isreal = FALSE;
  len = 0;
  if ((c = c1) != '\'')
@@ -2636,7 +2652,7 @@ static int rd_num(FILE *f, int c1)
       case '0': case '1': case '2': case '3': case '4': case '5':
       case '6': case '7': case '8': case '9': break;
       /* - and + here */
-      case 'e': case 'E': has_exp = TRUE; isreal = TRUE; break; 
+      case 'e': case 'E': isreal = TRUE; break; 
       case '.': isreal = TRUE; break;
       case '-': case '+':
        /* + and minus after exponent legal else end of number */
@@ -2714,7 +2730,8 @@ ok_letend:
      __macro_sep_width = FALSE;
      return(REALNUM);
     }
-   __itok_isint = TRUE;
+   /* SJM 10/02/03 - string of dec digits no '[base] is signed decimal */
+   __itok_signed = TRUE;
    /* handle numbers that fit in 10 chars as special case */
    if (strlen(__numtoken) < 10) 
     {
@@ -2732,17 +2749,7 @@ ok_letend:
  /* know c is ' */
  /* know token read after this is not first token on line because */
  /* number becuase size number ' is on next line */
- /* know '[base] form is unsized and unsigned */
-
- /* AIV 07/09/04 - special case to handle:  8'h`DEFINE */
- /* if `define macro contains a 'base it is illegal */
- if (__macbs_flag)
-  {
-   __pv_ferr(3418,
-    "number with '[base] macro expansion %s contains extra '[base]", __token);
-   /* AIV 07/12/04 - not sure what happens with error resync here */ 
-   return(UNDEF);
-  }
+ /* know '[base] form is unsized and unsigned but'[Ss][base] is signed */
 
  /* if this is too wide will be caught later - this sets [size]' size */
  if (strcmp(nwidtoken, "") != 0)
@@ -2782,7 +2789,17 @@ ok_letend:
    __itoklen = WBITS;
    __itoksized = FALSE;
   }
- if ((__itokbase = __to_base(c = my_getc(f))) == -1)
+
+ /* SJM 10/01/03 - add code that get the optional base signed char */ 
+ /* and set signed flag for use when expression token constructed */
+ c = my_getc(f); 
+ if (c == 's' || c == 'S')
+  {
+   __itok_signed = TRUE;
+   c = my_getc(f); 
+  }
+
+ if ((__itokbase = __to_base(c)) == -1)
   {
    __pv_ferr(954,
     "illegal Verilog number base %c - for compiler directive use back quote(`)", c);
@@ -2792,21 +2809,6 @@ ok_letend:
   }
  c = my_getc(f);
  c = voverwhite(f, c);
- /* AIV 07/09/04 - special case to handle:  8'h`DEFINE */
- if (c == '`')
-  {
-   int stok;
-   my_ungetc_(c, f);
-   /* save the base */
-   stok = __itokbase;
-   /* set the flag to make sure macro doesn't contain a base */
-   __macbs_flag = TRUE;
-   /* AIV 07/12/04 - need recursive call but can't read another number */ 
-   __get_vtok();
-   __macbs_flag = FALSE;
-   __itokbase = stok;
-   goto do_convert;
-  }
  /* know c is 1st character of sized number */
  toolong = FALSE;
  for (chp = __numtoken, len = 0;;)
@@ -2968,7 +2970,7 @@ extern int __is_vdigit(int c, int base)
  * this routine fills __ac wrk and __bc wrk, if needed will widen
  *
  * this is also used by tf_ string to value conversion routines 
- * sets values in __numtoken, __itoklen, __itok_isint
+ * sets values in __numtoken, __itoklen, __itok_signed
  */
 extern void __to_dhboval(int base, int emit_warn)
 {
@@ -2982,8 +2984,9 @@ extern void __to_dhboval(int base, int emit_warn)
  /* even if much wider than itoklen - just at least wide estimate here */
  srcblen = chlen_to_bitlen(chlen, base);
  if (srcblen < __itoklen) srcblen = __itoklen; 
- /* if signed int (no ') but needs to be truncated, turn off int */
- if (srcblen > WBITS) __itok_isint = FALSE;
+
+ /* SJM 10/02/03 now wide decimal or numbers with s/S base part signed */ 
+ /* therefore itok is int global not accessed here */
 
  wlen = wlen_(srcblen);
  /* if need to widen or wider than default, change allocated length */
@@ -3020,7 +3023,7 @@ extern void __to_dhboval(int base, int emit_warn)
      if (base == BHEX)
       {
        if (srcblen - __itoklen < 4 && wlen == srcwlen
-	&& nibblexz(__acwrk[wlen - 1], __bcwrk[wlen - 1], srcblen))
+ && nibblexz(__acwrk[wlen - 1], __bcwrk[wlen - 1], srcblen))
         goto do_mask;
       }
      else if (base == BOCT)
@@ -3489,7 +3492,7 @@ extern char *__prt_vtok(void)
   case QUEST: strcpy(__token, "?"); break;
   case AT: strcpy(__token, "@"); break;
   case CAUSE: strcpy(__token, "->"); break;
-  case PLUS: strcpy(__token, "+"); break;	
+  case PLUS: strcpy(__token, "+"); break; 
   case MINUS: strcpy(__token, "-"); break;
   case TIMES: strcpy(__token, "*"); break;
   case DIV: strcpy(__token, "/"); break;
@@ -3512,7 +3515,9 @@ extern char *__prt_vtok(void)
   case BOOLOR: strcpy(__token, "||"); break;
   case NOT: strcpy(__token, "!"); break;
   case SHIFTL: strcpy(__token, "<<"); break;
+  case ASHIFTL: strcpy(__token, "<<<"); break;
   case SHIFTR: strcpy(__token, ">>"); break;
+  case ASHIFTR: strcpy(__token, ">>>"); break;
   case EQ: strcpy(__token, "="); break;
   case FPTHCON: strcpy(__token, "*>"); break;
   case PPTHCON: strcpy(__token, "=>"); break;
@@ -3628,11 +3633,11 @@ static struct vkeywds_t vkeywds[] = {
  { "pull0", PULL0 },
  { "pull1", PULL1 },
  { "real", REAL },
- { "realtime", REALTIME },
  { "reg", REG },
  { "release", RELEASE },
  { "repeat", REPEAT },
  { "scalared", SCALARED },
+ { "signed", SIGNED },
  { "small", SMALL },
  { "specify", SPECIFY },
  { "specparam", SPECPARAM },
@@ -3860,6 +3865,61 @@ extern int __vskipto4_any(int targ1, int targ2, int targ3, int targ4)
 }
 
 /*
+ * skip to end of list of port port decl element
+ *
+ * special case because resyncs at port name keyword ID 
+ * notice can't be used for new list of parameters form
+ */
+extern int __vskipto_lofp_end()
+{
+ /* only for list of ports decl so can't be invoked from iact state */ 
+ if (__iact_state) __misc_terr(__FILE__, __LINE__);
+
+ for (;;)
+  {
+   /* semi can end because end of list ) always followed by ; */
+   if (__toktyp == INPUT || __toktyp == OUTPUT || __toktyp == INOUT
+    || __toktyp == RPAR || __toktyp == SEMI)
+    { __syncto_class = SYNC_TARG; return(TRUE); }
+   if (set_syncto_tokclass((byte) __toktyp)) break;
+   if (__toktyp == TEOF)
+    __fterr(315,
+     "unexpected EOF while skipping over list of port declaration");
+   __get_vtok();
+  }
+ return(FALSE);
+}
+
+/*
+ * skip to end of list of port port decl element from inside port name comma
+ * list
+ *
+ * special case because resyncs at port name keyword ID 
+ * notice can't be used for new list of parameters form
+ */
+extern int __vskipto2_lofp_end()
+{
+ /* only for list of ports decl so can't be invoked from iact state */ 
+ if (__iact_state) __misc_terr(__FILE__, __LINE__);
+
+ for (;;)
+  {
+   /* semi can end because end of list ) always followed by ; */
+   if (__toktyp == INPUT || __toktyp == OUTPUT || __toktyp == INOUT
+    || __toktyp == RPAR || __toktyp == SEMI || __toktyp == COMMA)
+    { __syncto_class = SYNC_TARG; return(TRUE); }
+
+   if (set_syncto_tokclass((byte) __toktyp)) break;
+
+   if (__toktyp == TEOF)
+    __fterr(315,
+     "unexpected EOF while skipping over list of port declaration");
+   __get_vtok();
+  }
+ return(FALSE);
+}
+
+/*
  * set __token class - return T if not a sync to
  */
 static int set_syncto_tokclass(byte ttyp) 
@@ -3884,8 +3944,7 @@ static int set_syncto_tokclass(byte ttyp)
   case INPUT: case OUTPUT: case INOUT:
   case WIRE: case TRI: case TRI0: case TRI1: case TRIAND: 
   case TRIOR: case TRIREG: case WAND: case WOR: case SUPPLY0:
-  case SUPPLY1: case REG: case INTEGER: case TIME: case REAL: case REALTIME:
-  case EVENT:
+  case SUPPLY1: case REG: case INTEGER: case TIME: case REAL: case EVENT:
    __unget_vtok();
    __syncto_class = SYNC_MODLEVEL;
    break;
@@ -4071,7 +4130,6 @@ static int set_udpsyncto(byte ttyp)
 /*
  * ascii character table for processing ID tokens
  * 0 - continue, 1 - end and don't back up, 2 - end and back up
- * 3 - new line - inc lin_cnt and end
  * notice here any non white space contiguous chars good since can be path
  */
 static char __lbctab[128] = {
@@ -4086,7 +4144,7 @@ static char __lbctab[128] = {
 };
 
 /*
- * get a -f file option token - only white space separation
+ * get a -f file option token - only white space and semi separation
  * (modified from yylex in "The Unix Programming Environment" p. 337)
  * notice no push back token here
  * also handles normal / * and // comments
@@ -4100,6 +4158,7 @@ extern int __get_cmdtok(FILE *f)
 
 again:
  while ((c = getc(f)) == ' ' || c == '\t' || c == '\f' || c == '\r') ;
+ /* SJM 12/06/03 - only new line needs line cnt inc and pushed back */
  if (c == '\n') { __lin_cnt++; goto again; }
 
  /* // or / * comments legal */
@@ -4118,7 +4177,7 @@ again:
     case 0: continue;         /* normal in ID char */
     case 1: goto end_nam;     /* white space token end - swallow it */
     /* or lin_cnt wrong for errors */
-    case 2: ungetc(c, f); goto end_nam; /* \n like 1 but inc. __lin_cnt */
+    case 2: ungetc(c, f); goto end_nam; /* non white space end token */
    }
   }
 end_nam:
@@ -4126,6 +4185,176 @@ end_nam:
  /* does not need canonical token since not related to output */
  /* Verilog world options are case sensitive */
  return(ID);
+}
+
+/*
+ * ascii character table for processing config tokens
+ * 0 - continue, 1 - end and don't back up, 2 - end and back up
+ * notice here any non white space contiguous chars good since can be path
+ */
+static char cfgctab[128] = {
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 1, 0, 0,  /* ^i,\n,\f \r */
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,  /* sp, , */
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,  /* ; */
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2   /* eof */
+};
+
+/*
+ * get a cfg -L or default map.lib file token 
+ * (modified from yylex in "The Unix Programming Environment" p. 337)
+ * AIV 10/30/03 - added for new 2001 cfg feature
+ *
+ * notice no push back token here and tok typ glb not set
+ * also handles normal / * and // comments
+ *
+ * allowing ' and " quotes and back slash escaping of quotes in quoted
+ * strings but not allowing embedded new lines in tokens
+ * 
+ * complicated because need warnings and must handle quoting and
+ * escaping but only within quoted names 
+ */
+extern int __get_cfgtok(FILE *f)
+{
+ /* the char must be an int for machine independence */
+ register int c;
+ register char *cp;
+ int namlen, ttyp, qchar;
+
+again:
+ while ((c = getc(f)) == ' ' || c == '\t' || c == '\f' || c == '\r') ;
+ /* SJM 12/06/03 - only new line needs line cnt inc and pushed back */
+ if (c == '\n') { __lin_cnt++; goto again; }
+ /* AIV since push back ; if ';' */
+ if (c == ';') return(CFG_SEMI);
+ if (c == ',') return(CFG_COMMA);
+ /* // or / * comments legal */
+ if (c == '/') if (get_cmdcomment(f)) goto again;
+
+ if (c == '\'' || c == '"')
+  {
+   qchar = c;
+   c = getc(f);
+   /* get here by falling through case */
+   for (cp = __token, namlen = 0;;)
+    {
+     if (++namlen >= IDCHARS - 1)
+      {
+       __pv_ferr(919,
+        "config file token (path?) too long (%d) - rest discarded",
+        IDCHARS - 1);
+       for (;;)
+        {
+         if (c == '\\') { c = getc(f); continue; }
+         if (c == qchar) break;
+         if (c == EOF) return(CFG_EOF);
+         c = getc(f);
+        }
+       *cp = '\0';
+       return(CFG_ID);
+      }
+     /* escaped chars legal but only in quoted strings */
+     if (c == '\\')
+      {
+       c = getc(f);
+       if (c == EOF) return(CFG_EOF);
+       *cp++ = c;
+      }
+     else
+      {
+       /* ending quote not part of ID and can't be key word */
+       if (c == qchar)
+        {
+         if (strcmp(__token, "") == 0)
+          {
+           __pv_fwarn(3125, "quoted map library token empty string");
+          }
+         break;
+        }
+      } 
+     if (c == '\n')
+      {
+       if (strcmp(__token, "") == 0)
+        {
+         __pv_fwarn(3126,
+          "quoted map library token contains embedded new line");
+        }
+      }
+     *cp++ = c;
+     c = getc(f);
+    }
+   *cp = '\0';
+   return(CFG_ID);
+  }
+
+ /* get here by falling through case */
+ for (cp = __token, namlen = 0;;)
+  {
+   if (++namlen >= IDCHARS - 1)
+    __pv_ferr(919,
+     "config file token (path?) too long (%d) - rest discarded", IDCHARS - 1);
+
+   *cp++ = c;
+   if ((c = getc(f)) == EOF) { __toktyp = CFG_EOF; return(CFG_EOF); }
+   switch (cfgctab[c & 0x7f]) {
+    case 0: continue;         /* normal in ID char */
+    case 1: goto end_nam;     /* white space token end - swallow it */
+    case 2: ungetc(c, f); goto end_nam; /* non white space end token */
+   }
+  }
+end_nam:
+ *cp = '\0';
+ ttyp = get_cfgkeywrd(__token);
+ return(ttyp);
+}
+
+/*
+ * look up a cfg file ID and convert to a keyword NUMBER
+ *
+ * notice keyword numbers disjoint from and overlap Verilog keywords 
+ * FIXME - should use binary search
+ */
+static int get_cfgkeywrd(char *tstr)
+{
+ if (strcmp(tstr, "library") == 0) return(CFG_LIBRARY);
+ if (strcmp(tstr, "config") == 0) return(CFG_CFG);
+ if (strcmp(tstr, "design") == 0) return(CFG_DESIGN);
+ if (strcmp(tstr, "liblist") == 0) return(CFG_LIBLIST);
+ if (strcmp(tstr, "instance") == 0) return(CFG_INSTANCE);
+ if (strcmp(tstr, "cell") == 0) return(CFG_CELL);
+ if (strcmp(tstr, "use") == 0) return(CFG_USE);
+ if (strcmp(tstr, "endconfig") == 0) return(CFG_ENDCFG);
+ if (strcmp(tstr, "default") == 0) return(CFG_DEFAULT);
+ return(CFG_ID);
+}
+
+/*
+ * convert cfg toktyp number to name
+ */
+extern char *__to_cfgtoknam(char *s, int ttyp)
+{ 
+ switch (ttyp) {
+  case CFG_UNKNOWN: strcpy(s, "??CFG-UNKNOWN??"); break;
+  case CFG_ID: strcpy(s, __token); break;
+  case CFG_COMMA: strcpy(s, ","); break;
+  case CFG_SEMI: strcpy(s, ";"); break;
+  case CFG_EOF: strcpy(s, "**CFG EOF**"); break;
+  case CFG_LIBRARY: strcpy(s, "library"); break;
+  case CFG_CFG: strcpy(s, "config"); break;
+  case CFG_INCLUDE: strcpy(s, "include"); break;
+  case CFG_DESIGN: strcpy(s, "design"); break;
+  case CFG_LIBLIST: strcpy(s, "liblist"); break;
+  case CFG_INSTANCE: strcpy(s, "instance"); break;
+  case CFG_CELL: strcpy(s, "cell"); break;
+  case CFG_USE: strcpy(s, "use"); break;
+  case CFG_ENDCFG: strcpy(s, "endconfig"); break; 
+  case CFG_DEFAULT: strcpy(s, "default"); break;
+  default: __case_terr(__FILE__, __LINE__);
+ }
+ return(s);
 }
 
 /*
@@ -4155,9 +4384,9 @@ more_comment:
       {
        if ((c2 = getc(f)) == '*')
         {
-	 __pv_fwarn(622, "nested /* in /* style -f argument file comment");
-	 continue;
-	}
+         __pv_fwarn(622, "nested /* in /* style -f argument file comment");
+         continue;
+        }
        c = c2;
       }
     }
@@ -4639,7 +4868,7 @@ extern int __fr_wtnam(int ttyp)
   case REG: wtyp = N_REG; break;
   case TIME: wtyp = N_TIME; break;
   case INTEGER: wtyp = N_INT; break;
-  case REAL: case REALTIME: wtyp = N_REAL; break;
+  case REAL: wtyp = N_REAL; break;
   case EVENT: wtyp = N_EVENT; break;
   default: wtyp = -1; break;
  }

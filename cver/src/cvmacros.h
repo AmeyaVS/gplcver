@@ -30,6 +30,8 @@
  * that are assumed to be defined
  */
 
+#define bld_init_insn_(type) __bld_init_insn(type, __FILE__, __LINE__); 
+
 /* DBG remove - */
 extern void __push_itstk(struct itree_t *);
 extern void __pop_itstk(void);
@@ -138,6 +140,14 @@ extern i_tev_ndx __alloc_tev(int, struct itree_t *, word64);
   if (((word) (bp)[__inum]) != (nval__)) \
    { (bp)[__inum] = (byte) (nval__); __lhs_changed = TRUE; } \
  } while(0)
+
+/* SJM 05/12/03 - eliminate nil pointer lint problem or stren scalar chg st */
+#define chg_st_strenscal_(bp, sbp) \
+ do { \
+  register byte *netsbp__; \
+  netsbp__ = &((bp)[__inum]); \
+  if (*netsbp__ != *(sbp)) { *netsbp__ = *(sbp); __lhs_changed = TRUE; } \
+ } while (0) 
 
 #define get_stwire_addr_(sbp, np) \
  (sbp) = &((np)->nva.bp[np->nwid*__inum])

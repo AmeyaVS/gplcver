@@ -34,7 +34,7 @@ ARCHFLGS= -march=pentiumpro
 # select one of the sets of C flags - comment out others
 
 # cflags when making optimized cver
-CFLAGS= $(ARCHFLGS) -pipe $(WARNS) $(INCS) $(OPTFLGS) -O2 
+CFLAGS= $(ARCHFLGS) -pipe $(WARNS) $(INCS) $(OPTFLGS) -O2
 
 # cflags when making -g debugging version 
 # CFLAGS= $(ARCHFLGS) -pipe $(WARNS) $(INCS) -g

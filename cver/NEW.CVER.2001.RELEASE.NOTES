@@ -1,0 +1,80 @@
+
+RELEASE NOTES FOR VERILOG 2001 BETA FOR PEOPLE TO TRY 
+
+  This directory contains release of a new code base that supports many
+  of the Verilog 2001 features as described in IEEE P1364 Verilog 2001
+  Language Reference Manual.  We also have just released gplcver-1.10i
+  that fixes quite a few bugs.  We suggest you use that release for 
+  production.  There are no known bugs in 110i other than some limitations
+  that will be fixed in this gplcver-2.xx source base.
+
+  To our knowledge this new 2.0 release produces identical result to 110i
+  for Verilog 1995 designs.  2.0 supports the following Verilog
+  2001 features:
+
+    1) Implements Verilog 2001 signed evaluation algorithm.  Supports signed
+       keyword and signed constants plus handles sign extension during
+       expression evaluation.
+
+    2) Support for Verilog 2001 config.  Use the +config [config file name] 
+       option to specify the library mapping file.  You can place a file
+       named lib.map in your current directory, but that is not recommended
+       since it will always silently use that file for configuring your
+       design. See tests_and_examples/v2001/config for some small examples.
+
+    3) Supports new file io Unix Stdlib stream file input and output
+       operations.
+   
+    5) Supports new module and task port and module parameter header  
+       declarations.  Here is an example:
+
+
+            module test
+             #(parameter integer p1 = 5,
+               parameter p2 = 7,
+               parameter r1 = 7.3
+              )
+
+             (
+              input [7:0] a,
+              input signed [7:0] b, c, d,
+              output [7:0] e,
+              output signed [7:0] f,g,
+              output signed [7:0] h
+             ) ;
+
+             task my_task(input a, b, inout c, output signed [15:0] d, e);
+              begin
+               c = a;
+               d = f;
+               e= 2*f;
+              end
+             endtask
+            endmodule
+
+    6) Supports Verilog 2001 implicit event calculation forms @(*) and
+       @*.  Also supports events lists with comma as substitute for
+       event or.  Now (a, b, c) and (a or b or c) are both legal.
+       You can see the result of @(*) by running cver with the -c and -d
+       options (-c means compile only and -d means dump internal net list).
+
+  The new 2.0 version of Cver is beta code and we know there are many
+  problems still, but it runs basic examples of all the new features. 
+  We are releasing it because we think we can now fix bugs quickly and
+  because we need more test cases.  Please report any bugs.  We think
+  we can provide bug fixes (or work arounds) within a few days.
+
+  Our current main problem areas are that we do not understand the
+  config and @(*) sensitivity list algorithms.  We think file io and
+  signed evaluation follow the LRM.  There are some known memory leaks 
+  in this release that we will once the code is more stable.  We are
+  releasing 2.0 because we think we can make faster progress if we have bug
+  reports to work from.
+
+  Main Verilog 2001 features that are multi-dimensional arrays and
+  generate.  We also think we can add whatever other minor Verilog 2001
+  features are still missing quickly.
+
+  See tests_and_example/v2001 for a growing directory of verilog 2001 test
+  files. 
+  

@@ -61,6 +61,7 @@ static void set_rhswidth(struct expr_t *, int);
 static void set2_rhswidth(struct expr_t *, int);
 static void set_fcall_widths(struct expr_t *, struct task_t *);
 static void set_sysfcall_widths(struct expr_t *);
+static void set_rhs_signed(struct expr_t *);
 static int find_xbase(struct expr_t *);
 static void setchk_real_expr(struct expr_t *);
 static void real_setchk_quest(struct expr_t *);
@@ -68,7 +69,6 @@ static void chk_specialop_rhsexpr(struct expr_t *);
 static int chk_srcbsel(struct expr_t *, int);
 static int chk_srcpsel(struct expr_t *, int);
 static void chkspecop_fcall(struct expr_t *);
-static void chk_qcol_signs(struct expr_t *, struct expr_t *, struct expr_t *);
 static int chk_mixedsign_relops(struct expr_t *);
 static void fold_subexpr(struct expr_t *);
 static int mark_constnd(register struct expr_t *, int *);
@@ -163,7 +163,9 @@ extern void __rhspsel(register word *, register word *, register int,
  register int);
 extern int __get_rhswidth(struct expr_t *);
 extern int __get_widthclass(struct expr_t *);
-extern void __sizchgxs(struct xstk_t *, int);
+extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
 extern void __getarr_range(struct net_t *, int *, int *, int *);
 extern void __getwir_range(struct net_t *, int *, int *);
 extern int __cnt_tfargs(register struct expr_t *);
@@ -905,6 +907,9 @@ static void chk_struct_rhsexpr(struct expr_t *ndp, int xwid)
 
  if (__expr_has_real) setchk_real_expr(ndp);
 
+ /* 10/02/03 - use new 2001 LRM rules to set expr has sign bit */
+ set_rhs_signed(ndp);
+
  /* check any special (bsel, psel, fcall, etc.) in rhs expr. */
  /* this leave bit select and part select expressions as is */
  /* must normalize and convert to WBITS number some where is const. */
@@ -1285,7 +1290,17 @@ extern int __get_rhswidth(struct expr_t *rhsx)
     /* getting output width, so have right context elsewhere */
     /* do not need to get arg. width since call shields */
     syp = rhsx->lu.x->lu.sy;
-    if (syp->sytyp == SYM_SF) xwid = syp->el.esyftbp->retwid;
+    if (syp->sytyp == SYM_SF)
+     {
+      /* SJM 05/28/04 - $signed and $unsigned are special case that return */
+      /* arg width - but need to recursively call get width to determine */
+      if (syp->el.esyftbp->syfnum == STN_SIGNED
+       || syp->el.esyftbp->syfnum == STN_UNSIGNED)
+       {
+        xwid = __get_rhswidth(rhsx->ru.x->lu.x);
+       }
+      else xwid = syp->el.esyftbp->retwid;
+     } 
     /* error caught later */
     else if (syp->sytyp == SYM_F)
      {
@@ -1438,8 +1453,18 @@ static void set2_rhswidth(struct expr_t *rhsx, int cwid)
       struct sysfunc_t *syfp;
 
       syfp = syp->el.esyftbp;
-      /* for real this must be WBITS */
-      rhsx->szu.xclen = syfp->retwid;
+      /* SJM 05/28/04 - $signed and $unsigned are special case that return */
+      /* arg width - but need to recursively call get width to determine */
+      if (syp->el.esyftbp->syfnum == STN_SIGNED
+       || syp->el.esyftbp->syfnum == STN_UNSIGNED)
+       {
+        rhsx->szu.xclen = __get_rhswidth(rhsx->ru.x->lu.x);
+       }
+      else
+       {
+        /* for real this must be WBITS */
+        rhsx->szu.xclen = syfp->retwid;
+       }
       /* notice also sets signed for function */
       if (syfp->retsigned) rhsx->has_sign = TRUE;
       frntyp = syfp->retntyp;
@@ -1575,7 +1600,7 @@ static void set_fcall_widths(struct expr_t *fcrhsx,
  tpp = tskp->tskpins->tpnxt;
  for (fandp = fcrhsx->ru.x; fandp != NULL; fandp = fandp->ru.x)
   {
-   /* move to next declard argument */
+   /* move to next declared argument */
    if (tpp != NULL) tpp = tpp->tpnxt;
 
    if (tpp == NULL || tpp->tpsy == NULL) pwid = 0;
@@ -1596,6 +1621,164 @@ static void set_sysfcall_widths(struct expr_t *fcrhsx)
  /* notice expressions structure does not have extra 1st return value */
  for (fandp = fcrhsx->ru.x; fandp != NULL; fandp = fandp->ru.x)
   set_rhswidth(fandp->lu.x, 0);
+}
+
+
+/*
+ * ROUTINE TO SET EXPR SIGNED USING NEW 2001 RULES
+ */
+
+/*
+ * set all expression nodes has signed flag 
+ */
+static void set_rhs_signed(struct expr_t *rhsx)
+{
+ register struct expr_t *ndp2;
+ int wclass;
+ struct net_t *np;
+ struct sy_t *syp;
+ struct task_t *tskp;
+ struct sysfunc_t *syfp;
+ struct task_pin_t *tpp;
+
+ switch ((byte) rhsx->optyp) {
+  case ID: case GLBREF:
+   np = rhsx->lu.sy->el.enp;
+   /* SJM 10/02/03 - for real has sign already set by width setting */
+   /* but doing it here again doesn't hurt */
+   if (np->n_signed) rhsx->has_sign = TRUE;
+   break;
+  case NUMBER: case ISNUMBER: case OPEMPTY:
+  case REALNUM: case ISREALNUM:
+   /* for numbers the signed flag set during source input */
+   break;
+  case LSB:
+   /* bit select or array reference */
+   /* set lhs ID node signedness */ 
+   set_rhs_signed(rhsx->lu.x);
+
+   /* then set select node signedness */
+   syp = rhsx->lu.x->lu.sy;
+   np = syp->el.enp;
+   if (np->n_isarr)
+    {
+     if (np->n_signed) rhsx->has_sign = TRUE; 
+    }
+   else rhsx->has_sign = FALSE;
+
+   /* finally set select range signed */
+   set_rhs_signed(rhsx->ru.x);
+   break;
+  case PARTSEL:
+   /* set lhs ID node signedness */ 
+   set_rhs_signed(rhsx->lu.x);
+   rhsx->has_sign = FALSE;
+   break;
+  case QUEST:
+   set_rhs_signed(rhsx->lu.x);
+
+   set_rhs_signed(rhsx->ru.x->lu.x);
+   set_rhs_signed(rhsx->ru.x->ru.x);
+   if (rhsx->ru.x->lu.x->has_sign && rhsx->ru.x->ru.x->has_sign)
+    {
+     rhsx->has_sign = TRUE;
+    }
+   else
+    {
+     /* SJM 05/21/04 - not both signed - easiest to just make both unsigned */
+     rhsx->has_sign = FALSE;
+     rhsx->ru.x->lu.x->has_sign = FALSE;
+     rhsx->ru.x->ru.x->has_sign = FALSE;
+    }
+   break;
+  case FCALL:
+   syp = rhsx->lu.x->lu.sy;
+   tskp = syp->el.etskp;
+   if (syp->sytyp == SYM_SF)
+    {
+     syfp = syp->el.esyftbp;
+     if (syfp->retsigned) rhsx->has_sign = TRUE;
+    }
+   else if (syp->sytyp == SYM_F)
+    {
+     /* SJM 10/02/03 - LOOKATME - old rule was put info in first dummy arg */
+     /* check to see for 2001 LRM is still true */
+
+     tpp = tskp->tskpins;
+     np = tpp->tpsy->el.enp;
+     if (np->n_signed) rhsx->has_sign = TRUE;
+    }
+   /* if call of non function error (caught already) - do nothing */
+   else return;
+
+   /* final step sets signed flag for each argument of function call */
+   for (ndp2 = rhsx->ru.x; ndp2 != NULL; ndp2 = ndp2->ru.x)
+    {
+     set_rhs_signed(ndp2->lu.x);
+    }
+   break;
+  case LCB:
+   /* know concatenate result never signed */
+   rhsx->has_sign = FALSE;
+   /* but components can have signed sub-expressions */
+   for (ndp2 = rhsx->ru.x; ndp2 != NULL; ndp2 = ndp2->ru.x)
+    {
+     set_rhs_signed(ndp2->lu.x);
+    }
+   break; 
+  default:
+   wclass = __get_widthclass(rhsx);
+   /* this is unary or binary op */
+   switch ((byte) wclass) {
+    case WIDONE:
+     set_rhs_signed(rhsx->lu.x);
+     if (rhsx->ru.x != NULL) set_rhs_signed(rhsx->ru.x);
+     rhsx->has_sign = FALSE;
+     break;
+    case WIDENONE:
+     /* this is for unaries only except for || and && */
+     /* DBG remove */
+     if (rhsx->ru.x == NULL) __misc_terr(__FILE__, __LINE__);
+     /* --- */
+     set_rhs_signed(rhsx->lu.x);
+     set_rhs_signed(rhsx->ru.x);
+     rhsx->has_sign = FALSE;
+     break;
+    case WIDMAX:
+     /* SJM 04/26/04 - unary minus can be be WID MAX */
+     /* rest of binaries */
+     set_rhs_signed(rhsx->lu.x);
+     if (rhsx->ru.x != NULL)
+      {
+       /* binary case */
+       set_rhs_signed(rhsx->ru.x);
+       if (rhsx->lu.x->has_sign && rhsx->ru.x->has_sign)
+        rhsx->has_sign = TRUE;
+       else rhsx->has_sign = FALSE;
+      }
+     else
+      {
+       /* unary case */
+       if (rhsx->lu.x->has_sign) rhsx->has_sign = TRUE;
+       else rhsx->has_sign = FALSE;
+      }
+     return;
+    case WIDLEFT:
+     /* SHIFT */
+     set_rhs_signed(rhsx->ru.x);
+     /* SJM 10/02/03 - LRM says shift count always unsigned */
+     rhsx->ru.x->has_sign = FALSE;
+     set_rhs_signed(rhsx->lu.x);
+     rhsx->has_sign = rhsx->lu.x->has_sign;
+     break;
+    case WIDSELF:
+     /* for unary - and ~ - (+ too but does nothing - optimized away) */
+     set_rhs_signed(rhsx->lu.x);
+     rhsx->has_sign = rhsx->lu.x->has_sign;
+     break;
+    default: __case_terr(__FILE__, __LINE__);
+   }
+ }
 }
 
 /*
@@ -1869,15 +2052,18 @@ static void chk_specialop_rhsexpr(struct expr_t *ndp)
    return;
   case QUEST:
    chk_specialop_rhsexpr(ndp->lu.x);
-   /* this also checks special ops */
-   chk_qcol_signs(ndp, ndp->ru.x->lu.x, ndp->ru.x->ru.x);
+   /* SJM 05/21/04 - these just sets the nd rel sign eval bit */
+   /* signed set elsewhere */
+   chk_specialop_rhsexpr(ndp->ru.x->lu.x);
+   chk_specialop_rhsexpr(ndp->ru.x->ru.x);
    return;   
   case REALREGQUEST: case REALREALQUEST: case REGREALQCOL:
    /* SJM 10/17/99 - now real's allowed in expressions - need to check */
    chk_specialop_rhsexpr(ndp->lu.x);
-   chk_qcol_signs(ndp, ndp->ru.x->lu.x, ndp->ru.x->ru.x);
+   chk_specialop_rhsexpr(ndp->ru.x->lu.x);
+   chk_specialop_rhsexpr(ndp->ru.x->ru.x);
    return;
-  case OPEVOR: case OPPOSEDGE: case OPNEGEDGE:
+  case OPEVOR: case OPEVCOMMAOR: case OPPOSEDGE: case OPNEGEDGE:
    __sgferr(818,
     "event expression operator %s illegal in right hand side expression",
     __to_opname(ndp->optyp));
@@ -1891,27 +2077,23 @@ static void chk_specialop_rhsexpr(struct expr_t *ndp)
  if (ndp->lu.x != NULL) chk_specialop_rhsexpr(ndp->lu.x);
  if (ndp->ru.x != NULL) chk_specialop_rhsexpr(ndp->ru.x);
  if (ndp->ru.x == NULL && ndp->lu.x == NULL) __arg_terr(__FILE__, __LINE__);
- /* finally set signedness */
- if (ndp->ru.x == NULL)
+
+ /* SJM 10/06/03 - now have separate proc to set sign but set rel sign eval */
+ if (ndp->szu.xclen == 1)
   {
-   /* unary */
-   if (ndp->lu.x->has_sign && ndp->szu.xclen <= WBITS && ndp->szu.xclen != 1)
-     ndp->has_sign = TRUE;
-  }
- else
-  {
-   if (ndp->lu.x->has_sign && ndp->ru.x->has_sign && ndp->szu.xclen <= WBITS)
+   /* SJM 05/13/04 - relationals always binary */
+   if (ndp->lu.x != NULL && ndp->ru.x != NULL) 
     {
-     if (ndp->szu.xclen != 1) ndp->has_sign = TRUE;
-     else
+     if (ndp->lu.x->has_sign && ndp->ru.x->has_sign)
       {
        /* for reals, always signed and this flag not used */
        switch ((byte) ndp->optyp) { 
         case RELGE: case RELGT: case RELLE: case RELLT:
+        case RELNEQ: case RELEQ: case RELCEQ: case RELCNEQ:
          ndp->rel_ndssign = TRUE;  
        }
       }
-    }
+    } 
   }
 }
 
@@ -2106,19 +2288,6 @@ static void chkspecop_fcall(struct expr_t *ndp)
 }
 
 /*
- * check non real colon part to set sign
- */
-static void chk_qcol_signs(struct expr_t *ndp, struct expr_t *qr1,
- struct expr_t *qr2)
-{
- chk_specialop_rhsexpr(qr1);
- chk_specialop_rhsexpr(qr2);
- /* result of ?: only signed if both are */
- if (ndp->szu.xclen != 1 && ndp->szu.xclen <= WBITS && qr1->has_sign
-  && qr2->has_sign) ndp->has_sign = TRUE;
-}
-
-/*
  * emit warning for unsigned relationals
  * return T if fold unsigned so only 1 warning emitted
  */
@@ -2291,6 +2460,8 @@ cnvt_gref_param:
          ndp->ru.xvi = __alloc_rlcval(__inst_mod->flatinum);
          /* LOOKATME - does this work ??? */
          dp = &(__rlcontab[ndp->ru.xvi]);
+         /* copy from param (aka net) form to constant value table */
+
          /* copy from param (aka net) form to constant value table */
          /* SJM 02/20/04 - copy every inst with real size */
          memcpy(dp, np->nva.dp, sizeof(double)*__inst_mod->flatinum);
@@ -2482,7 +2653,13 @@ static void fold_const(struct expr_t *ndp)
 
 is_1inst:
      /* for constants at least need to change width of expression */ 
-     if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > ndp->szu.xclen) __narrow_sizchg(xsp, ndp->szu.xclen);
+     else if (xsp->xslen < ndp->szu.xclen)
+      {
+       if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+       else __sizchg_widen(xsp, ndp->szu.xclen);
+      }
 
      __free2_xtree(ndp);
      __init_xnd(ndp);
@@ -2551,7 +2728,14 @@ is_1inst:
       }
      else
       {
-       if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
+       /* SJM 09/29/03 - change to handle sign extension and separate types */
+       if (xsp->xslen > ndp->szu.xclen) __narrow_sizchg(xsp, ndp->szu.xclen);
+       else if (xsp->xslen < ndp->szu.xclen)
+        {
+         if (ndp->has_sign) __sgn_xtnd_widen(xsp, ndp->szu.xclen);
+         else __sizchg_widen(xsp, ndp->szu.xclen);
+        }
+
        memcpy(&(wp[2*wlen*__inum]), xsp->ap, 2*WRDBYTES*wlen);
       }
 
@@ -3240,6 +3424,30 @@ static void chk_sysfargs_syntax(struct expr_t *ndp)
      syp->synam, __msgexpr_tostr(__xs, fax));
    special_syntax = TRUE;
    break;
+  case STN_SIGNED:
+   if (anum != 1) { sf_errifn(syp, 1); break; } 
+   fax = ndp->ru.x->lu.x;
+   /* no context for this special case sys func that does nothing */
+   /* and whose return value width is same as arg width */
+   __chk_rhsexpr(fax, 0);
+   if (fax->has_sign)
+    __sgfinform(3007,
+     "argment %s to new 2001 $signed system task already signed",
+     __msgexpr_tostr(__xs, fax));
+   special_syntax = TRUE;
+   break;
+  case STN_UNSIGNED:
+   if (anum != 1) { sf_errifn(syp, 1); break; } 
+   fax = ndp->ru.x->lu.x;
+   /* no context for this special case sys func that does nothing */
+   /* and whose return value width is same as arg width */
+   __chk_rhsexpr(fax, 0);
+   if (!fax->has_sign)
+    __sgfinform(3007,
+     "argment %s to new 2001 $unsigned system task already unsigned",
+     __msgexpr_tostr(__xs, fax));
+   special_syntax = TRUE;
+   break;
   case STN_COUNT_DRIVERS:
    chksf_count_drivers(ndp, anum);
    special_syntax = TRUE;
@@ -3307,8 +3515,98 @@ static void chk_sysfargs_syntax(struct expr_t *ndp)
     }
    break;
 
-  /* SJM 09/08/03 - old fopen just takes one arg */
+  /* functions that take exactly one argument */
   case STN_FOPEN:
+   /* AIV 09/08/03 - changed now can take one or 2 args */
+   /* $fopen([filename]) (mcd form) or $fopen([filename], [open type str]) */
+   if (anum !=1 && anum !=2)        
+    {
+     __sgferr(851,
+     "%s system function illegal number of arguments (%d) - 1 or 2 legal",
+     syp->synam, anum);
+    }
+   break; 
+  /* AIV 09/08/03 - new fileio system functions */
+  case STN_FGETC: case STN_FTELL: case STN_REWIND:
+   /* code = $fgetc([fd]), code = $ftell([fd]), code = $rewind([fd]) */
+   if (anum != 1) sf_errifn(syp, 1);
+   break;
+  case STN_UNGETC:
+   /* code = $ungetc([char], [fd]) - [fd] has high bit on */ 
+   if (anum != 2) sf_errifn(syp, 2);
+   break;
+  case STN_FSEEK:
+   /* code = $fseek([fd], [offset], [operation]) - [fd] has high bit on */ 
+   /* $fseek([fd], [offset], [operation]) */
+   if (anum != 3) sf_errifn(syp, 3);
+   break; 
+  case STN_FGETS:
+   /* code = $fgets([proc lhs], [fd]) */ 
+   /* this inhibits normal rhs checking of args */ 
+   special_syntax = TRUE;
+   if (anum != 2) { sf_errifn(syp, 2); break; }
+   fax = ndp->ru.x;
+   __chk_lhsexpr(fax->lu.x, LHS_PROC); 
+   fax = fax->ru.x;
+   __chk_rhsexpr(fax->lu.x, 32);
+   break;
+  case STN_FERROR:
+   /* [user errno] = $ferror([fd], [proc lhs]) */ 
+   /* this inhibits normal rhs checking of args */ 
+   if (anum != 2) { sf_errifn(syp, 3); return; }
+   fax = ndp->ru.x;
+   __chk_rhsexpr(fax->lu.x, 32);
+   fax = fax->ru.x;
+   __chk_lhsexpr(fax->lu.x, LHS_PROC); 
+   special_syntax = TRUE;
+   break;
+  case STN_FSCANF: case STN_SSCANF:
+   /* $fscanf([fd], ...) or $sscanf([proc lhs], ...) */
+   if (anum < 3)
+    {
+     __sgferr(851, "%s system function does not have required three arguments",
+      syp->synam);
+     return;
+    }
+   fax = ndp->ru.x;
+   /* width self determined */
+   __chk_rhsexpr(fax->lu.x, 0);
+   fax = fax->ru.x;
+   fax = fax->ru.x;
+   /* width self determined */
+   __chk_rhsexpr(fax->lu.x, 0);
+   for (fandp = fax->ru.x; fandp != NULL; fandp = fandp->ru.x)
+    {
+     __chk_lhsexpr(fandp->lu.x, LHS_PROC);
+    }
+   special_syntax = TRUE;
+   break;
+  case STN_FREAD:
+   /* for reg: code = $fgets([proc lhs], [fd]) - size from [proc lhs] size */ 
+   /* for mem $fgets(mem, [fd], {[start], [count] optional}) */
+   if (anum < 2 || anum > 4)        
+    {
+     __sgferr(851,
+      "%s system function illegal number of arguments (%d) - 2, 3, or 4 legal",
+      syp->synam, anum);
+    }
+   fax = ndp->ru.x;
+   /* if first arg is memory and not indexed ok */
+   if (fax->lu.x->optyp == ID || fax->lu.x->optyp == GLBREF)
+    {
+     if (fax->lu.x->lu.sy->el.enp->n_isarr) goto first_arg_ok;
+    }
+   __chk_lhsexpr(fax->lu.x, LHS_PROC);
+first_arg_ok:
+   /* check rest of args as normal rhs */
+   for (fandp = fax->ru.x; fandp != NULL; fandp = fandp->ru.x)
+    {
+     fax = fandp->lu.x;
+     /* next 3 are 32 bits numbers and optional */ 
+     __chk_rhsexpr(fax, WBITS);
+    }
+   special_syntax = TRUE;
+   break;
   case STN_TESTPLUSARGS:
    if (anum != 1) sf_errifn(syp, 1);
    break;
@@ -4207,7 +4505,7 @@ extern void __chk_evxpr(struct expr_t *ndp)
    /* any wire used in an event control is accessed as on rhs */
    if (np->nrngrep == NX_CT) np->nu.ct->n_onrhs = TRUE;
    goto chk_expr;
-  case OPEVOR:
+  case OPEVOR: case OPEVCOMMAOR:
    __chk_evxpr(ndp->lu.x);
    __chk_evxpr(ndp->ru.x);
    break;
@@ -4268,6 +4566,7 @@ static int xpr_has_nonsys_fcall(struct expr_t *ndp)
    /* only some built-in system functions allowed in const exprs */
    switch (syfp->syfnum) {
     case STN_ITOR: case STN_BITSTOREAL: case STN_RTOI: case STN_REALTOBITS:
+    case STN_SIGNED: case STN_UNSIGNED:
     case STN_COS: case STN_SIN: case STN_TAN: case STN_ACOS: case STN_ASIN:
     case STN_ATAN: case STN_COSH: case STN_SINH: case STN_TANH:
     case STN_ATANH: case STN_ACOSH: case STN_ASINH:
@@ -4441,6 +4740,62 @@ static void chk_systskenable(struct st_t *stp, struct tskcall_t *tkcp)
  /* dumpvars is special case because xmr's may not resolve to wire */
  /* if pli system task supercedes normal, will never see its task number */ 
  switch (stbp->stsknum) {
+  case STN_FFLUSH:
+   /* $fflush([optional op]) - op can be missing, then all, [mcd] or [fd] */
+   if (anum != 0 && anum !=1)
+    {
+     __sgferr(851,
+      "%s system task illegal number of arguments (%d) - 0 or 1 legal",
+      syp->synam, anum);
+    } 
+   break;
+  case STN_SWRITE: case STN_SWRITEB: case STN_SWRITEH: case STN_SWRITEO:
+   is_disp_typ = TRUE;
+   if (anum < 2)
+    {
+     __sgferr(882,
+      "%s system task required output reg and one argument missing",
+      syp->synam);
+     return;
+    }
+   ndp = xp->lu.x;
+   /* SJM 05/17/04 - LOOKATME this can be any width string - why 32? */
+   __chk_lhsexpr(ndp, 32);
+   /* move to 2nd argument */
+   xp = xp->ru.x;
+   break;
+  case STN_SFORMAT:
+   is_disp_typ = TRUE;
+   if (anum < 2)
+    {
+     __sgferr(882,
+      "%s system task required output reg and format argument(s) missing",
+      syp->synam);
+     special_syntax = TRUE;
+     break;
+    }
+   ndp = xp->lu.x;
+   /* width self determined for lhs string written into */
+   __chk_lhsexpr(ndp, 0);
+   /* move to 2nd format argument */
+   xp = xp->ru.x;
+   /* again width self determined */
+   __chk_rhsexpr(xp->lu.x, 0);
+
+   /* if format arg is literal string - can check format */
+   if (xp->lu.x->is_string) is_disp_typ = TRUE;
+   else special_syntax = TRUE;
+
+   xp = xp->ru.x;
+   /* if variable fmt, can only check the rhs fmt args */ 
+   if (special_syntax)
+    {
+     for (sav_xp = xp; xp != NULL; xp = xp->ru.x)
+      {
+       __chk_rhsexpr(xp->lu.x, 0);
+      }
+    }
+   break;
   /* task requires special argument processing */
   case STN_DUMPVARS:
    chkst_dumpvars_enable(tkcp, anum);
@@ -5272,7 +5627,7 @@ extern void __chkfix_spfy(void)
      if (!chk_1spcpth(pthp)) { pthp->pth_gone = TRUE; continue; }
      if (pthp->pthtyp == PTH_FULL) chk_rep_in_fullpth(pthp);
     }
-   /* use all mod paths to check for sdpds multiple same paths withs conds */
+   /* use all module paths to check for sdpds multiple same paths withs conds */
    chk_rep_sdpds(spfp);
   }
 
@@ -5300,7 +5655,7 @@ extern void __chkfix_spfy(void)
        tcp->tchknxt = rectcp;
        tcp = tcp->tchknxt;
       } 
-    }
+    } 
   }
 done:
  if (spec_empty)

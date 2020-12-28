@@ -147,7 +147,6 @@ extern void __init_instdownport_contas(struct itree_t *, struct itree_t *);
 extern void __init_instupport_contas(struct itree_t *);
 extern void __mdr_assign_or_sched(register struct expr_t *);
 extern void __assign_1mdrwire(register struct net_t *);
-extern void __record_net_chg(register struct net_t *);
 extern void __sched_1mdrwire(register struct net_t *);
 extern struct xstk_t *__load_mdrwire(register struct net_t *);
 extern int __move_to_npprefloc(struct net_pin_t *);
@@ -182,6 +181,9 @@ extern char *__bld_lineloc(char *, unsigned, int);
 extern void __strenwiden_sizchg(struct xstk_t *, int);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
 extern void __sizchgxs(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __narrow_sizchg(register struct xstk_t *, int);
 extern void __fix_widened_toxs(register struct xstk_t *, int);
 extern void __stren_exec_ca_concat(struct expr_t *, byte *, int);
 extern void __exec_conta_assign(struct expr_t *, register word *,
@@ -880,6 +882,7 @@ static void std_downtomdport(register struct expr_t *lhsx,
    /* other side always marked strength and if rhs reg, will add in strong */ 
    xsp = __ndst_eval_xpr(rhsx);
    /* widen to lhs width with z's - if too narrow, high part just unused */
+   /* SJM 05/10/04 - no sign extension because widening to z'x */
    if (xsp->xslen < lhsx->szu.xclen)
     __strenwiden_sizchg(xsp, lhsx->szu.xclen);
   }
@@ -889,12 +892,21 @@ static void std_downtomdport(register struct expr_t *lhsx,
    if (lhsx->szu.xclen != xsp->xslen)
     {
      orhslen = xsp->xslen;
-     __sizchgxs(xsp, lhsx->szu.xclen);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > lhsx->szu.xclen)
+      __narrow_sizchg(xsp, lhsx->szu.xclen);
+     else if (xsp->xslen < lhsx->szu.xclen)
+      {
+       if (rhsx->has_sign) __sgn_xtnd_widen(xsp, lhsx->szu.xclen);
+       else __sizchg_widen(xsp, lhsx->szu.xclen);
+      }
 
      /* widened, set bits higher than orhslen to z */ 
      /* LOOKATME - only strength continuous assignments widen to z */
      /* all others widen to 0 */
      /* ??? if (orhslen < xsp->xslen) __fix_widened_tozs(xsp, orhslen); */
+     /* SJM 05/10/04 - widening to x's eliminates need for sign difference */
      if (__wire_init) __fix_widened_toxs(xsp, orhslen);
     }
   }
@@ -1161,6 +1173,7 @@ static void std_uptoiconn(register struct expr_t *lhsx,
    /* if reg, will add strong strength */
    xsp = __ndst_eval_xpr(rhsx);
    /* widen to lhs width with z's - if too narrow, high part just unused */
+   /* SJM 05/10/04 - no sign extension because widening to z'x */
    if (xsp->xslen < lhsx->szu.xclen)
     __strenwiden_sizchg(xsp, lhsx->szu.xclen);
   }
@@ -1170,11 +1183,21 @@ static void std_uptoiconn(register struct expr_t *lhsx,
    if (lhsx->szu.xclen != xsp->xslen)
     {
      orhslen = xsp->xslen;
-     __sizchgxs(xsp, lhsx->szu.xclen);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > lhsx->szu.xclen)
+      __narrow_sizchg(xsp, lhsx->szu.xclen);
+     else if (xsp->xslen < lhsx->szu.xclen)
+      {
+       if (rhsx->has_sign) __sgn_xtnd_widen(xsp, lhsx->szu.xclen);
+       else __sizchg_widen(xsp, lhsx->szu.xclen);
+      }
+
      /* widened, set bits higher than orhslen to z */ 
      /* LOOKATME - only strength continuous assignments widen to z */
      /* all others widen to 0 except x during initialization */
      /* ??? if (orhslen < xsp->xslen) __fix_widened_tozs(xsp, orhslen); */
+     /* SJM 05/10/04 - widening to x's eliminates need for sign difference */
      if (__wire_init) __fix_widened_toxs(xsp, orhslen);
     }
   }
@@ -1789,10 +1812,19 @@ static struct xstk_t *ld_conta_driver(struct net_pin_t *npp)
    if (blen != xsp->xslen)
     {
      orhslen = xsp->xslen;
-     __sizchgxs(xsp, blen);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > blen) __narrow_sizchg(xsp, blen);
+     else if (xsp->xslen < blen)
+      {
+       if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp, blen);
+       else __sizchg_widen(xsp, blen);
+      }
+
      /* LOOKATME - only strength continuous assignments widen to z */
      /* all others widen to 0 unless during initialization when x */
      /* ??? if (orhslen < xsp->xslen) __fix_widened_tozs(xsp, orhslen); */
+     /* SJM 05/10/04 - widening to x's eliminates need for sign difference */
      if (__wire_init) __fix_widened_toxs(xsp, orhslen);
     }
    return(xsp);
@@ -2064,10 +2096,20 @@ static struct xstk_t *ld_iconn_up_driver(register struct net_pin_t *npp)
  if (xlhs->szu.xclen != xsp->xslen)
   {
    orhslen = xsp->xslen;
-   __sizchgxs(xsp, xlhs->szu.xclen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > xlhs->szu.xclen)
+    __narrow_sizchg(xsp, xlhs->szu.xclen);
+   else if (xsp->xslen < xlhs->szu.xclen)
+    {
+     if (mpp->mpref->has_sign) __sgn_xtnd_widen(xsp, xlhs->szu.xclen);
+     else __sizchg_widen(xsp, xlhs->szu.xclen);
+    }
+
    /* LOOKATME - only strength continuous assignments widen to z */
    /* all others widen to 0 */
    /* ??? if (orhslen < xlhs->szu.xclen) __fix_widened_tozs(xsp, orhslen); */
+   /* SJM 05/10/04 - widening to x's eliminates need for sign difference */
    if (__wire_init) __fix_widened_toxs(xsp, orhslen);
   }
  __pop_itstk();
@@ -2146,10 +2188,19 @@ static struct xstk_t *ld_modport_down_driver(register struct net_pin_t *npp)
  if (xlhs->szu.xclen != xsp->xslen)
   {
    orhslen = xsp->xslen;
-   __sizchgxs(xsp, xlhs->szu.xclen);
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > xlhs->szu.xclen)
+    __narrow_sizchg(xsp, xlhs->szu.xclen);
+   else if (xsp->xslen < xlhs->szu.xclen)
+    {
+     if (up_rhsx->has_sign) __sgn_xtnd_widen(xsp, xlhs->szu.xclen);
+     else __sizchg_widen(xsp, xlhs->szu.xclen);
+    }
+
    /* LOOKATME - only strength continuous assignments widen to z */
    /* all others widen to 0 */
    /* ?? if (orhslen < xlhs->szu.xclen) __fix_widened_tozs(xsp, orhslen); */
+   /* SJM 05/10/04 - widening to x's eliminates need for sign difference */
    if (__wire_init) __fix_widened_toxs(xsp, orhslen);
   }
  __pop_itstk();
@@ -2483,6 +2534,8 @@ static void ldcomb_stdriver(register byte *acc_sbp, struct net_t *np,
  /* need at least when stren gate output drives vector */ 
  /* SJM 11/11/02 - slightly wrong - works because only needed for gate */
  /* wich never has lhs concat sink */
+
+ /* SJM 05/10/04 - no sign extension because widening to z'x */
  if (xsp->xslen/4 < np->nwid) __strenwiden_sizchg(xsp, np->nwid);
 
  sbp = (byte *) xsp->ap;
@@ -2663,7 +2716,10 @@ static struct xstk_t *ld_stconta_driver(struct net_pin_t *npp)
     {
      orhslen = xsp2->xslen;
      /* notice first rhs is eval then widened to 0's before stren added */ 
+/* ??? how do load drivers work ### either can be signed */
      __sizchgxs(xsp2, cap->rhsx->szu.xclen);
+/* ??? ### what about signed initialization */
+
      if (__wire_init) __fix_widened_toxs(xsp2, orhslen);
     }
   }
@@ -2780,6 +2836,7 @@ static struct xstk_t *ld_sticonn_up_driver(register struct net_pin_t *npp)
  /* if too wide just ignores high bytes */
  if (xlhs->szu.xclen > mpp->mpref->szu.xclen)
   {
+   /* SJM 05/10/04 - no sign extension because widening to z'x */
    __strenwiden_sizchg(xsp, xlhs->szu.xclen);
   }
  __pop_itstk();
@@ -2855,6 +2912,7 @@ static struct xstk_t *ld_stmodport_down_driver(register struct net_pin_t *npp)
  xsp = __ndst_eval_xpr(up_rhsx);
  /* only if rhs too narrow, need to add in HIZ and maybe widen alloc area */
  /* if too wide just ignores high bytes */
+ /* SJM 05/10/04 - no sign extension because widening to z'x */
  if (xlhs->szu.xclen > up_rhsx->szu.xclen)
   __strenwiden_sizchg(xsp, xlhs->szu.xclen);
  __pop_itstk();

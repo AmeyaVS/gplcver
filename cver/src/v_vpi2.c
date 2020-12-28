@@ -6257,10 +6257,13 @@ extern int __expr_optype_get(struct expr_t *xp)
   case BOOLAND: case REALBOOLAND: return(vpiLogAndOp);
   case BOOLOR: case REALBOOLOR: return(vpiLogOrOp);
   case SHIFTL: return(vpiLShiftOp);
+  case ASHIFTL: return(vpiArithLShiftOp);
   case SHIFTR: return(vpiRShiftOp);
+  case ASHIFTR: return(vpiArithRShiftOp);
   case QUEST: case REALREALQUEST: case REALREGQUEST: case REGREALQCOL:
     return(vpiConditionOp);
-  case OPEVOR: return(vpiEventOrOp);
+  /* SJM 06/01/04 - ### ??? LOOKATME - vpi_ can't distinguish 2 ev or types */
+  case OPEVOR: case OPEVCOMMAOR: return(vpiEventOrOp);
   case OPPOSEDGE: return(vpiPosedgeOp);
   case OPNEGEDGE: return(vpiNegedgeOp);
   case LCB: return(vpiConcatOp);

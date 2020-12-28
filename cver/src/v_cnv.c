@@ -51,6 +51,8 @@ static int bld_tfmt_val(char *, struct expr_t *, word *, word *, int,
  int, int);
 static void sdispo(word *, word *, int, int);
 static void vstr_to_cstr(char *, int, int, int, int);
+static void disp_ufmt_binval(word *, word *, int);
+static void disp_zfmt_binval(word *, word *, int);
 static void numexpr_disp(struct expr_t *, int);
 static void st_regab_disp(byte *, int);
 static void disp_stvar(struct net_t *, int, int);
@@ -69,6 +71,7 @@ static int vval_hasx(word *, word *, int);
 static long my_strtol(char *, char **, int, int *);
 static void dmp_dig_attr_list(FILE *, struct attr_t *, int);
 static void dmp_modports(FILE *, struct mod_t *);
+static void dmp_mod_lofp_hdr(FILE *, struct mod_t *);
 static void dmp_decls(FILE *, struct mod_t *);
 static void dmp_1portdecl(FILE *, struct expr_t *);
 static void dmp_1netdecl(FILE *, struct net_t *);
@@ -95,6 +98,7 @@ static void dmp_task(FILE *, struct task_t *);
 static void dmp_func_decl(FILE *, struct task_t *);
 static void dmp_nblock(FILE *, struct task_t *, char *);
 static void dmp_tfdecls(FILE *, struct task_t *);
+static void dmp_tf_lofp_hdr(FILE *, struct task_t *);
 static void dmp_mdspfy(FILE *, struct mod_t *);
 static void dmp_specpths(FILE *, register struct spcpth_t *);
 static void dmp_pthlst(FILE *, struct spcpth_t *, int);
@@ -158,6 +162,8 @@ extern char *__to_vvnam(char *, word);
 extern char *__bld_lineloc(char *, unsigned, int);
 extern struct task_t *__find_thrdtsk(struct thread_t *);
 extern char *__alloc_vval_to_cstr(word *, int, int, int);
+
+extern struct expr_t *__disp_1fmt_to_exprline(char *, struct expr_t *);
 extern struct task_t *__getcur_scope_tsk(void);
 extern void __wrap_puts(char *, FILE *);
 extern void __wrap_putc(int, FILE *);
@@ -219,6 +225,8 @@ extern int __get_giarr_wide(struct giarr_t *);
 extern char *__get_vkeynam(char *, int);
 extern void __push_wrkitstk(struct mod_t *, int);
 extern void __pop_wrkitstk(void);
+extern int __is_lnegative(word *, int); 
+extern word __cp_lnegate(word *, register word *, int); 
 
 extern void __cvsim_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
@@ -237,7 +245,7 @@ extern word __masktab[];
 extern int errno;
 extern double __dbl_toticks_tab[];
 
-/* LOOKATME - on machten and sunos fmod is drem - but maybe not same */
+/* LOOKATME - on mach ten and sunos fmod is drem - but maybe not same */
 /* think ok since only used for know positive and arg1>arg2 case */
 #if defined(__SVR4) || defined(__hpux)
 #define drem fmod
@@ -268,7 +276,7 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
  if (xsp->bp[0] != 0L) 
   {
    __sgfwarn(611, 
-    "%s multi-channel descriptor %s not 32 bit non x/z value - no action",
+    "%s file or multi-channel descriptor %s not 32 bit non x/z value - no action",
     namstsk, __regab_tostr(s1, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE));
    __pop_xstk();
    return;
@@ -281,6 +289,19 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
  __cur_sofs = 0;
  disp_toexprline(axp, dflt_fmt);
 
+ /* SJM 09/09/03 - fd case easy because only one stream to write to */
+ if ((mcd & FIO_MSB) == FIO_MSB)
+  {
+   int fd;
+
+   fd = (int) (mcd & ~FIO_MSB);
+   /* if fd does not correspond to open file, just set error indicator */
+   if (__fio_fdtab[fd] == NULL) { errno = EBADF; __cur_sofs = 0; return; }
+   fputs(__exprline, __fio_fdtab[fd]->fd_s);
+   if (nd_nl) fputc('\n', __fio_fdtab[fd]->fd_s);
+   __cur_sofs = 0;
+   return;
+  }
 
  /* SJM 03/26/00 - mcd 1 now both stdout and std log and vendor 1 must */
  /* go through call back so can be intercepted */
@@ -302,7 +323,7 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
         namstsk, i);  
       }
      else
-      {	 
+      {
        /* FIXME - how are these handled? */
        fputs(__exprline, __mulchan_tab[i].mc_s);
        if (nd_nl) fputc('\n', __mulchan_tab[i].mc_s);
@@ -318,6 +339,17 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
  __cur_sofs = 0;
 }
 
+/*
+ * $swrite[hdob] version of formatted write into strings
+ * this writes into __exprline - caller handles assign verilog reg
+ *
+ * notice this is write not display so no new line at end
+ */
+extern void __str_do_disp(struct expr_t *axp, int dflt_fmt)
+{
+ __cur_sofs = 0;
+ disp_toexprline(axp, dflt_fmt);
+}
 
 /*
  * write $display output to file f (must be stream)  
@@ -344,16 +376,11 @@ extern void __do_disp(register struct expr_t *axp, int dflt_fmt)
 static void disp_toexprline(register struct expr_t *axp, int dflt_fmt)
 {
  register char *chp;
- int trim, fmt_pos, blen, base, fmt_non_real, chlen;
- double d1;
- word *ap, *bp;
- char *new_chp, *start_fp;
+ int base, chlen;
+ char *start_fp;
  struct expr_t *xp;
  struct xstk_t *xsp;
- struct task_t *tskp;
- char rfmtstr[RECLEN], s1[RECLEN], s2[RECLEN];
 
- fmt_pos = 0;
  for (;axp != NULL;)
   {
    xp = axp->lu.x;
@@ -366,167 +393,16 @@ static void disp_toexprline(register struct expr_t *axp, int dflt_fmt)
     {
      /* since just encoding literal, know no leading 0's */
      chp = __vval_to_vstr(&(__contab[xp->ru.xvi]), xp->szu.xclen, &chlen);
-     start_fp = chp;
-     /* assuming 8 bit bytes */
-
-     /* know literal string has no bval */
-     /* point to 1st format value argument */
-     axp = axp->ru.x;
-     if (axp == NULL) xp = NULL; else xp = axp->lu.x;
 
      /* notice since must be literal source text string escapes removed */
      /* also this string can contain embedded 0's that are printed */
-     for (; *chp != '\0'; chp++)
-      {
-       /* notice is escaped by user char in format gets echoed as is */
-       if (*chp != '%') { addch_(*chp); continue; }
-       chp++;
-       fmt_pos++; 
-       /* if non format character just continue */
-       /* needed since xp may be for %[non format] form */
-       trim = FALSE;
-try_fmt_again:
-       fmt_non_real = TRUE;
-       switch (*chp) {
-        case '%':
-	 /* interesting but since output always goes through printf */
-         /* this no longer goes through printf so only one needed */
-         addch_('%');
-	 continue;
-        case '0':
-         chp++;
-         if (trim) goto c_style_case;
-         trim = TRUE;
-         goto try_fmt_again;
-        case 'm': case 'M':
-         /* if no thread, know in interactive and have scope */
-         if (__cur_thd == NULL) tskp = __scope_tskp; 
-         /* %m defined as "scope" which may be task/func/block/inst */
-         else tskp = __getcur_scope_tsk();
-         __disp_itree_path(__inst_ptr, tskp);
-	 /* must not consume an argument */
-	 continue;
+     /* know literal string has no bval */
+     start_fp = chp;
 
-        case 'h': case 'H': case 'x': case 'X': case 'd': case 'D':
-        case 'o': case 'O': case 'b': case 'B': case 'c': case 'C':
-        case 's': case 'S': case 'v': case 'V':
-         break;
-        case 't': case 'T':
-         fmt_non_real = FALSE;
-         break;
-	case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
-         fmt_non_real = FALSE;
-	 /* F not in C standard and indentical to 'f' */
-	 if (*chp == 'F') *chp = 'f';
-         /* trim ignored here and any c style %10.3g (z.b.) example */    
-	 strcpy(rfmtstr, "");
-	 break;
-        /* for %f/%g only need to parse C style format */
-        /* notice for 0. enter normally, for c legal 00 get here from '0' */
-        case '1': case '2': case '3': case '4': case '5':
-	case '6': case '7': case '8': case '9': case '.': case '-':
-        case '+': case '#': case ' ':
-c_style_case:
-	 /* one of these after percent probably real format */
-         /* if new_chp not 0 points to end format char on return */
-         if ((new_chp = sep_real_fmt(rfmtstr, chp, trim)) == NULL)
-          {
-           addch_('%');
-	   if (trim) { addch_('0'); chp--; } else addch_(*chp);
-           continue;
-          }
-         /* got real format */
-	 chp = new_chp;
-         fmt_non_real = FALSE;
-	 break;
-        default:
-	 /* copy %[non format char] case */
-         addch_('%'); 
-         addch_(*chp);
-	 /* notice for loop has chp++ inc */
-	 continue;
-        }
+     /* assuming 8 bit bytes */
+     axp = __disp_1fmt_to_exprline(chp, axp);
+     if (axp != NULL) xp = axp->lu.x; else xp = NULL;
 
-       /* format needs expr. - check it */
-       /* if nil, treat as ,, */
-       if (xp == NULL) { addch_(' '); continue; }
-       if (xp->optyp == OPEMPTY) { addch_(' '); goto nxt_arg; }
-       /* ok for literal string to be printed as value */ 
-       /* need special evaluation for with strength formats */ 
-       if (*chp == 'v' || *chp == 'V')
-        { sdisp_st(xp); goto nxt_arg; }
-
-       /* eval. here uses type of expression to get real or non real val */
-       xsp = __eval_xpr(xp);
-       if (xp->is_real && fmt_non_real) __cnv_stk_fromreal_toreg32(xsp);
-       ap = xsp->ap;
-       bp = xsp->bp;
-       switch (*chp) {
-        case 'h': case 'H': case 'x': case'X':
-	 /* for variable accesses correct one */
-         sdisph(ap, bp, xsp->xslen, trim);
-         break;
-	case 'd': case 'D':
-do_dec:
-         sdispd(ap, bp, xp->szu.xclen, trim, (xp->has_sign == 1));
-	 break;
-        case 't': case 'T':
-         {
-          char tfmtstr[IDLEN];
-          
-          if (!bld_tfmt_val(tfmtstr, xp, ap, bp, xsp->xslen, trim, fmt_pos))
-           goto do_dec;
-          __adds(tfmtstr);
-         }
-         break;
-        case 'o': case 'O':
-         sdispo(ap, bp, xsp->xslen, trim);
-         break;
-	case 'b': case 'B':
-         __sdispb(ap, bp, xsp->xslen, trim);
-	 break;
-	case 's': case 'S':
-	 /* %s ignores b part and if non literal str leading 0's trimmed */
-         /* do not need %0s to cause leading (high) 0's to not print */
-         blen = __trim1_0val(ap, xsp->xslen);
-         __xline_vval_to_cstr(ap, blen, FALSE, FALSE, FALSE);
-	 break;
-	case 'c': case 'C':
-	 /* OVIsim only prints if printable */
-         /* SJM 09/19/03 - must also print new line and tab - isprint does */
-         /* not include new line and tab etc. */
-         if (isprint(ap[0] & 0xff) || (ap[0] & 0xff) == '\n'
-          || (ap[0] & 0xff) == '\r' || (ap[0] & 0xff) == '\t')
-          addch_((char) (ap[0] & 0xff));
-         else addch_(' ');
-	 break;
-        /* this can only be bit select or scalar */
-	/* notice this reevaluates expression since needs to access st too */
-	case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
-	 /* tricky case of real that needs c printf - fmt str in rfmtstr */
-	 if (!xp->is_real) 
-          {
-           /* this may produce warning if does not fit */
-           __cnv_stk_fromreg_toreal(xsp, (xp->has_sign == 1));
-           ap = xsp->ap;
-           bp = xsp->bp;
-          }
-	 /* first build the format string */
-         if (*chp == 'F') *chp = 'f'; 
-	 sprintf(s1, "%%%s%c", rfmtstr, *chp);
-         memcpy(&d1, ap, sizeof(double));
-
-	 /* know max size of real cannot be more than 30 or so */
-	 sprintf(s2, s1, d1);
-         __adds(s2);
-	 /* LOOKATME - fall thru under what conditions? */
-        }
-       __pop_xstk();
-nxt_arg:
-       /* know 1 format arguemnt used up, so must move to next */
-       axp = axp->ru.x;
-       if (axp == NULL) xp = NULL; else xp = axp->lu.x;
-      }
      /* already pointing one past last format string used */
      __my_free(start_fp, chlen);
      continue;
@@ -544,6 +420,210 @@ nxt_arg:
    axp = axp->ru.x;
   }
  __exprline[__cur_sofs] = '\0';
+}
+
+/*
+ * print into string according to specifications in one format string
+ *
+ * this is called multiple times $swrite and exactly onece for $sformat
+ * chp points to value converted to string
+ */
+extern struct expr_t *__disp_1fmt_to_exprline(char *chp, struct expr_t *axp)
+{
+ int trim, fmt_pos, fmt_non_real, blen;
+ word *ap, *bp;
+ double d1;
+ char *new_chp;
+ struct expr_t *xp;
+ struct xstk_t *xsp;
+ struct task_t *tskp;
+ struct mod_t *mdp;
+ char rfmtstr[RECLEN], s1[RECLEN], s2[RECLEN];
+
+ /* point to 1st format value argument */
+ axp = axp->ru.x;
+ if (axp == NULL) xp = NULL; else xp = axp->lu.x;
+
+ fmt_pos = 0;
+ for (; *chp != '\0'; chp++)
+  {
+   /* notice is escaped by user char in format gets echoed as is */
+   if (*chp != '%') { addch_(*chp); continue; }
+   chp++;
+   fmt_pos++; 
+   /* if non format character just continue */
+   /* needed since xp may be for %[non format] form */
+   trim = FALSE;
+try_fmt_again:
+   fmt_non_real = TRUE;
+   switch (*chp) {
+    case '%':
+     /* interesting but since output always goes through printf */
+     /* this no longer goes through printf so only one needed */
+     addch_('%');
+     continue;
+    case '0':
+     chp++;
+     if (trim) goto c_style_case;
+     trim = TRUE;
+     goto try_fmt_again;
+    case 'm': case 'M':
+     /* if no thread, know in interactive and have scope */
+     if (__cur_thd == NULL) tskp = __scope_tskp; 
+     /* %m defined as "scope" which may be task/func/block/inst */
+     else tskp = __getcur_scope_tsk();
+     __disp_itree_path(__inst_ptr, tskp);
+     /* must not consume an argument */
+     continue;
+    case 'l': case 'L':
+     /* SJM 05/17/04 - FIXME ??? ### need ptr from mod to cfg lib rec def in */
+     mdp = __inst_ptr->itip->imsym->el.emdp;
+     if (mdp->mod_cfglbp != NULL)
+      {
+       sprintf(s1, "%s.%s", mdp->mod_cfglbp->lbname, mdp->msym->synam); 
+      }
+     else
+      {
+       sprintf(s1, "[NO-CONFIG].%s", mdp->msym->synam); 
+      } 
+     __adds(s1);
+     continue;
+
+    case 'h': case 'H': case 'x': case 'X': case 'd': case 'D':
+    case 'o': case 'O': case 'b': case 'B': case 'c': case 'C':
+    case 's': case 'S': case 'v': case 'V':
+    /* SJM 05/17/04 - binary formats added for P1364 2001 */
+    case 'u': case 'U': case 'z': case 'Z':
+     break;
+
+    case 't': case 'T':
+     fmt_non_real = FALSE;
+     break;
+    case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
+     fmt_non_real = FALSE;
+     /* F not in C standard and indentical to 'f' */
+     if (*chp == 'F') *chp = 'f';
+     /* trim ignored here and any c style %10.3g (z.b.) example */    
+     strcpy(rfmtstr, "");
+     break;
+    /* for %f/%g only need to parse C style format */
+    /* notice for 0. enter normally, for c legal 00 get here from '0' */
+    case '1': case '2': case '3': case '4': case '5':
+    case '6': case '7': case '8': case '9': case '.': case '-':
+    case '+': case '#': case ' ':
+c_style_case:
+     /* one of these after percent probably real format */
+     /* if new_chp not 0 points to end format char on return */
+     if ((new_chp = sep_real_fmt(rfmtstr, chp, trim)) == NULL)
+      {
+       addch_('%');
+       if (trim) { addch_('0'); chp--; } else addch_(*chp);
+       continue;
+      }
+     /* got real format */
+     chp = new_chp;
+     fmt_non_real = FALSE;
+     break;
+    default:
+     /* copy %[non format char] case */
+     addch_('%'); 
+     addch_(*chp);
+     /* notice for loop has chp++ inc */
+     continue;
+   }
+
+  /* format needs expr. - check it */
+  /* if nil, treat as ,, */
+  if (xp == NULL)
+   {
+    addch_(' ');
+    continue;
+   }
+
+  if (xp->optyp == OPEMPTY) { addch_(' '); goto nxt_arg; }
+  /* ok for literal string to be printed as value */ 
+  /* need special evaluation for with strength formats */ 
+  if (*chp == 'v' || *chp == 'V') { sdisp_st(xp); goto nxt_arg; }
+
+  /* eval. here uses type of expression to get real or non real val */
+  xsp = __eval_xpr(xp);
+  if (xp->is_real && fmt_non_real) __cnv_stk_fromreal_toreg32(xsp);
+  ap = xsp->ap;
+  bp = xsp->bp;
+  switch (*chp) {
+   case 'h': case 'H': case 'x': case'X':
+    /* for variable accesses correct one */
+    sdisph(ap, bp, xsp->xslen, trim);
+    break;
+   case 'd': case 'D':
+do_dec:
+    sdispd(ap, bp, xp->szu.xclen, trim, (xp->has_sign == 1));
+    break;
+   case 't': case 'T':
+    {
+     char tfmtstr[IDLEN];
+          
+     if (!bld_tfmt_val(tfmtstr, xp, ap, bp, xsp->xslen, trim, fmt_pos))
+      goto do_dec;
+     __adds(tfmtstr);
+    }
+    break;
+   case 'o': case 'O':
+    sdispo(ap, bp, xsp->xslen, trim);
+    break;
+   case 'b': case 'B':
+    __sdispb(ap, bp, xsp->xslen, trim);
+    break;
+   case 's': case 'S':
+    /* %s ignores b part and if non literal str leading 0's trimmed */
+    /* do not need %0s to cause leading (high) 0's to not print */
+    blen = __trim1_0val(ap, xsp->xslen);
+    __xline_vval_to_cstr(ap, blen, FALSE, FALSE, FALSE);
+    break;
+   case 'c': case 'C':
+    /* OVIsim only prints if printable */
+    /* SJM 09/19/03 - must also print new line and tab - isprint does */
+    /* not include new line and tab etc. */
+    if (isprint(ap[0] & 0xff) || (ap[0] & 0xff) == '\n'
+     || (ap[0] & 0xff) == '\r' || (ap[0] & 0xff) == '\t')
+     addch_((char) (ap[0] & 0xff));
+    else addch_(' ');
+    break;
+   case 'u': case 'U':
+    disp_ufmt_binval(ap, bp, xsp->xslen);
+    break;
+   case 'z': case 'Z':
+    disp_zfmt_binval(ap, bp, xsp->xslen);
+    break;
+
+   /* this can only be bit select or scalar */
+   /* notice this reevaluates expression since needs to access st too */
+   case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
+    /* tricky case of real that needs c printf - fmt str in rfmtstr */
+    if (!xp->is_real) 
+     {
+      /* this may produce warning if does not fit */
+      __cnv_stk_fromreg_toreal(xsp, (xp->has_sign == 1));
+      ap = xsp->ap;
+      bp = xsp->bp;
+     }
+    /* first build the format string */
+    if (*chp == 'F') *chp = 'f'; 
+    sprintf(s1, "%%%s%c", rfmtstr, *chp);
+    memcpy(&d1, ap, sizeof(double));
+
+    /* know max size of real cannot be more than 30 or so */
+    sprintf(s2, s1, d1);
+    __adds(s2);
+    /* LOOKATME - fall thru under what conditions? */
+   }
+   __pop_xstk();
+nxt_arg:
+   /* know 1 format arguemnt used up, so must move to next */
+   axp = axp->ru.x;
+   if (axp == NULL) xp = NULL; else xp = axp->lu.x;
+  }
+ return(axp);
 }
 
 /*
@@ -600,7 +680,7 @@ extern void __chk_fmt(register struct expr_t *axp, byte *argnonvtab)
         {
          if (isprint(*chp) || *chp == '\n' || *chp == '\r' || *chp == '\t'
           || *chp == '\f') continue;
-	 __sgfwarn(561,
+         __sgfwarn(561,
           "format contains non printable character \\%o (%d) (next pos. %d)",
           *chp, *chp, fmt_pos + 1);
         }
@@ -619,70 +699,71 @@ try_fmt_again:
          trim = TRUE;
          goto try_fmt_again;
         case 'm': case 'M': continue;
+        case 'l': case 'L': continue;
 
         case 'v': case 'V':
          if (argnonvtab != NULL) argnonvtab[argi] = 1;
          break;
         case 'h': case 'H': case 'x': case 'X': case 'd': case 'D':
         case 'o': case 'O': case 'b': case 'B': case 'c': case 'C':
-        case 's': case 'S':
+        case 's': case 'S': case 'u': case 'U': case 'z': case 'Z':
          break;
         case 't': case 'T':
          fmt_non_real = FALSE;
          break;
-	case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
+        case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
          fmt_non_real = FALSE;
-	 /* F not in C standard and indentical to 'f' */
-	 if (*chp == 'F') *chp = 'f';
+         /* F not in C standard and indentical to 'f' */
+         if (*chp == 'F') *chp = 'f';
          /* trim ignored here and any c style %10.3g (z.b.) example */    
-	 break;
+         break;
         /* for %f/%g only need to parse C style format */
         /* notice for 0. enter normally, for c legal 00 get here from '0' */
         case '1': case '2': case '3': case '4': case '5':
-	case '6': case '7': case '8': case '9': case '.': case '-':
+        case '6': case '7': case '8': case '9': case '.': case '-':
         case '+': case '#': case ' ':
 c_style_case:
-	 /* one of these after percent probably real format */
+         /* one of these after percent probably real format */
          /* if new_chp not 0 points to end format char on return */
          if ((new_chp = sep_real_fmt(rfmtstr, chp, trim)) == NULL)
           { if (trim) chp--; continue; }
          /* got real format */
-	 chp = new_chp;
+         chp = new_chp;
          fmt_non_real = FALSE;
-	 break;
+         break;
         default: continue;
-	 /* notice for loop has chp++ inc */
-        }
+         /* notice for loop has chp++ inc */
+       }
 
        /* format needs expr. - check it */
        if (xp == NULL)
-	{
-	 __sgferr(719, "argument list exhausted for %%%c format (pos. %d).",
-	  *chp, fmt_pos);
-	 continue;
-	}
+        {
+         __sgferr(719, "argument list exhausted for %%%c format (pos. %d).",
+          *chp, fmt_pos);
+         continue;
+        }
        if (xp->optyp == OPEMPTY)
         {
-	 __sgfwarn(549,
+         __sgfwarn(549,
           "argument list ,, value - format %%%c (pos. %d) - value is space",
-	  *chp, fmt_pos);
-	 goto nxt_arg;
+          *chp, fmt_pos);
+         goto nxt_arg;
         }
        if (xp->is_string && *chp != 's' && *chp != 'S')
         {
          __sgfwarn(554,
           "string constant probably incompatible with %%%c format (pos. %d)",
           *chp, fmt_pos);
-	 goto nxt_arg;
+         goto nxt_arg;
         }
        /* strengths can be any 1 bit in OVIsim but anything in Cver */
 
        /* eval. here uses type of expression to get real or non real val */
        if (xp->is_real && fmt_non_real)
         {
-	 __sgfwarn(552,
+         __sgfwarn(552,
           "%c format but value expression (pos. %d) type real - converted to 32 bit reg",
- 	  *chp, fmt_pos);
+          *chp, fmt_pos);
         }
        /* only look at things that need checking */
        switch (*chp) {
@@ -698,15 +779,15 @@ c_style_case:
          break;
 
         /* this can only be bit select or scalar */
-	/* notice this reevaluates expression since needs to access st too */
-	case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
-	 /* tricky case of real that needs c printf - fmt str in rfmtstr */
-	 if (!xp->is_real)
-	  {
-	   __sgfinform(480,
+        /* notice this reevaluates expression since needs to access st too */
+        case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
+        /* tricky case of real that needs c printf - fmt str in rfmtstr */
+        if (!xp->is_real)
+         {
+          __sgfinform(480,
             "non real value output with %c format (pos. %d) - conversion needed",
-            *chp, fmt_pos);
-          }
+           *chp, fmt_pos);
+         }
         }
 nxt_arg:
        /* know 1 format arguemnt used up, so must move to next */
@@ -955,7 +1036,9 @@ static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
 {
  register int i;
  int ochnum, trimblen, widnumlen;
- char ch, *chp, s1[RECLEN];
+ sword sval;
+ struct xstk_t *xsp;
+ char ch, *chp, *chp2, s1[RECLEN];
 
  if (!trim) 
   {
@@ -971,26 +1054,72 @@ static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
    /* ? PORTABILITY sprintf(s1, "%*c", ochnum, ch); */
    for (i = 0; i < ochnum - 1; i++) addch_(' ');
    addch_(ch);
-done:
    __exprline[__cur_sofs] = '\0';
    return;
   }
  if (blen <= WBITS)
   {
    /* for decimal leading untrimmed must be spaces */
-   if (dsigned) sprintf(s1, "%ld", (sword) ap[0]);
+   if (dsigned)
+    {
+     if (blen == WBITS) sprintf(s1, "%ld", (sword) ap[0]);
+     else
+      {
+       if ((ap[0] & (1 << (blen - 1))) != 0)
+        {
+         sval = ~((int) ap[0]);
+         sval++;
+         /* SJM 10/20/03 - 1 bit width vars can't be signed so works */ 
+         if (blen == 1) sval = 0; else sval &= __masktab[blen - 1];
+         sprintf(s1, "-%ld", sval);
+        }
+       else sprintf(s1, "%lu", ap[0]);
+      }
+    }
    else sprintf(s1, "%lu", ap[0]);
    for (i = 0; i < ochnum - (int) strlen(s1); i++) addch_(' ');
    __adds(s1);
    return;
   }
+ /* SJM 05/27/04 - for negative can't trim until negated */
+ if (dsigned && __is_lnegative(ap, blen))
+  {
+   /* compute number of chars required by converted number */
+   /* need ceil here */
+   /* SJM 10/20/03 - since wide can now be signed must use 2's complement */
+   /* this works because know x/z case removed above */
+
+   /* number is negative - compute bit wise not then add 1 */
+   push_xstk_(xsp, blen);
+   __cp_lnegate(xsp->ap, ap, blen);
+
+   trimblen = __trim1_0val(xsp->ap, blen);
+   widnumlen = trimblen*LG2_DIV_LG10 + 0.999999;
+   chp = (char *) __my_malloc(widnumlen + 2);
+   __declcnv_tostr(chp, xsp->ap, trimblen, widnumlen);
+   widnumlen++;
+   for (i = 0; i < ochnum - widnumlen; i++) addch_(' ');
+   addch_('-');
+
+   /* SJM 05/28/04 - widnumlen estimate can be 1 too large must trim front */
+   /* can't just inc chp since must free beginning of area */
+   chp2 = chp;
+   while (*chp2 == ' ') chp2++;
+   __adds(chp2);
+
+   __my_free(chp, widnumlen + 2);
+   __pop_xstk(); 
+   return;
+  }
+ /* case 2: either not signed or positive */
  trimblen = __trim1_0val(ap, blen);
  /* handle wide 0 as special case - these need trim on to happen */
  if (trimblen == 0)
   {
    for (i = 0; i < ochnum - 1; i++) addch_(' ');
    addch_('0');
-   goto done;
+   __exprline[__cur_sofs] = '\0';
+   return;
   }
  /* next wide that trims to 1 word */
  if (trimblen <= WBITS)
@@ -1000,9 +1129,6 @@ done:
    __adds(s1);
    return;
   }
-
- /* compute number of chars required by converted number */
- /* need ceil here */
  widnumlen = trimblen*LG2_DIV_LG10 + 0.999999;
  chp = (char *) __my_malloc(widnumlen + 2);
  __declcnv_tostr(chp, ap, trimblen, widnumlen);
@@ -1236,20 +1362,18 @@ xl_disp:
    if (valreal) __cnv_stk_fromreal_toreg32(xsp);
  }
 
- /* SJM 08/03/04 - this code was wrongly trimmming leading 0s */
- /* LRM requires keeping leading 0s */
  switch ((byte) fmtchar) {
   case 'h': case 'H': case 'x': case'X':
-   sdisph(xsp->ap, xsp->bp, xsp->xslen, FALSE);
+   sdisph(xsp->ap, xsp->bp, xsp->xslen, TRUE);
    break;
   case 'd': case 'D':
-   sdispd(xsp->ap, xsp->bp, xsp->xslen, FALSE, vsigned);
+   sdispd(xsp->ap, xsp->bp, xsp->xslen, TRUE, vsigned);
    break;
   case 'o': case 'O':
-   sdispo(xsp->ap, xsp->bp, xsp->xslen, FALSE);
+   sdispo(xsp->ap, xsp->bp, xsp->xslen, TRUE);
    break;
   case 'b': case 'B':
-   __sdispb(xsp->ap, xsp->bp, xsp->xslen, FALSE);
+   __sdispb(xsp->ap, xsp->bp, xsp->xslen, TRUE);
    break;
   case 'g': case 'G': case 'f': case 'F':
    sprintf(s1, "%g", d1);
@@ -1474,6 +1598,83 @@ static void vstr_to_cstr(char *vstr, int blen, int space_0, int nd_quotes,
   }
  if (nd_quotes) addch_('"');
  __exprline[__cur_sofs] = '\0';
+}
+
+/* ---
+INVERSE:
+
+#if (BYTE_ORDER == BIG_ENDIAN)
+   wrd = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
+    | ((b4 & 0xff) << 24);
+#else
+   wrd = (b4 & 0xff) | ((b3 & 0xff) << 8) | ((b2 & 0xff) << 16)
+    | ((b1 & 0xff) << 24);
+--- */
+/*
+ * write 'u' format binary 0/1 one word using machine's endianness
+ * into __exprline
+ *
+ * for u format output is a words only but if b bit set value is 0
+ */
+static void disp_ufmt_binval(word *ap, word *bp, int blen)
+{
+ register int j;
+ register word wrd;
+ byte bval;
+ int wi;
+  
+ for (wi = 0; wi < wlen_(blen); wi++)
+  {
+   wrd = ap[wi] & (bp[wi] ^ 0xffffffff);
+
+#if (BYTE_ORDER != BIG_ENDIAN)
+   for (j = 24; j >= 0; j -= 8)
+    {
+     bval = (wrd >> j) & 0xff;
+     addch_(bval);
+    }
+#else
+   for (j = 0; j <= 24; j += 8)
+    {
+     bval = (wrd >> j) & 0xff;
+     addch_(bval);
+    }
+#endif
+  }
+}
+
+/*
+ * write 'z' format binary 0/1 two words using machine's endianness
+ * into __exprline
+ *
+ * for z format output is a and b words interleaved
+ */
+static void disp_zfmt_binval(word *ap, word *bp, int blen)
+{
+ register int j;
+ int wi;
+ byte bval;
+
+ for (wi = 0; wi < wlen_(blen); wi++)
+  {
+#if (BYTE_ORDER != BIG_ENDIAN)
+   for (j = 24; j >= 0; j -= 8)
+    {
+     bval = (ap[wi] >> j) & 0xff;
+     addch_(bval);
+     bval = (bp[wi] >> j) & 0xff;
+     addch_(bval);
+    }
+#else
+   for (j = 0; j <= 24; j += 8)
+    {
+     bval = (ap[wi] >> j) & 0xff;
+     addch_(bval);
+     bval = (bp[wi] >> j) & 0xff;
+     addch_(bval);
+    }
+#endif
+  }
 }
 
 /*
@@ -1809,7 +2010,7 @@ extern char *__xregab_tostr(char *s, word *ap, word *bp, int blen,
      if (xp->unsiznum) { base = BDEC; signv = TRUE; }   
      else base = xp->ibase; 
     }
-   /* notive if simple varible signed, has sign on */
+   /* notice if simple varible signed, has sign on */
    if (xp->has_sign) { base = BDEC; signv = TRUE; }
   }
  __regab_tostr(s, ap, bp, blen, base, signv);
@@ -3082,9 +3283,9 @@ done:
  * ROUTINES TO IMPLEMENT VERILOG SPECIFIC OR UNPORTABLE MATH LIB
  */
 
-#define MY_MAXDOUBLE	1.797693134862315708e+308
-/* #define MY_MAXDOUBLE	1.79e+308 */
-#define MY_MINDOUBLE	4.9406564584124654e-324
+#define MY_MAXDOUBLE 1.797693134862315708e+308
+/* #define MY_MAXDOUBLE 1.79e+308 */
+#define MY_MINDOUBLE 4.9406564584124654e-324
 #define MY_LONG_MAX 0x7fffffff
 #define MY_LONG_MIN 0x80000000
 
@@ -3292,7 +3493,9 @@ extern void __dmp_mod(FILE *f, struct mod_t *mdp)
  if (mdp->mattrs != NULL) { dmp_dig_attr_list(f, mdp->mattrs, TRUE); }
  __wrap_puts("module ", f);
  __wrap_puts(mdp->msym->synam, f);
- dmp_modports(f, mdp);
+
+ if (mdp->mod_lofp_decl) dmp_mod_lofp_hdr(f, mdp);
+ else dmp_modports(f, mdp);
 
  /* know I/O port decls will come first */
  dmp_decls(f, mdp);
@@ -3377,8 +3580,8 @@ static void dmp_modports(FILE *f, struct mod_t *mdp)
        /* un-named but explicit module port stored wrong */
        /* DBG remove ---
        if (mpp->mpsnam == NULL)
-	__misc_gfterr( __FILE__, __LINE__, mdp->msym->syfnam_ind,
-	  mdp->msym->sylin_cnt);
+        __misc_gfterr( __FILE__, __LINE__, mdp->msym->syfnam_ind,
+         mdp->msym->sylin_cnt);
        --- */
        __wrap_putc('.', f);
        __wrap_puts(mpp->mpsnam, f);
@@ -3389,6 +3592,66 @@ static void dmp_modports(FILE *f, struct mod_t *mdp)
       }
      else dmp_expr(f, mpp->mpref);
     }
+  }
+ if (!first_time) __wrap_putc(')', f);
+ __nl_wrap_puts(";", f);
+ __pv_stlevel--;
+}
+
+/*
+ * dump new list of ports module ports header
+ */
+static void dmp_mod_lofp_hdr(FILE *f, struct mod_t *mdp)
+{
+ register int pi;
+ register struct mod_pin_t *mpp;
+ int first_time, pnum;
+ struct net_t *np;
+ char s1[RECLEN];
+
+ first_time = TRUE;
+ __pv_stlevel++;
+ if ((pnum = mdp->mpnum) == 0)
+  {
+   if (!first_time) __wrap_putc(')', f);
+   __nl_wrap_puts(";", f);
+   __pv_stlevel--;
+  }
+
+ for (pi = 0, mpp = &(mdp->mpins[0]); pi < pnum; pi++, mpp++)
+  {
+   if (first_time) { __wrap_putc('(', f); first_time = FALSE; }
+   else __wrap_puts(", ", f);
+
+   /* DBG remove -- */
+   if (mpp->mpref->optyp != ID) __misc_terr(__FILE__, __LINE__);
+   /* --- */
+
+   np = mpp->mpref->lu.sy->el.enp;
+
+   if (np->nattrs != NULL) dmp_dig_attr_list(f, np->nattrs, FALSE);
+
+   __wrap_puts(__to_ptnam(s1, np->iotyp), f);
+
+   if (np->ntyp != N_WIRE)
+    {
+     __wrap_putc(' ', f);
+     __wrap_puts(__to_wtnam(s1, np), f);
+    }
+
+   if (np->n_signed && (np->ntyp != N_INT && np->ntyp != N_REAL
+    && np->ntyp != N_TIME))
+    {
+     __wrap_puts(" signed", f); 
+    }
+
+   /* for special types no range but will have internal range */
+   if (!np->n_isavec || np->ntyp == N_INT || np->ntyp == N_TIME
+    || np->ntyp == N_REAL) strcpy(s1, "");
+   else { __to_wrange(s1, np); __wrap_putc(' ', f); __wrap_puts(s1, f); }
+
+   __wrap_putc(' ', f);
+   __wrap_puts(np->nsym->synam, f);
   }
  if (!first_time) __wrap_putc(')', f);
  __nl_wrap_puts(";", f);
@@ -3413,7 +3676,7 @@ static void dmp_decls(FILE *f, struct mod_t *mdp)
     np->n_mark = FALSE;
   }
 
- if ((pnum = mdp->mpnum) != 0)
+ if ((pnum = mdp->mpnum) != 0 && !mdp->mod_lofp_decl)
   {
    for (i = 0, mpp = &(mdp->mpins[0]); i < pnum; i++, mpp++)
     dmp_1portdecl(f, mpp->mpref);
@@ -3478,7 +3741,11 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
  __outlinpos = 0;
  strcpy(wnam, "");
  /* if I/O port is normal wire, do not need wire declaration */
- if (np->iotyp != NON_IO && !nd_iowirdecl(np)) return;
+ if (np->iotyp != NON_IO)
+  {
+   if (__inst_mod->mod_lofp_decl) return;
+   if (!nd_iowirdecl(np)) return;
+  }
  
  /* 04/01/00 SJM - for Verilog 2000 need to dmp digital attributes */
  if (np->nattrs != NULL) dmp_dig_attr_list(f, np->nattrs, FALSE);
@@ -3501,6 +3768,13 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
       __wrap_puts(" vectored", f);
     }
    else { if (!np->vec_scalared) __wrap_puts(" vectored", f); }
+  }
+
+ /* SJM 10/06/03 - signed if present after vec/scalar */
+ if (np->n_signed && (np->ntyp != N_INT && np->ntyp != N_REAL
+  && np->ntyp != N_TIME))
+  {
+   __wrap_puts(" signed", f); 
   }
 
  /* for special types no range but will have internal range */
@@ -3531,6 +3805,11 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
 static int nd_iowirdecl(struct net_t *np)
 {
  if (np->n_isavec || np->n_isarr || np->nattrs != NULL) return(TRUE);
+
+ /* SJM 10/06/03 - if signed but not integer/real/time, need signed decl */ 
+ if (np->n_signed && (np->ntyp != N_INT && np->ntyp != N_REAL
+  && np->ntyp != N_TIME)) return(TRUE);
+
  if (np->nrngrep == NX_CT)
   {
    /* scalared is the default and impossible for regs */
@@ -3572,6 +3851,7 @@ static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int pnum,
      /* always emit vector declaration even if not in source */
      if (parm_np->nu.ct->ptypdecl)
       {
+       /* SJM 10/06/03 - know signed keyword can't have been used for these */
        if (parm_np->ntyp == N_REAL) strcpy(s1, " real");
        else if (parm_np->ntyp == N_INT) strcpy(s1, " integer");
        else if (parm_np->ntyp == N_TIME) strcpy(s1, " time");
@@ -3580,6 +3860,8 @@ static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int pnum,
       }
      else if (parm_np->nu.ct->prngdecl)
       {
+       /* SJM 10/06/03 - signed and range can be declared together */ 
+       if (parm_np->nu.ct->psigndecl) __wrap_puts(" signed", f);
        if (parm_np->n_isavec)
         {
          __wrap_putc(' ', f);
@@ -3588,6 +3870,9 @@ static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int pnum,
         }
       } 
     }
+   /* SJM 10/06/03 - signed without range possible - rhs range used */
+   else if (parm_np->nu.ct->psigndecl) __wrap_puts(" signed", f);
+
    __wrap_putc(' ', f);
    __wrap_puts(parm_np->nsym->synam, f);
    /* for specify never array and only array if decled */
@@ -4418,7 +4703,10 @@ static void dmp_task(FILE *f, struct task_t *tskp)
    __nl_wrap_puts("", f);
    __wrap_puts("task ", f);
    __wrap_puts(syp->synam, f);
+
+   if (tskp->tf_lofp_decl) dmp_tf_lofp_hdr(f, tskp);
    __wrap_putc(';', f);
+
    dmp_tfdecls(f, tskp);
    dmp_paramdecls(f, tskp->tsk_prms, tskp->tprmnum, "parameter");
    dmp_lstofsts(f, tskp->tskst);
@@ -4456,7 +4744,12 @@ static void dmp_func_decl(FILE *f, struct task_t *tskp)
  sprintf(s1, "function %s ", ftyp);
  __wrap_puts(s1, f);
  __wrap_puts(tskp->tsksyp->synam, f);
+
+ /* for new Ver 2001, if function args declared in header, emit in hdr */
+ if (tskp->tf_lofp_decl) dmp_tf_lofp_hdr(f, tskp);
+
  __nl_wrap_puts(";", f);
+
  dmp_tfdecls(f, tskp);
  dmp_paramdecls(f, tskp->tsk_prms, tskp->tprmnum, "parameter");
  dmp_lstofsts(f, tskp->tskst);
@@ -4505,22 +4798,26 @@ static void dmp_tfdecls(FILE *f, struct task_t *tskp)
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
 
  if (__outlinpos != 0) __nl_wrap_puts("", f);
- for (tpp = tskp->tskpins; tpp != NULL; tpp = tpp->tpnxt)
+ if (!tskp->tf_lofp_decl)
   {
-   /* 1st parameter for function is required return value */
-   if (tskp->tsktyp == FUNCTION && tpp == tskp->tskpins) continue;
+   /* SJM 05/26/04 - only dump tf port if they were not declared in hdr */ 
+   for (tpp = tskp->tskpins; tpp != NULL; tpp = tpp->tpnxt)
+    {
+     /* 1st parameter for function is required return value */
+     if (tskp->tsktyp == FUNCTION && tpp == tskp->tskpins) continue;
 
-   syp = tpp->tpsy;
-   regp = syp->el.enp;
-   if (!regp->n_isavec || regp->ntyp == N_TIME || regp->ntyp == N_INT
-    || regp->ntyp == N_REAL) strcpy(s1, "");
-   else __to_wrange(s1, regp);
+     syp = tpp->tpsy;
+     regp = syp->el.enp;
+     if (!regp->n_isavec || regp->ntyp == N_TIME || regp->ntyp == N_INT
+      || regp->ntyp == N_REAL) strcpy(s1, "");
+     else __to_wrange(s1, regp);
 
-   /* notice __to_wrange truncated to max of RECLEN - ok since only no.s */
-   sprintf(s3, " %s%s ", __to_ptnam(s2, tpp->trtyp), s1);
-   __wrap_puts(s3, f);
-   __wrap_puts(syp->synam, f);
-   __nl_wrap_puts(";", f);
+     /* notice __to_wrange truncated to max of RECLEN - ok since only no.s */
+     sprintf(s3, " %s%s ", __to_ptnam(s2, tpp->trtyp), s1);
+     __wrap_puts(s3, f);
+     __wrap_puts(syp->synam, f);
+     __nl_wrap_puts(";", f);
+    }
   }
 
  if (tskp->trnum == 0) return;
@@ -4537,6 +4834,40 @@ static void dmp_tfdecls(FILE *f, struct task_t *tskp)
    __wrap_puts(regp->nsym->synam, f);
    __nl_wrap_puts(";", f);
   }
+}
+
+/*
+ * dump tf list of ports header task port decls
+ */
+static void dmp_tf_lofp_hdr(FILE *f, struct task_t *tskp)
+{
+ register struct task_pin_t *tpp;
+ int first_time;
+ struct sy_t *syp;
+ struct net_t *regp;
+ char s1[RECLEN], s2[RECLEN], s3[RECLEN];
+
+ __wrap_putc('(', f);
+ first_time = TRUE;
+ for (tpp = tskp->tskpins; tpp != NULL; tpp = tpp->tpnxt)
+  {
+   /* 1st parameter for function is required return value */
+   if (tskp->tsktyp == FUNCTION && tpp == tskp->tskpins) continue;
+
+   if (!first_time) __wrap_puts(", ", f); else first_time = FALSE;
+
+   syp = tpp->tpsy;
+   regp = syp->el.enp;
+   if (!regp->n_isavec || regp->ntyp == N_TIME || regp->ntyp == N_INT
+    || regp->ntyp == N_REAL) strcpy(s1, "");
+   else __to_wrange(s1, regp);
+
+   /* notice __to_wrange truncated to max of RECLEN - ok since only no.s */
+   sprintf(s3, "%s%s ", __to_ptnam(s2, tpp->trtyp), s1);
+   __wrap_puts(s3, f);
+   __wrap_puts(syp->synam, f);
+  }
+ __wrap_putc(')', f);
 }
 
 /*
@@ -5361,7 +5692,8 @@ static void dmp_expr(FILE *f, struct expr_t *ndp)
   case OPEMPTY:
    return;
   /* event or cannot be parenthesisized or nested */ 
-  case OPEVOR:
+  case OPEVOR: case OPEVCOMMAOR:
+   /* SJM 06/01/04 - current scheme is 2 ops that print different but same */
    dmp_evor_chain(f, ndp);
    return;
   /* FALLTHRU */
@@ -5482,9 +5814,15 @@ static void dmp_fcallx(FILE *f, struct expr_t *ndp)
  */
 static void dmp_evor_chain(FILE *f, struct expr_t *ndp) 
 {
- if (ndp->lu.x->optyp == OPEVOR) dmp_evor_chain(f, ndp->lu.x);
+ if (ndp->lu.x->optyp == OPEVOR || ndp->lu.x->optyp == OPEVCOMMAOR)
+  {
+   dmp_evor_chain(f, ndp->lu.x);
+  }
  else dmp_expr(f, ndp->lu.x);
- __wrap_puts(" or ", f);
+
+ if (ndp->lu.x->optyp == OPEVOR) __wrap_puts(" or ", f);
+ else __wrap_puts(", ", f);
+
  dmp_expr(f, ndp->ru.x); 
 }
 

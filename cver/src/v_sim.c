@@ -41,6 +41,7 @@
 #include "v.h"
 #include "cvmacros.h"
 
+
 /* local prototypes */
 static void exec_slotend_dv(void);
 static void process_all_netchgs(void);
@@ -244,7 +245,9 @@ extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern void __lhsbsel(register word *, register int, word);
 extern struct xstk_t *__ndst_eval_xpr(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern void __sizchgxs(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __narrow_sizchg(register struct xstk_t *, int);
 extern void __fix_widened_toxs(register struct xstk_t *, int);
 extern void __st_perinst_val(union pck_u, int, register word *,
  register word *);
@@ -302,7 +305,6 @@ extern void __dmp1_nplstel(struct mod_t *, struct net_t *, struct net_pin_t *);
 extern void __push_wrkitstk(struct mod_t *, int);
 extern void __pop_wrkitstk(void);
 extern void __sched_mipd_nchg(struct net_t *, int, struct mipd_t *);
-extern void __dmp1_pseudo_iop(FILE *, void (*proc)(void));
 
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
@@ -2972,9 +2974,18 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
  if (xsp->xslen != lhslen)
   {
    orhslen = xsp->xslen;
-   __sizchgxs(xsp, lhslen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > lhslen) __narrow_sizchg(xsp, lhslen);
+   else if (xsp->xslen < lhslen)
+    {
+     if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp, lhslen);
+     else __sizchg_widen(xsp, lhslen);
+    }
+
    /* SJM 07/09/03 - now understand XL algorithm to mimic - for conta */
    /* semantics requires rhs non stren eval with 0 widening then add stren */
+   /* SJM 05/10/04 init x widending not related to new signed widening */
    if (__wire_init) __fix_widened_toxs(xsp, orhslen);
   }
 
@@ -3147,10 +3158,18 @@ static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
  if (xsp->xslen != lhslen)
   {
    orhslen = xsp->xslen;
-   __sizchgxs(xsp, lhslen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > lhslen) __narrow_sizchg(xsp, lhslen);
+   else if (xsp->xslen < lhslen)
+    {
+     if (cap->rhsx->has_sign) __sgn_xtnd_widen(xsp, lhslen);
+     else __sizchg_widen(xsp, lhslen);
+    }
    /* SJM 07/09/03 - now understand XL algorithm to mimic - if rhs is reg */
    /* or reg type expr, must widen with 0's (automatic) if net with zs */
    /* wire init is special case */
+   /* SJM 05/10/04 init x widending not related to new signed widening */
    if (__wire_init) __fix_widened_toxs(xsp, orhslen);
   }
 
@@ -3559,10 +3578,10 @@ static void process_nbpa_ev(struct tev_t *tevp)
    char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN];
 
    __tr_msg("-- nb event assign in %s %s of %s to %s at %s\n",
-    __msg2_blditree(s1, tevp->teitp), __bld_lineloc(s2, stp->stfnam_ind,
-     stp->stlin_cnt), __xregab_tostr(s3, wp, &wp[wlen], con_lhsxp->szu.xclen,
-     stp->st.spra.rhsx), __msgexpr_tostr(s4, con_lhsxp),
-    __to_timstr(__xs, &__simtime));
+    __msg2_blditree(s1, tevp->teitp), __bld_lineloc(s2,
+     tenbp->nbastp->stfnam_ind, tenbp->nbastp->stlin_cnt),
+    __xregab_tostr(s3, wp, &wp[wlen], con_lhsxp->szu.xclen, stp->st.spra.rhsx),
+    __msgexpr_tostr(s4, con_lhsxp), __to_timstr(__xs, &__simtime));
   }
 
  /* SJM 05/19/04 - complex procedural assign needs stmt file/line context */
@@ -4917,12 +4936,10 @@ emit_msg:
      __get_del(&lim2, tcp->tclim2_du, tcp->tc_delrep2);
      /* 2nd limit is hold part */
      lim1 = lim2;
-     /* AIV 09/15/04 - difference of 0 must not cause check - see hold */
-     if (diff < lim1 && diff != 0ULL) goto emit_msg;
+     if (diff < lim1) goto emit_msg;
      break;
     case TCHK_HOLD:
-     /* AIV 09/15/04 - difference of 0 must not cause check */
-     if (diff < lim1 && diff != 0ULL) goto emit_msg;
+     if (diff < lim1) goto emit_msg;
      break;
     case TCHK_WIDTH:
      /* opposite edge data event less than limit after 1st edge ref., err */
@@ -4968,6 +4985,7 @@ emit_msg:
        tcp2 = (struct tchk_t *) tcp->tclim_du.pdels;
        __get_del(&lim1, tcp2->tclim_du, tcp2->tc_delrep);
       }
+
      /* if data event (2nd clock) occurs too soon after 1st (clear edge) */
      /* recovery like hold but error if reference event not edge */
      /* recovery err if clock happens too soon after clear or preset edge */
@@ -4978,8 +4996,7 @@ emit_msg:
      /* (clear edge) - removal like setup but error if reference event not */
      /* edge - removal err if clock happens too soon after clear or preset */
      /* edge */
-     /* AIV 07/09/04 - removal test was reversed - was > but needs to be < */
-     if (diff < lim1 && diff != 0ULL) goto emit_msg;
+     if (diff > lim1 && diff != 0ULL) goto emit_msg;
      break;
     default: __case_terr(__FILE__, __LINE__);
    }
@@ -5830,7 +5847,16 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
  if (xsp->xslen != lhslen)
   {
    orhslen = xsp->xslen;
-   __sizchgxs(xsp, lhslen);
+
+   /* SJM 09/29/03 - change to handle sign extension and separate types */
+   if (xsp->xslen > lhslen) __narrow_sizchg(xsp, lhslen);
+   else if (xsp->xslen < lhslen)
+    {
+     if (xp->has_sign) __sgn_xtnd_widen(xsp, lhslen);
+     else __sizchg_widen(xsp, lhslen);
+    }
+   /* during initialization widen to x not 0 */
+
    /* SJM 05/19/04 - remove see below must widen rhs expr using 0's */
    /* --
    if (orhslen < xsp->xslen)
@@ -5848,7 +5874,15 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
    if (xsp->xslen != lhslen)
     {
      orhslen = xsp->xslen;
-     __sizchgxs(xsp, lhslen);
+
+     -* SJM 09/29/03 - change to handle sign extension and separate types *-
+     if (xsp->xslen > lhslen) __narrow_sizchg(xsp, lhslen);
+     else if (xsp->xslen < lhslen)
+      {
+       if (xp->has_sign) __sgn_xtnd_widen(xsp, lhslen);
+       else __sizchg_widen(xsp, lhslen);
+      }
+
      __fix_widened_toxs(xsp, orhslen);
     }
    -- */
@@ -6649,6 +6683,7 @@ static void remove_empty_upwards(void)
   {
 empty_tree:
    __my_free((char *) __btqroot, sizeof(struct bt_t));
+
    /* SJM 05/26/04 - notice root node is special case no telp multi */
    /* element not, instead just a pointer to a btp */
    __btqroot = NULL;

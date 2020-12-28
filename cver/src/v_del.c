@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ctype.h>
 
 #ifdef __DBMALLOC__
 #include "../malloc.h"
@@ -111,26 +110,10 @@ extern char *__my_malloc(int);
 extern void __my_free(char *, int);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern void __free_xtree(struct expr_t *);
-extern char *__to_wtnam(char *, struct net_t *);
-extern char *__get_eval_cstr(struct expr_t *, int *);
-extern struct task_t *__getcur_scope_tsk(void);
-extern struct expr_t *__glbnam_to_expr(char *);
-extern struct gref_t *__bld_glbref(struct expr_t *, int, int);
-extern void __resolve_glbnam(struct gref_t *);
-extern void __fill_grp_targu_fld(struct gref_t *);
-extern void __xmrpush_refgrp_to_targ(struct gref_t *);
-extern void __free_1glb_flds(struct gref_t *);
-extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern struct sy_t *__get_nongia_sym(char *, struct symtab_t *);
-extern char *__to_sytyp(char *, unsigned);
-extern int __wide_vval_is0(register word *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__pv_stralloc(char *);
 extern void __push_wrkitstk(struct mod_t *, int);
 extern void __pop_wrkitstk(void);
 
 extern void __cv_msg(char *, ...);
-extern void __cvsim_msg(char *, ...);
 extern void __gfwarn(int, unsigned, int, char *, ...);
 extern void __sgfwarn(int, char *, ...);
 extern void __gferr(int, unsigned, int, char *, ...);
@@ -410,6 +393,7 @@ extern void __cnv_ticks_tonum64(word64 *usertim, word64 tickstim,
 
  /* this subtract backwards here */
  unit = __des_timeprec - mdp->mtime_units;
+
  tscale = __itoticks_tab[unit];
  rem = tickstim % tscale;  
  quot = tickstim/tscale;  
@@ -920,7 +904,7 @@ neg_del:
   }
  wp = &(__contab[xp->ru.xvi]);
  delval = (word64) wp[0];
- /* notice 64 bit value can never be signed */
+ /* notice 64 bit time value can never be signed */
  if (xp->szu.xclen > WBITS) delval |= (((word64) wp[1]) << 32);
  else
   {

@@ -2202,6 +2202,9 @@ static int rdset_deltyps(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
       }
      /* this reads ) ending form */
      if (rd_1or2_vals(f, formnam) == -1) return(FALSE); 
+
+     /* SJM 03/13/04 - move into ID case above by AIV - why? */ 
+
      if (pptyp == SDF_PATHPULSE)
       { 
        if (!__seen_ppulse)
@@ -5803,6 +5806,7 @@ incr_neg:
  push_xstk_(xsp3, np->nwid);
  if (is_minus)
   {
+   /* SJM 05/10/04 LOOKATME SIGNED - think do not need signed wide comp here */
    cmp = __do_widecmp(&isxz, xsp->ap, xsp->bp, xsp2->ap, xsp2->bp, np->nwid);
    /* DBG remove --- */
    if (isxz) __misc_terr(__FILE__, __LINE__);
@@ -6542,13 +6546,27 @@ bad_scalar:
    return;
   case '>':
    if ((c1 = getc(f)) == '=') { __toktyp = RELGE; return; }
-   else if (c1 == '>') { __toktyp = SHIFTR; return; }
+   else if (c1 == '>')
+    {
+     /* SJM 10/01/03 - add parsing of arithmetic right shift >>> */  
+     if ((c1 = getc(f)) == '>') { __toktyp = ASHIFTR; return; }
+     ungetc(c1, f);
+     __toktyp = SHIFTR;
+     return;
+    }
    ungetc(c1, f);
    __toktyp = RELGT;
    return;
   case '<':
    if ((c1 = getc(f)) == '=') { __toktyp = RELLE; return; }
-   else if (c1 == '<') { __toktyp = SHIFTL; return; }
+   else if (c1 == '<') 
+    {
+     /* SJM 10/01/03 - add parsing of arithmetic right shift >>> */  
+     if ((c1 = getc(f)) == '<') { __toktyp = ASHIFTL; return; }
+     ungetc(c1, f);
+     __toktyp = SHIFTL;
+     return;
+    }
    ungetc(c1, f);
    __toktyp = RELLT;
    return;   
@@ -7195,9 +7213,11 @@ static char *prt_sdftok(void)
   case RELCNEQ: strcpy(__token, "!=="); break;
   case RELGE: strcpy(__token, ">="); break;
   case SHIFTR: strcpy(__token, ">>"); break;
+  case ASHIFTR: strcpy(__token, ">>>"); break;
   case RELGT:  strcpy(__token, ">"); break;
   case RELLE: strcpy(__token, "<="); break;
   case SHIFTL: strcpy(__token, "<<"); break;
+  case ASHIFTL: strcpy(__token, "<<<"); break;
   case RELLT: strcpy(__token, "<"); break;
   case UNDEF: strcpy(__token, "**NONE**"); break; 
   case BADOBJ: strcpy(__token, "**ILLEGAL**"); break;

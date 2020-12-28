@@ -47,28 +47,29 @@ static void travfreeze_syms(register struct tnode_t *);
 static void travfreeze_lowsymtab(register struct symtab_t *);
 static void bld_mdpin_table(struct mod_t *);
 static int rd_modhdr(struct mod_t *);
+static int rd_hdrpnd_parmdecls(void);
 static int rd_portref(void);
 static void set_ioprtnets(struct expr_t *);
+static int rd_list_of_ports_decl(struct mod_t *);
 static int rd_modbody(void);
 static int rd_iodecl(unsigned);
 static void add_net_attr(struct net_t *, int);
-static int rd_wirdecl(unsigned);
+static int rd_vardecl(unsigned);
 static void chk_capwdecl_strens(unsigned);
 static void chk_drvstren(unsigned);
 static int rd_oparamdels(struct paramlst_t **);
 static int do_wdecl_assgn(struct sy_t *, struct paramlst_t *, int);
 static int is_decl_err(struct sy_t *, unsigned, unsigned);
-static void set_reg_widths(unsigned, struct expr_t **, struct expr_t **,
- int *);
+static void set_reg_widths(unsigned, struct expr_t **, struct expr_t **);
 static int chkset_wdrng(struct net_t *, struct expr_t *, struct expr_t *);
 static int cmp_rng(struct expr_t *, struct expr_t *, struct expr_t *,
  struct expr_t *);
 static int rd_verstrens(void);
 static int rd_1verstren(int *);
 static int is_tokstren(int);
-static int rd_opt_param_array_rng(struct expr_t **, struct expr_t **);
-static struct net_t *chkadd_array_param(char *, int, int, struct expr_t *,
-  struct expr_t *, struct expr_t *, struct expr_t *);
+static int rd_opt_param_array_rng(struct expr_t **, struct expr_t **, int);
+static struct net_t *chkadd_array_param(char *, int, int, int,
+ struct expr_t *, struct expr_t *, struct expr_t *, struct expr_t *);
 static void cnvt_to_pdecl(struct xstk_t *, struct expr_t *, struct net_t *,
  char *);
 static void unwind_param_array_constructor(struct expr_t *);
@@ -76,6 +77,7 @@ static void chk1_arrinit_expr(struct expr_t *, char *, int);
 static int rd_contassign(void);
 static struct conta_t *add_conta(struct expr_t *, struct expr_t *, int, int);
 static int rd_eventdecl(void);
+static int rd_paramdecl(int);
 static int rd_dfparam_stmt(void);
 static struct dfparam_t *alloc_dfpval(void);
 static int rd_task(void);
@@ -85,7 +87,7 @@ static struct net_t *decl_taskvar(unsigned, struct expr_t *, struct expr_t *);
 static struct task_pin_t *alloc_tskpin(void);
 static int rd_func(void);
 static void add_funcretdecl(char *, unsigned, struct expr_t *,
- struct expr_t *);
+ struct expr_t *, int);
 static int rd_inst(char *);
 static void add_cell_attr(struct cell_t *);
 static int rd_pull_stren(char *, int *);
@@ -99,19 +101,20 @@ static struct cell_pin_t *alloc_memcpins(void);
 static struct cell_t *add_cell(char *);
 static struct cell_t *alloc_memcell(void);
 static void init_task(struct task_t *);
+static int rd_tf_list_of_ports_decl(struct task_t *, char *);
 
 /* extern prototypes (maybe defined in this module) */
 extern char *__pv_stralloc(char *);
 extern char *__my_malloc(int);
 extern struct mod_t *__alloc_mod(struct sy_t *);
 extern void __init_mod(struct mod_t *, struct sy_t *);
-extern int __rd_paramdecl(void);
 extern int __xpr_has_param(struct expr_t *);
 extern struct ncomp_t *__alloc_arrncomp(void);
 extern char *__prt_kywrd_vtok(void);
 extern char *__prt_vtok(void);
 extern void __freeze_1symtab(struct symtab_t *);
 extern struct sy_t *__get_sym_env(char *);
+extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct sy_t *__decl_sym(char *, struct symtab_t *);
 extern struct sy_t *__bld_loc_symbol(int, struct symtab_t *, char *, char *);
 extern struct sy_t *__find_sym(char *);
@@ -151,10 +154,12 @@ extern unsigned __to_cap_size(int);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct expr_t *__alloc_newxnd(void);
 extern void __get_vtok(void);
-extern int __rd_moddef(void);
+extern int __rd_moddef(struct symtab_t *, int);
 extern struct gref_t *__alloc_grtab(struct gref_t *, int);
-extern int __rd_udpdef(void);
+extern int __rd_udpdef(struct symtab_t *);
 extern int __vskipto_modend(int);
+extern int __vskipto_lofp_end(void);
+extern int __vskipto2_lofp_end(void);
 extern void __add_sym(char *, struct tnode_t *);
 extern int __rd_decl_rng(struct expr_t **, struct expr_t **);
 extern int __chk_redef_err(char *, struct sy_t *, char *, unsigned);
@@ -162,6 +167,7 @@ extern void __remove_undef_mod(struct sy_t *);
 extern void __my_free(char *, int);
 extern int __vskipto2_any(int, int);
 extern int __vskipto3_any(int, int, int);
+extern int __vskipto4_any(int, int, int, int);
 extern void __unget_vtok(void);
 extern int __col_parenexpr(int);
 extern int __col_connexpr(int);
@@ -175,6 +181,7 @@ extern int __col_comsemi(int);
 extern void __set_numval(struct expr_t *, word, word, int);
 extern int __col_lval(void);
 extern int __col_newparamrhsexpr(void);
+extern int __col_lofp_paramrhsexpr(void);
 extern int __bld_tsk(char *, int);
 extern int __rd_tfdecls(char *);
 extern int __bld_expnode(void);
@@ -185,7 +192,7 @@ extern void __set_opempty(int);
 extern void __free_xtree(struct expr_t *);
 extern void __free2_xtree(struct expr_t *);
 extern int __src_rd_chk_paramexpr(struct expr_t *, int);
-extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **);
+extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **, int);
 extern int __chk_paramexpr(struct expr_t *, int);
 extern void __eval_param_rhs_tonum(struct expr_t *);
 extern int __nd_ndxnum(struct expr_t *, char *, int);
@@ -202,7 +209,10 @@ extern struct cell_pin_t *__alloc_cpin(int);
 extern void __add_syp_to_undefs(struct sy_t *);
 extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *, int);
 extern void __src_rd_cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __sizchgxs(struct xstk_t *, int);
+extern void __sizchgxs(struct xstk_t *, int);  
+extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __sizchg_widen(register struct xstk_t *, int);
+extern void __sgn_xtnd_widen(struct xstk_t *, int);
 extern int __wide_vval_is0(register word *, int);
 extern int __alloc_cval(int);
 extern int __alloc_shareable_cval(word, word, int);
@@ -250,12 +260,12 @@ extern void __rd_ver_mod(void)
    /* or have skipped on error so next token read is mod/prim */
    __get_vtok();
 rd_def:
-   __rd_moddef();
+   __rd_moddef(NULL, FALSE);
    break;
   case PRIMITIVE:
    /* because library must check for unresolved, get name before call */
    __get_vtok();
-   __rd_udpdef();
+   __rd_udpdef(NULL);
    break;
   default:
    __pv_ferr(975, "module or primitive keyword expected - %s read",
@@ -267,20 +277,56 @@ rd_def:
 }
 
 /*
+ * cfg form of read ver mod 
+ *
+ * SJM FIXME ??? - why is this different version needed 
+ */
+extern void __rd_cfg_ver_mod(void)
+{
+ switch ((byte) __toktyp) {
+  case TEOF: return;
+  case MACROMODULE:
+   __get_vtok();
+   __finform(423, "macromodules not expanded - %s translated as module",
+    __token);
+   __get_vtok();
+   break;
+  case MODULE:
+   /* know these will either die with eof or have read end mod/prim */
+   /* or have skipped on error so next token read is mod/prim */
+   __get_vtok();
+   break;
+  case PRIMITIVE:
+   /* because library must check for unresolved, get name before call */
+   __get_vtok();
+   break;
+  default:
+   __pv_ferr(975, "module or primitive keyword expected - %s read",
+    __prt_vtok());
+   /* for common extra ;, will move to module and back up 1 */
+   /* otherwise will skip to eof */  
+ }
+}
+
+/*
  * MODULE DEFINITION ROUTINES
  */
 
 /*
  * read a module definition
+ * 
+ * if reading config, put module name in passed config lib el sym table 
  * upon return current token must be synced to file level token
  * return F if parse errors, T even if other errors
  */
-extern int __rd_moddef(void)
+extern int __rd_moddef(struct symtab_t *cfg_sytab, int isconfig)
 {
  struct sy_t *syp;
  struct symtab_t *sp_sytp;
  struct mod_t *mdp;
+ struct tnode_t *tnp;
 
+ __lofp_port_decls = FALSE;
  /* DBG remove --- */
  if (__top_sti != 0) __misc_terr(__FILE__, __LINE__);
  if (__inst_mod != NULL) __misc_terr(__FILE__, __LINE__);
@@ -297,9 +343,30 @@ no_read:
    __vskipto_modend(ENDMODULE);
    return(FALSE);
   }
- if ((syp = __add_modsym(__token)) == NULL) goto no_read;
+ 
+ /* SJM 01/07/04 - if module in config library file, put into its mod sy tab */
+ if (cfg_sytab != NULL) 
+  {
+   tnp = __vtfind(__token, cfg_sytab);
+   /* dups already checked for */
+   /* DBG remove -- */
+   if (!__sym_is_new) __misc_terr(__FILE__, __LINE__);
+   /* --- */
+   __add_sym(__token, tnp);
+   (cfg_sytab->numsyms)++;
+   syp = tnp->ndp;
+  }
+ else syp = __add_modsym(__token);
+
+ syp->cfg_needed = FALSE;
+ if (syp == NULL) goto no_read;
+ syp->sytyp = SYM_M;
+
  mdp = __alloc_mod(syp);
  syp->el.emdp = mdp;
+ /* AIV 05/24/04 - need to set flag to get rid of highest level mods */
+ /* that are scanned but never used in configs */
+ mdp->m_inconfig = isconfig;
  /* this is where module definition actually resolved */
  syp->sydecl = TRUE;
  /* need place where udp declared */
@@ -476,6 +543,7 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mod_last_lini = -1;
  mdp->mod_last_ifi = -1;
  mdp->msymtab = NULL;
+ mdp->mod_cfglbp = NULL; 
  mdp->minstnum = 0;
  mdp->mhassts = FALSE;
  mdp->msplit = FALSE;
@@ -509,6 +577,7 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mod_1bcas = FALSE;
  mdp->mod_has_mipds = FALSE;
  mdp->mod_parms_gd = FALSE;
+ mdp->mod_lofp_decl = FALSE;
  /* values not used by cver but set so vpi_ routines can return */
  mdp->mod_dfltntyp = (unsigned) __dflt_ntyp;
  mdp->mod_uncdrv =  (unsigned) __unconn_drive;
@@ -516,7 +585,6 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mhas_frcassgn = FALSE;
  mdp->flatinum = 0;
  mdp->mpnum = 0;
- mdp->minum = 0;
  mdp->miarr = NULL; 
  mdp->mpins = NULL;
  mdp->mgates = NULL;
@@ -548,9 +616,6 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
 
  mdp->mgrtab = NULL;
  mdp->mgrnum = 0;
-
- mdp->micodtab = NULL;
- mdp->micodsiz = 0;
 
  mdp->mspfy = NULL;
  mdp->mndvcodtab = NULL;
@@ -785,7 +850,18 @@ static int rd_modhdr(struct mod_t *mp)
 
  /* empty I/O list legal */
  __get_vtok();
+
+ /* P1364 2001 allows #(list of normal parameter decls) here that allows */
+ /* param decls in addition to body param decls */
+ if (__toktyp == SHARP)
+  {
+   /* if error and sync failed, know synced to module level item */
+   if (!rd_hdrpnd_parmdecls()) goto ret_end;
+  }
+ 
  if (__toktyp == SEMI) return(TRUE);
+ /* norma end reads ending rpar but on error mayhave synced to lpar */
+ if (__toktyp != LPAR) __get_vtok();
 
  if (__toktyp != LPAR)
   {
@@ -815,6 +891,7 @@ ret_end:
   {
 do_end:
    __get_vtok();
+do_end2:
    if (__toktyp == SEMI) return(TRUE);
 
    __pv_ferr(980,
@@ -822,6 +899,16 @@ do_end:
     __prt_vtok());
    __unget_vtok();
    return(TRUE);
+  }
+
+ /* SJM 05/23/04 - branch point for separate list of port decl header form */
+ if (__toktyp == INPUT || __toktyp == OUTPUT || __toktyp == INOUT)
+  {
+   /* reads ending ; after ) - also sets flags that prevents further */
+   /* port decls that would be legal for port name (explicit too) forms */
+   if (!rd_list_of_ports_decl(mp)) goto ret_end;
+   if (__toktyp == RPAR) __get_vtok();
+   goto do_end2;
   }
 
  for (last_mpp = NULL;;)
@@ -886,6 +973,40 @@ nxt_port:
    __get_vtok();
   }
  return(TRUE);
+}
+
+/*
+ * read the module define #(param decl list) parameter delcarations
+ * know the leading # read and reads one past ending ')' (probably '(')
+ *
+ * format is: module xx #([parameter decl list], ...) (port list) ...
+ * notice that only legal for module definitions
+ */
+static int rd_hdrpnd_parmdecls(void)
+{
+ __get_vtok();
+ if (__toktyp != LPAR)
+  {
+   __pv_ferr(984,
+    "module header #([parameter decl], ..) form starting left paren expected - %s read",
+    __prt_vtok());
+   if (!__vskipto3_any(RPAR, LPAR, SEMI)) return(FALSE);
+   return(TRUE);
+  }
+ __get_vtok();
+ for (;;)
+  {
+   if (__toktyp == RPAR) return(TRUE);
+   if (__toktyp != PARAMETER)
+    {
+     if (!__vskipto4_any(PARAMETER, COMMA, RPAR, SEMI)) return(FALSE);
+     if (__toktyp == PARAMETER) continue;
+     if (__toktyp == COMMA) { __get_vtok(); continue; }
+     if (__toktyp == RPAR || __toktyp == SEMI) return(TRUE);
+    }
+
+   if (!rd_paramdecl(TRUE)) return(FALSE);
+  }
 }
 
 /*
@@ -1036,6 +1157,200 @@ extern struct mod_pin_t *__alloc_modpin(void)
 }
 
 /*
+ * ROUTINES TO READ AND ADD LIST OF PORTS STYLE HEADER PORT DECLATIONS 
+ */
+
+/*
+ * read list of header port declarations
+ * new alternative ANSII style port header decl form added to 2001 LRM
+ *
+ * first port type keyword read and reads ending );
+ *
+ * if return T, even if error parsing can continue in module
+ * on error must sync to semi and back up one - mod item which just returns
+ */
+static int rd_list_of_ports_decl(struct mod_t *mp)
+{
+ int first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
+ struct sy_t *syp;
+ struct net_t *np;
+ struct expr_t *x1, *x2, *ox1, *ox2;
+ struct mod_pin_t *mpp, *last_mpp;
+ char s1[RECLEN];
+
+ /* even if syntax error, T once a port type keyword appears in hdr */
+ mp->mod_lofp_decl = TRUE;
+ __lofp_port_decls = TRUE;
+
+ last_mpp = NULL;
+ for (;;)
+  {
+   /* attribute collected by scanner - but need to save so associates with */
+   /* right port */
+   if (__attr_prefix)
+    {
+     __wrk_attr.attr_tok = __toktyp;
+     __wrk_attr.attr_seen = TRUE;
+     /* for now this is unparsed entire attr. string */
+     __wrk_attr.attrnam = __pv_stralloc(__attrwrkstr);
+     __wrk_attr.attr_fnind = __attr_fnam_ind;
+     __wrk_attr.attrlin_cnt = __attr_lin_cnt;
+    }
+   else __wrk_attr.attr_seen = FALSE;
+
+   attr_ttyp = __toktyp;
+   if (__toktyp == INPUT) ptyp = IO_IN;
+   else if (__toktyp == OUTPUT) ptyp = IO_OUT;
+   else if (__toktyp == INOUT) ptyp = IO_BID;
+   else __case_terr(__FILE__, __LINE__); 
+
+   __get_vtok();
+
+   /* defaults to wire if net type omitted - can be var/reg type */
+   if ((wtyp = __fr_wtnam(__toktyp)) != -1) __get_vtok();
+   else wtyp = N_WIRE;
+
+   if (wtyp == N_INT || wtyp == N_REAL) decl_signed = TRUE;
+   else decl_signed = FALSE;
+
+   /* vectored or scalared keywords never appear in port decls */
+   if (__toktyp == SIGNED)
+    {
+     decl_signed = TRUE;
+     if (wtyp == N_TIME || wtyp == N_INT || wtyp == N_REAL || wtyp == N_EVENT) 
+      {
+       __pv_ferr(3423,
+        "signed keyword illegal when task or function variable type %s",
+        __to_wtnam2(s1, wtyp));
+      }
+     __get_vtok();
+    }
+
+   /* even if error if 1 past ending ] continue */
+   if (!__rd_decl_rng(&ox1, &ox2))
+    {
+     /* bad decl - but if sync to new I/O port direction, caller will cont */
+     if (!__vskipto_lofp_end()) return(FALSE); 
+     if (__toktyp == RPAR) { __get_vtok(); return(TRUE); } 
+     /* semi read */
+     return(TRUE);
+    }
+
+   /* use local has attr flag so can turn glb seen off before return */
+   if (__wrk_attr.attr_seen)
+    { has_attr = TRUE; __wrk_attr.attr_seen = FALSE; }
+   else has_attr = FALSE;
+
+   x1 = x2 = NULL;
+   for (first_time = TRUE;;)
+    {
+     if (__toktyp != ID)
+      {
+       __pv_ferr(992, "list of port form %s port name expected - %s read",
+        __to_ptnam(s1, ptyp), __prt_kywrd_vtok());
+
+       if (__vskipto2_lofp_end())
+        {
+         if (__toktyp == SEMI) return(TRUE);
+         if (__toktyp == RPAR) { __get_vtok(); return(TRUE); }
+         /* only other possibility is the port name separating comma */
+         continue;
+        }
+       /* can't recover (resync) from error - synced to module item */
+       return(FALSE);
+      }
+
+     if ((syp = __get_sym_env(__token)) != NULL)
+      {
+       __pv_ferr(3418, "list of port form %s port name %s redeclared", 
+        __to_ptnam(s1, ptyp), __token);
+       goto nxt_port;
+      }
+
+     if (first_time) { x1 = ox1; x2 = ox2; first_time = FALSE; } 
+     else
+      {
+       if (x1 == NULL) x1 = x2 = NULL;
+       else { x1 = __copy_expr(ox1); x2 = __copy_expr(ox2); }
+      }
+
+     /* first declare the port's wire/reg */
+     if ((np = __decl_wirereg(wtyp, x1, x2, NULL)) == NULL) goto nxt_port;
+
+     /* if previously used will be treated as reg - must set to compatible */
+     /* wire type if declared as time or int */
+     np->ntyp = wtyp;
+     syp = np->nsym;
+
+     /* if saw an (* *) attribute for module item token, seen on */
+     if (has_attr)
+      {
+       /* this add to net's attr list on end if also net decl first */
+       add_net_attr(np, attr_ttyp);
+      }
+
+     /* SJM 10/02/03 - signed can be turned on either in port or wire decl */ 
+     if (decl_signed) np->n_signed = TRUE;
+
+     np->iotyp = ptyp;
+     /* for list of ports mod header decl form, all info in hdr decl */ 
+     np->nu.ct->n_iotypknown = TRUE;
+
+     syp->sydecl = TRUE;
+     /* need I/O decl. place not header or wire decl. */
+     syp->syfnam_ind = __cur_fnam_ind;
+     syp->sylin_cnt = __lin_cnt;
+
+     /* then add the port to the port list - know port and net name same */
+     mpp = __alloc_modpin();
+     mpp->mpsnam = __pv_stralloc(np->nsym->synam);
+     mpp->mp_explicit = FALSE;
+
+     if (last_mpp == NULL) mp->mpins = mpp; else last_mpp->mpnxt = mpp;
+     last_mpp = mpp;
+
+     /* name of port still in token - expr here always ID */
+     __last_xtk = -1;
+     if (!__bld_expnode()) __set_xtab_errval();
+     __bld_xtree(0);
+     mpp->mpref = __root_ndp;
+
+     /* count number of ports */
+     (mp->mpnum)++;
+     if (mp->mpnum >= MAXNUMPORTS)
+      {
+       __pv_ferr(314,
+        "INTERNAL FATAL - module has more than %d ports - contact Pragmatic C",
+        MAXNUMPORTS);
+       (mp->mpnum)--; 
+      }
+
+nxt_port:
+     __get_vtok();
+     if (__toktyp == RPAR) return(TRUE);
+
+     if (__toktyp != COMMA)
+      {
+       __pv_ferr(995,
+        "list of ports form declaration list comma or right paren expected - %s read",
+        __prt_vtok());
+       /* try to resync */
+       if (!__vskipto_lofp_end()) return(FALSE); 
+       if (__toktyp == COMMA) goto nxt_net;
+       /* misplaced semi or sync to rpar */
+       return(TRUE);
+      }
+nxt_net:
+     __get_vtok();
+     if (__toktyp == INPUT || __toktyp == OUTPUT || __toktyp == INOUT)  
+      break;
+    }
+  }
+ __misc_terr(__FILE__, __LINE__);
+ return(TRUE);
+}
+
+/*
  * MODULE ITEM ROUTINES
  */
 
@@ -1134,7 +1449,7 @@ moditem_stmt:
      if (!rd_contassign()) goto moditem_resync;
      continue;
     case PARAMETER:
-     if (!__rd_paramdecl()) goto moditem_resync;
+     if (!rd_paramdecl(FALSE)) goto moditem_resync;
      continue;
     case DEFPARAM:
      if (!rd_dfparam_stmt()) goto moditem_resync;
@@ -1174,7 +1489,7 @@ moditem_stmt:
       {
        /* false here means out of sync - must skip rest of module */
        /* if T will have skipped to semi */
-       if (!rd_wirdecl((unsigned) wtyp)) goto moditem_resync;
+       if (!rd_vardecl((unsigned) wtyp)) goto moditem_resync;
        /* needed to add attribute to every net in list - can now reset */
        __wrk_attr.attr_seen = FALSE;
        continue;
@@ -1210,14 +1525,21 @@ moditem_stmt:
  */
 static int rd_iodecl(unsigned typ)
 {
- int first_time, ttyp, has_attr;
+ int first_time, ttyp, has_attr, decl_signed;
  struct sy_t *syp;
  struct net_t *np;
  struct expr_t *x1, *x2, *ox1, *ox2;
  char s1[RECLEN];
 
+ decl_signed = FALSE;
  /* vectored or scalared keywords only appear on wire decls */
  __get_vtok();
+ if (__toktyp == SIGNED)
+  {
+   decl_signed = TRUE;
+   __get_vtok();
+  }
+
  /* even if error if 1 past ending ] continue */
  if (!__rd_decl_rng(&ox1, &ox2))
   {
@@ -1239,6 +1561,16 @@ static int rd_iodecl(unsigned typ)
      /* need token and symbol and cannot parse */
      return(__vskipto_any(SEMI));
     }
+
+   /* any port decl illegal if hdr list of port form used */
+   if (__lofp_port_decls)
+    {
+     __pv_ferr(3421,
+      "%s declaration of \"%s\" illegal - module uses list of ports declaration form",
+     __to_ptnam(s1, typ), __prt_kywrd_vtok());
+     goto nxt_port; 
+    }
+
    /* 3 ways to not be in I/O port header list */
    /* know only one symbol level here */
    /* also know must be defined since added when header read */
@@ -1246,12 +1578,16 @@ static int rd_iodecl(unsigned typ)
     {
 not_a_port:
      __pv_ferr(993,
-     "%s declaration for \"%s\" illegal - not in module header list of ports",
+     "%s declaration of \"%s\" illegal - not in module header list of ports",
       __to_ptnam(s1, typ), __token);
      goto nxt_port;
     }
    if (syp->sytyp != SYM_N) goto not_a_port;
    np = syp->el.enp;
+
+   /* SJM 10/02/03 - signed can be turned on either in port or wire decl */ 
+   if (decl_signed) np->n_signed = TRUE;
+
    /* when module header list of ports read, port set to IO_UNKN */
    if (np->iotyp == NON_IO) goto not_a_port;
 
@@ -1306,10 +1642,10 @@ nxt_port:
       __prt_vtok());
      /* try to resync */
      if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
-     if (__toktyp == COMMA) goto nxt_ev;
+     if (__toktyp == COMMA) goto nxt_var;
      break;
     }
-nxt_ev:
+nxt_var:
    __get_vtok();
   }
  return(TRUE);
@@ -1381,7 +1717,7 @@ static void add_net_attr(struct net_t *np, int ttyp)
  */
 
 /*
- * read and process a wire/reg/time/int/real declaration
+ * read and process a wire/reg/time/int/real variable declaration
  * know wire type read and reads final semi
  * semantic routines detect errors later
  * tricky because wires can also be continuous assignments
@@ -1389,9 +1725,9 @@ static void add_net_attr(struct net_t *np, int ttyp)
  *
  * if returns F synced to next module, else synced to SEMI
  */
-static int rd_wirdecl(unsigned wtyp)
+static int rd_vardecl(unsigned wtyp)
 {
- int first_time, split_state, intsigned, has_attr;
+ int first_time, split_state, decl_signed, has_attr;
  struct expr_t *x1, *x2, *ox1, *ox2, *xm1, *xm2;
  struct sy_t *syp;
  struct net_t *np;
@@ -1400,7 +1736,9 @@ static int rd_wirdecl(unsigned wtyp)
 
  pmphdr = NULL;
  __v0stren = __v1stren = NO_STREN;
- intsigned = FALSE;
+ if (wtyp == N_INT || wtyp == N_REAL) decl_signed = TRUE;
+ else decl_signed = FALSE;
+ 
  __get_vtok();
  if (__toktyp == LPAR)
   {
@@ -1421,6 +1759,16 @@ rd_rng:
  if (__toktyp == VECTORED) { __get_vtok(); split_state = SPLT_VECT; }
  else if (__toktyp == SCALARED) { split_state = SPLT_SCAL; __get_vtok(); }
 
+ if (__toktyp == SIGNED)
+  {
+   decl_signed = TRUE;
+   if (wtyp == N_TIME || wtyp == N_INT || wtyp == N_REAL || wtyp == N_EVENT) 
+    {
+     __pv_ferr(3423,
+      "signed keyword illegal when variable type %s", __to_wtnam2(s1, wtyp));
+    }
+   __get_vtok();
+  }
  if (!__rd_decl_rng(&ox1, &ox2))
   {
    if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
@@ -1483,9 +1831,27 @@ bad_end:
      __get_vtok();
      goto bad_end;
     }
+
+   if (__lofp_port_decls)
+    {
+     /* if hdr list of port form used, decls giving additional info illegal */
+     if ((syp = __get_sym_env(__token)) != NULL && syp->sytyp == SYM_N
+      && syp->el.enp->iotyp != NON_IO)
+      {
+       __pv_ferr(3421,
+        "%s declaration of port \"%s\" illegal - module uses list of ports declarations form",
+        __to_wtnam2(s1, wtyp), __prt_kywrd_vtok());
+
+       /* ignore rest of declaration - should resync if no syntax error */
+       if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
+       if (__toktyp == SEMI) return(TRUE);
+       goto nxt_wire;
+      }
+    }
+
    /* set implied range for time and integer */
    /* each time through need to call this to make copy */
-   if (ox1 == NULL) set_reg_widths(wtyp, &x1, &x2, &intsigned);
+   if (ox1 == NULL) set_reg_widths(wtyp, &x1, &x2);
    else if (first_time) { x1 = ox1; x2 = ox2; }
    else { x1 = __copy_expr(ox1); x2 = __copy_expr(ox2); }
 
@@ -1536,7 +1902,10 @@ try_resync:
    if (xm1 != NULL)
     { np->n_isarr = TRUE; np->nu.ct->ax1 = xm1; np->nu.ct->ax2 = xm2; }
    np->nu.ct->n_spltstate = split_state;
-   if (intsigned) np->n_signed = TRUE; else np->n_signed = FALSE;
+
+   /* SJM 10/02/03 - now signed keyword or int real implies signed */
+   /* must not turn off since if port and turned on there, stays on */
+   if (decl_signed) np->n_signed = TRUE;
 
    if (__toktyp == EQ)
     {
@@ -1884,6 +2253,7 @@ extern struct net_t *__add_net(struct sy_t *syp)
  np->nu.ct->p_setby_defparam = FALSE;
  np->nu.ct->prngdecl = FALSE;
  np->nu.ct->ptypdecl = FALSE;
+ np->nu.ct->psigndecl = FALSE;
  np->nu.ct->parm_srep = SR_VEC;
  np->nu.ct->pbase = BNONE;
  np->nu.ct->pstring = FALSE;
@@ -1996,12 +2366,11 @@ static int is_decl_err(struct sy_t *syp, unsigned dclsytyp,
  * set a register width
  */
 static void set_reg_widths(unsigned wtyp, struct expr_t **x1,
- struct expr_t **x2, int *intsigned)
+ struct expr_t **x2)
 {
  word rhigh;
 
- *intsigned = FALSE;
- if (wtyp == N_INT) { rhigh = WBITS - 1; *intsigned = TRUE; }
+ if (wtyp == N_INT) rhigh = WBITS - 1;
  else if (wtyp == N_TIME) rhigh = TIMEBITS - 1;
  else if (wtyp == N_REAL) rhigh = REALBITS - 1; 
  else { *x1 = NULL; *x2 = NULL; return; }
@@ -2243,10 +2612,18 @@ static int is_tokstren(int ttyp)
  * if returns F synced to next module, else synced to SEMI
  *
  * also reads vendor1 specific param types
+ *
+ * SJM 10/07/03 - add optional signed declaration - following normal
+ * rule for parameter typing, if signed not present determined from rhs
+ *
+ * SJM 05/25/04 - added new P1364 module #(<param decl>, ...) form but only 
+ * for modules parameter declarations and unlike header list of ports both
+ * types can be combined 
  */
-extern int __rd_paramdecl(void)
+static int rd_paramdecl(int is_hdr_form)
 {
- int ptyp_decl, prng_decl, pwtyp, pwid, r1, r2, wlen, has_valrng;
+ int ptyp_decl, prng_decl, pwtyp, pwid, r1, r2, wlen;
+ int psign_decl; 
  word *wp;
  struct expr_t *dx1, *dx2, *x1, *x2, *ax1, *ax2;
  struct net_t *np;
@@ -2256,17 +2633,23 @@ extern int __rd_paramdecl(void)
  strcpy(ptnam, "parameter");
 
  dx1 = dx2 = x1 = x2 = ax1 = ax2 = NULL;
- has_valrng = FALSE;
  ptyp_decl = FALSE; 
  prng_decl = FALSE;
  pwtyp = -1;
  pwid = 0;
+ psign_decl = FALSE; 
  __get_vtok();
+ if (__toktyp == SIGNED)
+  {
+   psign_decl = TRUE;
+   __get_vtok();
+  }
+
  /* case 1: range but not decl type */
  if (__toktyp == LSB)
   {
    /* also check to make sure ranges are non x/z 32 bit values */
-   if (!__rd_opt_param_vec_rng(&dx1, &dx2)) return(FALSE);
+   if (!__rd_opt_param_vec_rng(&dx1, &dx2, is_hdr_form)) return(FALSE);
    if (dx1 == NULL || dx2 == NULL) goto rd2_param_list;
 
    r1 = (int) __contab[dx1->ru.xvi];
@@ -2330,6 +2713,15 @@ chk_norng:
 rd_param_list:
  __get_vtok();
 rd2_param_list:
+ /* SJM 10/06/03 - signed keyword not allowed with var types */
+ if (psign_decl && (pwtyp == N_TIME || pwtyp == N_INT || pwtyp == N_REAL))
+  {
+   __pv_ferr(3423,
+    "signed keyword illegal when parameter variable type %s",
+    __to_wtnam2(__xs, pwtyp));
+   psign_decl = FALSE;
+  }
+
  /* if ptyp decl F, then must attempt to determine param type from rhs */ 
  for (;;)
   {
@@ -2340,8 +2732,16 @@ rd2_param_list:
       __prt_kywrd_vtok());
 bad_end:
      /* part of delay expression may have been built */
-     if (!__vskipto2_any(COMMA, SEMI)) return(FALSE);
-     if (__toktyp == COMMA) { __get_vtok(); continue; }
+     if (!is_hdr_form)
+      {
+       if (!__vskipto2_any(COMMA, SEMI)) return(FALSE);
+       if (__toktyp == COMMA) { __get_vtok(); continue; }
+      }
+     else
+      {
+       if (!__vskipto2_any(COMMA, RPAR)) return(FALSE); 
+       if (__toktyp == COMMA) { __get_vtok(); continue; }
+      }
      return(TRUE);
     }
    strcpy(paramnam, __token);
@@ -2353,7 +2753,7 @@ bad_end:
    if (__toktyp == LSB)
     {
      /* also check to make sure ranges are non x/z 32 bit values */
-     if (!rd_opt_param_array_rng(&ax1, &ax2)) return(FALSE);
+     if (!rd_opt_param_array_rng(&ax1, &ax2, is_hdr_form)) return(FALSE);
     }
    if (ax1 != NULL && !ptyp_decl)
     {
@@ -2374,7 +2774,16 @@ bad_end:
    /* notice initial value required */
    __get_vtok();
    /* this can collect array construct that will look like concat */
-   if (!__col_newparamrhsexpr()) goto bad_end;
+   if (is_hdr_form)
+    {
+     /* SJM 05/26/04 - new module decl #(list of param decls) form needs */
+     /* different collect routine because semi illegal */
+     if (!__col_lofp_paramrhsexpr()) goto bad_end;
+    }
+   else
+    {
+     if (!__col_newparamrhsexpr()) goto bad_end;
+    }
    __bld_xtree(0);
 
    if (__has_top_mtm)
@@ -2394,7 +2803,8 @@ bad_end:
      /* notice range and type for all in possible param list but */
      /* array range and initializer different for each */
      /* if error returns nil and try to resync */
-     if ((np = chkadd_array_param(paramnam, pwtyp, pwid, x1, x2, ax1, ax2))
+     if ((np = chkadd_array_param(paramnam, pwtyp, pwid, psign_decl, x1, x2,
+       ax1, ax2))
        == NULL) goto bad_end;
 
      goto nxt_param;
@@ -2403,6 +2813,7 @@ bad_end:
 
    /* checking rhs does no evaluation but set sizes and checks for */
    /* only params that are defined previously in module */
+   /* SJM 10/06/03 - rd chk paramexpr routine set expr signed bit */
    if (__expr_has_glb(__root_ndp) || !__src_rd_chk_paramexpr(__root_ndp, 0))
     {
      __pv_ferr(1025,
@@ -2445,8 +2856,9 @@ bad_end:
        np->ntyp = pwtyp;
        /* if declared always know width */
        np->nwid = pwid;
-       /* FIXME ??? - need to implement new signed/unsigned keywords */
-       if (np->ntyp == N_INT) np->n_signed = TRUE;
+       if (np->ntyp == N_INT || (np->ntyp == N_REG && psign_decl))
+        np->n_signed = TRUE;
+
        /* even if declared use rhs expr. for param ncomp expr formats */
        if (__root_ndp->is_string) np->nu.ct->pstring = TRUE;
        np->nu.ct->pbase = __root_ndp->ibase;
@@ -2459,13 +2871,35 @@ bad_end:
         }
        /* xsp always right width for parameter net width */
        if (xsp->xslen != pwid) __sizchgxs(xsp, pwid);
+
+       /* SJM 09/29/03 - change to handle sign extension and separate types */
+       if (xsp->xslen != pwid) __narrow_sizchg(xsp, pwid);
+       else if (xsp->xslen < pwid)
+        {
+         if (__root_ndp->has_sign) __sgn_xtnd_widen(xsp, pwid);
+         else __sizchg_widen(xsp, pwid);
+        }
       }
     }
    else
     {
      /* no parameter range given or will not get here */ 
-     if (__root_ndp->is_real) np->ntyp = N_REAL;
-     else np->ntyp = N_REG;
+     if (__root_ndp->is_real)
+      {
+       np->ntyp = N_REAL;
+       np->n_signed = TRUE;
+      }
+     else
+      {
+       np->ntyp = N_REG;
+       /* SJM 10/06/03 - no range or var type but signed may be present */
+       if (psign_decl) np->n_signed = TRUE;
+       else
+        {
+         if (__root_ndp->has_sign) np->n_signed = TRUE;
+        }
+      }
+
      np->nwid = __root_ndp->szu.xclen;
      if (np->nwid > 1)
       {
@@ -2474,7 +2908,7 @@ bad_end:
        np->nu.ct->nx1 = __bld_rng_numxpr(np->nwid - 1, 0L, WBITS);
        np->nu.ct->nx2 = __bld_rng_numxpr(0L, 0L, WBITS);
       }
-     if (__root_ndp->has_sign) np->n_signed = TRUE;
+     /* always true for real and int - maybe true from others */
      if (__root_ndp->is_string) np->nu.ct->pstring = TRUE;
      /* this works because param expr checking always sets ibase */ 
      np->nu.ct->pbase = __root_ndp->ibase;
@@ -2482,6 +2916,7 @@ bad_end:
 
    if (ptyp_decl) np->nu.ct->ptypdecl = TRUE;
    if (prng_decl) np->nu.ct->prngdecl = TRUE;
+   if (psign_decl) np->nu.ct->psigndecl = TRUE;
    if (__xpr_has_param(__root_ndp)) 
     {
      np->nu.ct->p_rhs_has_param = TRUE;
@@ -2527,16 +2962,36 @@ bad_end:
     }
 
 nxt_param:
-   if (__toktyp == SEMI) break;
-   if (__toktyp != COMMA)
+   if (is_hdr_form)
     {
-     __pv_ferr(1026,
-      "%s declaration semicolon or comma separator expected - %s read",
-      ptnam, __prt_vtok());
-     if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
+     if (__toktyp == RPAR) break;
+     if (__toktyp != COMMA)
+      {
+       __pv_ferr(1026,
+        "%s module header form declaration right paren or comma expected - %s read",
+        ptnam, __prt_vtok());
+       if (!__vskipto2_any(COMMA, RPAR)) return(FALSE); 
+       if (__toktyp == RPAR) break;
+      }
+    }
+   else
+    {
      if (__toktyp == SEMI) break;
+     if (__toktyp != COMMA)
+      {
+       __pv_ferr(1026,
+        "%s declaration semicolon or comma separator expected - %s read",
+        ptnam, __prt_vtok());
+       if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
+       if (__toktyp == SEMI) break;
+      }
     }
    __get_vtok();
+   if (is_hdr_form)
+    {
+     /* if , followed by ID, part of list else new parameter decl */
+     if (__toktyp == PARAMETER) break;
+    }
   }
  return(TRUE);
 }
@@ -2604,7 +3059,8 @@ extern int __src_rd_chk_paramexpr(struct expr_t *ndp, int xwid)
  *
  * know [ read and reads one past ]
  */
-extern int __rd_opt_param_vec_rng(struct expr_t **ax1, struct expr_t **ax2)
+extern int __rd_opt_param_vec_rng(struct expr_t **ax1, struct expr_t **ax2,
+ int is_hdr_form)
 {
  int rngerr;
  struct expr_t *x1, *x2;
@@ -2617,8 +3073,16 @@ extern int __rd_opt_param_vec_rng(struct expr_t **ax1, struct expr_t **ax2)
  rngerr = FALSE;
  if (!__rd_decl_rng(&x1, &x2))
   {
-   if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
-   if (__toktyp == SEMI) return(TRUE);
+   if (!is_hdr_form)
+    {
+     if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
+     if (__toktyp == SEMI) return(TRUE);
+    }
+   else
+    {
+     if (!__vskipto3_any(COMMA, RPAR, RSB)) return(FALSE); 
+     if (__toktyp != RSB) return(TRUE);
+    }
    rngerr = TRUE; 
    __get_vtok();
    goto done;
@@ -2669,7 +3133,8 @@ done:
  *
  * know [ read and reads one past ]
  */
-static int rd_opt_param_array_rng(struct expr_t **ax1, struct expr_t **ax2)
+static int rd_opt_param_array_rng(struct expr_t **ax1, struct expr_t **ax2,
+ int is_hdr_form)
 {
  int rngerr;
  struct expr_t *x1, *x2;
@@ -2677,8 +3142,16 @@ static int rd_opt_param_array_rng(struct expr_t **ax1, struct expr_t **ax2)
  rngerr = FALSE;
  if (!__rd_decl_rng(&x1, &x2) || x1 == NULL || x2 == NULL)
   {
-   if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
-   if (__toktyp == SEMI) return(TRUE);
+   if (!is_hdr_form)
+    {
+     if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
+     if (__toktyp == SEMI) return(TRUE);
+    }
+   else
+    {
+     if (!__vskipto3_any(COMMA, RPAR, RSB)) return(FALSE); 
+     if (__toktyp != RSB) return(TRUE);
+    }
    rngerr = TRUE;
    __get_vtok();
    goto done;
@@ -2724,7 +3197,6 @@ done:
  *ax2 = x2;
  return(TRUE);
 }
-
      
 /*
  * routine to check and declare array param 
@@ -2733,7 +3205,8 @@ done:
  * know cur mod set when this is called
  */
 static struct net_t *chkadd_array_param(char *paramnam, int pwtyp, int pwid,
- struct expr_t *x1, struct expr_t *x2, struct expr_t *ax1, struct expr_t *ax2)
+ int psign, struct expr_t *x1, struct expr_t *x2, struct expr_t *ax1,
+  struct expr_t *ax2)
 {
  register int ai;
  word *wp;
@@ -2823,8 +3296,12 @@ static struct net_t *chkadd_array_param(char *paramnam, int pwtyp, int pwid,
    np->ntyp = pwtyp;
    /* if declared always know width */
    np->nwid = pwid;
-   /* FIXME ??? - need to implement new signed/unsigned keywords */
    if (np->ntyp == N_INT) np->n_signed = TRUE;
+   else
+    {
+     if (psign && np->ntyp != N_TIME) np->n_signed = TRUE; 
+    }
+
    /* if some but not all strings needs warning */
    for (some_str = FALSE, all_str = TRUE, ai = awid - 1; ai >= 0; ai--)
     {
@@ -2941,7 +3418,14 @@ static void cnvt_to_pdecl(struct xstk_t *xsp, struct expr_t *xrhs,
       "parameter %s in %s assign required width change from %d to %d",
       np->nsym->synam, innam, xsp->xslen, np->nwid); 
      /* key always convert to declared */
-     __sizchgxs(xsp, np->nwid);
+
+     /* SJM 09/29/03 - change to handle sign extension and separate types */
+     if (xsp->xslen > np->nwid) __narrow_sizchg(xsp, np->nwid);
+     else if (xsp->xslen < np->nwid)
+      {
+       if (xrhs->has_sign) __sgn_xtnd_widen(xsp, np->nwid);
+       else __sizchg_widen(xsp, np->nwid);
+      }
     }
   }
 }
@@ -3553,7 +4037,7 @@ extern void __init_stmt(struct st_t *stp, int styp)
  stp->strb_seen_now = FALSE;
  stp->lpend_goto = FALSE;
  stp->dctrl_goto = FALSE;
- stp->st_beg_codp = NULL;
+ stp->st_schd_ent = FALSE;
  /* assume if non blocking need the sched tev table */
  stp->stnxt = NULL;
 }
@@ -3570,6 +4054,7 @@ extern struct delctrl_t *__alloc_dctrl(void)
  dctp->dc_iact = FALSE;
  dctp->dc_delrep = DT_CMPLST;
  dctp->dc_nblking = FALSE;
+ dctp->implicit_evxlst = FALSE;
  dctp->dc_du.pdels = NULL;
  dctp->repcntx = NULL;
  dctp->dceschd_tevs = NULL;
@@ -3740,6 +4225,7 @@ static int rd_task(void)
 {
  struct st_t *stp;
 
+ __lofp_port_decls = FALSE;
  __get_vtok();
  if (__toktyp != ID)
   {
@@ -3755,6 +4241,19 @@ sync_to_endtask:
  if (!__bld_tsk(__token, TASK)) goto sync_to_endtask;
   
  __get_vtok();
+ if (__toktyp == LPAR)
+  {
+   /* if couldn't sync to end of list of tf decls list ); */
+   if (!rd_tf_list_of_ports_decl(__cur_tsk, "task"))
+    {
+     switch ((byte) __syncto_class) {
+      case SYNC_FLEVEL: case SYNC_MODLEVEL: return(FALSE);
+      case SYNC_STMT: __get_vtok(); goto more_stmts;
+      default: __case_terr(__FILE__, __LINE__);
+     }
+    }
+   if (__toktyp == RPAR) __get_vtok();
+  }
  if (__toktyp != SEMI)
   {
    __pv_ferr(1131,
@@ -3911,6 +4410,7 @@ static void init_task(struct task_t *tskp)
  tskp->thas_outs = FALSE;
  tskp->thas_tskcall = FALSE;
  tskp->fhas_fcall = FALSE;
+ tskp->tf_lofp_decl = FALSE;
  tskp->tsksymtab = NULL;
  tskp->st_namblkin = NULL;
  tskp->tskpins = NULL;
@@ -3921,6 +4421,202 @@ static void init_task(struct task_t *tskp)
  tskp->tskst = NULL;
  tskp->tsknxt = NULL;
  tskp->tthrds = NULL;
+}
+
+/*
+ * ROUTINES TO READ AND ADD LIST OF PORTS STYLE TASK/FUNC HEADER PORT DECLS 
+ */
+
+/*
+ * read list of task/func header port declarations
+ * new alternative ANSII style port header decl form added to 2001 LRM
+ *
+ * initial ( read and reads ending );
+ * think now () form legal
+ *
+ * if return T, even if error parsing can continue in module
+ * on error must sync to end of tf list of decls ')' - if not returns F
+ * and sets sync class to right place to continue in t/f
+ * may also sync to ; on error with T return
+ */
+static int rd_tf_list_of_ports_decl(struct task_t *tskp, char *tftypnam)
+{
+ int first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
+ struct sy_t *syp;
+ struct net_t *np;
+ struct expr_t *x1, *x2, *ox1, *ox2;
+ struct task_pin_t *tpp;
+ char s1[RECLEN];
+
+ /* even if syntax error, T once a port type keyword appears in hdr */
+ tskp->tf_lofp_decl = TRUE;
+ __lofp_port_decls = TRUE;
+
+ __get_vtok();
+ for (;;)
+  {
+   if (__toktyp == RPAR)
+    {
+     __pv_fwarn(3136,
+      "%s %s header list of ports decl form - but list of ports empty",
+      tftypnam, tskp->tsksyp->synam);
+     /* assuming this forces list of ports header form */ 
+     return(TRUE);
+    }
+
+   if (__toktyp != INPUT && __toktyp != OUTPUT && __toktyp != INOUT)
+    {
+     __pv_ferr(3422, "%s list of ports form port direction expected - %s read",
+      tftypnam, __prt_kywrd_vtok());
+     if (!__vskipto_lofp_end()) return(FALSE); 
+     return(TRUE);
+    }
+
+   /* attribute collected by scanner - but need to save so associates with */
+   /* right port */
+   if (__attr_prefix)
+    {
+     __wrk_attr.attr_tok = __toktyp;
+     __wrk_attr.attr_seen = TRUE;
+     /* for now this is unparsed entire attr. string */
+     __wrk_attr.attrnam = __pv_stralloc(__attrwrkstr);
+     __wrk_attr.attr_fnind = __attr_fnam_ind;
+     __wrk_attr.attrlin_cnt = __attr_lin_cnt;
+    }
+   else __wrk_attr.attr_seen = FALSE;
+
+   attr_ttyp = __toktyp; 
+   if (__toktyp == INPUT) ptyp = IO_IN;
+   else if (__toktyp == OUTPUT) ptyp = IO_OUT;
+   else if (__toktyp == INOUT) ptyp = IO_BID;
+   else __case_terr(__FILE__, __LINE__); 
+
+   __get_vtok();
+
+   /* defaults to reg if net type omitted - can be var/reg type */
+   if ((wtyp = __fr_wtnam(__toktyp)) != -1) __get_vtok();
+   else wtyp = N_REG;
+
+   if (wtyp == N_INT || wtyp == N_REAL) decl_signed = TRUE;
+   else decl_signed = FALSE;
+   /* vectored or scalared keywords never appear in port decls */
+
+   if (__toktyp == SIGNED)
+    {
+     decl_signed = TRUE;
+     if (wtyp == N_TIME || wtyp == N_INT || wtyp == N_REAL
+      || wtyp == N_EVENT) 
+      {
+       __pv_ferr(3423,
+        "signed keyword illegal when task or function variable has type %s",
+        __to_wtnam2(s1, wtyp));
+      }
+     __get_vtok();
+    }
+
+   /* even if error if 1 past ending ] continue */
+   if (!__rd_decl_rng(&ox1, &ox2))
+    {
+     /* bad decl - but if sync to new I/O port direction, caller will cont */
+     if (!__vskipto_lofp_end()) return(FALSE); 
+     if (__toktyp == RPAR) return(TRUE); 
+     /* semi read */
+     return(TRUE);
+    }
+
+   /* use local has attr flag so can turn glb seen off before return */
+   if (__wrk_attr.attr_seen)
+    { has_attr = TRUE; __wrk_attr.attr_seen = FALSE; }
+   else has_attr = FALSE;
+
+   x1 = x2 = NULL;
+   for (first_time = TRUE;;)
+    {
+     if (__toktyp != ID)
+      {
+       __pv_ferr(992,
+        "%s header list of port form %s port name expected - %s read",
+        tftypnam, __to_ptnam(s1, ptyp), __prt_kywrd_vtok());
+
+       if (__vskipto2_lofp_end())
+        {
+         if (__toktyp == SEMI) return(TRUE);
+         if (__toktyp == RPAR) { __get_vtok(); return(TRUE); }
+         /* only other possibility is the port name separating comma */
+         continue;
+        }
+       /* can't recover (resync) from error - synced to module item */
+       return(FALSE);
+      }
+
+     /* SJM 05/25/04 - must just search for redeclare in tf sym tab */
+     if ((syp = __get_sym(__token, __venviron[__top_sti])) != NULL)
+      {
+       __pv_ferr(3418,
+        "%s header list of ports form %s port name %s redeclared", 
+        tftypnam, __to_ptnam(s1, ptyp), __token);
+       goto nxt_port;
+      }
+
+     if (first_time) { x1 = ox1; x2 = ox2; first_time = FALSE; } 
+     else
+      {
+       if (x1 == NULL) x1 = x2 = NULL;
+       else { x1 = __copy_expr(ox1); x2 = __copy_expr(ox2); }
+      }
+
+     /* first declare the port's wire/reg */
+     if ((np = decl_taskvar(wtyp, x1, x2)) == NULL) goto nxt_port;
+
+     /* if previously used will be treated as reg - must set to compatible */
+     /* wire type if declared as time or int */
+     syp = np->nsym;
+
+     /* if saw an (* *) attribute for module item token, seen on */
+     if (has_attr)
+      {
+       /* this add to net's attr list on end if also net decl first */
+       add_net_attr(np, attr_ttyp);
+      }
+
+     /* SJM 10/02/03 - signed can be turned on either in port or wire decl */ 
+     if (decl_signed) np->n_signed = TRUE;
+     np->iotyp = ptyp;
+
+     /* alloc port and add to end of list - order here crucial */
+     tpp = alloc_tskpin();
+     tpp->tpsy = syp;
+     tpp->trtyp = ptyp;
+
+     /* although with hdr list of ports form list known, for other form */
+     /* don't know task/func ports until end of task/func */ 
+     if (__end_tpp == NULL) __cur_tsk->tskpins = tpp;
+     else __end_tpp->tpnxt = tpp;
+     __end_tpp = tpp;
+
+nxt_port:
+     __get_vtok();
+     if (__toktyp == RPAR) return(TRUE);
+
+     if (__toktyp != COMMA)
+      {
+       __pv_ferr(995,
+        "%s list of ports form declaration list comma or right paren expected - %s read",
+        tftypnam, __prt_vtok());
+       /* try to resync */
+       if (!__vskipto_lofp_end()) return(FALSE); 
+       if (__toktyp == COMMA) goto nxt_var;
+       /* misplaced semi or sync to rpar */
+       return(TRUE);
+      }
+nxt_var:
+     __get_vtok();
+     if (__toktyp == INPUT || __toktyp == OUTPUT || __toktyp == INOUT)  
+      break;
+    }
+  }
+ __misc_terr(__FILE__, __LINE__);
+ return(TRUE);
 }
 
 /*
@@ -3943,7 +4639,7 @@ extern int __rd_tfdecls(char *tftypnam)
     case PARAMETER:
      /* this add to symbol table and list */
      /* notice for these, if error but synced to ;, still returns T */
-     if (!__rd_paramdecl()) 
+     if (!rd_paramdecl(FALSE)) 
       {
 tfdecl_sync:
        switch ((byte) __syncto_class) {
@@ -3968,15 +4664,14 @@ decl_port:
      if (!rd_taskvardecl(pntyp, TRUE, tftypnam)) goto tfdecl_sync;
      break;
     case REG:
-      wtyp = N_REG;
+     wtyp = N_REG;
 do_tfwdecl:
      if (!rd_taskvardecl(wtyp, FALSE, tftypnam)) goto tfdecl_sync;
      break;
     case TIME: wtyp = N_TIME; goto do_tfwdecl;
     case INTEGER: wtyp = N_INT; goto do_tfwdecl;
-    case REAL: case REALTIME: wtyp = N_REAL; goto do_tfwdecl;
+    case REAL: wtyp = N_REAL; goto do_tfwdecl;
     case EVENT:
-     /* this can be the same since events just put in symbol table */
      if (!rd_eventdecl()) goto tfdecl_sync;
      break;
     default:
@@ -3993,10 +4688,9 @@ decl_end:
  * read and process a task reg/time/int/real declaration
  * know reg type read and reads final semi
  */
-static int rd_taskvardecl(unsigned regwtyp, int is_io,
- char *tftypnam)
+static int rd_taskvardecl(unsigned regwtyp, int is_io, char *tftypnam)
 {
- int intsigned, first_time, ttyp, has_attr;
+ int decl_signed, first_time, ttyp, has_attr;
  unsigned wtyp;
  struct sy_t *syp;
  struct net_t *np;
@@ -4006,8 +4700,23 @@ static int rd_taskvardecl(unsigned regwtyp, int is_io,
 
  ttyp = __toktyp;
  if (is_io) wtyp = N_REG; else wtyp = regwtyp;
- intsigned = FALSE;
+ /* SJM 10/02/03 - need sign bit for reals even though always signed */
+ if (wtyp == N_INT || wtyp == N_REAL) decl_signed = TRUE;
+ else decl_signed = FALSE;
  __get_vtok();
+
+ if (__toktyp == SIGNED)
+  {
+   decl_signed = TRUE;
+   if (wtyp == N_TIME || wtyp == N_INT || wtyp == N_REAL || wtyp == N_EVENT) 
+    {
+     __pv_ferr(3423,
+      "signed keyword illegal when task or function variable type %s",
+      __to_wtnam2(s1, wtyp));
+    }
+   __get_vtok();
+  }
+
  if (!__rd_decl_rng(&ox1, &ox2))
   {
    if (!__vskipto2_any(SEMI, RSB)) return(FALSE); 
@@ -4036,8 +4745,37 @@ static int rd_taskvardecl(unsigned regwtyp, int is_io,
 bad_end:
      return(__vskipto_any(SEMI));
     }
+
+   /* any port decl illegal - new ones or re-decls */
+   if (__lofp_port_decls)
+    {
+     if (is_io)
+      {
+       __pv_ferr(3421,
+       "port declaration of \"%s\" illegal - list of ports declaration form used",
+       __prt_kywrd_vtok());
+       /* if I/O decl, know read entire decl, i.e. can't be array */
+       goto nxt_var; 
+      }
+     else
+      {
+       if (((syp = __get_sym_env(__token)) != NULL) && syp->sytyp == SYM_N
+        && syp->el.enp->iotyp != NON_IO)
+        {
+         __pv_ferr(3421,
+          "%s declaration of port \"%s\" illegal - %s uses list of ports declarations form",
+          __to_wtnam2(s1, wtyp), __prt_kywrd_vtok(), tftypnam);
+
+         /* here may need to skip the possible array decl */
+         if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
+         if (__toktyp == SEMI) return(TRUE);
+         goto nxt_var;
+        }
+      }
+    }
+
    /* each time through need to call this to make copy */
-   if (ox1 == NULL) set_reg_widths(wtyp, &x1, &x2, &intsigned);
+   if (ox1 == NULL) set_reg_widths(wtyp, &x1, &x2);
    else if (first_time) { x1 = ox1; x2 = ox2; first_time = FALSE; }
    else { x1 = __copy_expr(ox1); x2 = __copy_expr(ox2); }
 
@@ -4080,7 +4818,7 @@ bad_end:
     }
    if (xa1 != NULL)
     { np->n_isarr = TRUE; np->nu.ct->ax1 = xa1; np->nu.ct->ax2 = xa2; }
-   if (intsigned) np->n_signed = TRUE; else np->n_signed = FALSE;
+   if (decl_signed) np->n_signed = TRUE;
 
    if (is_io)
     {
@@ -4219,13 +4957,21 @@ static struct task_pin_t *alloc_tskpin(void)
  */
 static int rd_func(void)
 {
- int frwtyp;
+ int frwtyp, decl_signed;
  word rhigh;
  struct st_t *stp;
  struct expr_t *x1, *x2, *dx1, *dx2;
 
+ __lofp_port_decls = FALSE;
  dx1 = dx2 = NULL;
+ decl_signed = FALSE;
  __get_vtok();
+ if (__toktyp == SIGNED)
+  {
+   decl_signed = TRUE;
+   __get_vtok();
+  }
+
  if (__toktyp == LSB)
   {
    if (!__rd_decl_rng(&dx1, &dx2))
@@ -4284,9 +5030,31 @@ no_sym:
    return(FALSE);
   }
  if (!__bld_tsk(__token, FUNCTION)) goto no_sym;
- add_funcretdecl(__token, (unsigned) frwtyp, x1, x2);
+ 
+ if (decl_signed && (frwtyp == N_TIME || frwtyp == N_INT || frwtyp == N_REAL)) 
+  {
+   __pv_ferr(3423,
+    "signed keyword illegal when function declaration return type %s",
+    __to_wtnam2(__xs, frwtyp));
+  }
+ if (frwtyp == N_INT || frwtyp == N_REAL) decl_signed = TRUE;
+ add_funcretdecl(__token, (unsigned) frwtyp, x1, x2, decl_signed);
 
  __get_vtok();
+ if (__toktyp == LPAR)
+  {
+   /* if couldn't sync to end of list of tf decls list ); */
+   if (!rd_tf_list_of_ports_decl(__cur_tsk, "function"))
+    {
+     switch ((byte) __syncto_class) {
+      case SYNC_FLEVEL: case SYNC_MODLEVEL: return(FALSE);
+      case SYNC_STMT: __get_vtok(); goto more_stmts;
+      default: __case_terr(__FILE__, __LINE__);
+     }
+    }
+   if (__toktyp == RPAR) __get_vtok();
+  }
+
  if (__toktyp != SEMI)
   {
    __pv_ferr(1153,
@@ -4345,15 +5113,11 @@ more_stmts:
  * add implicit first output port return value decl. to task d.s.
  */
 static void add_funcretdecl(char *rvnam, unsigned frwtyp,
- struct expr_t *x1, struct expr_t *x2)
+ struct expr_t *x1, struct expr_t *x2, int decl_signed)
 {
- int intsigned;
  struct sy_t *syp;
  struct net_t *np;
  struct task_pin_t *tpp;
-
- if (frwtyp == N_INT || frwtyp == N_REAL) intsigned = TRUE;
- else intsigned = FALSE;
 
  /* notice symbol already in one up task decl. also name of port */
  syp = __decl_sym(rvnam, __venviron[__top_sti]);
@@ -4373,7 +5137,7 @@ static void add_funcretdecl(char *rvnam, unsigned frwtyp,
  np->nu.ct->n_rngknown = TRUE;
  np->nu.ct->n_iotypknown = TRUE;
  np->nu.ct->n_wirtypknown = TRUE;
- if (intsigned) np->n_signed = TRUE; else np->n_signed = FALSE;
+ if (decl_signed) np->n_signed = TRUE; else np->n_signed = FALSE;
 
  syp->sydecl = TRUE;
  syp->syfnam_ind = __cur_fnam_ind;
@@ -4515,7 +5279,6 @@ rd_parms:
         "instance/gate \"%s\" type \"%s\" connection list expected - %s read",
   	s1, typnam, __prt_vtok());
         goto bad_end;     
-
       }
     }
    __get_vtok();
@@ -4536,6 +5299,9 @@ no_inam:
        __add_syp_to_undefs(syp);
       }
      else syp = tnp->ndp;
+     /* AIV 06/01/05 - mark all as not in config - config processing */ 
+     /* will mark as true later */ 
+     syp->cfg_needed = FALSE;
      /* instance must be named, error caught only after lib. processed */
      /* using inst. num that is unused until design wide checking */
      if (has_iname) cp->c_named = TRUE;

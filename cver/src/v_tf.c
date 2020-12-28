@@ -278,6 +278,7 @@ extern void __init_tfdrv(struct tfarg_t *, struct expr_t *, struct mod_t *);
 extern int __trim1_0val(word *, int);
 extern void __process_pli_dynamic_libs(struct loadpli_t *);
 extern void __dcelst_off(struct dceauxlst_t *);
+extern double __cnvt_signed64_to_real(word *, int);
 
 extern void __tr_msg(char *, ...);
 extern void __crit_msg(char *, ...);
@@ -1763,6 +1764,7 @@ extern double tf_getrealp(int pnum)
  word *wp;
  double d1;
  word64 t1;
+ sword64 st1;
  struct expr_t *xp;
  struct xstk_t *xsp;
 
@@ -1798,16 +1800,51 @@ extern double tf_getrealp(int pnum)
  if (xp->has_sign) { i1 = (int) xsp->ap[0]; d1 = (double) i1; goto done; }   
 
 do_non_real:
- /* here value must be unsigned because only 32 bits can be signed */
+ /* SJM 05/10/04 - must handle conversion of signed 33-64 to signed double */
  if (xsp->xslen > WBITS)
   {
-   t1 = ((word64) xsp->ap[0]) | (((word64) xsp->ap[1]) << 32); 
-   if (!__v64_to_real(&d1, &t1)) d1 = 0.0;
+   if (xp->has_sign) d1 = __cnvt_signed64_to_real(xsp->ap, xsp->xslen);
+   else
+    {
+     t1 = ((word64) xsp->ap[0]) | (((word64) xsp->ap[1]) << 32); 
+     if (!__v64_to_real(&d1, &t1)) d1 = 0.0;
+    }
   }
  else d1 = (double) xsp->ap[0];
 
 done:
  __pop_xstk();
+ return(d1);
+}
+
+/*
+ * convert signed 33 to 64 bit to real - tricky if narrow than 64
+ */
+extern double __cnvt_signed64_to_real(word *ap, int blen)
+{
+ word64 t1;
+ sword64 st1;
+ double d1;
+ 
+ /* DBG remove -- */
+ if (blen <= WBITS) __misc_terr(__FILE__, __LINE__);
+ /* -- */
+
+ /* t1 is just the unsigned bit pattern */
+ t1 = ((word64) ap[0]) | (((word64) ap[1]) << 32); 
+ if (__is_lnegative(ap, blen))
+  {
+   t1 &= (((word64) ~(__masktab[ubits_(blen)])) << 32);
+   st1 = (sword64) t1;
+   st1 = -st1;
+   t1 = (word64) st1;
+   if (!__v64_to_real(&d1, &t1)) d1 = 0.0;
+   else d1 = -d1;
+  }
+ else
+  {
+   if (!__v64_to_real(&d1, &t1)) d1 = 0.0;
+  }
  return(d1);
 }
 
@@ -1874,7 +1911,11 @@ extern int tf_putp(int pnum, int value)
    if (!__tfrec->tf_func) return(1);
    if (__tfrec->fretreal) __cnv_stk_fromreg_toreal(xsp, TRUE);
    /* contiguous bytes of stack have value after possible conversion */
-   else if (xsp->xslen != __tfrec->fretsiz) __sizchgxs(xsp, __tfrec->fretsiz);
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+   else if (xsp->xslen != __tfrec->fretsiz)
+    {
+     __sizchgxs(xsp, __tfrec->fretsiz);
+    }
    wp = tfap->arg.awp;
    memcpy(wp, xsp->ap, 2*wlen_(__tfrec->fretsiz)*WRDBYTES);
    __pop_xstk();
@@ -1889,6 +1930,7 @@ extern int tf_putp(int pnum, int value)
 
  /* assigned to param is real must convert before assign */ 
  if (xp->is_real) __cnv_stk_fromreg_toreal(xsp, TRUE);
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
  else if (xsp->xslen != xp->szu.xclen) __sizchgxs(xsp, xp->szu.xclen);
  /* ok to assign (by continuous) to wire */
  exec_tfarg_assign(tfap, xp, xsp->ap, xsp->bp);
@@ -1964,6 +2006,7 @@ extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
    xsp->ap[1] = (word) highvalue; 
    xsp->bp[0] = xsp->bp[1] = 0L;
    /* contiguous bytes of stack have value after possible conversion */
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
    if (xsp->xslen != __tfrec->fretsiz) __sizchgxs(xsp, __tfrec->fretsiz);
    memcpy(tfap->arg.awp, xsp->ap, 2*wlen_(__tfrec->fretsiz)*WRDBYTES);
    __pop_xstk();
@@ -1987,6 +2030,7 @@ extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
    xsp->ap[0] = (word) lowvalue;
    xsp->ap[1] = (word) highvalue; 
    xsp->bp[0] = xsp->bp[1] = 0L;
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
    if (xsp->xslen != xp->szu.xclen) __sizchgxs(xsp, xp->szu.xclen);
   }
  exec_tfarg_assign(tfap, xp, xsp->ap, xsp->bp);
@@ -2100,6 +2144,7 @@ static struct xstk_t *tf_pushconvfromreal(double d1, int destsiz)
    xsp->ap[0] = (word) i;
    xsp->bp[0] = 0L;
   } 
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
  if (xsp->xslen != destsiz) __sizchgxs(xsp, destsiz);
  return(xsp);
 } 
@@ -2455,15 +2500,14 @@ extern struct xstk_t *__putdstr_to_val(char *s, int blen, int lhslen,
 
  /* numeric case caller's passed length is token length */
  __itoklen = blen; 
- /* can never be signed */
- __itok_isint = FALSE;
  /* this cannot fail but to get here know string good - value in ac/bc wr k*/ 
-  
  __to_dhboval(__itokbase, TRUE);
  push_xstk_(xsp, __itoklen);
  cp_walign_(xsp->ap, __acwrk, __itoklen);
  cp_walign_(xsp->bp, __bcwrk, __itoklen);
  /* convert in preparation for storing in event for maybe later assign */
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+ /* SJM 05/10/04 FIXME ??? ### but here could use format to determine */ 
  if (xsp->xslen != lhslen) __sizchgxs(xsp, lhslen);
  return(xsp);
 }
@@ -3906,7 +3950,7 @@ extern int tf_dofinish(void)
  */
 extern void __pli_dofinish(int diag_level, char *caller)
 {
- int rv;
+ int rv; 
 
  /* need to call PLI end of sim routines before finishing */
  if (__tfrec_hdr != NULL) __call_misctfs_finish();
@@ -4326,6 +4370,26 @@ extern void io_mcdprintf(int mcd, char *format, ...)
  register int i;
  va_list va, va2;
 
+ /* SJM 09/09/03 - fd case easy because only one stream to write to */
+ if ((mcd & FIO_MSB) == FIO_MSB)
+  {
+   int fd;
+
+   fd = (int) (mcd & ~FIO_MSB);
+   /* if fd does not correspond to open file, just set error indicator */
+   if (__fio_fdtab[fd] == NULL)
+    {
+     __sgfwarn(651,
+      "in tf_ pli file not open for descriptor number %d ", fd);
+     errno = EBADF;
+     return;
+    }
+   /* SJM 10/13/99 - ansii std says varargs not usable after vprintf */
+   va_start(va, format);
+   vfprintf(__fio_fdtab[fd]->fd_s, format, va);
+   va_end(va);
+   return;
+  }
 
  /* SJM 03/26/00 - mcd 1 now both stdout and log if open */
  if ((mcd & 1) != 0)

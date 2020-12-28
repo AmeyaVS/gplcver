@@ -59,6 +59,17 @@
 #define STN_GETPATTERN 20
 #define STN_Q_FULL 23
 
+/* AIV 09/08/03 - new P1364 2001 fileio sys funcs */
+#define STN_FGETC 24
+#define STN_UNGETC 25
+#define STN_FGETS 26
+#define STN_FTELL 27
+#define STN_REWIND 28
+#define STN_FSEEK 29
+#define STN_FERROR 30 
+#define STN_FREAD 31
+#define STN_FSCANF 32 
+#define STN_SSCANF 33
 
 /* system task id numbers */
 
@@ -160,6 +171,10 @@
 /* sdf annotate system task */
 #define STN_SDF_ANNOTATE 175
 
+/* new P1364 2001 special signed/unsigned conversion system functions */
+#define STN_SIGNED 176
+#define STN_UNSIGNED 177
+
 /* graphical output tasks */
 #define STN_GRREMOTE 180
 #define STN_PSWAVES 181
@@ -185,7 +200,8 @@
 #define STN_FLUSHLOG 202
 #define STN_SCANPLUSARGS 203
 
-/* new transcendental function extension but works in digital */
+/* new ams transcendental function extension but works in digital */
+/* SJM 10/01/03 - leaving in for now */
 #define STN_COS 217
 #define STN_SIN 218
 #define STN_TAN 219
@@ -220,4 +236,11 @@
 #define STN_HSIGN 246
 #define STN_HYPOT 247
 
+/* AIV 09/08/03 - new P1364 2001 fileio sys tasks */
+#define STN_FFLUSH 248
+#define STN_SWRITE 249
+#define STN_SWRITEB 250
+#define STN_SWRITEH 251
+#define STN_SWRITEO 252
+#define STN_SFORMAT 253
 

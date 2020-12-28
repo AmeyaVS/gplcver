@@ -1,0 +1,11 @@
+To run the config files:
+
+ cver +config [config.file]
+
+to use config1.map
+
+ cver +config config1.map
+
+with library verbose option
+
+ cver +config config1.map +libverbose

@@ -58,7 +58,6 @@ static void bld_ylb_dirfiles(struct vylib_t *);
 static int srch_yfiles(char *, struct mydir_t *, unsigned);
 static int fn_cmp(const void *, const void *);
 static void rd_vlibfil(struct undef_t *);
-static int open_lbfil(int);
 static void rescan_process_lib(void);
 static void rescan_resolve_from_ydir(struct vylib_t *, struct undef_t *);
 static void free_tnblks(void);
@@ -250,8 +249,8 @@ extern void __get_vtok(void);
 extern void __process_cdir(void);
 extern int __vskipto_modend(int);
 extern int __vskipto2_modend(int, int);
-extern int __rd_moddef(void);
-extern int __rd_udpdef(void);
+extern int __rd_moddef(struct symtab_t *, int);
+extern int __rd_udpdef(struct symtab_t *);
 extern void __my_rewind(FILE *);
 extern void __my_fclose(FILE *);
 extern FILE *__tilde_fopen(char *, char *);
@@ -287,6 +286,7 @@ extern void __pop_wrkitstk(void);
 extern struct mod_t *__get_mast_mdp(struct mod_t *);
 extern void __set_drvr_bits(void);
 extern void __chk_chg_port_dir(int);
+extern int __open_lbfil(int);
 
 
 extern void __cv_msg(char *, ...);
@@ -324,7 +324,8 @@ extern int __fixup_nl(void)
  register struct mod_t *mdp;
 
  /* find and resolve unsatisfied module/udp refs - process lib. in here */
- if (__undef_mods != 0)
+ /* SJM 05/19/04 - following new P1364 LRM, config can't be in src */
+ if (__map_files_hd == NULL && __undef_mods != 0)
   {
    resolve_undef_mods();
    if (__undef_mods != 0)
@@ -335,7 +336,6 @@ extern int __fixup_nl(void)
      return(FALSE);
     }
   }
-
 
  /* at this point all module and task symbol tables frozen so can free */
  /* the tree nodes (can be large) and change formats */
@@ -352,10 +352,14 @@ extern int __fixup_nl(void)
  /* check module ports and connect inst ports (for iarrs conns unexpanded) */
  fix_port_conns();
 
+ /* AIV 06/01/04 FIXME ### ??? bug if config used and free these blocks */
  /* now finished with cell pins and cells */
- free_cpblks();
- /* this also frees cell pins (optional explicit port name) */
- free_cppblks();
+ if (__map_files_hd != NULL)
+  {
+   free_cpblks();
+   /* this also frees cell pins (optional explicit port name) */
+   free_cppblks();
+  }
 
  count_flat_insts();
 
@@ -455,7 +459,6 @@ extern int __fixup_nl(void)
  __set_drvr_bits();
  __chk_chg_port_dir(__chg_portdir);
 
-
  /* at this point all wire widths known */
 
  /* if no arrays of gate or instances in design, can set strengths now */ 
@@ -488,7 +491,6 @@ extern int __fixup_nl(void)
  if (__pv_err_cnt != 0) return(TRUE);
 
  if (!__quiet_msgs) __prt_top_mods();
- /* -- v_fx3.c contains statement checking part of chk_mod */
 
  /* check mainly element usage semantics */
  /* expression node widths and constant optimizations here */
@@ -507,6 +509,8 @@ extern int __fixup_nl(void)
    __free_icptab();
    __pop_wrkitstk();
   }
+
+ /* -- specify fixup (pass 2) routines in v fx3 but also expr checking */
 
  /* check and fix up expressions from specify section */
  /* also emit all unused parameter (both types warnings */
@@ -647,7 +651,7 @@ static void process_lib(void)
      sav_last_lbf = __last_lbf;
      __last_lbf = vyp->vyfnam_ind;
      /* know this will leave undef_mods with correct value */
-     if (open_lbfil(FALSE)) rd_vlibfil(NULL);
+     if (__open_lbfil(FALSE)) rd_vlibfil(NULL);
      __last_lbf = sav_last_lbf;
      if (__undef_mods <= 0) return;
     }
@@ -738,7 +742,7 @@ static void resolve_from_ydir(struct vylib_t *vyp)
    __last_lbf = vyp->yfiles[dfi].ydirfnam_ind;
    got_err = FALSE;
 
-   if (open_lbfil(FALSE)) rd_vlibfil(NULL); else got_err = TRUE;
+   if (__open_lbfil(FALSE)) rd_vlibfil(NULL); else got_err = TRUE;
    __last_lbf = sav_last_lbf;
    if (got_err) continue;
    /* if scanned because of a module and still unresolved after scanning */
@@ -966,7 +970,7 @@ try_add_unref:
      if (__lib_verbose)
       __cv_msg("  Compiling library module (%s).\n", __token);
      /* know error here will cause skipping to file level thing */
-     if (!__rd_moddef()) goto nxt_tok;
+     if (!__rd_moddef(NULL, FALSE)) goto nxt_tok;
      /* when reading source this was set only if in cell define region */
      /* now turn on (maybe again) if all library modules are cells */
      /* dummy itstk empty here but if good module read mark as cell */
@@ -1014,7 +1018,7 @@ try_add_unref:
      /* notice name token read */
      if (__lib_verbose)
       __cv_msg("  Compiling library udp primitive (%s).\n", __token);
-     if (!__rd_udpdef()) goto nxt_tok;
+     if (!__rd_udpdef(NULL)) goto nxt_tok;
      /* if all modules resolved, nothing more to do */
      __cur_passres++;
      if (__undef_mods <= 0 || __lib_rescan) return;
@@ -1093,7 +1097,7 @@ chk_ifdef:
  * in fils of last lbf must be filled with file name
  * since know last_lbf > last_inf - on EOF get_vtok will resturn to caller
  */
-static int open_lbfil(int is_dir)
+extern int __open_lbfil(int is_dir)
 {
  /* if not first time, close previous file */
  if (__visp->vi_s != NULL) { __my_fclose(__visp->vi_s); __visp->vi_s = NULL; }
@@ -1159,7 +1163,7 @@ static void rescan_process_lib(void)
  passi = 1; 
  for (undefp = __undefhd; undefp != NULL; passi++)
   {
-   /* AIV 10/07/03 - undefhd may be removed and then new undefhd added as */
+   /* AIV 10/10/03 - undefhd may be removed and then new undefhd added as */
    /* unresolved so must save and replace if changed */
    sav_undefhd = __undefhd;
 
@@ -1206,7 +1210,7 @@ static void rescan_process_lib(void)
      sav_last_lbf = __last_lbf;
      __last_lbf = vyp->vyfnam_ind;
      /* know this will leave undef_mods with correct value */
-     if (open_lbfil(FALSE)) rd_vlibfil(undefp);
+     if (__open_lbfil(FALSE)) rd_vlibfil(undefp);
      __last_lbf = sav_last_lbf;
      if (__cur_passres == 0) continue;
      /* DBG remove -- */
@@ -1301,7 +1305,7 @@ static void rescan_resolve_from_ydir(struct vylib_t *vyp,
    __last_lbf = vyp->yfiles[dfi].ydirfnam_ind;
    got_err = FALSE;
 
-   if (open_lbfil(FALSE)) rd_vlibfil(undefp); else got_err = TRUE;
+   if (__open_lbfil(FALSE)) rd_vlibfil(undefp); else got_err = TRUE;
    __last_lbf = sav_last_lbf;
    if (got_err) continue;
    /* if scanned because of a module and still unresolved after scanning */
@@ -3021,12 +3025,8 @@ static void do_giarr_splitting(void)
 
        /* because static src inst loc. has pnd params, if any gate must */
        /* try to set any gate range params */
-       /* AIV 07/12/04 - old checking and was wrong and mark gia rng checks */
-       if (!imdp->mgiarngdone)
-        {
-         mark_gia_rng_params(imdp);
-         imdp->mgiarngdone = TRUE;
-        }
+       if (!imdp->mgiarngdone && imdp->mgarr != NULL)
+        { mark_gia_rng_params(imdp); imdp->mgiarngdone = TRUE; }
 
        /* eliminate if instance not arrayed at this src loc. */ 
        if (__inst_mod->miarr == NULL || __inst_mod->miarr[ii] == NULL)
@@ -3192,8 +3192,8 @@ static void bld_top_virtinsts(void)
    /* descend to count only from top level modules */
    if (mdp->minstnum != 0) continue;
 
-
-   if (mdp->m_iscell)
+   /* top modules will have is cell bit on if configs used */
+   if (mdp->m_iscell && __map_files_hd == NULL)
     {
      __gfwarn(597, mdp->msym->syfnam_ind, mdp->msym->sylin_cnt,
       "top level module %s in `celldefine region but cannot be a cell",
@@ -3208,7 +3208,6 @@ static void bld_top_virtinsts(void)
  for (tpii = -1, mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
    if (mdp->minstnum != 0) continue;
-
    /* need 1 itree inst for each top level module because itp->itip */
    /* accessed during simulation */
    ip = (struct inst_t *) __my_malloc(sizeof(struct inst_t));
@@ -7465,7 +7464,7 @@ static void bld2_flat_itree(struct itree_t *new_itp)
    /* assign instance number */
    itp->itinum = imdp->lastinum;
    imdp->lastinum += 1;
-   /* DBG remove --- 
+   /* DBG remove ---
    if (__debug_flg)
     {
      __dbg_msg("==> building flat itree for instance %s of type %s\n",

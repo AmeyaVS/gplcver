@@ -100,6 +100,10 @@ word *__wsupptab;      /* tab (1 bit/msg) for warn and iact suppress */
 char *__blnkline;      /* work blank line */
 char __pv_homedir[RECLEN]; /* home dir - . if HOME env. not set */
 struct mcchan_t __mulchan_tab[32];/* mc desc. tab (32 built in Ver) */ 
+struct fiofd_t **__fio_fdtab; /* table of ptrs to file io stream */
+char *__fiolp;         /* fio file input work string ptr */
+char *__fiofp;         /* fio file input work fmt string ptr */
+long __scanf_pos;      /* byte offset position of scanf in file */
 sighandler *__old_int_sig;  /* value of quit (^c) signal on entry */
 int __force_base;      /* for output force base if not BASENONE */
 struct vinstk_t **__vinstk;/* open file/macro list in stack form */
@@ -125,6 +129,20 @@ int __sdf_sav_maxerrs; /* saved max errors so won't stop */
 int __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
 int __sdf_active;      /* T => annotating SDF - for PLI erro code  */
 struct mod_t *__sdf_mdp; /* special sdf context mod */
+
+/* cfg variables */
+char *__cmdl_library;  /* library name to file off the command line */
+struct mapfiles_t *__map_files_hd; /* hdr of map files from cmd args */
+struct mapfiles_t *__map_files_tail; /* end of map file list */
+struct cfglib_t *__cfglib_hd; /* head of list of libs for cfg */
+struct cfglib_t *__cfglib_tail; /* and tail */
+struct cfg_t *__cfg_hd;/* head of list of cfgs */
+struct cfg_t *__cur_cfg;/* current cfg */
+struct mod_t *__cfg_mdp;/* SJM - remove me - why global */
+char **__bind_inam_comptab;/* during cfg binding, comp descent comps */ 
+int __siz_bind_comps;  /* current malloc size of table */
+int __last_bind_comp_ndx;/* last currently used comp end index */ 
+int __cfg_verbose;     /* T => emit cfg reading verbose messages */ 
 
 /* file variables */
 int __cur_infi;        /* index in in_fils of current file */
@@ -207,8 +225,6 @@ int __no_errs;         /* T => don't print error msgs */
 int __no_informs;      /* T => don't print inform msgs (dflt) */
 int __debug_flg;       /* T => turn on debugging output */
 int __opt_debug_flg;   /* T => turn on vm compiler debugging output */
-int __vm_trace_flg;    /* T => trace execution of vm insns */
-int __vm_profile_flg;  /* T => compute and dump dynamic profile */
 int __st_tracing;      /* T => trace statement execution */
 int __ev_tracing;      /* T => trace event schedules and processes */
 int __pth_tracing;     /* T => trace path delays in detail */
@@ -254,7 +270,7 @@ int __itoklen;         /* current number token bit length */
 int __itoksized;       /* T => token is sized */
 int __itokbase;        /* base constant for number token */
 int __itoksizdflt;     /* '[base] form with width (uses dflt.) */
-int __itok_isint;      /* T => for simple decimal number only */
+int __itok_signed;     /* T => token is signed number */
 double __itok_realval; /* actual scannoer double val */
 char *__strtoken;      /* growable token to hold string */
 int __strtok_wid;      /* current size of string token */    
@@ -271,7 +287,6 @@ char *__macwrkstr;     /* work string for macros */
 int __mac_line_len;    /* actual length of macro line in wrk str */   
 int __macwrklen;       /* allocated len of mac. work string */
 struct macarg_t *__macarg_hdr; /* hdr of list of format mac. args */
-int __macbs_flag;      /* T=> 8'h`DEFINE to catch multiple bases errors */
 char *__attrwrkstr;    /* work string for attributes */
 int __attr_line_len;   /* actual length of attribute string */ 
 int __attrwrklen;      /* alloced len of attr work string - grows */
@@ -300,7 +315,7 @@ int __allow_scope_var; /* T => process systask arg can be scope */
 int __lastitokbase;
 int __lastitoksized;
 int __lastitoksizdflt;
-int __lastitok_isint;
+int __lastitok_signed;
 int __lastitoklen;
 word *__lastacwrk;  /* special malloced push back num value */
 word *__lastbcwrk; 
@@ -320,7 +335,7 @@ struct task_pin_t *__end_tpp; /* end of task port list */
 struct task_t *__end_tbp;/* end of top level task/functions/blocks */
 struct task_t *__cur_tsk;/* ptr. to current task */
 struct net_t *__end_paramnp; /* end of ordered parm decl. list */
-struct net_t *__end_impparamnp; /* end of ordered imprt parm decl list */
+struct net_t *__end_impparamnp; /* end of ordered imprt parm decl lst */
 struct net_t *__end_glbparamnp; /* end of ordered glb parm decl. lst */
 struct net_t *__end_tskparamnp; /* end of task param decl. list */
 struct ialst_t *__end_ialst; /* end of module initial/always list */
@@ -334,6 +349,10 @@ int __strenprop_chg;   /* during propagate pass at least one chged */
 int __splitting;       /* T => in process of splitting module */
 int __processing_pnd0s;/* T => in time unit, in end #0 region */
 struct dce_expr_t *__cur_dce_expr; /* glb for edge events eval expr */
+int __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
+struct exprlst_t *__impl_evlst_hd; /* hdr of impl @(*) ev expr list */
+struct exprlst_t *__impl_evlst_tail; /* and its tail */
+int __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
 
 /* variables for dumpvars */
 int __dv_seen;         /* dumpvars seen but not yet setup */
@@ -797,6 +816,7 @@ static void open_logfile(void);
 static void init_glbs(void);
 static void set_tfmt_dflts(void);
 static void init_ds(void);
+static void init_cfg(void);
 static void xpnd_args(int, char **);
 static struct optlst_t *alloc_optlst(void);
 static void copy_xpnd_onelev_args(void);
@@ -817,12 +837,10 @@ static struct vylib_t *alloc_vylib(char *);
 static int add_suppwarn(char *, struct optlst_t *);
 static void wrhelp(void);
 static void init_modsymtab(void);
-static void sym_addprims(void);
 static void init_stsymtab(void);
 static void add_systsksym(struct systsk_t *);
 static void add_sysfuncsym(struct sysfunc_t *);
 static void prep_vflist(void);
-static void rd_ver_src(void);
 static void do_timescale(void);
 static int prt_summary(void);
 static void prt_deswide_stats(void);
@@ -874,6 +892,7 @@ extern int __enum_is_suppressable(int);
 extern int __comp_sigint_handler(void);
 extern char *__my_malloc(int);
 extern char *__my_realloc(char *, int , int);
+/* pv stralloc is fast small section string alloc but can't be freed */ 
 extern char *__pv_stralloc(char *);
 extern struct symtab_t *__alloc_symtab(int);
 extern char *__prt_vtok(void);
@@ -945,9 +964,14 @@ extern void __call_vlog_startup_procs(void);
 extern void __dmp_mod(FILE *, struct mod_t *);
 extern void __dmp_udp(FILE *, struct udp_t *);
 extern void __get_vtok(void);
+extern void __rd_ver_src(void);
 extern void __rd_ver_mod(void);
 extern int __bqline_emptytail(register char *);
 extern void __process_pli_dynamic_libs(struct loadpli_t *);
+extern int __rd_cfg(void);
+extern void __expand_lib_wildcards(void); 
+extern void __rd_ver_cfg_src(void);
+extern void __sym_addprims(void);
 
 
 
@@ -957,6 +981,8 @@ extern int errno;
 /* special external for setjmp environment - reset environment */ 
 extern jmp_buf __reset_jmpbuf;
 extern char __pv_ctab[];
+
+
 
 /*
  * main
@@ -1012,6 +1038,10 @@ extern int __dig_main(int argc, char **argv)
 #endif
 #endif
 
+#ifdef __CYGWIN32__
+ __platform = __pv_stralloc("Cygwin32");
+#endif
+
 #ifdef __FreeBSD__
  __platform = __pv_stralloc("X86 FreeBSD");
 #endif
@@ -1029,10 +1059,6 @@ extern int __dig_main(int argc, char **argv)
 
 #ifdef __hpux
  __platform = __pv_stralloc("hpux");
-#endif
-
-#ifdef __CYGWIN32__
- __platform = __pv_stralloc("Cygwin32");
 #endif
 
  __vers = __pv_stralloc(VERS);
@@ -1087,9 +1113,56 @@ extern int __dig_main(int argc, char **argv)
  --- */
 
 
+ /* SJM 12/05/03 - for now assuming if +config options to specify lib map */ 
+ /* file, then do not read default lib.map in cwd - is that correct? */ 
+ if (__map_files_hd == NULL)
+  {
+   FILE *fp;
+
+   if ((fp = __tilde_fopen("lib.map", "r")) != NULL)
+    {
+     __my_fclose(fp); 
+     __map_files_hd = __map_files_tail = (struct mapfiles_t *) 
+      __my_malloc(sizeof(struct mapfiles_t));
+     __map_files_hd->mapfnam = __pv_stralloc("lib.map");
+     __map_files_hd->mapfnxt = NULL;
+     if (__verbose)
+      {
+       __cv_msg(
+        "  Using map.lib config file because no +config options specified.\n");
+      }
+    }
+   else if (__verbose)
+    {
+     __cv_msg(
+      "  P1364 2001 config map library not specified - using -y/-v libraries.\n"); 
+    }
+  }
+
+ /* read the cfg lib.map file list and build internal d.s. */ 
  if (__verbose) __cv_msg("  Begin Translation:\n");
- prep_vflist();
- rd_ver_src();
+
+ if (__map_files_hd != NULL)
+  {
+   /* SJM - 05/26/04 if config used, ignore any command line .v files */
+   if (__last_inf != __last_optf)
+    {
+     __pv_warn(3138,
+      "config used but verilog files specified on command line - files ignored");
+    }
+   if (__verbose) __cv_msg("  Reading config map.lib files:\n");
+   __rd_cfg();
+   if (__cmdl_library == NULL) __cmdl_library = __pv_stralloc("work");
+   /* after expansion, each library element is a concrete file name */
+   __expand_lib_wildcards(); 
+   __rd_ver_cfg_src();
+  }
+  else
+   {
+    /* use pre-2001 files reading routines */
+    prep_vflist();
+    __rd_ver_src();
+   }
 
  if (__parse_only)
   {
@@ -1338,17 +1411,17 @@ extern void __setup_dbmalloc(void)
 
  /* 0 means don't check str/mem func args */
  /* --- */
- /* --- default is on - uncomment to turn off */
- m.i = 1;
+ /* --- default is on - uncomment to turn off
+ m.i = 0;
  dbmallopt(MALLOC_CKDATA,&m);
- /* --- */
+ --- */
  /* --- */
  m.i = 1;
  dbmallopt(MALLOC_REUSE,&m);
  /* --- */
  /* --- */
- /* m.i = 0; */
  m.i = 3;
+ /* m.i = 0; */
  dbmallopt(MALLOC_FILLAREA, &m);
  /* -- */
 }
@@ -1463,6 +1536,7 @@ static void init_glbs(void)
  __verbose = FALSE;
  __quiet_msgs = FALSE;
  __lib_verbose = FALSE;
+ __cfg_verbose = FALSE;
  __lib_rescan = FALSE;
  __rescanning_lib = FALSE;
  __switch_verbose = FALSE;
@@ -1481,6 +1555,17 @@ static void init_glbs(void)
  __sdf_opt_log_fnam = NULL;
  __sdf_opt_log_s = NULL;
  __has_sdfann_calls = FALSE;
+
+ __map_files_hd = __map_files_tail = NULL;
+ __cmdl_library = NULL;
+ __cfglib_hd = __cfglib_tail = NULL;
+ __cfg_hd = NULL;
+ __cur_cfg = NULL;
+ __cfg_mdp = NULL;
+ __bind_inam_comptab = NULL;
+ __siz_bind_comps = 0;
+ __last_bind_comp_ndx = -1;
+
  __sdf_active = FALSE;
  __sdf_no_warns = FALSE;
  __sdf_no_errs = FALSE;
@@ -1498,8 +1583,6 @@ static void init_glbs(void)
  __parse_only = FALSE;
  __optimized_sim = FALSE;
  __opt_debug_flg = FALSE;
- __vm_trace_flg = FALSE;
- __vm_profile_flg = FALSE;
  __iact_state = FALSE;
  __no_iact = FALSE;
  __intsig_prt_snapshot = FALSE;
@@ -1595,6 +1678,9 @@ static void init_glbs(void)
  /* assume no strengths - if unc. pull, turned off before stren marking*/
  __design_no_strens = TRUE;
  __cur_dce_expr = NULL;
+ __impl_evlst_hd = NULL;
+ __impl_evlst_tail = NULL;
+ __canbe_impl_evctrl = FALSE;
 
  __my_ftime(&__start_time, &__start_mstime);
  cp = ctime(&__start_time);
@@ -1609,6 +1695,7 @@ static void init_glbs(void)
  /* sim time need for possible pli calls */ 
  __simtime = 0ULL;
  init_ds();
+ init_cfg();
 }
 
 /*
@@ -1707,7 +1794,6 @@ static void init_ds(void)
  __macwrkstr = __my_malloc(__macwrklen);
  __mac_line_len = 0;
  __macarg_hdr = NULL;
- __macbs_flag = FALSE;
 
  /* allocate attribute collection work string (it grows)*/
  __attrwrklen = IDLEN;
@@ -1826,6 +1912,7 @@ static void init_ds(void)
  __tmpip_freelst = NULL;
  
  __last_libmdp = NULL;
+
  /* SJM 01/27/04 - initializing global seed for $random and other dist */
  /* systfs in case uses omits the seed inout arg */ 
  /* guessing that 0 will match 2001 LRM rand generator standard */
@@ -1874,7 +1961,6 @@ static void init_ds(void)
  u = 10ULL;
  for (i = 1; i < 16; i++) 
   {
-   /* notice lmult may destroy operands and overwrites p */
    p = u *__itoticks_tab[i - 1];
    __itoticks_tab[i] = p;
   }
@@ -1894,6 +1980,36 @@ static void init_ds(void)
  __mulchan_tab[1].mc_s = stderr;
  __mulchan_tab[1].mc_fnam = __pv_stralloc("stderr"); 
 
+ /* AIV 09/05/03 - initialization code for new P1364 2001 fileio streams */
+ /* SJM 09/05/03 - rewrote to match mulchan I/O program organization */
+
+ /* use first free with closing and freeing algorithm per Unix and mcds */
+ /* SJM 05/17/04 - LOOKATME - stdio.h 16 value is wrong - trying 1024 */ 
+ __fio_fdtab = (struct fiofd_t **)
+  __my_malloc(MY_FOPEN_MAX*sizeof(struct fiofd_t *));
+
+ for (i = 0; i < MY_FOPEN_MAX; i++) __fio_fdtab[i] = NULL; 
+
+ /* numbers probably same as unix but LRM requires predefined 0,1,2 */
+ __fio_fdtab[0] = (struct fiofd_t *) __my_malloc(sizeof(struct fiofd_t));
+ __fio_fdtab[0]->fd_error = FALSE;
+ /* name only needed for user opened in case stdio fopen fails */
+ __fio_fdtab[0]->fd_name = __pv_stralloc("stdin"); 
+ __fio_fdtab[0]->fd_s = stdin;
+
+ __fio_fdtab[1] = (struct fiofd_t *) __my_malloc(sizeof(struct fiofd_t));
+ __fio_fdtab[1]->fd_error = FALSE;
+ __fio_fdtab[1]->fd_name = __pv_stralloc("stdout"); 
+ __fio_fdtab[1]->fd_s = stdout;
+
+ __fio_fdtab[2] = (struct fiofd_t *) __my_malloc(sizeof(struct fiofd_t));
+ __fio_fdtab[2]->fd_error = FALSE;
+ __fio_fdtab[2]->fd_name = __pv_stralloc("stdout"); 
+ __fio_fdtab[2]->fd_s = stdout;
+
+ __fiolp = NULL;
+ __fiofp = NULL;
+ __scanf_pos = -1;
 
  /* start with no array for ncomp elements */
  __ncablk_nxti = -1;
@@ -1954,6 +2070,15 @@ static void init_ds(void)
   = __my_malloc(BIG_ALLOC_SIZE);
  __hdr_cpnblks->cpn_end_sp = __hdr_cpnblks->cpn_start_sp + BIG_ALLOC_SIZE - 16;
 
+}
+
+/*
+ * initialize cfg globals
+ *
+ * CFG FIXME - just add to init glb do not need routine
+ */
+static void init_cfg(void)
+{
 }
 
 /*
@@ -2027,17 +2152,17 @@ static void init_ds(void)
 #define CO_PLIKEEPSRC 60
 #define CO_OPT_SIM 61
 #define CO_OPT_DEBUG 62
-#define CO_VM_TRACE 63
-#define CO_VM_PROFILE 64
-#define CO_SNAPSHOT 65
-#define CO_FRSPICE 66
-#define CO_SWITCHVERB 67
-#define CO_CHG_PORTDIR 68
-#define CO_SDF_LOG 69
-#define CO_SDF_NO_ERRS 70
-#define CO_SDF_NO_WARNS 71
-#define CO_LOADPLI1 72
-#define CO_LOADVPI 73
+#define CO_SNAPSHOT 63
+#define CO_FRSPICE 64
+#define CO_SWITCHVERB 65
+#define CO_CHG_PORTDIR 66
+#define CO_SDF_LOG 67
+#define CO_SDF_NO_ERRS 68
+#define CO_SDF_NO_WARNS 69
+#define CO_LOADPLI1 70
+#define CO_LOADVPI 71
+#define CO_LIBLIST 72
+#define CO_LIBMAP 73
 
 /* command line option table */
 /* this does not need to be alphabetical */
@@ -2109,13 +2234,14 @@ static struct namlst_t cmdopts[] = {
  { CO_OPT_SIM, "+optimized_sim" },
  { CO_OPT_SIM, "-O" },
  { CO_OPT_DEBUG, "+Odebug" },
- { CO_VM_TRACE, "+vm_trace" },
  { CO_SNAPSHOT, "+snapshot" },
  { CO_FRSPICE, "+fromspice" },
  { CO_SWITCHVERB, "+switchverbose" },
  { CO_CHG_PORTDIR, "+change_port_type" },
  { CO_SDF_NO_ERRS, "+sdf_noerrors" },
- { CO_SDF_NO_WARNS, "+sdf_nowarns" }
+ { CO_SDF_NO_WARNS, "+sdf_nowarns" },
+ { CO_LIBLIST, "-L"},
+ { CO_LIBMAP, "+config"}
 };
 #define NCMDOPTS (sizeof(cmdopts) / sizeof(struct namlst_t))
 
@@ -2415,8 +2541,7 @@ static void open_logfile(void)
       "cannot open -l log file %s - trying default", chp);
      goto no_explicit;
     }
-   __log_fnam = __my_malloc(strlen(chp) + 1);
-   strcpy(__log_fnam, chp);
+   __log_fnam = __pv_stralloc(chp);
    goto done;
   }
 
@@ -2426,11 +2551,8 @@ no_explicit:
    __pv_fwarn(505, "cannot open default log file %s - no log file", s1);
    return;
   }
- else 
-  {
-   __log_fnam = __my_malloc(strlen(s1) + 1);
-   strcpy(__log_fnam, s1);
-  }
+ else __log_fnam = __pv_stralloc(s1);
+
 done:;
  /* SM 03/26/00 - 2 (bit 4) no longer used for log file - lumped in with 1 */
  /* ---
@@ -2452,6 +2574,7 @@ static void do_args(void )
  FILE *f;
  struct optlst_t *sav_olp;
  struct loadpli_t *ldp;
+ struct mapfiles_t *mapfp;
  char *chp, *chp2, *chp3;
  char s1[2*RECLEN];
 
@@ -2573,9 +2696,8 @@ static void do_args(void )
      /* only open when tracing enabled */
      if (strcmp(chp, "STDOUT") == 0) strcpy(chp, "stdout"); 
      if (__tr_fnam != NULL) __my_free(__tr_fnam, strlen(__tr_fnam) + 1);
-     __tr_fnam = __my_malloc(strlen(chp) + 1);
+     __tr_fnam = __pv_stralloc(chp);
      __tr_s = NULL;
-     strcpy(__tr_fnam, chp);
      if (__verbose)
       __cv_msg(
        "  Statement and/or event trace output will be written to file \"%s\".\n",
@@ -2596,8 +2718,8 @@ static void do_args(void )
      olp->optnum = -2;
      if (__sdf_opt_log_fnam != NULL)
       __my_free(__sdf_opt_log_fnam, strlen(__sdf_opt_log_fnam) + 1);
-     __sdf_opt_log_fnam = __my_malloc(strlen(chp) + 1);
-     strcpy(__sdf_opt_log_fnam, chp);
+     __sdf_opt_log_fnam = __pv_stralloc(chp);
+
      if (__verbose)
       {
        __cv_msg(
@@ -2682,6 +2804,51 @@ bad_maxerrs:
      add_lbfil(chp, 'v');
      if (__verbose)
       __cv_msg("  File \"%s\" in library from -v option.\n", chp); 
+     break;
+    case CO_LIBLIST:
+     /* -L library */
+     sav_olp = olp;
+     olp = olp->optlnxt; 
+     if (olp != NULL) chp = olp->opt;
+     if (olp == NULL || olp->is_emark || *chp == '+' || *chp == '-')
+      {
+       __gfwarn(501, sav_olp->optfnam_ind, sav_olp->optlin_cnt,
+        "-L library map file option not followed by file name - ignored");
+       continue;
+      }
+     olp->optnum = -2;
+     /* set the global name of the -L library name */
+     __cmdl_library = __pv_stralloc(chp);
+     if (__verbose)
+      __cv_msg("  File \"%s\" in library from -L option.\n", chp); 
+     break;
+    case CO_LIBMAP:
+     /* +config [filename] */
+     sav_olp = olp;
+     olp = olp->optlnxt; 
+     if (olp != NULL) chp = olp->opt;
+     if (olp == NULL || olp->is_emark || *chp == '+' || *chp == '-')
+      {
+       __gfwarn(501, sav_olp->optfnam_ind, sav_olp->optlin_cnt,
+        "+config [file] library map file option not followed by file name - ignored");
+       continue;
+      }
+     olp->optnum = -2;
+
+     mapfp = (struct mapfiles_t *) __my_malloc(sizeof(struct mapfiles_t));
+     mapfp->mapfnam = __pv_stralloc(chp);
+     mapfp->mapfnxt = NULL;
+
+     if (__map_files_hd == NULL) __map_files_hd = __map_files_tail = mapfp;
+     else
+      {
+       __map_files_tail->mapfnxt = mapfp;
+       __map_files_tail = mapfp;
+      }
+     if (__verbose)
+      __cv_msg(
+       "  Will read \"%s\" map lib file specified by +config [file] option.\n",
+       mapfp->mapfnam); 
      break;
     case CO_FRSPICE:
      break;
@@ -2917,6 +3084,7 @@ bad_maxerrs:
      break;
     case CO_LBVERB:
      __lib_verbose = TRUE;
+     __cfg_verbose = TRUE;
      if (__verbose) __cv_msg("  Library tracing verbose mode is on.\n");
      break;
     case CO_SWITCHVERB:
@@ -3060,10 +3228,9 @@ lib_mth:
      break;
     /* just ignore if optimization not compiled in */
     case CO_OPT_DEBUG:
-    case CO_VM_TRACE:
     case CO_OPT_SIM:
      __gfwarn(3121, olp->optfnam_ind, olp->optlin_cnt,
-      " -O optimizing byte code compiler not enabled in this version.\n");
+      " -O native assembly code simulation not enabled in this version.\n");
      break;
   
     default: __case_terr(__FILE__, __LINE__);
@@ -4091,13 +4258,13 @@ static void init_modsymtab(void)
  __slotend_action = 0;
  /* this symbol table is not a symbol table of any symbol */
  __modsyms = __alloc_symtab(FALSE);
- sym_addprims();
+ __sym_addprims();
 }
 
 /*
  * add primitives to module type name symbol table - separate name space
  */
-static void sym_addprims(void)
+extern void __sym_addprims(void)
 {
  register int i;
  struct sy_t *syp;
@@ -4223,6 +4390,16 @@ static struct systsk_t vsystasks[] = {
  { STN_WRITEB, "$writeb" },
  { STN_WRITEH, "$writeh" },
  { STN_WRITEO, "$writeo" },
+ /* AIV 09/05/03 - added for fileio - only one that is sys task */
+ { STN_FFLUSH, "$fflush"},
+ /* SJM 09/05/03 - also add the new fileio string forms - see 2001 LRM */
+ /* SJM 05/21/04 - these are sys tasks not functs (but LRM inconsistent) */
+ { STN_SWRITE, "$swrite" },
+ { STN_SWRITEB, "$swriteb" },
+ { STN_SWRITEH, "$swriteh" },
+ { STN_SWRITEO, "$swriteo" },
+ /* same as $swrite except 2nd arg (can be var) must be only format string */
+ { STN_SFORMAT, "$sformat" },
  /* patches for getting models to compile pli tasks -- */
  /* STN_LAI_INPUTS, "$lai_inputs", */
  /* STN_LAI_OUTPUTS, "$lai_outputs", */
@@ -4260,6 +4437,8 @@ struct sysfunc_t __vsysfuncs[] = {
  { STN_RTOI, N_REG, 1, SYSF_BUILTIN, WBITS, "$rtoi"},
  /* scale takes as argument the module whose scale to return */
  { STN_SCALE, N_REAL, 0, SYSF_BUILTIN, REALBITS, "$scale"},
+ /* SJM 10/01/03 - special conversion to signed - arg size is ret size */
+ { STN_SIGNED, N_REG, 1, SYSF_BUILTIN, 0, "$signed" }, 
  { STN_STIME, N_REG, 0, SYSF_BUILTIN, WBITS, "$stime"},
  { STN_TESTPLUSARGS, N_REG, 0, SYSF_BUILTIN, WBITS, "$test$plusargs" },
  { STN_SCANPLUSARGS, N_REG, 0, SYSF_BUILTIN, WBITS, "$scan$plusargs" },
@@ -4267,6 +4446,8 @@ struct sysfunc_t __vsysfuncs[] = {
  /* cver system function extensions */
  { STN_STICKSTIME, N_REG, 0, SYSF_BUILTIN, WBITS, "$stickstime"},
  { STN_TICKSTIME, N_TIME, 0, SYSF_BUILTIN, TIMEBITS, "$tickstime"},
+ /* SJM 10/01/03 - special conversion to signed - arg size is ret size */
+ { STN_UNSIGNED, N_REG, 0, SYSF_BUILTIN, 0, "$unsigned" }, 
  /* new transcendental functions */
  { STN_COS, N_REAL, 1, SYSF_BUILTIN, WBITS, "$cos"},
  { STN_SIN, N_REAL, 1, SYSF_BUILTIN, WBITS, "$sin"},
@@ -4301,6 +4482,17 @@ struct sysfunc_t __vsysfuncs[] = {
  { STN_HDB, N_REAL, 1, SYSF_BUILTIN, WBITS, "$hdb" },
  { STN_HSIGN, N_REAL, 1, SYSF_BUILTIN, WBITS, "$hsign" },
  { STN_HYPOT, N_REAL, 1, SYSF_BUILTIN, WBITS, "$hypot" },
+ /* AIV 09/05/03 - add the fileio sy funcs */
+ { STN_FGETC, N_REG, 1, SYSF_BUILTIN, WBITS, "$fgetc" },
+ { STN_UNGETC, N_REG, 1, SYSF_BUILTIN, WBITS, "$ungetc" },
+ { STN_FGETS, N_REG, 1, SYSF_BUILTIN, WBITS, "$fgets" },
+ { STN_FTELL, N_REG, 1, SYSF_BUILTIN, WBITS, "$ftell" },
+ { STN_REWIND, N_REG, 1, SYSF_BUILTIN, WBITS, "$rewind" },
+ { STN_FSEEK, N_REG, 1, SYSF_BUILTIN, WBITS, "$fseek" },
+ { STN_FERROR, N_REG, 1, SYSF_BUILTIN, WBITS, "$ferror" },
+ { STN_FREAD, N_REG, 1, SYSF_BUILTIN, WBITS, "$fread" },
+ { STN_FSCANF, N_REG, 1, SYSF_BUILTIN, WBITS, "$fscanf" },
+ { STN_SSCANF, N_REG, 1, SYSF_BUILTIN, WBITS, "$sscanf" },
  { 0, 0, 0, 0, 0, "" }
 };
 
@@ -4594,7 +4786,7 @@ extern void __do_decompile(void)
  * read the Verilog source input
  * know 1st file and 1st token read
  */
-static void rd_ver_src(void)
+extern void __rd_ver_src(void)
 {
  __total_rd_lines = 0;
  __total_lang_dirs = 0;
