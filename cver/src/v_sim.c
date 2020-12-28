@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -46,26 +46,26 @@
 static void exec_slotend_dv(void);
 static void process_all_netchgs(void);
 static void free_chgedvars(void);
-static void eval_netchg_lds(register struct net_t *, int, int, int);
+static void eval_netchg_lds(register struct net_t *, int32, int32, int32);
 static void process_mipd_nchg_ev(register struct tev_t *);
 static void emit_nchglds_trmsg(struct net_t *, struct net_pin_t *);
-static int is2_chg_match(word *, int, int);
-static void std_chg_logic_gate(register struct gate_t *, register unsigned);
-static void acc_chg_bufnot(struct gate_t *, unsigned);
-static void acc_stichg_bufnot(register struct gate_t *, unsigned);
-static void acc_chg_4igate(register struct gate_t *, unsigned);
-static void acc_stichg_4igate(register struct gate_t *, unsigned);
-static void trace_gunchg(struct gate_t *, unsigned);
-static void std_chg_udp_gate(register struct gate_t *, register unsigned);
-static void std_chg_bufif_gate(register struct gate_t *, register unsigned);
-static void std_chg_mos_gate(register struct gate_t *, register unsigned);
-static void std_chg_cmos_gate(register struct gate_t *, register unsigned);
-static void prop_gatechg(register struct gate_t *, register int, int);
-static void evtr_prop_gatechg(register struct gate_t *, register unsigned,
- int);
-static unsigned get_showcancele_val(struct gate_t *);
-static i_tev_ndx schedule_1gev(register struct gate_t *, word64, word64, int);
-static i_tev_ndx reschedule_1gev(i_tev_ndx, word64, word64, unsigned, int);
+static int32 is2_chg_match(int32, int32, int32);
+static void std_chg_logic_gate(register struct gate_t *, register word32);
+static void acc_chg_bufnot(struct gate_t *, word32);
+static void acc_stichg_bufnot(register struct gate_t *, word32);
+static void acc_chg_4igate(register struct gate_t *, word32);
+static void acc_stichg_4igate(register struct gate_t *, word32);
+static void trace_gunchg(struct gate_t *, word32);
+static void std_chg_udp_gate(register struct gate_t *, register word32);
+static void std_chg_bufif_gate(register struct gate_t *, register word32);
+static void std_chg_mos_gate(register struct gate_t *, register word32);
+static void std_chg_cmos_gate(register struct gate_t *, register word32);
+static void prop_gatechg(register struct gate_t *, register int32, int32);
+static void evtr_prop_gatechg(register struct gate_t *, register word32,
+ int32);
+static word32 get_showcancele_val(struct gate_t *);
+static i_tev_ndx schedule_1gev(register struct gate_t *, word64, word64, int32);
+static i_tev_ndx reschedule_1gev(i_tev_ndx, word64, word64, word32, int32);
 static void emit_pulsewarn(struct gate_t *, struct tev_t *, word64 *,
  word64 *, char *);
 static void process_gatechg_ev(register struct tev_t *);
@@ -73,11 +73,11 @@ static void acc_evchg_gate_outwire(register struct gate_t *);
 static void emit_gev_trace(struct gate_t *, struct tev_t *);
 static void change_gate_outwire(register struct gate_t *);
 static void trace_chg_gateout(struct gate_t *, struct expr_t *);
-static void gate_st_bit(union pck_u, int, int, int, register word,
- register word);
-static void gate_st_scalval(register word *, register word, register word);
-static int chg_mos_instate(register struct gate_t *, unsigned);
-static int chg_cmos_instate(register struct gate_t *, unsigned);
+static void gate_st_bit(union pck_u, int32, int32, int32, register word32,
+ register word32);
+static void gate_st_scalval(register word32 *, register word32, register word32);
+static int32 chg_mos_instate(register struct gate_t *, word32);
+static int32 chg_cmos_instate(register struct gate_t *, word32);
 static void eval_tranif_onoff(struct gate_t *);
 static void evtr_eval_conta_rhs_ld(struct net_pin_t *);
 static void schedule_1caev(struct conta_t *, word64, word64, struct xstk_t *);
@@ -85,28 +85,26 @@ static void reschedule_1caev(i_tev_ndx, word64, word64, struct xstk_t *);
 static void process_conta_ev(register struct tev_t *tevp);
 static void process_wire_ev(register struct tev_t *tevp);
 static void process_nbpa_ev(struct tev_t *tevp);
-static int force_inhibit_wireassign(struct net_t *, register int,
+static int32 force_inhibit_wireassign(struct net_t *, register int32,
  struct itree_t *);
 static void process_trpthdst_ev(register struct tev_t *);
-static int filter_edge_expr(register struct dce_expr_t *, register word *,
- register word *);
+static int32 filter_edge_expr(register struct dce_expr_t *, register word32 *,
+ register word32 *);
 static void trigger_evctrl(struct delctrl_t *, register i_tev_ndx);
-static int stfilter_dce_chg(register struct net_t *,
- register struct dcevnt_t *, word *, word *, int);
-static int vccb_vec_standval_filter(register struct net_t *,
- register struct dcevnt_t *, word *, word *, int);
-static int scal_stfilter_dce_chg(register struct net_t *,
- register struct dcevnt_t *, word *, word *, int);
-static int vccb_scal_standval_filter(register struct net_t *,
- register struct dcevnt_t *, word *, word *, int);
-static int filter_dce_chg(register struct net_t *, register struct dcevnt_t *,
- word *, word *, int);
-static int scal_filter_dce_chg(register struct net_t *,
- register struct dcevnt_t *, word *, word *, int);
+static int32 stfilter_dce_chg(register struct net_t *,
+ register struct dcevnt_t *, word32 *, word32 *, int32);
+static int32 vccb_vec_standval_filter(register struct net_t *,
+ register struct dcevnt_t *, word32 *, word32 *, int32);
+static int32 vccb_scal_standval_filter(register struct net_t *,
+ register struct dcevnt_t *, word32 *, word32 *, int32);
+static int32 filter_dce_chg(register struct net_t *, register struct dcevnt_t *,
+ word32 *, word32 *, int32);
+static int32 scal_stfilter_dce_chg(register struct net_t *,
+ register struct dcevnt_t *, word32 *, word32 *, int32);
 static void bld_xmrsrc_ref(char *, struct net_t *);
-static void bld_srcfilter_ref(char *, unsigned, unsigned, struct expr_t *);
-static int filter_bitchange(register word, register byte *,
- register unsigned, struct expr_t *);
+static void bld_srcfilter_ref(char *, word32, word32, struct expr_t *);
+static int32 filter_bitchange(register word32, register byte *,
+ register word32, struct expr_t *);
 static void add_tchk_chged(struct chktchg_t *);
 static void process_all_tchk_violations(void);
 static void process_notify(struct net_t *);
@@ -123,12 +121,11 @@ static void init_logic_gate(struct gate_t *);
 static void init_bufif_gate(struct gate_t *);
 static void init_tranif_gate(struct gate_t *);
 static void conta_initeval(struct conta_t *, struct conta_t *);
-static void chk_1nschd_dce(struct net_t *, struct mod_t *);
-static int move_to_time0(void);
-static int move_time(void);
+static int32 move_to_time0(void);
+static int32 move_time(void);
 static void chk_event_consist(void);
 static void add_ovfetim(word64, i_tev_ndx, struct tev_t *);
-static struct bt_t *alloc_btnod(int);
+static struct bt_t *alloc_btnod(int32);
 static struct bt_t *find_fringe(word64);
 static struct bt_t *insert_fringe(struct bt_t *, word64, i_tev_ndx);
 static void splitinsert_nonfringe(void);
@@ -140,38 +137,38 @@ static void mv_subtree_towheel(struct bt_t *);
 static void mv_to_wheel(word64, struct telhdr_t *);
 static struct telhdr_t *tfind_btnode_after(struct bt_t *, word64);
 static void dmp_twheel(void);
-static int dmp_events(register i_tev_ndx);
+static int32 dmp_events(register i_tev_ndx);
 static void dmp_btree(struct bt_t *);
-static void dmp2_btree(struct bt_t *, int);
-static void dmp_btnode(struct bt_t *, int);
+static void dmp2_btree(struct bt_t *, int32);
+static void dmp_btnode(struct bt_t *, int32);
 static char *to_evtronam(char *, char *, struct itree_t *, struct task_t *);
 /* SJM UNUSED static void chk_schd_dces(void); */
 static void chk_tev_list(register i_tev_ndx);
 
 /* extern prototypes defined elsewhere */
 extern void __pv_sim(void);
-extern void __get_cor_range(register int, union intptr_u, register int *,
- register int *);
+extern void __get_cor_range(register int32, union intptr_u, register int32 *,
+ register int32 *);
 extern void __set_gchg_func(struct gate_t *);
 extern void __vpi_set_chg_proc(struct gate_t *);
-extern int __gate_is_acc(struct gate_t *);
+extern int32 __gate_is_acc(struct gate_t *);
 extern void __add_nchglst_el(register struct net_t *);
 extern void __add_dmpv_chglst_el(struct net_t *);
 extern void __eval_conta_rhs_ld(register struct net_pin_t *);
-extern void __eval_tranif_ld(register struct gate_t *, register int);
-extern void __add_select_nchglst_el(register struct net_t *, register int,
- register int);
-extern void __wakeup_delay_ctrls(register struct net_t *, register int,
- register int);
+extern void __eval_tranif_ld(register struct gate_t *, register int32);
+extern void __add_select_nchglst_el(register struct net_t *, register int32,
+ register int32);
+extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
+ register int32);
 extern void __process_npp_timofchg(struct net_t *,
  register struct net_pin_t *);
 
 extern char *__to_evtrcanam(char *, struct conta_t *, struct itree_t *);
 extern void __evtr_resume_msg(void);
 extern void __process_getpat(struct conta_t *);
-extern char *__to_evtrwnam(char *, struct net_t *, int, int,
+extern char *__to_evtrwnam(char *, struct net_t *, int32, int32,
  struct itree_t *);
-extern char *__to_evtrpnam(char *, struct mod_pin_t *, int,
+extern char *__to_evtrpnam(char *, struct mod_pin_t *, int32,
  struct itree_t *);
 extern void __init_sim(void);
 extern void __reinit_sim(void);
@@ -193,7 +190,7 @@ extern void __process_vpidrv_ev(i_tev_ndx);
 extern void __process_vpi_varputv_ev(i_tev_ndx);
 extern void __delay_callback(i_tev_ndx);
 extern void __sync_call_misctf(struct tev_t *);
-extern void __exec_monit(struct dceauxlst_t *, int);
+extern void __exec_monit(struct dceauxlst_t *, int32);
 extern void __exec_fmonits(void);
 extern void __exec_strobes(void);
 extern void __exec_rosync_misctf(void);
@@ -203,93 +200,93 @@ extern void __do_dmpvars_baseline(char *);
 extern void __turnoff_all_dumpvars(void);
 extern void __turnon_all_dumpvars(void);
 extern void __do_dmpvars_chg(void);
-extern int __tilde_creat(char *);
-extern int __my_creat(char *);
+extern int32 __tilde_creat(char *);
+extern int32 __my_creat(char *);
 extern void __setup_dmpvars(void);
-extern int __move_to_npprefloc(struct net_pin_t *);
+extern int32 __move_to_npprefloc(struct net_pin_t *);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_tetyp(char *, unsigned);
-extern char *__var_tostr(char *, struct net_t *, int, int, int);
+extern char *__to_tetyp(char *, word32);
+extern char *__var_tostr(char *, struct net_t *, int32, int32, int32);
 extern char *__to_npptyp(char *, struct net_pin_t *);
-extern int __eval_logic_gate(struct gate_t *, unsigned, int *);
-extern void __ld_bit(register word *, register word *,
- register struct net_t *, int);
-extern int __correct_forced_newwireval(struct net_t *, word *, word *);
-extern int __forced_inhibit_bitassign(struct net_t *, struct expr_t *,
+extern int32 __eval_logic_gate(struct gate_t *, word32, int32 *);
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
+extern int32 __correct_forced_newwireval(struct net_t *, word32 *, word32 *);
+extern int32 __forced_inhibit_bitassign(struct net_t *, struct expr_t *,
  struct expr_t *);
-extern void __chg_st_bit(struct net_t *, int, register word, register word);
-extern word __wrd_redxor(word);
-extern int __eval_udp(register struct gate_t *, unsigned, int *, int);
-extern int __eval_bufif_gate(register struct gate_t *, unsigned, int *);
-extern void __eval_pmos_gate(register word);
-extern void __eval_rpmos_gate(register word);
-extern void __eval_nmos_gate(register word);
-extern void __eval_rnmos_gate(register word);
+extern void __chg_st_bit(struct net_t *, int32, register word32, register word32);
+extern word32 __wrd_redxor(word32);
+extern int32 __eval_udp(register struct gate_t *, word32, int32 *, int32);
+extern int32 __eval_bufif_gate(register struct gate_t *, word32, int32 *);
+extern void __eval_pmos_gate(register word32);
+extern void __eval_rpmos_gate(register word32);
+extern void __eval_nmos_gate(register word32);
+extern void __eval_rnmos_gate(register word32);
 extern void __eval_cmos_gate(struct gate_t *);
-extern int __get_acc_class(struct gate_t *);
+extern int32 __get_acc_class(struct gate_t *);
 extern void __hizstrengate_getdel(word64 *, register struct gate_t *);
-extern void __get_del(register word64 *, register union del_u, unsigned);
-extern int __em_suppr(int);
-extern char *__to_ginam(char *, struct gate_t *, unsigned, int);
-extern char *__to_gonam(char *, struct gate_t *, unsigned);
+extern void __get_del(register word64 *, register union del_u, word32);
+extern int32 __em_suppr(int32);
+extern char *__to_ginam(char *, struct gate_t *, word32, int32);
+extern char *__to_gonam(char *, struct gate_t *, word32);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
 extern char *__schop(char *, char *);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern void __mdr_assign_or_sched(register struct expr_t *);
-extern void __exec_conta_assign(struct expr_t *, register word *,
- register word *, int);
-extern char *__gstate_tostr(char *, struct gate_t *, int);
+extern void __exec_conta_assign(struct expr_t *, register word32 *,
+ register word32 *, int32);
+extern char *__gstate_tostr(char *, struct gate_t *, int32);
 extern void __immed_eval_trifchan(struct gate_t *);
 extern char *__to_gassign_str(char *, struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern void __lhsbsel(register word *, register int, word);
+extern void __lhsbsel(register word32 *, register int32, word32);
 extern struct xstk_t *__ndst_eval_xpr(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __narrow_sizchg(register struct xstk_t *, int);
-extern void __fix_widened_toxs(register struct xstk_t *, int);
-extern void __st_perinst_val(union pck_u, int, register word *,
- register word *);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __narrow_sizchg(register struct xstk_t *, int32);
+extern void __fix_widened_toxs(register struct xstk_t *, int32);
+extern void __st_perinst_val(union pck_u, int32, register word32 *,
+ register word32 *);
 extern void __grow_xstk(void);
 extern void __grow_tevtab(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __st_standval(register byte *, register struct xstk_t *, byte);
-extern void __stren_exec_ca_concat(struct expr_t *, byte *, int);
-extern void __exec_ca_concat(struct expr_t *, register word *,
- register word *, int);
-extern int __wide_vval_is0(register word *, int);
-extern int __vval_is1(register word *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__st_regab_tostr(char *, byte *, int);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int , int);
-extern char *__to_vvnam(char *, word);
-extern char *__xregab_tostr(char *, word *, word *, int, struct expr_t *);
-extern void __exec2_proc_assign(struct expr_t *, register word *,
- register word *);
-extern int __unnormalize_ndx(struct net_t *, int);
+extern void __stren_exec_ca_concat(struct expr_t *, byte *, int32);
+extern void __exec_ca_concat(struct expr_t *, register word32 *,
+ register word32 *, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __vval_is1(register word32 *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern char *__st_regab_tostr(char *, byte *, int32);
+extern char *__bld_lineloc(char *, word32, int32);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32 , int32);
+extern char *__to_vvnam(char *, word32);
+extern char *__xregab_tostr(char *, word32 *, word32 *, int32, struct expr_t *);
+extern void __exec2_proc_assign(struct expr_t *, register word32 *,
+ register word32 *);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
 extern char *__to_mpnam(char *, char *);
-extern void __eval_tran_1bit(register struct net_t *, register int);
-extern int __match_push_targ_to_ref(unsigned, struct gref_t *);
+extern void __eval_tran_1bit(register struct net_t *, register int32);
+extern int32 __match_push_targ_to_ref(word32, struct gref_t *);
 extern void __assign_qcaf(struct dcevnt_t *);
 extern void __pvc_call_misctf(struct dcevnt_t *);
 extern void __cbvc_callback(struct cbrec_t *, struct h_t *);
-extern void __exec_vpi_gateoutcbs(int);
+extern void __exec_vpi_gateoutcbs(int32);
 extern void __add_ev_to_front(register i_tev_ndx);
-extern int __get_dcewid(struct dcevnt_t *, struct net_t *);
-extern void __ld_wire_sect(word *, word *, struct net_t *, register int,
- register int);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
-extern char *__to_tcnam(char *, unsigned);
+extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
+extern void __ld_wire_sect(word32 *, word32 *, struct net_t *, register int32,
+ register int32);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern char *__to_tcnam(char *, word32);
 extern void __vpi_tchkerr_trycall(struct tchk_t *, struct itree_t *);
-extern void __chg_st_val(struct net_t *, register word *, register word *);
+extern void __chg_st_val(struct net_t *, register word32 *, register word32 *);
 extern void __adds(char *);
-extern void __chg_xprline_size(int);
-extern char *__to_edgenam(char *, unsigned);
-extern void __trunc_exprline(int, int);
+extern void __chg_xprline_size(int32);
+extern char *__to_edgenam(char *, word32);
+extern void __trunc_exprline(int32, int32);
 extern char *__pv_stralloc(char *);
 extern void __init_interactive(void);
 extern void __my_fclose(FILE *);
@@ -297,30 +294,31 @@ extern void __init_all_trchans(void);
 extern void __init_instdownport_contas(struct itree_t *, struct itree_t *);
 extern void __init_instupport_contas(struct itree_t *);
 extern struct thread_t *__alloc_thrd(void);
-extern void __ld_perinst_val(register word *, register word *, union pck_u,
- int);
-extern int __sim_sigint_handler(void);
+extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
+ int32);
+extern int32 __sim_sigint_handler(void);
 extern void __dmp_event_tab(void);
 extern void __dmp1_nplstel(struct mod_t *, struct net_t *, struct net_pin_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern void __sched_mipd_nchg(struct net_t *, int, struct mipd_t *);
+extern void __sched_mipd_nchg(struct net_t *, int32, struct mipd_t *);
+extern void __exec_var_decl_init_assigns(void);
 
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
 extern void __tr_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *,...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __ia_warn(int, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __ia_warn(int32, char *, ...);
 extern void __my_fprintf(FILE *, char *, ...);
 
-extern word __masktab[];
+extern word32 __masktab[];
 extern byte __stren_map_tab[];
 extern byte __hizstren_del_tab[];
 
@@ -411,7 +409,7 @@ extern void __pv_sim(void)
      goto no_stop;
     }
 stop:
-   /* interactive loop expects int (^c) signal to be ignored */ 
+   /* interactive loop expects int32 (^c) signal to be ignored */ 
    __do_interactive_loop();
   }
 
@@ -422,6 +420,11 @@ no_stop:
 #else
  signal(SIGINT, (void (*)()) __sim_sigint_handler);
 #endif
+
+ /* SJM 09/30/04 - execute all new Verilog 2001 variable decl assigns */
+ /* as the first step in simulation - do not need any events */
+ /* SJM 09/30/04 - LOOKATME - could build and schedule separate init block */
+ __exec_var_decl_init_assigns();
 
  /* repeat this loop for every time */
  __processing_pnd0s = FALSE; 
@@ -441,7 +444,9 @@ no_stop:
      __push_itstk(tevp->teitp);
      /* notice before event executed, cur. itp set from event */
      switch ((byte) tevp->tetyp) {
-      case TE_THRD: __process_thrd_ev(tevp); break;
+      case TE_THRD:
+       __process_thrd_ev(tevp);
+       break;
       /* for gates and 1 bit continous assigns */
       case TE_CA: process_conta_ev(tevp); break;
       case TE_G: process_gatechg_ev(tevp); break;
@@ -538,7 +543,10 @@ no_stop:
        
        /* notice before event executed, cur. itp set from event */
        switch ((byte) tevp->tetyp) {
-        case TE_THRD: __process_thrd_ev(tevp); break;
+        case TE_THRD:
+         __process_thrd_ev(tevp);
+         break;
+         break;
         case TE_CA: process_conta_ev(tevp); break;
         /* for gates and 1 bit continous assigns */
         case TE_G: process_gatechg_ev(tevp); break;
@@ -583,7 +591,7 @@ no_stop:
      if (__monit_active && ((__slotend_action
       & (SE_MONIT_TRIGGER | SE_MONIT_CHG)) != 0))
       __exec_monit(__monit_dcehdr,
-       (int) (__slotend_action & SE_MONIT_CHG) != 0);
+       (int32) (__slotend_action & SE_MONIT_CHG) != 0);
 
      /* LOOKATME - should monitoroff (on) effect fmonitor (think no) */
      if ((__slotend_action & SE_FMONIT_TRIGGER) != 0) __exec_fmonits();
@@ -742,7 +750,7 @@ static void process_all_netchgs(void)
  register struct net_t *np;
  register struct nchglst_t *nchglp, *last_nchglp;
  struct nchglst_t *sav_nchglp;
- int num_this_pass, num_passes, total_num;
+ int32 num_this_pass, num_passes, total_num;
 
  num_passes = 0;
  total_num = 0;
@@ -831,7 +839,7 @@ static void process_all_netchgs(void)
 void chk_nchgnlst(struct nchglst_t *hdr)
 {
  register struct nchglst_t *nchglp;
- int ndx;
+ int32 ndx;
  
  ndx = 0;
  for (nchglp = hdr; nchglp != NULL; nchglp = nchglp->nchglnxt)
@@ -864,13 +872,13 @@ void chk_nchgnlst(struct nchglst_t *hdr)
  * added to a list which is then used to provide the next pass of wire 
  * loads 
  */
-static void eval_netchg_lds(register struct net_t *np, int chgi1, int chgi2,
- int is_delayed_mipd)
+static void eval_netchg_lds(register struct net_t *np, int32 chgi1, int32 chgi2,
+ int32 is_delayed_mipd)
 {
  register struct net_pin_t *npp;
  register struct npaux_t *npauxp;
- register int bi;
- int nd_itpop;
+ register int32 bi;
+ int32 nd_itpop;
  struct mod_t *downmdp;
  struct mod_pin_t *mpp;
  struct itree_t *itp;
@@ -900,7 +908,7 @@ static void eval_netchg_lds(register struct net_t *np, int chgi1, int chgi2,
    /* case 2: range of npp is IS form */
    if (npauxp->nbi1 == -2) 
     {
-     if (is2_chg_match((word *) npauxp->nbi2.p, chgi1, chgi2))
+     if (is2_chg_match(npauxp->nbi2.xvi, chgi1, chgi2))
       goto got_match;
      continue;
     }
@@ -1011,7 +1019,7 @@ got_match:
      __eval_conta_rhs_ld(npp);
      break;
     case NP_TRANIF:
-     __eval_tranif_ld(npp->elnpp.egp, (int) npp->obnum);
+     __eval_tranif_ld(npp->elnpp.egp, (int32) npp->obnum);
      break;
     case NP_TCHG:
      __process_npp_timofchg(np, npp);
@@ -1082,7 +1090,7 @@ static void process_mipd_nchg_ev(struct tev_t *tevp)
 {
  register struct net_t *np;
  register struct mipd_t *mipdp;
- int bi, bi2;
+ int32 bi, bi2;
 
  np = tevp->tu.tenp->tenu.np;
  bi = tevp->tu.tenp->nbi;
@@ -1135,7 +1143,7 @@ static void process_mipd_nchg_ev(struct tev_t *tevp)
  */
 static void emit_nchglds_trmsg(struct net_t *np, struct net_pin_t *npp)
 {
- int i1, i2;
+ int32 i1, i2;
  struct npaux_t *npauxp;
  char s1[RECLEN], s2[RECLEN];
 
@@ -1155,17 +1163,20 @@ static void emit_nchglds_trmsg(struct net_t *np, struct net_pin_t *npp)
  * T if bit inside npi1..npi2
  * will overlap unless either high changed below low of range
  * or low changed above high of range
+ *
+ * SJM 10/12/04 - changed to pass contab ndx instead of ptr since contab
+ * realloced
  */
-static int is2_chg_match(word *nbi2p, int npi1, int npi2)
+static int32 is2_chg_match(int32 nbi2_xvi, int32 npi1, int32 npi2)
 {
- int i1;
- word *wp;
+ int32 i1;
+ word32 *wp;
 
- wp = (word *) nbi2p;
+ wp = &(__contab[nbi2_xvi]);
  wp = &(wp[2*__inum]);
  /* if value x - force match since unknown - only can happen for procedural */
  if (wp[1] != 0L) return(TRUE);
- i1 = (int) wp[0];
+ i1 = (int32) wp[0];
  /* know form here h:0 */
  return(npi1 >= i1 && npi2 <= i1);
 }
@@ -1173,16 +1184,17 @@ static int is2_chg_match(word *nbi2p, int npi1, int npi2)
 /*
  * get an possibly correctd for is2 form bit index (part select always split)
  */
-extern void __get_cor_range(register int oi1, union intptr_u oi2,
- register int *i1, register int *i2)
+extern void __get_cor_range(register int32 oi1, union intptr_u oi2,
+ register int32 *i1, register int32 *i2)
 {
- register word *wp;
+ register word32 *wp;
 
  if (oi1 != -2) { *i1 = oi1; *i2 = oi2.i; }
  else
   {
-   wp = (word *) oi2.p;
-   *i1 = *i2 = (int) wp[2*__inum];
+   /* SJM 10/12/04 - because contab realloced, must be ndx base of IS */
+   wp = &(__contab[oi2.xvi]);
+   *i1 = *i2 = (int32) wp[2*__inum];
   }
 }
 
@@ -1212,7 +1224,7 @@ extern void __get_cor_range(register int oi1, union intptr_u oi2,
  */
 
 /* --- unused non proc call gate eval routine
-static void eval_gatein_ld(struct gate_t *gp, int i)
+static void eval_gatein_ld(struct gate_t *gp, int32 i)
 {
  switch ((byte) gp->g_class) {
   case GC_LOGIC: std_chg_logic_gate(gp, i); break;
@@ -1228,9 +1240,9 @@ static void eval_gatein_ld(struct gate_t *gp, int i)
 /*
  * evaluate a logic - std not optimized version
  */
-static void std_chg_logic_gate(register struct gate_t *gp, register unsigned i)
+static void std_chg_logic_gate(register struct gate_t *gp, register word32 i)
 {
- int out_chg;
+ int32 out_chg;
 
  if (!__eval_logic_gate(gp, i, &out_chg))
   { if (__ev_tracing) trace_gunchg(gp, i); return; }
@@ -1250,11 +1262,11 @@ static void std_chg_logic_gate(register struct gate_t *gp, register unsigned i)
  * both ports must be constant bit select or scalar
  * inputs can not be strength for this most optimized routine
  */
-static void acc_chg_bufnot(struct gate_t *gp, unsigned i)
+static void acc_chg_bufnot(struct gate_t *gp, word32 i)
 {
- register word ouwrd, uwrd, ngav, ngbv;
- int out_chg, gatid, biti;
- word igav, igbv;
+ register word32 ouwrd, uwrd, ngav, ngbv;
+ int32 out_chg, gatid, biti;
+ word32 igav, igbv;
  struct expr_t *xp;
  struct net_t *np;
 
@@ -1264,14 +1276,14 @@ static void acc_chg_bufnot(struct gate_t *gp, unsigned i)
  else
   {
    __ld_bit(&igav, &igbv, xp->lu.x->lu.sy->el.enp,
-    (int) __contab[xp->ru.x->ru.xvi]);
+    (int32) __contab[xp->ru.x->ru.xvi]);
   }
 
  __new_inputval = igav | (igbv << 1);
  /* eval changed input and store in gstate if needed */
  /* 12/19/99 SJM - notice buf or not still packed into 1 byte but vars */
- /* only packed into word as smallest */
- ouwrd = (word) gp->gstate.bp[__inum];
+ /* only packed into word32 as smallest */
+ ouwrd = (word32) gp->gstate.bp[__inum];
 
  /* input for not is bits 0 and 2 */
  uwrd = ouwrd & ~(0x5L);
@@ -1333,7 +1345,7 @@ static void acc_chg_bufnot(struct gate_t *gp, unsigned i)
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int) __contab[xp->ru.x->ru.xvi];
+   biti = (int32) __contab[xp->ru.x->ru.xvi];
 
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
@@ -1354,13 +1366,13 @@ try_trace:
  *
  * only difference is slow if for accessing value from strength
  */
-static void acc_stichg_bufnot(register struct gate_t *gp, unsigned i)
+static void acc_stichg_bufnot(register struct gate_t *gp, word32 i)
 {
  register struct expr_t *xp;
- register word ouwrd, uwrd, ngav, ngbv;
+ register word32 ouwrd, uwrd, ngav, ngbv;
  register struct net_t *np;
- int out_chg, gatid, biti;
- word igav, igbv;
+ int32 out_chg, gatid, biti;
+ word32 igav, igbv;
 
  xp = gp->gpins[1];
  if (xp->optyp == ID)
@@ -1368,18 +1380,18 @@ static void acc_stichg_bufnot(register struct gate_t *gp, unsigned i)
    np = xp->lu.sy->el.enp;
    if (np->n_stren)
     {
-     uwrd = (word) np->nva.bp[__inum];
+     uwrd = (word32) np->nva.bp[__inum];
      igav = uwrd & 1L;
      igbv = (uwrd >> 1) & 1L;
     }
    else ld_scalval_(&igav, &igbv, np->nva.bp);
   }
  else __ld_bit(&igav, &igbv, xp->lu.x->lu.sy->el.enp,
-  (int) __contab[xp->ru.x->ru.xvi]);
+  (int32) __contab[xp->ru.x->ru.xvi]);
 
  __new_inputval = igav | (igbv << 1);
  /* eval changed input and store in gstate if needed */
- ouwrd = (word) gp->gstate.bp[__inum];
+ ouwrd = (word32) gp->gstate.bp[__inum];
  /* input for not is bits 0 and 2 */
  uwrd = ouwrd & ~(0x5L);
  uwrd |= (igav | (igbv << 2)); 
@@ -1440,7 +1452,7 @@ static void acc_stichg_bufnot(register struct gate_t *gp, unsigned i)
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];  
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
@@ -1460,24 +1472,24 @@ try_trace:
  * inputs must not be stren wires
  * degenerate 2 input gate not accelerated
  */
-static void acc_chg_4igate(register struct gate_t *gp, unsigned i)
+static void acc_chg_4igate(register struct gate_t *gp, word32 i)
 {
  register struct expr_t *xp;
- register word ouwrd, uwrd, ngav, ngbv, gwid;
+ register word32 ouwrd, uwrd, ngav, ngbv, gwid;
  struct net_t *np;
- int out_chg, biti, bi;
- word gav, gbv, mask;
+ int32 out_chg, biti, bi;
+ word32 gav, gbv, mask;
 
  xp = gp->gpins[i];
  if (xp->optyp == ID) ld_scalval_(&gav, &gbv, xp->lu.sy->el.enp->nva.bp);
  else __ld_bit(&gav, &gbv, xp->lu.x->lu.sy->el.enp,
-  (int) __contab[xp->ru.x->ru.xvi]);
+  (int32) __contab[xp->ru.x->ru.xvi]);
  bi = i - 1; 
  gwid = gp->gpnum;
  __new_inputval = gav | (gbv << 1);
 
  /* eval changed input and store in gstate if needed */
- ouwrd = (word) gp->gstate.bp[__inum];
+ ouwrd = (word32) gp->gstate.bp[__inum];
  uwrd = ouwrd & ~(1L << bi) & ~(1L << (gwid + bi));
  uwrd |= ((gav << bi) | (gbv << (gwid + bi))); 
  /* input change did not change gate */ 
@@ -1564,7 +1576,7 @@ static void acc_chg_4igate(register struct gate_t *gp, unsigned i)
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];  
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
@@ -1584,13 +1596,13 @@ try_trace:
  *
  * inputs can be strength wires (removed) but cannot driver stren
  */
-static void acc_stichg_4igate(register struct gate_t *gp, unsigned i)
+static void acc_stichg_4igate(register struct gate_t *gp, word32 i)
 {
  register struct expr_t *xp;
- register word ouwrd, uwrd, ngav, ngbv, gwid;
+ register word32 ouwrd, uwrd, ngav, ngbv, gwid;
  struct net_t *np;
- int out_chg, biti, bi;
- word gav, gbv, mask;
+ int32 out_chg, biti, bi;
+ word32 gav, gbv, mask;
 
  xp = gp->gpins[i];
  if (xp->optyp == ID)
@@ -1598,20 +1610,20 @@ static void acc_stichg_4igate(register struct gate_t *gp, unsigned i)
    np = xp->lu.sy->el.enp;
    if (np->n_stren)
     {
-     uwrd = (word) np->nva.bp[__inum];
+     uwrd = (word32) np->nva.bp[__inum];
      gav = uwrd & 1L;
      gbv = (uwrd >> 1) & 1L;
     }
    else ld_scalval_(&gav, &gbv, np->nva.bp);
   }
  else __ld_bit(&gav, &gbv, xp->lu.x->lu.sy->el.enp,
-   (int) __contab[xp->ru.x->ru.xvi]);
+   (int32) __contab[xp->ru.x->ru.xvi]);
  bi = i - 1; 
  gwid = gp->gpnum;
  __new_inputval = gav | (gbv << 1);
 
  /* eval changed input and store in gstate if needed */
- ouwrd = (word) gp->gstate.bp[__inum];
+ ouwrd = (word32) gp->gstate.bp[__inum];
  uwrd = ouwrd & ~(1L << bi) & ~(1L << (gwid + bi));
  uwrd |= ((gav << bi) | (gbv << (gwid + bi))); 
  /* input change did not change gate */ 
@@ -1698,7 +1710,7 @@ static void acc_stichg_4igate(register struct gate_t *gp, unsigned i)
  else
   {
    np = xp->lu.x->lu.sy->el.enp;
-   biti = (int) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];  
    /* if the 1 bit is forced nothing to do else normal assign */
    if (np->frc_assgn_allocated
     && __forced_inhibit_bitassign(np, xp->lu.x, xp->ru.x)) goto try_trace;
@@ -1712,7 +1724,7 @@ try_trace:
 /*
  * write gate value unchanged when input changes trace msg
  */
-static void trace_gunchg(struct gate_t *gp, unsigned i)
+static void trace_gunchg(struct gate_t *gp, word32 i)
 {
  char s1[RECLEN];
 
@@ -1724,10 +1736,10 @@ static void trace_gunchg(struct gate_t *gp, unsigned i)
 /*
  * evaluate a udp - std not optimized version
  */
-static void std_chg_udp_gate(register struct gate_t *gp, register unsigned i) 
+static void std_chg_udp_gate(register struct gate_t *gp, register word32 i) 
 {
- register int is_edge;
- int out_chg;
+ register int32 is_edge;
+ int32 out_chg;
 
  __cur_udp = gp->gmsym->el.eudpp;
  is_edge = (__cur_udp->utyp == U_EDGE) ? TRUE : FALSE;
@@ -1746,9 +1758,9 @@ static void std_chg_udp_gate(register struct gate_t *gp, register unsigned i)
 /*
  * evaluate a bufif gate - std not optimized version
  */
-static void std_chg_bufif_gate(register struct gate_t *gp, register unsigned i) 
+static void std_chg_bufif_gate(register struct gate_t *gp, register word32 i) 
 {
- int out_chg;
+ int32 out_chg;
 
  /* this sets __new_gateval to strength if out changed T */
  if (!__eval_bufif_gate(gp, i, &out_chg))
@@ -1768,9 +1780,9 @@ static void std_chg_bufif_gate(register struct gate_t *gp, register unsigned i)
  *
  * g resist here is for real resistive gate not flag for acc
  */
-static void std_chg_mos_gate(register struct gate_t *gp, register unsigned i) 
+static void std_chg_mos_gate(register struct gate_t *gp, register word32 i) 
 {
- register int out_chg, gid;
+ register int32 out_chg, gid;
 
  /* this sets __new_gateval to strength if out changed T */
  if (!chg_mos_instate(gp, i))
@@ -1799,9 +1811,9 @@ static void std_chg_mos_gate(register struct gate_t *gp, register unsigned i)
 /*
  * evaluate a cmos gate - std not optimized version
  */
-static void std_chg_cmos_gate(register struct gate_t *gp, register unsigned i) 
+static void std_chg_cmos_gate(register struct gate_t *gp, register word32 i) 
 {
- register int out_chg;
+ register int32 out_chg;
 
  if (!chg_cmos_instate(gp, i))
   { if (__ev_tracing) trace_gunchg(gp, i); return; }
@@ -1825,7 +1837,7 @@ static void std_chg_cmos_gate(register struct gate_t *gp, register unsigned i)
  */
 extern void __set_gchg_func(struct gate_t *gp)
 {
- int acc_class;
+ int32 acc_class;
 
  switch ((byte) gp->g_class) {
   case GC_LOGIC:
@@ -1882,7 +1894,7 @@ extern void __vpi_set_chg_proc(struct gate_t *gp)
 /*
  * return T if gate has accelerated action routine
  */
-extern int __gate_is_acc(struct gate_t *gp)
+extern int32 __gate_is_acc(struct gate_t *gp)
 {
  if (gp->gchg_func == acc_chg_bufnot || gp->gchg_func == acc_stichg_bufnot
   || gp->gchg_func == acc_chg_4igate || gp->gchg_func == acc_stichg_4igate)
@@ -1906,8 +1918,8 @@ extern int __gate_is_acc(struct gate_t *gp)
  * only called if know has delay and know old gateval and new gateval
  * globals set
  */
-static void prop_gatechg(register struct gate_t *gp, register int outchg,
- int is_acc)
+static void prop_gatechg(register struct gate_t *gp, register int32 outchg,
+ int32 is_acc)
 {
  i_tev_ndx tevpi;
  word64 gdel, schtim;
@@ -2000,8 +2012,8 @@ on_detect_show_x:
  * SJM 11/27/00 - this always calls or schedules change gate outwire where 
  * the gate terminal call back is checked so do not need separate code
  */
-static void evtr_prop_gatechg(register struct gate_t *gp, register unsigned i,
- int outchg)
+static void evtr_prop_gatechg(register struct gate_t *gp, register word32 i,
+ int32 outchg)
 {
  i_tev_ndx tevpi;
  word64 gdel, schtim;
@@ -2138,9 +2150,9 @@ on_detect_show_x:
  * idea is to change event change to value but time still start of
  * region after place where gate may or may not have switched
  */
-static unsigned get_showcancele_val(struct gate_t *gp)
+static word32 get_showcancele_val(struct gate_t *gp)
 {
- int nd_stren = FALSE;
+ int32 nd_stren = FALSE;
 
  switch ((byte) gp->g_class) {
   /* these never have strength value */
@@ -2180,7 +2192,7 @@ static char *to_evtronam(char *s, char *onam, struct itree_t *teitp,
  * expects __new_gateval to contain value to schedule to
  */
 static i_tev_ndx schedule_1gev(register struct gate_t *gp, word64 gdel,
- word64 schtim, int is_acc)
+ word64 schtim, int32 is_acc)
 {
  register i_tev_ndx tevpi;
  register struct tev_t *tevp; 
@@ -2213,7 +2225,7 @@ static i_tev_ndx schedule_1gev(register struct gate_t *gp, word64 gdel,
  * create new event if later
  */
 static i_tev_ndx reschedule_1gev(i_tev_ndx tevpi, word64 gdel, word64 newtim,
- unsigned newoutv, int is_acc)
+ word32 newoutv, int32 is_acc)
 {
  struct tev_t *tevp;
 
@@ -2263,7 +2275,7 @@ static void emit_pulsewarn(struct gate_t *gp, struct tev_t *tevp,
    sptnam, __to_timstr(__xs, etim), __to_timstr(__xs2, newetim), s2);
 }
 
-word __pow3tab[] = { 1, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049 };
+word32 __pow3tab[] = { 1, 3, 9, 27, 81, 243, 729, 2187, 6561, 19683, 59049 };
 
 /*
  * process a gate change event - new level has reached output
@@ -2294,16 +2306,16 @@ static void process_gatechg_ev(register struct tev_t *tevp)
 static void acc_evchg_gate_outwire(register struct gate_t *gp)
 { 
  register struct expr_t *xp;
- register word uwrd, ngav, ngbv;
+ register word32 uwrd, ngav, ngbv;
  register struct net_t *lhsnp;
- int biti, gwid;
- word igav, igbv;
+ int32 biti, gwid;
+ word32 igav, igbv;
 
  __immed_assigns++;
  ngav = __new_gateval & 1L;
  ngbv = __new_gateval >> 1;
  xp = gp->gpins[0];
- uwrd = (word) gp->gstate.bp[__inum];
+ uwrd = (word32) gp->gstate.bp[__inum];
  if ((gwid = gp->gpnum) < 3)
   {
    /* update state with computed output value is bits 1 and 3 */
@@ -2336,7 +2348,7 @@ static void acc_evchg_gate_outwire(register struct gate_t *gp)
  else
   {
    lhsnp = xp->lu.x->lu.sy->el.enp;
-   biti = (int) __contab[xp->ru.x->ru.xvi];  
+   biti = (int32) __contab[xp->ru.x->ru.xvi];  
    /* if the 1 bit is forced nothing to do else normal assign */
    if (lhsnp->frc_assgn_allocated
     && __forced_inhibit_bitassign(lhsnp, xp->lu.x, xp->ru.x)) goto try_trace;
@@ -2414,8 +2426,8 @@ extern void __add_nchglst_el(register struct net_t *np)
  * add to end of next pass, netchg list elements
  * notice this needs inst. loc of target wire for xmr
  */
-extern void __add_select_nchglst_el(register struct net_t *np, register int i1,
- register int i2)
+extern void __add_select_nchglst_el(register struct net_t *np, register int32 i1,
+ register int32 i2)
 {
  register struct nchglst_t *nchglp;
 
@@ -2493,14 +2505,14 @@ extern void __add_dmpv_chglst_el(struct net_t *np)
  */
 static void change_gate_outwire(register struct gate_t *gp)
 {
- register word *wp;
+ register word32 *wp;
  register struct expr_t *xp;
- register int bi, wi;
- int schd_wire, nins, srep;
+ register int32 bi, wi;
+ int32 schd_wire, nins, srep;
  hword *hwp;
- word av, bv;
+ word32 av, bv;
  byte sb2, *sbp;
- unsigned uwrd;
+ word32 uwrd;
  struct xstk_t *xsp;
 
  __immed_assigns++;
@@ -2514,8 +2526,8 @@ static void change_gate_outwire(register struct gate_t *gp)
    nins = gp->gpnum - 1;
    if (nins > 15) srep = SR_VEC; else srep = SR_PVEC;
    /* FIXME - why are these not wrd? */
-   av = ((word) __new_gateval) & 1;
-   bv = ((word) __new_gateval) >> 1;
+   av = ((word32) __new_gateval) & 1;
+   bv = ((word32) __new_gateval) >> 1;
    gate_st_bit(gp->gstate, nins + 1, nins, srep, av, bv);
    break;
   case GC_UDP:
@@ -2528,7 +2540,7 @@ static void change_gate_outwire(register struct gate_t *gp)
    if (__cur_udp->u_wide)
     {
      wp = &(gp->gstate.wp[2*__inum]);  
-     /* update running 2nd state signature word */
+     /* update running 2nd state signature word32 */
      if (__cur_udp->utyp != U_COMB)
       {
        /* need to access old gate value (out about to change) */ 
@@ -2543,7 +2555,7 @@ static void change_gate_outwire(register struct gate_t *gp)
        /* add in new contribution of state output */
        wp[1] += ((__new_gateval == 3) ? 2 : __new_gateval)*__pow3tab[nins];
       }
-     /* update first value word */
+     /* update first value word32 */
      wp[0] &= ~(3L << bi);
      wp[0] |= (__new_gateval << bi);
     }
@@ -2597,7 +2609,7 @@ do_hasstren_assign:
      set_byteval_(sbp, xp->szu.xclen, ST_HIZ);
      /* set the low bit */
      sbp[0] = (byte) __new_gateval;
-     __exec_conta_assign(xp, (word *) sbp, (word *) NULL, schd_wire);
+     __exec_conta_assign(xp, (word32 *) sbp, (word32 *) NULL, schd_wire);
      __pop_xstk();
     } 
    goto done; 
@@ -2642,7 +2654,7 @@ do_hasstren_assign:
       { 
        /* notice tran that uses g st val for mark never goes here */
        uwrd = __new_gateval | (gp->g_stval << 2);
-       uwrd = (word) __stren_map_tab[uwrd];
+       uwrd = (word32) __stren_map_tab[uwrd];
        sb2 = (byte) uwrd;
       }
      /* 07/08/00 - if gate (always 1 bit) drives wider vec must initialize */  
@@ -2652,7 +2664,7 @@ do_hasstren_assign:
      set_byteval_(sbp, xp->szu.xclen, ST_HIZ);
      /* set the low bit */
      sbp[0] = sb2;
-     __exec_conta_assign(xp, (word *) sbp, (word *) NULL, schd_wire);
+     __exec_conta_assign(xp, (word32 *) sbp, (word32 *) NULL, schd_wire);
      __pop_xstk();
     } 
    else
@@ -2670,7 +2682,7 @@ done:
  /* gate state so it does ont matter if after wire changed */ 
  if (__have_vpi_gateout_cbs)
   {
-   int gi, tevpi;
+   int32 gi, tevpi;
 
    gi = gp - __inst_mod->mgates;
    if (__inst_mod->mgateout_cbs != NULL && __inst_mod->mgateout_cbs[gi] != NULL
@@ -2711,12 +2723,12 @@ static void trace_chg_gateout(struct gate_t *gp, struct expr_t *xp)
  * with know good index (not -1)
  * this is for logic gates only
  */
-static void gate_st_bit(union pck_u pckv, int blen, int biti, int srep,
- register word av, register word bv)
+static void gate_st_bit(union pck_u pckv, int32 blen, int32 biti, int32 srep,
+ register word32 av, register word32 bv)
 {
- register word uwrd, ouwrd;
- word *rap;
- int wlen;
+ register word32 uwrd, ouwrd;
+ word32 *rap;
+ int32 wlen;
 
  /* this is same as full value store - biti 0 or will not get here */
  switch ((byte) srep) {
@@ -2729,7 +2741,7 @@ static void gate_st_bit(union pck_u pckv, int blen, int biti, int srep,
    __lhsbsel(&(rap[wlen]), biti, bv);
    return;  
   case SR_PVEC: 
-   /* SJM 12/19/99 - notice gates still packed into bp, hwp, wp not just word */
+   /* SJM 12/19/99 - notice gates still packed into bp, hwp, wp not just word32 */
    ouwrd = get_packintowrd_(pckv, __inum, blen);
    uwrd = ouwrd & ~(1L << biti) & ~(ouwrd & (1L << (blen + biti)));
    uwrd |= ((av & 1L) << biti) | ((bv & 1L) << (blen + biti));
@@ -2747,11 +2759,11 @@ static void gate_st_bit(union pck_u pckv, int blen, int biti, int srep,
  * coded as 2 contiguous bits per instance
  * assuming shift by 0 legal and gets right answer in C
  */
-static void gate_st_scalval(register word *wp, register word av,
- register word bv)
+static void gate_st_scalval(register word32 *wp, register word32 av,
+ register word32 bv)
 {
- register int bi;
- int dbi, dwi;
+ register int32 bi;
+ int32 dbi, dwi;
  
  bi = 2*__inum;
  dwi = get_wofs_(bi);
@@ -2766,9 +2778,9 @@ static void gate_st_scalval(register word *wp, register word av,
  * returns false if new input value is same as old
  * this requires correct cur. itp
  */
-static int chg_mos_instate(register struct gate_t *gp, unsigned i)
+static int32 chg_mos_instate(register struct gate_t *gp, word32 i)
 {
- register word uwrd;
+ register word32 uwrd;
  register struct expr_t *ndp; 
  register byte *sbp;
  struct xstk_t *xsp;
@@ -2813,9 +2825,9 @@ static int chg_mos_instate(register struct gate_t *gp, unsigned i)
  * but only 2 bits of 1st and 2nd control inputs used
  * notice input starts at 1 because output is pos. 0
  */
-static int chg_cmos_instate(register struct gate_t *gp, unsigned i)
+static int32 chg_cmos_instate(register struct gate_t *gp, word32 i)
 {
- register word uwrd;
+ register word32 uwrd;
  register byte *sbp;
  register struct expr_t *ndp; 
  register struct xstk_t *xsp;
@@ -2868,9 +2880,9 @@ static int chg_cmos_instate(register struct gate_t *gp, unsigned i)
 /*
  * evaluate tranif when third enable port changes
  */
-extern void __eval_tranif_ld(register struct gate_t *gp, register int i)
+extern void __eval_tranif_ld(register struct gate_t *gp, register int32 i)
 {
- int out_chg;
+ int32 out_chg;
 
  /* DBG remove */
  if (i != 2) __arg_terr(__FILE__, __LINE__);
@@ -2897,10 +2909,10 @@ extern void __eval_tranif_ld(register struct gate_t *gp, register int i)
  */
 static void eval_tranif_onoff(struct gate_t *gp)
 {
- register int wi, bi; 
- register unsigned cval;
+ register int32 wi, bi; 
+ register word32 cval;
  register struct xstk_t *xsp;
- int gateid;
+ int32 gateid;
 
  wi = get_wofs_(2*__inum);
  bi = get_bofs_(2*__inum);
@@ -2946,8 +2958,8 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
 {
  register struct xstk_t *xsp, *xsp2;
  register struct conta_t *cap;
- int cv, cv2, schd_wire;
- int lhswlen, orhslen, lhslen;
+ int32 cv, cv2, schd_wire;
+ int32 lhswlen, orhslen, lhslen;
  byte *sbp;
  word64 cadel, schtim;
  i_tev_ndx tevpi;
@@ -3121,8 +3133,8 @@ extern void __eval_conta_rhs_ld(register struct net_pin_t *npp)
  */
 static void evtr_eval_conta_rhs_ld(struct net_pin_t *npp)
 {
- int cv, schd_wire;
- int lhswlen, orhslen, lhslen;
+ int32 cv, schd_wire;
+ int32 lhswlen, orhslen, lhslen;
  byte *sbp;
  word64 cadel, schtim;
  i_tev_ndx tevpi;
@@ -3413,7 +3425,7 @@ static void process_conta_ev(register struct tev_t *tevp)
 {
  register struct xstk_t *xsp, *xsp2;
  register struct conta_t *cap;
- int schd_wire, lhslen;
+ int32 schd_wire, lhslen;
  byte *sbp;
  struct expr_t *lhsxp;
 
@@ -3489,10 +3501,10 @@ static void process_conta_ev(register struct tev_t *tevp)
  */
 static void process_wire_ev(register struct tev_t *tevp)
 {
- register int bi;
+ register int32 bi;
  register struct net_t *np;
  register byte *sbp;
- word nval;
+ word32 nval;
  struct rngdwir_t *dwirp;
 
  np = tevp->tu.tenp->tenu.np;
@@ -3515,7 +3527,7 @@ static void process_wire_ev(register struct tev_t *tevp)
    else strcpy(s2, "");
    __tr_msg("-- processing delay wire %s%s store event, value %s\n",
     __to_evtrwnam(__xs, np, bi, bi, tevp->teitp), s2,
-     __to_vvnam(s1, (word) nval));
+     __to_vvnam(s1, (word32) nval));
   }
  dwirp = np->nu.rngdwir; 
  dwirp->wschd_pbtevs[np->nwid*tevp->teitp->itinum + bi] = -1;
@@ -3557,10 +3569,10 @@ static void process_wire_ev(register struct tev_t *tevp)
  */
 static void process_nbpa_ev(struct tev_t *tevp)
 {
- register word *wp;
+ register word32 *wp;
  register struct expr_t *con_lhsxp; 
  register struct st_t *stp;
- int wlen;
+ int32 wlen;
  struct tenbpa_t *tenbp;
 
  __push_itstk(tevp->teitp);
@@ -3570,7 +3582,9 @@ static void process_nbpa_ev(struct tev_t *tevp)
 
  /* SJM 08/08/99 - need to assign to copied lhs expr with select indices */ 
  /* (possibly many if lhs concatenate) replaced by constants */ 
- if ((con_lhsxp = tenbp->nblhsxp) == NULL) con_lhsxp = stp->st.spra.lhsx;
+ /* SJM PUTMEBACK */ 
+ con_lhsxp = tenbp->nblhsxp;
+ if (con_lhsxp == NULL) con_lhsxp = stp->st.spra.lhsx;
 
  wlen = wlen_(con_lhsxp->szu.xclen);
  if (__ev_tracing)
@@ -3634,11 +3648,11 @@ extern void __evtr_resume_msg(void)
  */
 extern void __process_getpat(struct conta_t *cap)
 {
- register int bi;
+ register int32 bi;
  register struct expr_t *catx;
- register word cbita, cbitb;
- int i, wlen, ubits;
- word tmpa, tmpb;
+ register word32 cbita, cbitb;
+ int32 i, wlen, ubits;
+ word32 tmpa, tmpb;
  struct expr_t *idndp, *lhsxp, *rhsxp; 
  struct xstk_t *xsp;
  struct net_t *np;
@@ -3660,7 +3674,7 @@ extern void __process_getpat(struct conta_t *cap)
     __to_evtrcanam(__xs, cap, __inst_ptr));
   }
 
- /* wider than 1 word case */
+ /* wider than 1 word32 case */
  wlen = wlen_(lhsxp->szu.xclen);
  ubits = ubits_(lhsxp->szu.xclen);
  catx = lhsxp->ru.x;
@@ -3696,7 +3710,7 @@ done:
  * emit an netname for tracing with path if needed
  * for ev. know never task/func. part of xmr reference
  */
-extern char *__to_evtrwnam(char *s, struct net_t *np, int bi1, int bi2, 
+extern char *__to_evtrwnam(char *s, struct net_t *np, int32 bi1, int32 bi2, 
  struct itree_t *teitp)
 {
  char s1[RECLEN], s2[RECLEN];
@@ -3717,7 +3731,7 @@ extern char *__to_evtrwnam(char *s, struct net_t *np, int bi1, int bi2,
  *
  * port can be only 1 bit always number from hight to low so no normalize 
  */
-extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int bi, 
+extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int32 bi, 
  struct itree_t *teitp)
 {
  char s1[RECLEN], s2[RECLEN];
@@ -3737,11 +3751,11 @@ extern char *__to_evtrpnam(char *s, struct mod_pin_t *mpp, int bi,
  * here do not need to worry about some bits only forced from range
  * this is only for wire where 1 bit per bit*inst product
  */
-static int force_inhibit_wireassign(struct net_t *np, register int biti, 
+static int32 force_inhibit_wireassign(struct net_t *np, register int32 biti, 
  struct itree_t *itp)
 {
  register struct qcval_t *frc_qcp;
- int nd_itpop, rv;
+ int32 nd_itpop, rv;
 
  if (itp != NULL) { __push_itstk(itp); nd_itpop = TRUE; }
  else nd_itpop = FALSE;
@@ -3765,11 +3779,11 @@ static int force_inhibit_wireassign(struct net_t *np, register int biti,
  */
 static void process_trpthdst_ev(register struct tev_t *tevp)
 {
- register int bi;
+ register int32 bi;
  register struct net_t *np;
  register byte *sbp;
  struct traux_t *trap;
- word nval, av, bv;
+ word32 nval, av, bv;
  struct rngdwir_t *dwirp;
  struct xstk_t *xsp;
 
@@ -3793,7 +3807,7 @@ static void process_trpthdst_ev(register struct tev_t *tevp)
    __tr_msg(
     "-- processing inout path dest. %s driven value update event, value %s\n",
     __to_evtrwnam(__xs, np, bi, bi, tevp->teitp),
-     __to_vvnam(s1, (word) nval));
+     __to_vvnam(s1, (word32) nval));
   }
  dwirp = np->nu.rngdwir; 
  dwirp->wschd_pbtevs[np->nwid*tevp->teitp->itinum + bi] = -1;
@@ -3858,13 +3872,13 @@ byte __epair_tab[] =
  * inst. ptr here is place np changed (i.e. for XMR define itree loc)
  * know npi1 >= npi2 since normalized internally
  */
-extern void __wakeup_delay_ctrls(register struct net_t *np, register int npi1,
- register int npi2)
+extern void __wakeup_delay_ctrls(register struct net_t *np, register int32 npi1,
+ register int32 npi2)
 {
  register struct dcevnt_t *dcep;
- register word *wp;
- int nd_itpop, oneinst, tevpi, i1;
- word oval, nval;
+ register word32 *wp;
+ int32 nd_itpop, oneinst, tevpi, i1;
+ word32 oval, nval;
  byte emask;
  struct delctrl_t *dctp;
  struct fmonlst_t *fmonp;
@@ -3889,14 +3903,19 @@ extern void __wakeup_delay_ctrls(register struct net_t *np, register int npi1,
      /* dce is range DCE range, know dci1 cannot be -1 */
      if (dcep->dci1 == -2)
       {
-       wp = (word *) dcep->dci2.p;
-       i1 = (int) wp[2*__inum];
+       /* SJM 10/12/04 - because contab realloced, must be ndx base of IS */
+       wp = &(__contab[dcep->dci2.xvi]);
+       i1 = (int32) wp[2*__inum];
        /* change must be inside range to match */
        if (i1 > npi1 || i1 < npi2) continue;
       }
-     /* eliminate if changed bit do not overlap range */
-     /* if low chged above high or high chged below low, eliminate */ 
-     if (npi2 > dcep->dci1 || npi1 < dcep->dci2.i) continue;
+     else
+      {
+       /* SJM 06/26/04 - FIXME ??? ### isn't else needed here ??? */
+       /* eliminate if changed bit do not overlap range */
+       /* if low chged above high or high chged below low, eliminate */ 
+       if (npi2 > dcep->dci1 || npi1 < dcep->dci2.i) continue;
+      }
      goto do_event_ctrl;
     case DCE_INST:
      /* notice dce that is entire wire always matches changed range */
@@ -3911,27 +3930,15 @@ do_event_ctrl:
      /* LOOKATME - filtering even for DOWN XMR insts that do not match? */
      if (dcep->prevval.wp != NULL)
       {
-       /* if has previous value, know there is not an edge expr */
-       /* DBG remove -- */
-       if (dcep->dce_expr != NULL) __misc_terr(__FILE__, __LINE__);
-       /* --- */
-
        /* also eliminate if event control range or wire did not change */
        /* for xmr and/or collpase - look in target itree where dce attached */
        /* for non dce expr form, sets old and new values for edge detection */
        oneinst = (dcep->dce_1inst) ? TRUE : FALSE;
        if (!np->n_isavec)
         {  
-         if (!np->n_stren)
-          {
-           if (!scal_filter_dce_chg(np, dcep, &oval, &nval, oneinst))
-            goto dce_done;
-          } 
-         else
-          {
-           if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, oneinst))
-            goto dce_done;
-          } 
+         /* SJM 06/29/04 - simplified - always use stren version for scalar */
+         if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, oneinst))
+          goto dce_done;
         }
        else
         {
@@ -4018,10 +4025,10 @@ do_event_ctrl:
             "+++ now %s repeated edge for net %s (inst %s) count %d\n",
             __to_timstr(__xs2, &__simtime), np->nsym->synam,
             __msg2_blditree(__xs, __inst_ptr),
-            (int) dctp->dce_repcnts[__inum] - 1);
+            (int32) dctp->dce_repcnts[__inum] - 1);
           } 
          /* --- */
-         /* SJM 04/02/02 since unsigned, any positive still do not trigger */
+         /* SJM 04/02/02 since word32, any positive still do not trigger */
          if (--dctp->dce_repcnts[__inum] != 0) goto dce_done;
         }
        trigger_evctrl(dctp, tevpi);
@@ -4128,7 +4135,7 @@ dce_done:
      /* DBG remove ---
      if (__debug_flg && np->n_stren)
       {
-       int dwid;
+       int32 dwid;
        byte *sbp;
        char s1[RECLEN];
 
@@ -4177,26 +4184,20 @@ dce_done:
       {
        if (!np->n_isavec)
         {  
-         if (!np->n_stren)
+         /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */ 
+         /* user passed non stren val request to vpi_ cb call back */
+         if (!np->n_stren || dcep->dce_nomonstren)
           {
-           if (!scal_filter_dce_chg(np, dcep, &oval, &nval, TRUE)) continue;
-          } 
+           /* SJM 06/29/04 - simplified - always use stren version for scal */
+           if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, TRUE))
+            continue;
+          }
          else
           {
-           /* 05/20/00 - SJM - following LRM vi vpi stren report st chg */ 
-           /* user passed non stren val request to vpi_ cb call back */
-           if (dcep->dce_nomonstren)
-            {
-             if (!scal_stfilter_dce_chg(np, dcep, &oval, &nval, TRUE))
-              continue;
-            }
-           else
-            {
-             /* need strength changes too */
-             if (!vccb_scal_standval_filter(np, dcep, &oval, &nval, TRUE))
-              continue;
-            }
-          } 
+           /* need strength changes too */
+            if (!vccb_scal_standval_filter(np, dcep, &oval, &nval, TRUE))
+             continue;
+          }
         }
        else
         {
@@ -4245,12 +4246,12 @@ dce_done:
 /*
  * evaluate, set edge new and old and filter for dce change - non xmr case
  */
-static int filter_edge_expr(register struct dce_expr_t *dcexp, word *oval,
- word *nval)
+static int32 filter_edge_expr(register struct dce_expr_t *dcexp, word32 *oval,
+ word32 *nval)
 {
- register word nav, nbv;
+ register word32 nav, nbv;
  register struct xstk_t *xsp;
- word av, bv;
+ word32 av, bv;
  
  /* evaluate expr. to get current edge in ref. context */
  xsp = __eval_xpr(dcexp->edgxp);
@@ -4348,12 +4349,12 @@ static void trigger_evctrl(struct delctrl_t *dctp, register i_tev_ndx tevpi)
  *
  * this is for change operator not %v so value not strength change used
  */
-static int stfilter_dce_chg(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
+static int32 stfilter_dce_chg(register struct net_t *np,
+ register struct dcevnt_t *dcep, word32 *oval, word32 *nval, int32 oneinst)
 {
- register int bi;
+ register int32 bi;
  register byte *dcesbp, *nsbp;
- int dcewid, i1, i2;
+ int32 dcewid, i1, i2;
  byte dcev, nv;
 
  /* SJM 05/08/03 - stren can't be expr since eval of expr removes stren */
@@ -4405,11 +4406,11 @@ not_same_val:
  *
  * 06/06/00 - SJM - new routine to filter vpi vec stren only chg
  */
-static int vccb_vec_standval_filter(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
+static int32 vccb_vec_standval_filter(register struct net_t *np,
+ register struct dcevnt_t *dcep, word32 *oval, word32 *nval, int32 oneinst)
 {
  register byte *dcesbp, *nsbp;
- int dcewid, i1, i2;
+ int32 dcewid, i1, i2;
  byte dcev, nv;
 
  /* SJM 05/08/03 - stren can't be expr since eval of expr removes stren */
@@ -4448,50 +4449,13 @@ static int vccb_vec_standval_filter(register struct net_t *np,
 }
 
 /*
- * scalar stren filter non monit dce for real change 
- * return F if not changed
- *
- * changes are always value only - monit %v strength handles in monit
- * as special case
- */
-static int scal_stfilter_dce_chg(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
-{
- register byte *dcesbp, *nsbp;
- byte dcev, nv;
-
- /* SJM 05/08/03 - stren can't be expr since eval of expr removes stren */
- /* DBG remove -- */
- if (dcep->dce_expr != NULL) __misc_terr(__FILE__, __LINE__);
- /* --- */
-
- /* get dce value ptr (for iact per instance so from 0th) */
- if (oneinst) dcesbp = dcep->prevval.bp;
- else dcesbp = &(dcep->prevval.bp[__inum]);
-
- /* point to wire value */
- get_stwire_addr_(nsbp, np);
- /* if values same, no edge or no change */
- if ((dcev = (dcesbp[0] & 3)) == (nv = (nsbp[0] & 3))) return(FALSE);
- dcesbp[0] = nsbp[0];
-
- /* only need to set values for edge if complicated need expr form */
- if (dcep->dce_edge) { *oval = dcev; *nval = nv; }
-
- /* LOOKATME - could fix %v strength only change on value here */
- /* if knew which dce was not %v and dcewid is number of bytes since stren */
-
- return(TRUE);
-}
-
-/*
  * vpi_ scalar val chg stren and value filter (report stren only chges)
  * return F if not changed
  *
  * 06/06/00 - SJM - new routine to filter vpi scalar stren only chg
  */
-static int vccb_scal_standval_filter(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
+static int32 vccb_scal_standval_filter(register struct net_t *np,
+ register struct dcevnt_t *dcep, word32 *oval, word32 *nval, int32 oneinst)
 {
  register byte *dcesbp, *nsbp;
  byte dcev, nv;
@@ -4523,13 +4487,13 @@ static int vccb_scal_standval_filter(register struct net_t *np,
  * called from decl itree contextfor XMR
  *
  * needed because may assign to range but monitor bit in range did not chged
- * also if edge operator (not chaange) sets the oval and nval
+ * also if edge operator (not change) sets the oval and nval
  * know wire changed so "new" prevval is wire value
  */
-static int filter_dce_chg(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
+static int32 filter_dce_chg(register struct net_t *np,
+ register struct dcevnt_t *dcep, word32 *oval, word32 *nval, int32 oneinst)
 {
- int dcewid, i1, i2, rv;
+ int32 dcewid, i1, i2, rv;
  register struct xstk_t *dcexsp, *nxsp;
 
  dcewid = __get_dcewid(dcep, np);
@@ -4560,7 +4524,7 @@ static int filter_dce_chg(register struct net_t *np,
    *oval = (dcexsp->ap[0] & 1L) | ((dcexsp->bp[0] << 1) & 2L);
    *nval = (nxsp->ap[0] & 1L) | ((nxsp->bp[0] << 1) & 2L);
   } 
- /* if one instance store into that 0th ints (only) loc. */
+ /* if one instance store into that 0th inst (only) loc. */
  if (oneinst)
   {
    /* need itree loc. - use current mod - save before pushing on top */
@@ -4577,36 +4541,34 @@ done:
 }
 
 /*
- * for scalar filter non monit dce for real change
- * called from decl itree contextfor XMR
- *
- * know np is not a vector
- *
+ * scalar stren filter non monit dce for real change 
  * return F if not changed
+ *
+ * changes are always value only - monit %v strength handles in monit
+ * as special case
  */
-static int scal_filter_dce_chg(register struct net_t *np,
- register struct dcevnt_t *dcep, word *oval, word *nval, int oneinst)
+static int32 scal_stfilter_dce_chg(register struct net_t *np,
+ register struct dcevnt_t *dcep, word32 *oval, word32 *nval, int32 oneinst)
 {
- register byte *bp;
- word av, bv, nav, nbv;
- 
- bp = dcep->prevval.bp;
- /* if only one inst prev. val. is from 0th inst but wire from rigth inst */
- if (oneinst) { av = (word) bp[0]; bv = (av >> 1) & 1L; av &= 1L; }
- else ld_scalval_(&av, &bv, bp);
+ register byte *dcesbp, *nsbp;
+ byte dcev, nv;
 
- __ld_wire_val(&nav, &nbv, np); 
- /* make sure this wire changed */
- if (av == nav && bv == nbv) return(FALSE);
+ /* get dce value ptr (for iact per instance so from 0th) */
+ if (oneinst) dcesbp = dcep->prevval.bp;
+ else dcesbp = &(dcep->prevval.bp[__inum]);
+
+ /* point to wire value */
+ get_stwire_addr_(nsbp, np);
+ /* if values same, no edge or no change */
+ if ((dcev = (dcesbp[0] & 3)) == (nv = (nsbp[0] & 3))) return(FALSE);
+ dcesbp[0] = nsbp[0];
 
  /* only need to set values for edge if complicated need expr form */
- if (dcep->dce_edge)
-  { *oval = av | (bv << 1); *nval = nav | (nbv << 1); } 
+ if (dcep->dce_edge) { *oval = dcev; *nval = nv; }
 
- /* if one instance store into that 0th ints (only) loc. */
- /* notice storing back into prevval.wp */
- if (oneinst) bp[0] = (byte) (nav | (nbv << 1));
- else st_scalval_(bp, nav, nbv);
+ /* LOOKATME - could fix %v strength only change on value here */
+ /* if knew which dce was not %v and dcewid is number of bytes since stren */
+
  return(TRUE);
 }
 
@@ -4622,10 +4584,10 @@ static int scal_filter_dce_chg(register struct net_t *np,
 extern void __process_npp_timofchg(struct net_t *np,
  register struct net_pin_t *npp)
 {
- register int ii;
+ register int32 ii;
  register struct tchg_t *tchgp;
- int i1;
- word new_eval, old_eval, av, bv;
+ int32 i1;
+ word32 new_eval, old_eval, av, bv;
  word64 chgtim, reftim;
  struct tchk_t *tcp;
  struct chktchg_t *chktcp;
@@ -4718,7 +4680,8 @@ extern void __process_npp_timofchg(struct net_t *np,
       }
      /* if repeated edge during same time - use 1st of this time as ref. */
     }
-   else tchgp->lastchg[ii] = __simtime;
+   /* SJM 10/10/04 - was wrongly setting ref even change time when repeated */
+   /* check event changes during same time */
    break;
   case NPCHG_PTHSRC:
    tchgp = npp->elnpp.etchgp;
@@ -4775,10 +4738,10 @@ static void bld_xmrsrc_ref(char *s, struct net_t *np)
 /*
  * build path source filter (ifnone, or edge and/or condition)
  */
-static void bld_srcfilter_ref(char *s, unsigned pthifnone, unsigned cedge,
+static void bld_srcfilter_ref(char *s, word32 pthifnone, word32 cedge,
  struct expr_t *cxp)
 {
- int has_edge;
+ int32 has_edge;
  struct xstk_t *xsp;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
 
@@ -4810,12 +4773,12 @@ static void bld_srcfilter_ref(char *s, unsigned pthifnone, unsigned cedge,
  * return T if bit changed (must pass all filters to change 
  * because new edge value already computed (in up), need down itree here
  */
-static int filter_bitchange(register word new_eval, register byte *oldbp,
- register unsigned signat, struct expr_t *condx)
+static int32 filter_bitchange(register word32 new_eval, register byte *oldbp,
+ register word32 signat, struct expr_t *condx)
 {
- register word old_eval;
- word av, bv;
- int epair;
+ register word32 old_eval;
+ word32 av, bv;
+ int32 epair;
  struct xstk_t *xsp;
 
  ld_scalval_(&av, &bv, oldbp);
@@ -4936,10 +4899,12 @@ emit_msg:
      __get_del(&lim2, tcp->tclim2_du, tcp->tc_delrep2);
      /* 2nd limit is hold part */
      lim1 = lim2;
-     if (diff < lim1) goto emit_msg;
+     /* AIV 09/15/04 - difference of 0 must not cause check - see hold */
+     if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     case TCHK_HOLD:
-     if (diff < lim1) goto emit_msg;
+     /* AIV 09/15/04 - difference of 0 must not cause check */
+     if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     case TCHK_WIDTH:
      /* opposite edge data event less than limit after 1st edge ref., err */
@@ -4966,7 +4931,7 @@ emit_msg:
      /* if data event (2nd) more than limit after ref. 1st => err */
      /* skew error if date event too long after reference event */
      /* i.e. too much skew (lateness) of arriving signal */
-     /* SJM 04/13/04 - if backward should be oppositeof PERIOD above */
+     /* SJM 04/13/04 - if backward should be opposite of PERIOD above */
      if (diff > lim1) goto emit_msg;
      break;
     case TCHK_RECREM:
@@ -4996,7 +4961,8 @@ emit_msg:
      /* (clear edge) - removal like setup but error if reference event not */
      /* edge - removal err if clock happens too soon after clear or preset */
      /* edge */
-     if (diff > lim1 && diff != 0ULL) goto emit_msg;
+     /* AIV 07/09/04 - removal test was reversed - was > but needs to be < */
+     if (diff < lim1 && diff != 0ULL) goto emit_msg;
      break;
     default: __case_terr(__FILE__, __LINE__);
    }
@@ -5009,7 +4975,7 @@ emit_msg:
 }
 
 /* LOOKATME - to match OVISIM x goes to 1 not 0 */
-static word ntfy_toggle_tab[] = {1, 0, 2, 1};
+static word32 ntfy_toggle_tab[] = {1, 0, 2, 1};
 
 /*
  * process notify
@@ -5017,7 +4983,7 @@ static word ntfy_toggle_tab[] = {1, 0, 2, 1};
 static void process_notify(struct net_t *np)
 {
  struct xstk_t *xsp;
- word val;
+ word32 val;
  
  push_xstk_(xsp, np->nwid);
  __ld_wire_val(xsp->ap, xsp->bp, np);
@@ -5040,7 +5006,7 @@ static void process_notify(struct net_t *np)
 static char *bld_tchk_srcdump(char *s, struct tchk_t *tcp, word64 *tim1,
  word64 *tim2, word64 *lim1, word64 *lim2)
 {
- int nd_rpar;
+ int32 nd_rpar;
  char s1[RECLEN];
 
  __cur_sofs = 0;
@@ -5162,7 +5128,7 @@ extern void __init_sim(void)
  */
 static void init_stime(void)
 {
- register int i;
+ register int32 i;
  struct telhdr_t *telp;
 
  /* initialize the simulation realloced event table */
@@ -5351,7 +5317,7 @@ static void reinit_stime(void)
  */
 static void init_wires(void)
 {
- int ii;
+ int32 ii;
 
  __wire_init = TRUE;
  /* go through list of 1 inst. corresponding to each top level module */
@@ -5394,8 +5360,8 @@ static void init_wires(void)
  */
 static void init_itinsts(struct itree_t *up_itp)
 {
- register int gi, pbi;
- int ii;
+ register int32 gi, pbi;
+ int32 cai, ii;
  struct conta_t *cap;
  struct mod_t *mdp;
  struct itree_t *itp;
@@ -5414,7 +5380,7 @@ static void init_itinsts(struct itree_t *up_itp)
  for (gi = 0; gi < mdp->mgnum; gi++) gate_initeval(&(mdp->mgates[gi]));
 
  /* and all contas */ 
- for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+ for (cap = mdp->mcas, cai = 0; cai < mdp->mcanum; cai++, cap++)
   {
    /* SJM 09/28/02 - need to initialize the PB separated contas */
    if (cap->ca_pb_sim)
@@ -5521,7 +5487,7 @@ static void init_sched_thd(struct mod_t *mdp)
  */
 static void gate_initeval(struct gate_t *gp)
 {
- int i, gid;
+ int32 i, gid;
  
  /* evaluate gate - even if no change assign (this stores state) */
  /* if input value same, nothing to do */
@@ -5555,7 +5521,7 @@ static void gate_initeval(struct gate_t *gp)
    /* this is needed since probably all drivers tristate at time 0 */
    /* but pull must start at time 0 */
    /* notice no output here so starts at 0 not 1 (normally 0 output) */
-   for (i = 0; i < (int) gp->gpnum; i++)
+   for (i = 0; i < (int32) gp->gpnum; i++)
     __mdr_assign_or_sched(gp->gpins[i]);
    if (__debug_flg)
     {
@@ -5596,19 +5562,19 @@ static void gate_initeval(struct gate_t *gp)
  * storing gate output that always happens during init.
  *
  * notice that for gpins, 0 is output and first input is 1
- * but values in upd state word are input 0 in low 2 bits, and high (maybe
+ * but values in upd state word32 are input 0 in low 2 bits, and high (maybe
  * output if sequential) in high 2 bits
  */
 static void init_udp(struct gate_t *gp)
 {
- register int i;
- int nins;
+ register int32 i;
+ int32 nins;
  hword *hwp;
- word wide_ival, new_inputval, *wp;
- int out_chg;
+ word32 wide_ival, new_inputval, *wp;
+ int32 out_chg;
  struct xstk_t *xsp;
- extern word __to_noztab[];
- extern word __to_uvaltab[];
+ extern word32 __to_noztab[];
+ extern word32 __to_uvaltab[];
 
  __cur_udp = gp->gmsym->el.eudpp;
  /* for level, this includes state */ 
@@ -5639,7 +5605,7 @@ static void init_udp(struct gate_t *gp)
   }
  else
   {
-   /* in wide, case need 2nd running value index word */
+   /* in wide, case need 2nd running value index word32 */
    wp = &(gp->gstate.wp[2*__inum]);
    for (i = 0; i < nins; i++)
     {
@@ -5670,7 +5636,7 @@ static void init_udp(struct gate_t *gp)
    if (!__cur_udp->u_wide)
     {
      hwp = &(gp->gstate.hwp[__inum]);
-     new_inputval = (word) (hwp[0] & 3L); 
+     new_inputval = (word32) (hwp[0] & 3L); 
      if (new_inputval == 0) new_inputval = 3; else new_inputval = 0;
      hwp[0] &= ~(3L); 
      hwp[0] |= (hword) new_inputval;
@@ -5704,9 +5670,9 @@ static void init_udp(struct gate_t *gp)
  */
 static void init_logic_gate(struct gate_t *gp)
 {
- register int i;
- int srep, nins;
- int out_chg;
+ register int32 i;
+ int32 srep, nins;
+ int32 out_chg;
  struct xstk_t *xsp;
 
  if (gp->gpnum > 16) srep = SR_VEC; else srep = SR_PVEC;  
@@ -5720,7 +5686,7 @@ static void init_logic_gate(struct gate_t *gp)
    xsp->ap[0] &= 1L;
    xsp->bp[0] &= 1L;
    if (i == 0) xsp->bp[0] = (~xsp->bp[0]) & 1L;
-   gate_st_bit(gp->gstate, (int) gp->gpnum, i, srep, xsp->ap[0], xsp->bp[0]);
+   gate_st_bit(gp->gstate, (int32) gp->gpnum, i, srep, xsp->ap[0], xsp->bp[0]);
    __pop_xstk();
   }
  /* know reevaluating 1st input will result in new value so will eval. */
@@ -5737,7 +5703,7 @@ static void init_logic_gate(struct gate_t *gp)
  */
 static void init_bufif_gate(struct gate_t *gp)
 {
- int out_chg;
+ int32 out_chg;
  hword *hwp;
  struct xstk_t *xsp;
 
@@ -5768,8 +5734,8 @@ static void init_bufif_gate(struct gate_t *gp)
  */
 static void init_tranif_gate(struct gate_t *gp)
 {
- register word cval;
- int conducting, gateid, bi, wi;
+ register word32 cval;
+ int32 conducting, gateid, bi, wi;
  struct xstk_t *xsp;
 
  /* first initialize conducting state */
@@ -5810,7 +5776,7 @@ static void init_tranif_gate(struct gate_t *gp)
  */
 static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
 {
- int lhslen, orhslen;
+ int32 lhslen, orhslen;
  byte *sbp;
  struct xstk_t *xsp, *xsp2;
  struct expr_t *xp, *lhsxp;
@@ -5934,7 +5900,7 @@ static void conta_initeval(struct conta_t *cap, struct conta_t *mast_cap)
  */
 extern void __insert_event(register i_tev_ndx tevpi)
 {
- register int schtwi;
+ register int32 schtwi;
  register struct tev_t *tevp;
  register struct telhdr_t *telp;
  word64 schtim, t;
@@ -5942,10 +5908,10 @@ extern void __insert_event(register i_tev_ndx tevpi)
  tevp = &(__tevtab[tevpi]);
  schtim = tevp->etime;
  /* because of wrap around event up to __twhsize - 1 fit in timing wheel */
- /* notice borrow possible here - but index always fit in 1 word */
+ /* notice borrow possible here - but index always fit in 1 word32 */
  t = schtim - __simtime;
  /* schtwi here is number of timing wheel slots to scheduled event */
- schtwi = (int) (t & WORDMASK_ULL);
+ schtwi = (int32) (t & WORDMASK_ULL);
 
  /* if event would go in timing wheel if it were at 0, then goes in */
  /* but may need to wrap around */
@@ -5989,7 +5955,7 @@ extern void __insert_event(register i_tev_ndx tevpi)
  * the b zero initializes all flags to off 
  */
 /* DBG ??? remove --- */
-extern i_tev_ndx __alloc_tev(int etyp, struct itree_t *itp, word64 absetime)
+extern i_tev_ndx __alloc_tev(int32 etyp, struct itree_t *itp, word64 absetime)
 {
   register struct tev_t *tevp__;
   register i_tev_ndx tevpi;
@@ -6023,7 +5989,7 @@ extern i_tev_ndx __alloc_tev(int etyp, struct itree_t *itp, word64 absetime)
  */
 extern void __grow_tevtab(void)
 {
- int osize, nsize;
+ int32 osize, nsize;
 
  osize = __size_tevtab*sizeof(struct tev_t);
  __size_tevtab += (__size_tevtab/2);
@@ -6057,7 +6023,7 @@ static void chk_tev_list(register i_tev_ndx tevpi)
 /* ---
 static void chk_schd_dces(void)
 {
- register int ni;
+ register int32 ni;
  register struct mod_t *mdp; 
  register struct task_t *tskp; 
  struct net_t *np;
@@ -6089,7 +6055,7 @@ static void chk_schd_dces(void)
 static void chk_1nschd_dce(struct net_t *np, struct mod_t *mdp)
 {
  register struct dcevnt_t *dcep; 
- register int ii;
+ register int32 ii;
  i_tev_ndx tevpi;
  struct delctrl_t *dctp;
 
@@ -6116,7 +6082,7 @@ static void chk_1nschd_dce(struct net_t *np, struct mod_t *mdp)
  * ROUTINES TO IMPLEMENT TIME FLOW
  */
 
-static int move_to_time0(void)
+static int32 move_to_time0(void)
 {
  register struct telhdr_t *twp;
 
@@ -6135,7 +6101,7 @@ static int move_to_time0(void)
  * when done, events to process at current time ready to be processed
  * and __cur_te_hdr and __cur_te_end point to the now event queue
  */
-static int move_time(void)
+static int32 move_time(void)
 {
  register struct telhdr_t *twp;
  word64 tmp;
@@ -6229,8 +6195,8 @@ got_event:
  */
 static void chk_event_consist(void)
 {
- register int twi;
- int num_whevents;
+ register int32 twi;
+ int32 num_whevents;
 
  for (num_whevents = 0, twi = 0;; twi++)
   {
@@ -6315,7 +6281,7 @@ static void add_ovfetim(word64 etim, i_tev_ndx tevpi, struct tev_t *tevp)
 /*
  * allocate a btree node of type bntyp
  */
-static struct bt_t *alloc_btnod(int btyp)
+static struct bt_t *alloc_btnod(int32 btyp)
 {
  struct bt_t *btp;
 
@@ -6381,9 +6347,9 @@ static struct bt_t *find_fringe(word64 etim)
 static struct bt_t *insert_fringe(struct bt_t *frnghdr, word64 etim, 
  i_tev_ndx tevpi)
 {
- register int i;
+ register int32 i;
  register struct bt_t *btp;
- int goes_onend;
+ int32 goes_onend;
  struct bt_t *last_btp, *btpnew;
  struct telhdr_t *telp;
 
@@ -6453,9 +6419,9 @@ do_add:
  */
 static void splitinsert_nonfringe(void)
 {
- register int i;
+ register int32 i;
  register struct bt_t *btp;
- int stki;
+ int32 stki;
  struct bt_t *parbtp, *parhdr, *splt1, *splt2, *last_btp, *splt2par;
 
  /* notice fringe node not stacked, top of stack is parent of fringe */
@@ -6515,7 +6481,7 @@ static void splitinsert_nonfringe(void)
  */
 static void ovflow_into_wheel(void)
 {
- int stki;
+ int32 stki;
  struct bt_t *btphdr;
 
  /* if leftmost time in overflow tree past wheel end time, nothing to do */
@@ -6578,7 +6544,7 @@ static void ovflow_into_wheel(void)
 static void divide_fringe_node(struct bt_t *btphdr)
 {
  register struct bt_t *btp, *btp2;
- int cnum;
+ int32 cnum;
  struct bt_t *btptmp;
 
  /* fringe node low time cannot be larger than wheel end */
@@ -6631,7 +6597,7 @@ static void divide_fringe_node(struct bt_t *btphdr)
 static void divide_internal_node(struct bt_t *btphdr)
 {
  register struct bt_t *btp;
- int cnum;
+ int32 cnum;
  struct bt_t *last_btp, *btp2, *btptmp;
  
  /* case 1 (impossible) - all of tree past timing wheel */
@@ -6676,7 +6642,7 @@ static void remove_empty_upwards(void)
 {
  register struct bt_t *btp;
  struct bt_t *last_btp, *rembtp;
- int stki, stki2;
+ int32 stki, stki2;
 
  /* case 1, if only root is above now empty fringe - remove all of tree */
  if (__topi == 1) 
@@ -6780,7 +6746,7 @@ static void mv_subtree_towheel(struct bt_t *btphdr)
  */
 static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
 {
- int twslot; 
+ int32 twslot; 
  word64 tmp;
  struct telhdr_t *twlp;
 
@@ -6798,7 +6764,7 @@ static void mv_to_wheel(word64 etim, struct telhdr_t *telp)
  /* because of wrapping later events already on wheel element */
  /* sim time + 1 is 0th timing wheel position */ 
  tmp = etim - __simtime;
- twslot = (int) (tmp & WORDMASK_ULL);
+ twslot = (int32) (tmp & WORDMASK_ULL);
 
  /* notice, there will always be at least one entry on overflow q */
  /* list or will not get here - cancelled events just marked */
@@ -6864,8 +6830,8 @@ static struct telhdr_t *tfind_btnode_after(struct bt_t *btphdr, word64 tim)
  */
 static void dmp_twheel(void)
 {
- register int twi;
- int e_num, totenum;
+ register int32 twi;
+ int32 e_num, totenum;
 
  __dbg_msg("<< timing wheel that ends at %s\n", __to_timstr(__xs, &__whetime));
  for (twi = 0, totenum = 0;; twi++)
@@ -6886,9 +6852,9 @@ static void dmp_twheel(void)
 /*
  * dump event list
  */
-static int dmp_events(register i_tev_ndx tevpi) 
+static int32 dmp_events(register i_tev_ndx tevpi) 
 {
- int e_num;
+ int32 e_num;
  /* char s1[20], s2[RECLEN]; */
 
  for (e_num = 0; tevpi != -1; tevpi = __tevtab[tevpi].tenxti, e_num++)
@@ -6910,7 +6876,7 @@ static int dmp_events(register i_tev_ndx tevpi)
  */
 extern void __dmp_event_tab(void)
 {
- register int ei;
+ register int32 ei;
  struct tev_t *tevp;
  char s1[RECLEN];
 
@@ -6940,7 +6906,7 @@ extern void __dmp_event_tab(void)
  */
 static void dmp_btree(struct bt_t *btphdr)
 {
- register int i;
+ register int32 i;
 
  if (__btqroot == NULL)
   {
@@ -6958,7 +6924,7 @@ static void dmp_btree(struct bt_t *btphdr)
 /*
  * dump a btree to standard output depth first using large linked b nodes
  */
-static void dmp2_btree(struct bt_t *btphdr, int level)
+static void dmp2_btree(struct bt_t *btphdr, int32 level)
 {
  register struct bt_t *btp;
 
@@ -6973,10 +6939,10 @@ static void dmp2_btree(struct bt_t *btphdr, int level)
  * dump a btree node
  * for now assume fits on one line
  */
-static void dmp_btnode(struct bt_t *btp, int level)
+static void dmp_btnode(struct bt_t *btp, int32 level)
 {
  struct bt_t *btp1;  
- int first_time;
+ int32 first_time;
  char s1[RECLEN];
 
  if (__nd_level != level) return;
@@ -7067,8 +7033,8 @@ extern void __free_telhdr_tevs(register struct telhdr_t *telp)
  */
 extern void __free_1tev(i_tev_ndx tevpi)
 {
- int wlen;
- word *wp;
+ int32 wlen;
+ word32 *wp;
  struct tev_t *tevp;
  struct tenbpa_t *tenbp;
  struct tedputp_t *tedp; 

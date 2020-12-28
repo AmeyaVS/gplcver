@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #ifdef __DBMALLOC__
 #include "../malloc.h"
@@ -40,25 +41,25 @@
 #include "cvmacros.h"
 
 /* local prototypes */
-static struct st_t *rd_block(int, int);
+static struct st_t *rd_block(int32, int32);
 static struct st_t *convert_to_fork(struct st_t *);
-static int rd_lstofsts(int, struct st_t **, int, int);
-static struct st_t *rd_namblock(int, int, int, int);
+static int32 rd_lstofsts(int32, struct st_t **, int32, int32);
+static struct st_t *rd_namblock(int32, int32, int32, int32);
 static struct st_t *rd_if(void);
-static struct st_t *rd_case(int);
-static struct st_t *rd_loop(int);
+static struct st_t *rd_case(int32);
+static struct st_t *rd_loop(int32);
 static struct st_t *rd_for(void);
 static struct st_t *rd_cause(void);
 static struct st_t *rd_disable(void);
-static struct sy_t *find_tfsy(char *, int);
-static struct st_t *rd_wireassign(int);
-static struct st_t *rd_wiredeassign(int);
+static struct expr_t *find_bldxpr_tfsy(char *, int32);
+static struct st_t *rd_wireassign(int32);
+static struct st_t *rd_wiredeassign(int32);
 static struct st_t *rd_taske_or_proc_assign(void);
 static struct st_t *rd_dctrl_st(void);
-static struct expr_t *rd_delctrl(int *, int *);
-static int col2_lval(void);
-static int col_dctrl_xmr(void);
-static int col_evctrlexpr(void);
+static struct expr_t *rd_delctrl(int32 *, int32 *);
+static int32 col2_lval(void);
+static int32 col_dctrl_xmr(void);
+static int32 col_evctrlexpr(void);
 static void init_gref(struct gref_t *, char *);
 static struct expr_t *parse_qcexpr(void);
 static void xskip_toend(void);
@@ -74,101 +75,102 @@ static struct expr_t *parse_addop(void);
 static struct expr_t *parse_mulop(void);
 static struct expr_t *parse_unopterm(void);
 static void skip_3valend(void);
-static int is_unop(unsigned);
+static int32 is_unop(word32);
 static struct expr_t *parse_term(void);
-static int decl_id_inexpr(struct expr_t *, struct expridtab_t *);
+static int32 decl_id_inexpr(struct expr_t *, struct expridtab_t *);
 static struct expr_t *parse_concat(void);
 static struct expr_t *parse_select(struct expr_t *);
 static struct expr_t *parse_glbref(struct expr_t *, struct expridtab_t *);
 static struct expr_t *bld_1cmp_global(struct expr_t *, struct expridtab_t *);
 static char *alloc_glbndp_tostr(struct expr_t *);
 static void grow_grtab(void);
-static struct expr_t *parse_fcall(struct expr_t *, struct expridtab_t *, int);
-static int chk_decl_func(int *, struct expr_t *, struct expridtab_t *);
+static struct expr_t *parse_fcall(struct expr_t *, struct expridtab_t *, int32);
+static int32 chk_decl_func(int32 *, struct expr_t *, struct expridtab_t *);
+static void cnvt_forw_tfcall_1cmpglb(struct expr_t *, char *, int32, int32);
 static struct expr_t *parse_evexpr(void);
 static void grow_exprtab(void);
 static struct expr_t *my_xndalloc(void);
-static struct expr_t *alloc_xtnd(int);
+static struct expr_t *alloc_xtnd(int32);
 static void set2_opempty(struct expr_t *);
-static char *to_xndnam(char *, int xndi);
-
+static char *to_xndnam(char *, int32 xndi);
+static word32 get_hash(word32 *, word32 *, int32);
 
 /* extern prototypes (maybe defined in this module) */
 extern char *__pv_stralloc(char *);
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int, int);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32, int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__prt_vtok(void);
 extern char *__prt_kywrd_vtok(void);
-extern struct tnode_t *__vtfind(char *, struct symtab_t *);
 extern struct sy_t *__get_sym_env(char *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct sy_t *__decl_sym(char *, struct symtab_t *);
 extern struct net_t *__add_net(struct sy_t *);
 extern char *__to_idnam(struct expr_t *);
-extern char *__to_sytyp(char *, unsigned);
-extern struct st_t *__alloc_stmt(int);
-extern char *__get_vkeynam(char *, int);
-extern void __find_matchendblk(int, int);
+extern char *__to_sytyp(char *, word32);
+extern struct st_t *__alloc_stmt(int32);
+extern char *__get_vkeynam(char *, int32);
+extern void __find_matchendblk(int32, int32);
 extern void __find_matchendcase(void);
-extern int __col_caseexpr(void);
+extern int32 __col_caseexpr(void);
 extern struct exprlst_t *__alloc_xprlst(void);
 extern struct csitem_t *__alloc_csitem(void);
-extern char *__to_opname(unsigned);
+extern char *__to_opname(word32);
 extern struct paramlst_t *__alloc_pval(void);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern struct gref_t *__bld_glbref(struct expr_t *, int, int);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern char *__bld_lineloc(char *, word32, int32);
+extern struct gref_t *__bld_glbref(struct expr_t *, int32, int32);
 extern struct expr_t *__alloc_newxnd(void);
 extern void __get_vtok(void);
 extern void __unget_vtok(void);
-extern int __vskipto_any(int);
-extern int __vskipto2_any(int, int);
-extern int __vskipto3_any(int, int, int);
-extern int __vskipto4_any(int, int, int, int);
-extern int __bld_tsk(char *, int);
-extern int __rd_tfdecls(char *);
+extern int32 __vskipto_any(int32);
+extern int32 __vskipto2_any(int32, int32);
+extern int32 __vskipto3_any(int32, int32, int32);
+extern int32 __vskipto4_any(int32, int32, int32, int32);
+extern int32 __bld_tsk(char *, int32);
+extern int32 __rd_tfdecls(char *);
 extern void __set_xtab_errval(void);
-extern void __bld_xtree(int);
+extern void __bld_xtree(int32);
 extern void __bld_evxtree(void);
-extern int __col_parenexpr(int);
-extern int __col_lval(void);
-extern int __col_comsemi(int);
+extern int32 __col_parenexpr(int32);
+extern int32 __col_lval(void);
+extern int32 __col_comsemi(int32);
 extern void __resolve_glbnam(struct gref_t *);
 extern void __fill_grp_targu_fld(struct gref_t *);
-extern void __add_sym(char *, struct tnode_t *);
-extern void __set_opempty(int);
-extern int __col_connexpr(int);
-extern int __bld_expnode(void);
+extern void __set_opempty(int32);
+extern int32 __col_connexpr(int32);
+extern int32 __bld_expnode(void);
 extern void __init_xnd(struct expr_t *);
-extern void __set_numval(struct expr_t *, word, word, int);
-extern void __my_free(char *, int);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
+extern void __my_free(char *, int32);
 extern void __free2_xtree(struct expr_t *);
-extern struct st_t *__rd_tskenable(char *, struct expr_t *, int);
+extern struct st_t *__rd_tskenable(char *, struct expr_t *, int32);
 extern void __setup_contab(void);
-extern int __alloc_shareable_cval(word, word, int);
-extern int __alloc_cval(int);
-extern void __grow_contab(int);
-extern int __alloc_shareable_rlcval(double);
-extern int __alloc_rlcval(int);
-extern void __grow_rlcontab(int);
+extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __alloc_is_cval(int32);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
+extern char *__alloc_vval_to_cstr(word32 *, int32, int32, int32);
+extern void __grow_contab(int32);
+extern int32 __alloc_shareable_rlcval(double);
+extern int32 __alloc_rlcval(int32);
+extern void __grow_rlcontab(int32);
 extern struct expridtab_t *__alloc_expridnd(char *);
 extern struct expr_t *__alloc_exprnd(void);
 
-
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __fterr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_fterr(char *, int);
-extern void __ia_err(int id_num, char *s, ...);
+extern void __my_fprintf(FILE *, char *, ...);
+extern void __fterr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_fterr(char *, int32);
+extern void __ia_err(int32 id_num, char *s, ...);
 
 extern struct opinfo_t __opinfo[];
-extern word __masktab[];
+extern word32 __masktab[];
 
 /*
  * STATEMENT PROCESSING ROUTINES
@@ -283,9 +285,9 @@ bad_struct:
  * notice for unnamed begin-end block will return list of stmts
  * with first have unb head turned on 
  */
-static struct st_t *rd_block(int btok, int endbtok)
+static struct st_t *rd_block(int32 btok, int32 endbtok)
 {
- int slcnt, sfnind;
+ int32 slcnt, sfnind;
  struct st_t *stp, *hdstp;
 
  slcnt = __lin_cnt;
@@ -340,9 +342,9 @@ static struct st_t *rd_block(int btok, int endbtok)
  */
 static struct st_t *convert_to_fork(struct st_t *hdstp)
 {
- register int fji;
+ register int32 fji;
  register struct st_t *stp;
- int num_fjs;
+ int32 num_fjs;
  struct st_t *stp2, *fjstp;
 
  /* first count how many */
@@ -358,7 +360,7 @@ static struct st_t *convert_to_fork(struct st_t *hdstp)
  /* one extra for nil fence at end */ 
  fjstp->st.fj.fjstps = (struct st_t **)
   __my_malloc((num_fjs + 1)*sizeof(struct st_t *));
- fjstp->st.fj.fjlabs = (int *) __my_malloc((num_fjs + 1)*sizeof(int));
+ fjstp->st.fj.fjlabs = (int32 *) __my_malloc((num_fjs + 1)*sizeof(int32));
 
  /* fill table of ptrs to stmts */
  /* for now leaving begin-end as unnamed block - not making st. list */ 
@@ -397,8 +399,8 @@ static struct st_t *convert_to_fork(struct st_t *hdstp)
  * reads block end token
  * must use local variables since recursively nested blocks legal
  */
-static int rd_lstofsts(int endbtok, struct st_t **stpp, int slcnt,
- int sfnind)
+static int32 rd_lstofsts(int32 endbtok, struct st_t **stpp, int32 slcnt,
+ int32 sfnind)
 {
  struct st_t *stp, *last_stp, *unbstp;
 
@@ -456,8 +458,8 @@ static int rd_lstofsts(int endbtok, struct st_t **stpp, int slcnt,
  * notice named block linked on task list and from stmt
  * also notice body is pointer to statement that may or may not be list
  */
-static struct st_t *rd_namblock(int btok, int endbtok, int slcnt,
- int sfnind)
+static struct st_t *rd_namblock(int32 btok, int32 endbtok, int32 slcnt,
+ int32 sfnind)
 {
  struct task_t *sav_cur_tsk;
  struct st_t *hdstp, *stp;
@@ -530,9 +532,9 @@ bad_end:
 /*
  * find a matching end block (end or join)
  */
-extern void __find_matchendblk(int btok, int endbtok)
+extern void __find_matchendblk(int32 btok, int32 endbtok)
 {
- int blklev = 0;
+ int32 blklev = 0;
 
  for (;;)
   {
@@ -552,7 +554,7 @@ static struct st_t *rd_if(void)
 {
  struct st_t *stp, *thenstp, *elsestp;
  struct expr_t *ifxnd;
- int slcnt, sfnind;
+ int32 slcnt, sfnind;
 
  slcnt = __lin_cnt;
  sfnind = __cur_fnam_ind;
@@ -643,13 +645,13 @@ rd_else:
 /*
  * know case/casex,casez keyword read and reads endcase
  */
-static struct st_t *rd_case(int casttyp)
+static struct st_t *rd_case(int32 casttyp)
 {
  struct st_t *casp, *dflsp, *stp;
  struct csitem_t *cip, *last_cip, *csihdr, *dflt_csip;
  struct expr_t *csndp;
  struct exprlst_t *csixhdr, *xplp, *last_xplp;
- int slcnt, sfnind;
+ int32 slcnt, sfnind;
 
  slcnt = __lin_cnt;
  sfnind = __cur_fnam_ind;
@@ -772,7 +774,7 @@ bld_case:
  */
 extern void __find_matchendcase(void)
 {
- int caselev = 0;
+ int32 caselev = 0;
  for (;;)
   {
    if (__syncto_class != SYNC_STMT) return;
@@ -815,7 +817,7 @@ extern struct csitem_t *__alloc_csitem(void)
 /*
  * read a simple (non for) loop statement
  */
-static struct st_t *rd_loop(int ttyp)
+static struct st_t *rd_loop(int32 ttyp)
 {
  struct st_t *stp, *repstp;
  struct expr_t *loopx;
@@ -891,7 +893,7 @@ static struct st_t *rd_for(void)
  struct for_t *frs;
  struct st_t *stp, *inita, *inca, *forbd;
  struct expr_t *lhsndp, *rhsndp, *stopndp;
- int slcnt, sfnind;
+ int32 slcnt, sfnind;
 
  slcnt = __lin_cnt;
  sfnind = __cur_fnam_ind;
@@ -1050,7 +1052,6 @@ skp_end:
 static struct st_t *rd_disable(void)
 {
  struct st_t *stp;
- struct sy_t *syp;
  struct expr_t *dsxndp;
  struct expridtab_t *xidp;
  
@@ -1074,13 +1075,10 @@ static struct st_t *rd_disable(void)
   {
    /* must allocate name of task or fixup if previously used */
    xidp = __expr_idtab[0];
-   if ((syp = find_tfsy(xidp->idnam, UNDEF)) == NULL) return(NULL);
+   if ((dsxndp = find_bldxpr_tfsy(xidp->idnam, UNDEF)) == NULL) return(NULL);
 
    /* also can't disable funcs - because run in no time but caught later */
    stp = __alloc_stmt(S_DSABLE);
-   dsxndp = __alloc_newxnd();
-   dsxndp->optyp = ID;
-   dsxndp->lu.sy = syp;
    stp->st.sdsable.dsablx = dsxndp;
    return(stp);
   }
@@ -1104,17 +1102,16 @@ static struct st_t *rd_disable(void)
  * know definition at top mod level and non gref
  * may get here on named block disable (tfsytyp UNDEF) or enable
  */
-static struct sy_t *find_tfsy(char *nam, int tfsytyp)
+static struct expr_t *find_bldxpr_tfsy(char *nam, int32 tfsytyp)
 {
- struct tnode_t *tnp;
+ struct expr_t *enable_ndp;
  struct sy_t *syp;
 
  /* if id declared in currently accessible name evironment use it */
  if ((syp = __get_sym_env(nam)) != NULL)
   {
    /* if disable must check in disable statement fixup */
-   if (tfsytyp == UNDEF) return(syp);
-   else
+   if (tfsytyp != UNDEF)
     {
      /* error if declared or used as non task */
      /* illegal to enable or disable a function */
@@ -1132,8 +1129,12 @@ static struct sy_t *find_tfsy(char *nam, int tfsytyp)
         return(NULL);
        }
      }
-     return(syp);
     }
+   /* rest of fields gets filled later - notice no width not in expr */
+   enable_ndp = __alloc_newxnd();
+   enable_ndp->optyp = ID;
+   enable_ndp->lu.sy = syp;
+   return(enable_ndp);
   }
  /* error if not declared in interactive command input */
  if (__iact_state)
@@ -1143,29 +1144,20 @@ static struct sy_t *find_tfsy(char *nam, int tfsytyp)
    return(NULL);
   }
 
- /* insert in module top level (task/function decl.) level */
- tnp = __vtfind(__token, __inst_mod->msymtab);
+ enable_ndp = __alloc_newxnd();
+ enable_ndp->optyp = ID;
 
- /* add but do not build task/func. storage */
- /* symbol table inconsistent for new task/function ref. */
- /* DBG remove --- */
- if (!__sym_is_new) __misc_fterr(__FILE__, __LINE__);
- /* --- */
-
- __add_sym(__token, tnp);
- (__inst_mod->msymtab->numsyms)++;
- syp = tnp->ndp;
- /* if unknown task type assume real task for now */
- if (tfsytyp == UNDEF) syp->sytyp = SYM_TSK;
- else syp->sytyp = tfsytyp;
- return(syp);
+ /* here building the enable so just need to pass place holder - for fcall */
+ /* need the parsed expr where its insides are changed to xmr */
+ cnvt_forw_tfcall_1cmpglb(enable_ndp, nam, __cur_fnam_ind, __lin_cnt); 
+ return(enable_ndp);
 }
 
 /*
  * read proc. quasi-cont assign - normal wire assign but only enable when
  * time token moves here, force for wires and 2nd level of qc assign
  */
-static struct st_t *rd_wireassign(int qcattyp)
+static struct st_t *rd_wireassign(int32 qcattyp)
 {
  struct st_t *stp;
  struct expr_t *lhsndp, *rhsndp;
@@ -1215,7 +1207,7 @@ bad_qassgn:
  * read wire deassign/release (difference is force arg. can be wire)
  * form is deassign/release [lvalue];
  */
-static struct st_t *rd_wiredeassign(int qcdeattyp)
+static struct st_t *rd_wiredeassign(int32 qcdeattyp)
 {
  struct st_t *stp;
 
@@ -1261,7 +1253,7 @@ skp_end:
  */
 static struct st_t *rd_taske_or_proc_assign(void)
 {
- int dtyp, is_nb, slcnt, sfnind, is_evctl_impl;
+ int32 dtyp, is_nb, slcnt, sfnind, is_evctl_impl;
  struct st_t *stp, *dcstp;
  struct expr_t *lhsndp, *rhsndp, *delxndp, *repcntx;
  struct delctrl_t *dctp;
@@ -1419,15 +1411,15 @@ try_parsing:
  * need special parsing for system task since ,, form legal there
  */
 extern struct st_t *__rd_tskenable(char *tknam, struct expr_t *glbndp,
- int is_glbenable)
+ int32 is_glbenable)
 {
- register int i;
- int rd_semi, nd_glb_conv;
+ register int32 i;
+ int32 rd_semi, nd_glb_conv;
  struct sy_t *syp;
  struct st_t *stp;
  struct tskcall_t *tkcp;
  struct expr_t *last_fcomxp, *lop;
- struct expr_t *tkexp;
+ struct expr_t *enable_ndp;
  struct systsk_t *stbp;
 
  rd_semi = FALSE;
@@ -1495,15 +1487,18 @@ opt_dbg_illegal:
     default:
      /* PLI system tasks/functions always allow XMR's */
      if (stbp->stsknum >= BASE_VERIUSERTFS
-      && (int) stbp->stsknum <= __last_systf) nd_glb_conv = TRUE;
+      && (int32) stbp->stsknum <= __last_systf) nd_glb_conv = TRUE;
      break;
    }
+   enable_ndp = __alloc_newxnd();
+   enable_ndp->optyp = ID;
+   enable_ndp->lu.sy = syp;
   }
  else
   {
    /* if user task not declared must add to symbol table */
    /* return of NULL to here on error - message already written */
-   if ((syp = find_tfsy(tknam, SYM_TSK)) == NULL)
+   if ((enable_ndp = find_bldxpr_tfsy(tknam, SYM_TSK)) == NULL)
     {
 err_end:
      __vskipto_any(SEMI);
@@ -1513,10 +1508,7 @@ err_end:
  /* build the task enable statement */
  stp = __alloc_stmt(S_TSKCALL);
  tkcp = &(stp->st.stkc);
- tkexp = __alloc_newxnd();
- tkexp->optyp = ID;
- tkexp->lu.sy = syp;
- tkcp->tsksyx = tkexp;
+ tkcp->tsksyx = enable_ndp;
 
 get_args:
  tkcp->targs = NULL;
@@ -1563,7 +1555,7 @@ get_args:
       default:
        /* any argument to PLI system task can be xmr */
        if (stbp->stsknum >= BASE_VERIUSERTFS
-        && (int) stbp->stsknum <= __last_systf)
+        && (int32) stbp->stsknum <= __last_systf)
         {
          __allow_scope_var = TRUE;
         }
@@ -1616,7 +1608,7 @@ done:
  */
 static struct st_t *rd_dctrl_st(void)
 {
- int dtyp, slcnt, sfnind, is_evctl_impl;
+ int32 dtyp, slcnt, sfnind, is_evctl_impl;
  struct st_t *dcstp, *stp;
  struct expr_t *delxndp;
  struct delctrl_t *dctp;
@@ -1661,7 +1653,7 @@ static struct st_t *rd_dctrl_st(void)
  *
  * this must have skipped past delay control to stmt if possible 
  */
-static struct expr_t *rd_delctrl(int *dtyp, int *ev_impl)
+static struct expr_t *rd_delctrl(int32 *dtyp, int32 *ev_impl)
 {
  struct expr_t *ndp;
 
@@ -1759,8 +1751,15 @@ bad_dctrl:
    switch ((byte) __toktyp) {
     case NUMBER: case REALNUM: case ID: break;
     /* only create IS number at param assign */ 
-    case ISNUMBER: case ISREALNUM:__arg_terr(__FILE__, __LINE__); break;
+    case TIMES:
+     /* AIV 07/21/04 - handle @* without () */
+     *ev_impl = TRUE;
+      __get_vtok();
+     return(NULL);
+    case ISNUMBER: case ISREALNUM:
     /* here on error, assume right structure but 1 thing wrong */
+     __arg_terr(__FILE__, __LINE__);
+     break;
     default:
      /* one token after delay/event control case - no sync possible */
      __pv_ferr(1088,
@@ -1794,9 +1793,9 @@ bld_evx:
  * know ID read and reads one past end of XMR (if not simple ID)
  * also emits error on non ID or GLBREF - select at end illegal - need ()
  */
-static int col_dctrl_xmr(void)
+static int32 col_dctrl_xmr(void)
 {
- int sblevel;
+ int32 sblevel;
 
  __last_xtk = -1;
  if (!__bld_expnode()) goto bad_end;
@@ -1866,7 +1865,7 @@ bad_end:
  * but otherwise is identical to collect connecting expr.
  * expects 1st token to have been read
  */
-extern int __col_delexpr(void)
+extern int32 __col_delexpr(void)
 {
  struct expr_t *ndp;
 
@@ -1905,7 +1904,7 @@ bad_del:
  * on error sets value to 0 not x - is this right? 
  * if this is used where only ; can end, caller must check for and emit err
  */
-extern int __col_paramrhsexpr(void)
+extern int32 __col_paramrhsexpr(void)
 {
  struct expr_t *ndp;
 
@@ -1932,9 +1931,9 @@ extern int __col_paramrhsexpr(void)
  * need to reuse or move nodes here to tree
  * surrounding parentheses not included
  */
-extern int __col_parenexpr(int start_xtk)
+extern int32 __col_parenexpr(int32 start_xtk)
 {
- int parlevel;
+ int32 parlevel;
 
  /* this is illegal () case */
  if (__toktyp == RPAR)
@@ -1979,9 +1978,9 @@ bad_end:
  * know implicit @* and @(*) never seen here
  * need to reuse or move nodes here to tree
  */
-static int col_evctrlexpr(void)
+static int32 col_evctrlexpr(void)
 {
- int parlevel, catlevel;
+ int32 parlevel, catlevel;
 
  __last_xtk = -1;
  /* this is illegal () case */
@@ -2035,9 +2034,9 @@ done:
  * expects first token ([) to have been read and reads ending ] token
  * includes ] in expression
  */
-extern int __col_rangeexpr(void)
+extern int32 __col_rangeexpr(void)
 {
- int brklevel;
+ int32 brklevel;
  struct expr_t *ndp;
 
  /* must add dummy symbol so range parses as x[cexpr:cexpr] */
@@ -2098,9 +2097,9 @@ bad_end:
  * for each comma sep.  * piece
  * normal start of expr. is -1
  */
-extern int __col_connexpr(int start_xtk)
+extern int32 __col_connexpr(int32 start_xtk)
 {
- int parlevel, catlevel;
+ int32 parlevel, catlevel;
 
  /* ,, or ,) form ok here - if not caller will check */
  if (__toktyp == COMMA || __toktyp == RPAR)
@@ -2144,9 +2143,9 @@ bad_end:
  * reads trailing , or ;
  * empty here will not collect - error
  */
-extern int __col_comsemi(int last_xti)
+extern int32 __col_comsemi(int32 last_xti)
 {
- int parlevel, catlevel;
+ int32 parlevel, catlevel;
 
  __last_xtk = last_xti; 
  for (parlevel = 0, catlevel = 0;;)
@@ -2192,9 +2191,9 @@ bad_end:
  *
  * for mismatched nesting parse will catch error
  */
-extern int __col_newparamrhsexpr(void)
+extern int32 __col_newparamrhsexpr(void)
 {
- int parlevel, catlevel;
+ int32 parlevel, catlevel;
  struct expr_t *ndp;
 
  __last_xtk = -1; 
@@ -2246,9 +2245,9 @@ bad_end:
  *
  * for mismatched nesting parse will catch error
  */
-extern int __col_lofp_paramrhsexpr(void)
+extern int32 __col_lofp_paramrhsexpr(void)
 {
- int parlevel, catlevel;
+ int32 parlevel, catlevel;
  struct expr_t *ndp;
 
  __last_xtk = -1; 
@@ -2304,9 +2303,9 @@ bad_end:
  * must emit error on 1st extra right parenthesis or will get error line
  * wrong - also if returns F must emit error
  */
-extern int __col_lval(void)
+extern int32 __col_lval(void)
 {
- int parlevel;
+ int32 parlevel;
 
  parlevel = 0;
  for (__last_xtk = -1;;)
@@ -2349,9 +2348,9 @@ bad_end:
  * expects 1st token of assignment lhs expr to have been read and reads
  * trailing '(' or ';' (no argumnet form), or '=' or '<=' for assign
  */
-static int col2_lval(void)
+static int32 col2_lval(void)
 {
- int sblevel, cblevel;
+ int32 sblevel, cblevel;
 
  sblevel = cblevel = 0;
  /* set flag for bld expnode error recovery - must be off when done */
@@ -2407,9 +2406,9 @@ bad_end:
  * expects 1st token to be read and reads ending token
  * but it is not included
  */
-extern int __col_caseexpr(void)
+extern int32 __col_caseexpr(void)
 {
- int parlevel, collevel, sblevel, cblevel;
+ int32 parlevel, collevel, sblevel, cblevel;
 
  parlevel = collevel = sblevel = cblevel = 0;
  for (__last_xtk = -1;;)
@@ -2463,10 +2462,9 @@ good_end:
  * 'or' in expression always evor
  * anything part of expression goes through here
  */
-extern int __bld_expnode(void)
+extern int32 __bld_expnode(void)
 {
- int wlen;
- word *wp;
+ int32 wlen;
  struct opinfo_t *oip;
  struct expr_t *ndp;
 
@@ -2494,13 +2492,13 @@ extern int __bld_expnode(void)
    ndp->szu.xclen = __itoklen;
    if (__itoksized) ndp->unsiznum = FALSE; else ndp->unsiznum = TRUE;
 
-   /* only true for decimal without 'd even 'd[num] is unsigned */
+   /* only true for decimal without 'd even 'd[num] is word32 */
    /* SJM 10/02/03 - scanner sets if signed - depends on new 2001 LRM rules */ 
    if (__itok_signed) ndp->has_sign = TRUE;
 
-   ndp->ibase = (unsigned) __itokbase;
+   ndp->ibase = (word32) __itokbase;
    ndp->sizdflt = (__itoksizdflt) ? TRUE : FALSE;
-   /* Verilog values are really unsigned bit patterns */
+   /* Verilog values are really word32 bit patterns */
 
    wlen = wlen_(__itoklen);
    if (__itoklen <= WBITS)
@@ -2510,11 +2508,7 @@ extern int __bld_expnode(void)
     }
    else
     {
-     ndp->ru.xvi = __alloc_cval(2*wlen);
-     wp = &(__contab[ndp->ru.xvi]);
-     /* notice ac wrk and bc wrk not contiguous */
-     memcpy(wp, __acwrk, wlen*WRDBYTES);
-     memcpy(&(wp[wlen]), __bcwrk, wlen*WRDBYTES);
+     ndp->ru.xvi = __allocfill_cval_new(__acwrk, __bcwrk, wlen);
     }
    break;
   case REALNUM:
@@ -2533,12 +2527,7 @@ extern int __bld_expnode(void)
    ndp->szu.xclen = __itoklen;
 
    wlen = wlen_(__itoklen);
-   ndp->ru.xvi = __alloc_cval(2*wlen);
-   wp = &(__contab[ndp->ru.xvi]);
-   /* notice ac wrk and bc wrk not contiguous */
-   memcpy(wp, __acwrk, wlen*WRDBYTES);
-   memcpy(&(wp[wlen]), __bcwrk, wlen*WRDBYTES);
-
+   ndp->ru.xvi = __allocfill_cval_new(__acwrk, __bcwrk, wlen);
    ndp->is_string = TRUE;
    ndp->unsiznum = FALSE;
    ndp->has_sign = FALSE;
@@ -2573,6 +2562,10 @@ extern int __bld_expnode(void)
  return(TRUE);
 }
 
+#define HASHTABSIZ 3011     /* prime number size of consts hash table */
+#define HASHSEED 0x371546dc    /* seed of first word of the hash table */
+
+
 /*
  * setup the constant tables
  *
@@ -2582,10 +2575,10 @@ extern int __bld_expnode(void)
  */ 
 extern void __setup_contab(void)
 {
- register int i, j;
+ register int32 i, j;
 
  __contabwsiz = 400;
- __contab = (word *) __my_malloc(__contabwsiz*sizeof(word));
+ __contab = (word32 *) __my_malloc(__contabwsiz*sizeof(word32));
  /* 0th and 1st unused - marker to catch errors */
  for (i = 0; i < 4; i++) __contab[i] = ALL1W;
  /* 3rd is one bit z */
@@ -2600,6 +2593,9 @@ extern void __setup_contab(void)
  /* 6th is 32 bit x */
  __contab[10] = ALL1W;
  __contab[11] = ALL1W;
+ /* SJM 06/14/04 - need negatives but for now this is 32 bits (c world) -1 */
+ __b32_minus1 = 10;
+
  for (i = 12, j = 0; i <= 12 + 2*128; i += 2, j++)
   {
    __contab[i] = j; 
@@ -2619,8 +2615,13 @@ extern void __setup_contab(void)
  /* use index for first 101 constant reals */
  for (i = 0; i < 101; i++) __rlcontab[i] = (double) i;
  __rlcontabdi = 101;
-}
 
+ __contab_hash = (struct contab_info_t **)
+  __my_malloc(HASHTABSIZ*sizeof(struct contab_info_t *));
+ memset(__contab_hash, 0, HASHTABSIZ*sizeof(struct contab_info_t *));
+
+}
+ 
 /* some local use only constant for fixed con table locations */
 #define FIXCON_1BITZ 4
 #define FIXCON_1BITX 6
@@ -2632,9 +2633,9 @@ extern void __setup_contab(void)
  * sharable (non IS form) any 32 bit or any 32 or less 0 
  * plus some non x/z low values
  */
-extern int __alloc_shareable_cval(word aval, word bval, int bwid)
+extern int32 __alloc_shareable_cval(word32 aval, word32 bval, int32 bwid)
 {
- int wi;
+ int32 wi;
 
  if (bwid == 1)
   {
@@ -2655,44 +2656,108 @@ do_nonxz:
  if (aval <= 128) return(NONXZ_CONBASE + 2*aval);
 
 do_alloc:
- wi = __alloc_cval(2);
- __contab[wi] = aval & __masktab[bwid];
- __contab[wi + 1] = bval & __masktab[bwid];
+ aval &= __masktab[bwid];
+ bval &= __masktab[bwid];
+ wi = __allocfill_cval_new(&(aval), &(bval), 1);
  return(wi); 
 }
 
 /*
  * allocate a constant value in design wide constant table
- * 
- * requires and assumed cur mod set
+ *
+ * now only for IS forms where must allocate big region and can't use
+ * hashing to share because each inst must be filled with mem copy
+ *
+ * wlen is really wlen times no. of instances in IS form - multiply by
+ * 2 works since need b parts for each inst
  * know a and b parts contiguous
  */
-extern int __alloc_cval(int wsiz)
+extern int32 __alloc_is_cval(int32 wlen)
 {
- int wi;
+ int32 wi;
 
- if (__contabwi + wsiz >= __contabwsiz) __grow_contab(wsiz);
+ if (__contabwi + 2*wlen >= __contabwsiz) __grow_contab(2*wlen);
  wi = __contabwi;
- __contabwi += wsiz;
+ __contabwi += 2*wlen;
  return(wi);
+}
+
+/*
+ * new version of allocate a constant value in design wide constant table
+ * notice passing word len but need room for 2*wlen for b part
+ *
+ * that uses hashing to prevent too much growth of contab during
+ * non blocking assign realloc and also just a better algorithm
+ */
+extern int32 __allocfill_cval_new(word32 *ap, word32 *bp, int32 wlen)
+{
+ register word32 hti;
+ register struct contab_info_t *cip;
+ int32 wi, bytsiz;
+ word32 *wp;
+
+ hti = get_hash(ap, bp, wlen);
+ bytsiz = wlen*WRDBYTES;
+ if ((cip = __contab_hash[hti]) != NULL)
+  {
+   for (; cip != NULL; cip = cip->cnxt)
+    {
+     if (cip->cwid != wlen) continue;
+
+     wp = &(__contab[cip->xvi]);
+     if (memcmp(wp, ap, bytsiz) == 0 && memcmp(&(wp[wlen]), bp, bytsiz) == 0) 
+       return(cip->xvi);
+    }
+  }
+
+ if (__contabwi + 2*wlen >= __contabwsiz) __grow_contab(2*wlen);
+ wi = __contabwi;
+ __contabwi += 2*wlen;
+ memcpy(&(__contab[wi]), ap, bytsiz);
+ memcpy(&(__contab[wi + wlen]), bp, bytsiz);
+
+ cip = (struct contab_info_t *) __my_malloc(sizeof(struct contab_info_t));
+ cip->xvi = wi;
+ cip->cwid = wlen;
+ /* put on front */ 
+ cip->cnxt = __contab_hash[hti];
+ __contab_hash[hti] = cip;
+ return(wi);
+}
+
+/*
+ * hash function
+ */
+static word32 get_hash(word32 *ap, word32 *bp, int32 wlen)
+{
+ register int32 wi;
+ word32 hval;
+
+ hval = ap[0] * HASHSEED;
+ for (wi = 1; wi < wlen; wi++)
+  {
+   hval ^= (ap[wi] ^ bp[wi]);
+  }
+ hval += wlen;
+ return(hval % HASHTABSIZ);
 }
 
 /*
  * grow design wide constant table
  *
  * when growing, grow with current needed words in case IS array large  
- * all sizes are in words because need word alignment
+ * all sizes are in words because need word32 alignment
  */
-extern void __grow_contab(int ndwrds)
+extern void __grow_contab(int32 ndwrds)
 {
- int old_ctabsiz, obsize, nbsize;
+ int32 old_ctabsiz, obsize, nbsize;
  
  old_ctabsiz = __contabwsiz;
- obsize = __contabwsiz*sizeof(word);
+ obsize = __contabwsiz*sizeof(word32);
  /* fibronacci growth */
  __contabwsiz = 3*(old_ctabsiz + ndwrds)/2; 
- nbsize = __contabwsiz*sizeof(word);
- __contab = (word *) __my_realloc((char *) __contab, obsize, nbsize);
+ nbsize = __contabwsiz*sizeof(word32);
+ __contab = (word32 *) __my_realloc((char *) __contab, obsize, nbsize);
 }
 
 /*
@@ -2701,9 +2766,9 @@ extern void __grow_contab(int ndwrds)
  * probably should add some common real constants (such as pi)
  * for IS form will allocate many reals 
  */
-extern int __alloc_rlcval(int nreals)
+extern int32 __alloc_rlcval(int32 nreals)
 {
- int di;
+ int32 di;
 
  if (__rlcontabdi + nreals >= __rlcontabdsiz) __grow_rlcontab(nreals);
  di = __rlcontabdi;
@@ -2715,15 +2780,15 @@ extern int __alloc_rlcval(int nreals)
  * sharable (non IS form) some small common real values
  * here never more than one at a time (non IS) allocated
  */
-extern int __alloc_shareable_rlcval(double d1)
+extern int32 __alloc_shareable_rlcval(double d1)
 {
- int di;
+ int32 di;
 
  /* SJM 06/18/01 - real constant folding for negative values was returning */
  /* wrong negative index - now only used shared real con table for positive */
  if (d1 >= 0.0 && d1 <= 100.0)
   {
-   di = (int) d1; 
+   di = (int32) d1; 
    if ((double) di == d1) return(di);
   }
  di = __alloc_rlcval(1);
@@ -2737,9 +2802,9 @@ extern int __alloc_shareable_rlcval(double d1)
  * when growing, grow with current needed num in case IS array large  
  * all sizes are in doubles since need alignment
  */
-extern void __grow_rlcontab(int ndreals)
+extern void __grow_rlcontab(int32 ndreals)
 {
- int old_rlctabsiz, obsize, nbsize;
+ int32 old_rlctabsiz, obsize, nbsize;
  
  old_rlctabsiz = __rlcontabdsiz;
  obsize = __rlcontabdsiz*sizeof(double);
@@ -2793,7 +2858,7 @@ struct opinfo_t __opinfo[] = {
  /* unary ops */
  /* LOOKATME - this is not really self determined result context determines */
  /* but does not fit in pattern so always checked for */ 
- { UNOP, NOTREALOP, PTHOP, WIDSELF, "~" },       /* ~ BITNOT - self determine */
+ { UNOP, NOTREALOP, PTHOP, WIDMAX, "~" },       /* ~ BITNOT - self determine */
  { UNOP, REALOP, PTHOP, WIDONE, "!" },          /* ! NOT */
  { RUNOP, REALOP, NOTPTHOP, WIDONE, "!" },      /* ! REALNOT */
  /* both unary and binary */
@@ -2875,7 +2940,7 @@ struct opinfo_t __opinfo[] = {
  * convert expression table to expression tree
  * for specparam may start at 1 instead of 0 if not min:typ:max form
  */
-extern void __bld_xtree(int start_xndi)
+extern void __bld_xtree(int32 start_xndi)
 {
  struct expr_t *ndp;
 
@@ -3001,7 +3066,7 @@ static void xskip_toend(void)
  */
 static struct expr_t *parse_boolorop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3032,7 +3097,7 @@ static struct expr_t *parse_boolorop(void)
  */
 static struct expr_t *parse_boolandop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3063,7 +3128,7 @@ static struct expr_t *parse_boolandop(void)
  */
 static struct expr_t *parse_borop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3099,7 +3164,7 @@ static struct expr_t *parse_borop(void)
  */
 static struct expr_t *parse_bxorop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3130,7 +3195,7 @@ static struct expr_t *parse_bxorop(void)
  */
 static struct expr_t *parse_bandop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3167,7 +3232,7 @@ static struct expr_t *parse_bandop(void)
  */
 static struct expr_t *parse_eqop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3198,7 +3263,7 @@ static struct expr_t *parse_eqop(void)
  */
 static struct expr_t *parse_ltgtop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3229,7 +3294,7 @@ static struct expr_t *parse_ltgtop(void)
  */
 static struct expr_t *parse_shop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3260,7 +3325,7 @@ static struct expr_t *parse_shop(void)
  */
 static struct expr_t *parse_addop(void)
 {
- int savi;
+ int32 savi;
  /* struct expr_t *ndp, *lhsndp, *rhsndp, *opndp, *last_opndp; */
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
@@ -3292,7 +3357,7 @@ static struct expr_t *parse_addop(void)
  */
 static struct expr_t *parse_mulop(void)
 {
- int savi;
+ int32 savi;
  struct expr_t *ndp, *rhsndp, *leftopndp;
 
  /* routine leaves __xndi at next place to look */
@@ -3325,7 +3390,7 @@ static struct expr_t *parse_mulop(void)
  */
 static struct expr_t *parse_unopterm(void)
 {
- int sav_xndi;
+ int32 sav_xndi;
  struct expr_t *ndp, *ndp2, *unopndp, *lastndp;
 
  lastndp = NULL;
@@ -3415,7 +3480,7 @@ unop_ret:
  */
 static void skip_3valend(void)
 {
- int paren_level;
+ int32 paren_level;
 
  for (paren_level = 0; __xndi <= __last_xtk; __xndi++)
   {
@@ -3433,7 +3498,7 @@ static void skip_3valend(void)
  * return T if expression node is a unary operator that does not require
  * special processing
  */
-static int is_unop(unsigned otyp)
+static int32 is_unop(word32 otyp)
 {
  struct opinfo_t *opip;
 
@@ -3585,7 +3650,6 @@ do_decl:
    /* non special terminal - next is lower precedence rest of expr */
    if (__exprtab[__xndi]->optyp == DOT)
     {
-
      if ((glbndp = parse_glbref(idndp, xidp)) == NULL) return(NULL);
 
      if (__exprtab[__xndi]->optyp != LPAR) return(glbndp);
@@ -3622,7 +3686,7 @@ do_decl:
  * must not call until ID known not to be part of xmr
  * name of variable taken from expr id nam global table
  */
-static int decl_id_inexpr(struct expr_t *ndp, struct expridtab_t *xidp)
+static int32 decl_id_inexpr(struct expr_t *ndp, struct expridtab_t *xidp)
 { 
  struct sy_t *syp;
  struct net_t *np;
@@ -3870,7 +3934,7 @@ static struct expr_t *parse_select(struct expr_t *idndp)
 static struct expr_t *parse_glbref(struct expr_t *cmp1_ndp,
  struct expridtab_t *cmp1_xidp)
 {
- int is_sel;
+ int32 is_sel;
  struct expr_t *ndp, *glbndp, *last_cmp;
  struct expr_t *idndp, *ndp2, *cmp_ndp; 
  struct expridtab_t *xidp;
@@ -4081,8 +4145,8 @@ static struct expr_t *bld_1cmp_global(struct expr_t *ndp,
  * at this build point, only link if from expression
  * caller must set line and file location
  */
-extern struct gref_t *__bld_glbref(struct expr_t *glbndp, int gfnam_ind,
- int glin_cnt)
+extern struct gref_t *__bld_glbref(struct expr_t *glbndp, int32 gfnam_ind,
+ int32 glin_cnt)
 {
  struct gref_t *grp;
  struct expr_t *glbpth_ndp;
@@ -4139,12 +4203,10 @@ extern struct gref_t *__bld_glbref(struct expr_t *glbndp, int gfnam_ind,
 
 /*
  * grow global gref work table
- *
- * always allocate size 100 table
  */
 static void grow_grtab(void)
 {
- int old_grtsiz, osize, nsize;
+ int32 old_grtsiz, osize, nsize;
 
  old_grtsiz = __grwrktabsiz;
  osize = old_grtsiz*sizeof(struct gref_t);
@@ -4166,7 +4228,7 @@ static void grow_grtab(void)
 static char *alloc_glbndp_tostr(struct expr_t *glbndp)
 { 
  register struct expr_t *gcmp_ndp, *ndp;
- int slen, glen, gstrsiz;
+ int32 slen, glen, gstrsiz;
  char *chp, *gnam, s1[IDLEN];
 
  /* DBG remove --- */
@@ -4180,7 +4242,7 @@ static char *alloc_glbndp_tostr(struct expr_t *glbndp)
   {
    ndp = gcmp_ndp->lu.x;
    if (ndp->optyp == XMRID) chp = ndp->ru.qnchp;
-   else if (ndp->optyp == LSB)
+   else if (ndp->optyp == LSB || ndp->optyp == PARTSEL)
     {
      /* build the <id>[<expr>] expression as string */
      /* works because XMRID nodes know to dmp expr */
@@ -4267,9 +4329,9 @@ static void init_gref(struct gref_t *grp, char *gnam)
  * ,, form legal for system functions but not user - caught elsewhere
  */
 static struct expr_t *parse_fcall(struct expr_t *fcall_ndp,
- struct expridtab_t *xidp, int is_glb)
+ struct expridtab_t *xidp, int32 is_glb)
 {
- int is_sysfunc;
+ int32 is_sysfunc;
  struct expr_t *ndp, *fchdrx, *argndp, *last_ndp, *lop;
 
  is_sysfunc = FALSE;
@@ -4405,7 +4467,7 @@ static struct expr_t *parse_fcall(struct expr_t *fcall_ndp,
  * know ID and following '(' read - must find or maybe add func symbol
  * xidp ok here since only declaring no movement in symbol table
  */
-static int chk_decl_func(int *is_sysfunc, struct expr_t *idndp,
+static int32 chk_decl_func(int32 *is_sysfunc, struct expr_t *idndp,
  struct expridtab_t *xidp)
 {
  struct sy_t *syp;
@@ -4420,6 +4482,7 @@ static int chk_decl_func(int *is_sysfunc, struct expr_t *idndp,
    *is_sysfunc = TRUE;
    return(TRUE);
   }
+ /* SJM 02/01/05 - change to use tf undef work symtab - for uprel 1 cmp glb */
  /* look up to see if previously declared as function or used as func */
  if ((syp = __get_sym(xidp->idnam, __venviron[0])) == NULL)
   {
@@ -4432,17 +4495,15 @@ static int chk_decl_func(int *is_sysfunc, struct expr_t *idndp,
      __ia_err(1436, "function %s not declared", xidp->idnam);
      return(FALSE);
     }
-   /* declare symbol as function as top level but do not mark as decled */
-   syp = __decl_sym(xidp->idnam, __venviron[0]);
-   syp->el.etskp = NULL;
-   syp->sytyp = SYM_F;
-   syp->syfnam_ind = __cur_fnam_ind;
-   syp->sylin_cnt = __lin_cnt;
-   idndp->lu.sy = syp;
+   /* SJM 02/01/05 - must assume 1 comp XMR - if declared later will be */
+   /* changed back in resolv local path routine */
+   cnvt_forw_tfcall_1cmpglb(idndp, xidp->idnam, xidp->idfnam_ind,
+    xidp->idlin_cnt);
    return(TRUE);
   }
  /* if already in symbol table as wire error - used as wire */
  idndp->lu.sy = syp;
+
  /* if declared (or just seen) but not as fcall error */
  if (syp->sytyp != SYM_F)
   {
@@ -4461,6 +4522,41 @@ static int chk_decl_func(int *is_sysfunc, struct expr_t *idndp,
    /* return T since can continue parsing with wrong type symbol */ 
   }
  return(TRUE);
+}
+
+/*
+ * routine to build func call 1 comp global for forward refs
+ *
+ * special case because must convert top node to xmr and make left
+ * offspring newly allocated with same contents
+ *
+ * needed because f([args]) may be upward relative xmr to f in above
+ * module - can't tell so any function call use before declares must
+ * be assumed to be XMRs - will get changed back if decl later in mod
+ */
+static void cnvt_forw_tfcall_1cmpglb(struct expr_t *ndp, char *tfnam, 
+ int32 fnam_ind, int32 lin_cnt)
+{
+ struct expr_t *cmp_ndp, sav_xnod;
+ struct gref_t *grp;
+
+ /* DBG remove -- */
+ if (ndp->optyp != ID) __misc_terr(__FILE__, __LINE__);
+ /* -- */
+
+ sav_xnod = *ndp;
+ ndp->optyp = GLBREF;
+ ndp->ru.x = __alloc_newxnd();
+ ndp->ru.x->optyp = XMRCOM;
+ cmp_ndp = __alloc_newxnd();
+ *cmp_ndp = sav_xnod;
+ ndp->ru.x->lu.x = cmp_ndp;
+ ndp->ru.x->ru.x = NULL;
+
+ cmp_ndp->ru.qnchp = __pv_stralloc(tfnam);
+ cmp_ndp->optyp = XMRID;
+
+ grp = __bld_glbref(ndp, fnam_ind, lin_cnt);
 }
 
 /*
@@ -4595,8 +4691,8 @@ extern struct expr_t *__alloc_exprnd(void)
  */
 static void grow_exprtab(void)
 {
- register int i;
- int old_xtabsiz, osize, nsize;
+ register int32 i;
+ int32 old_xtabsiz, osize, nsize;
 
  old_xtabsiz = __exprtabsiz;
  osize = old_xtabsiz*sizeof(struct expr_t *);
@@ -4619,7 +4715,7 @@ static void grow_exprtab(void)
  */
 extern struct expridtab_t *__alloc_expridnd(char *idnam)
 {
- int slen;
+ int32 slen;
  struct expridtab_t *xidp;
 
  if ((xidp = __expr_idtab[__last_xtk]) == NULL)
@@ -4662,7 +4758,7 @@ static struct expr_t *my_xndalloc(void)
  * numeric values never changed because __exprtab node just points to
  * atokptr and btokptr and those values moved to malloced node
  */
-static struct expr_t *alloc_xtnd(int ndi)
+static struct expr_t *alloc_xtnd(int32 ndi)
 {
  struct expr_t *ndp, *ndp2;
 
@@ -4822,7 +4918,7 @@ extern void __bld_unc_expr(void)
  *
  * this does not free partially built x trees - caller must free if needed
  */
-extern void __set_opempty(int ndi)
+extern void __set_opempty(int32 ndi)
 {
  __init_xnd(__exprtab[ndi]);
  set2_opempty(__exprtab[ndi]);
@@ -4853,7 +4949,7 @@ static void set2_opempty(struct expr_t *ndp)
  *
  * notice this must not change __root_ndp
  */
-extern void __set_numval(struct expr_t *ndp, word av, word bv, int blen)
+extern void __set_numval(struct expr_t *ndp, word32 av, word32 bv, int32 blen)
 {
  ndp->optyp = NUMBER;
  if (blen <= WBITS) 
@@ -4871,13 +4967,13 @@ extern void __set_numval(struct expr_t *ndp, word av, word bv, int blen)
  * this is a routine that uses wr to exprline routines so cannot be
  * called to add to exprline - must use disp of expr. routine
  *
- * BEWARE - can only be called during expression because needs
+ * BEWARE - can only be called during expression reading because needs
  *          __exprtab and __expridtab
  */
-static char *to_xndnam(char *s, int xndi)
+static char *to_xndnam(char *s, int32 xndi)
 {
- int wlen;
- word *ap, *bp;
+ int32 wlen;
+ word32 *ap, *bp;
  struct expr_t *ndp;
  struct expridtab_t *xidp;
  char s1[2*IDLEN], s2[RECLEN];
@@ -4902,7 +4998,7 @@ static char *to_xndnam(char *s, int xndi)
   case REALNUM: case ISREALNUM:
    /* LOOKATME - better to just format as double */ 
    /* just pass a part for both here */ 
-   ap = (word *) &(__rlcontab[ndp->ru.xvi]);
+   ap = (word32 *) &(__rlcontab[ndp->ru.xvi]);
    sprintf(s1, "REAL: %s", __regab_tostr(s2, ap, ap, ndp->szu.xclen, BDBLE,
     FALSE));
    break;
@@ -4915,7 +5011,7 @@ static char *to_xndnam(char *s, int xndi)
   default:
    strcpy(s, __to_opname(ndp->optyp)); return(s);
  }
- if ((int) strlen(s1) >= RECLEN - 1) s1[RECLEN - 1] = '\0';
+ if ((int32) strlen(s1) >= RECLEN - 1) s1[RECLEN - 1] = '\0';
  strcpy(s, s1);
  return(s);
 }

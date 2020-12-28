@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1998-2005 Pragmatic C Software Corp. */
 
 /* === INSERT LICENSE === */
 

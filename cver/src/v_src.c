@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -46,69 +46,72 @@ static void freeze_mod_syms(struct symtab_t *, struct symtab_t *);
 static void travfreeze_syms(register struct tnode_t *);
 static void travfreeze_lowsymtab(register struct symtab_t *);
 static void bld_mdpin_table(struct mod_t *);
-static int rd_modhdr(struct mod_t *);
-static int rd_hdrpnd_parmdecls(void);
-static int rd_portref(void);
+static int32 rd_modhdr(struct mod_t *);
+static int32 rd_hdrpnd_parmdecls(void);
+static int32 rd_portref(void);
 static void set_ioprtnets(struct expr_t *);
-static int rd_list_of_ports_decl(struct mod_t *);
-static int rd_modbody(void);
-static int rd_iodecl(unsigned);
-static void add_net_attr(struct net_t *, int);
-static int rd_vardecl(unsigned);
-static void chk_capwdecl_strens(unsigned);
-static void chk_drvstren(unsigned);
-static int rd_oparamdels(struct paramlst_t **);
-static int do_wdecl_assgn(struct sy_t *, struct paramlst_t *, int);
-static int is_decl_err(struct sy_t *, unsigned, unsigned);
-static void set_reg_widths(unsigned, struct expr_t **, struct expr_t **);
-static int chkset_wdrng(struct net_t *, struct expr_t *, struct expr_t *);
-static int cmp_rng(struct expr_t *, struct expr_t *, struct expr_t *,
+static int32 rd_list_of_ports_decl(struct mod_t *);
+static int32 rd_modbody(void);
+static int32 rd_iodecl(word32);
+static void add_net_attr(struct net_t *, int32);
+static int32 rd_vardecl(word32);
+static void chk_capwdecl_strens(word32);
+static void chk_drvstren(word32);
+static int32 rd_oparamdels(struct paramlst_t **);
+static int32 do_wdecl_assgn(struct sy_t *, struct paramlst_t *, int32);
+static int32 rdbld_mod_varinitlst(struct sy_t *);
+static int32 is_decl_err(struct sy_t *, word32, word32);
+static void set_reg_widths(word32, struct expr_t **, struct expr_t **);
+static int32 chkset_wdrng(struct net_t *, struct expr_t *, struct expr_t *);
+static int32 cmp_rng(struct expr_t *, struct expr_t *, struct expr_t *,
  struct expr_t *);
-static int rd_verstrens(void);
-static int rd_1verstren(int *);
-static int is_tokstren(int);
-static int rd_opt_param_array_rng(struct expr_t **, struct expr_t **, int);
-static struct net_t *chkadd_array_param(char *, int, int, int,
+static int32 rd_verstrens(void);
+static int32 rd_1verstren(int32 *);
+static int32 is_tokstren(int32);
+static int32 rd_opt_param_array_rng(struct expr_t **, struct expr_t **,
+ int32);
+static struct net_t *chkadd_array_param(char *, int32, int32, int32,
  struct expr_t *, struct expr_t *, struct expr_t *, struct expr_t *);
 static void cnvt_to_pdecl(struct xstk_t *, struct expr_t *, struct net_t *,
  char *);
 static void unwind_param_array_constructor(struct expr_t *);
-static void chk1_arrinit_expr(struct expr_t *, char *, int);
-static int rd_contassign(void);
-static struct conta_t *add_conta(struct expr_t *, struct expr_t *, int, int);
-static int rd_eventdecl(void);
-static int rd_paramdecl(int);
-static int rd_dfparam_stmt(void);
+static void chk1_arrinit_expr(struct expr_t *, char *, int32);
+static int32 rd_contassign(void);
+static struct conta_t *add_conta(struct expr_t *, struct expr_t *, int32,
+ int32);
+static int32 rd_eventdecl(void);
+static int32 rd_paramdecl(int32);
+static int32 rd_dfparam_stmt(void);
 static struct dfparam_t *alloc_dfpval(void);
-static int rd_task(void);
-static int unsigned to_tasksytyp(int);
-static int rd_taskvardecl(unsigned, int, char *);
-static struct net_t *decl_taskvar(unsigned, struct expr_t *, struct expr_t *);
+static int32 rd_task(void);
+static word32 to_tasksytyp(int32);
+static int32 rd_taskvardecl(word32, int32, char *);
+static struct net_t *decl_taskvar(word32, struct expr_t *, struct expr_t *);
 static struct task_pin_t *alloc_tskpin(void);
-static int rd_func(void);
-static void add_funcretdecl(char *, unsigned, struct expr_t *,
- struct expr_t *, int);
-static int rd_inst(char *);
+static int32 rd_func(void);
+static void add_funcretdecl(char *, word32, struct expr_t *,
+ struct expr_t *, int32);
+static int32 rd_inst(char *);
 static void add_cell_attr(struct cell_t *);
-static int rd_pull_stren(char *, int *);
+static int32 rd_pull_stren(char *, int32 *);
 static struct namparam_t *rd_npndparams(void);
 static struct namparam_t *rd1_namedparam(void);
 static struct namparam_t *copy_namparamlst(struct namparam_t *);  
-static int rd_iports(char *);
-static int rd_cpin_conn(void);
+static int32 rd_iports(char *);
+static int32 rd_cpin_conn(void);
 static char *alloc_cpnam(char *);
 static struct cell_pin_t *alloc_memcpins(void);
 static struct cell_t *add_cell(char *);
 static struct cell_t *alloc_memcell(void);
 static void init_task(struct task_t *);
-static int rd_tf_list_of_ports_decl(struct task_t *, char *);
+static int32 rd_tf_list_of_ports_decl(struct task_t *, char *);
 
 /* extern prototypes (maybe defined in this module) */
 extern char *__pv_stralloc(char *);
-extern char *__my_malloc(int);
+extern char *__my_malloc(int32);
 extern struct mod_t *__alloc_mod(struct sy_t *);
 extern void __init_mod(struct mod_t *, struct sy_t *);
-extern int __xpr_has_param(struct expr_t *);
+extern int32 __xpr_has_param(struct expr_t *);
 extern struct ncomp_t *__alloc_arrncomp(void);
 extern char *__prt_kywrd_vtok(void);
 extern char *__prt_vtok(void);
@@ -116,128 +119,130 @@ extern void __freeze_1symtab(struct symtab_t *);
 extern struct sy_t *__get_sym_env(char *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct sy_t *__decl_sym(char *, struct symtab_t *);
-extern struct sy_t *__bld_loc_symbol(int, struct symtab_t *, char *, char *);
+extern struct sy_t *__bld_loc_symbol(int32, struct symtab_t *, char *,
+ char *);
 extern struct sy_t *__find_sym(char *);
 extern struct net_t *__add_net(struct sy_t *);
-extern struct net_t *__decl_wirereg(unsigned, struct expr_t *,
+extern struct net_t *__decl_wirereg(word32, struct expr_t *,
  struct expr_t *, struct sy_t *);
 extern struct sy_t *__add_modsym(char *);
-extern char *__to_ptnam(char *, unsigned);
+extern char *__to_ptnam(char *, word32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_wtnam2(char *, unsigned);
+extern char *__to_wtnam2(char *, word32);
 extern char *__to_wrange(char *, struct net_t *);
-extern char *__get_vkeynam(char *, int);
-extern char *__to_sytyp(char *, unsigned);
+extern char *__get_vkeynam(char *, int32);
+extern char *__to_sytyp(char *, word32);
 extern char *__msgtox_wrange(char *, struct expr_t *, struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern char *__pregab_tostr(char *, word *, word *, struct net_t *);
-extern char *__to_stren_nam(char *, int, int);
-extern unsigned __fr_stren_nam(int);
-extern struct symtab_t *__alloc_symtab(int);
+extern char *__pregab_tostr(char *, word32 *, word32 *, struct net_t *);
+extern char *__to_stren_nam(char *, int32, int32);
+extern word32 __fr_stren_nam(int32);
+extern struct symtab_t *__alloc_symtab(int32);
 extern struct mod_pin_t *__alloc_modpin(void);
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
 extern struct namparam_t *__alloc_namparam(void);
 extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
-extern struct st_t *__alloc_stmt(int);
-extern struct st_t *__alloc2_stmt(int, int, int);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
+extern struct st_t *__alloc_stmt(int32);
+extern struct st_t *__alloc2_stmt(int32, int32, int32);
 extern struct delctrl_t *__alloc_dctrl(void);
-extern char *__to_splt_nam(char *, int);
+extern char *__to_splt_nam(char *, int32);
 extern struct st_t *__rd_stmt(void);
 extern struct paramlst_t *__alloc_pval(void);
 extern struct task_t *__alloc_task(struct sy_t *);
 extern struct expr_t *__gen_wireid_expr(struct sy_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
 extern struct xstk_t *__src_rd_eval_xpr(struct expr_t *);
-extern unsigned __to_cap_size(int);
+extern word32 __to_cap_size(int32);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct expr_t *__alloc_newxnd(void);
 extern void __get_vtok(void);
-extern int __rd_moddef(struct symtab_t *, int);
-extern struct gref_t *__alloc_grtab(struct gref_t *, int);
-extern int __rd_udpdef(struct symtab_t *);
-extern int __vskipto_modend(int);
-extern int __vskipto_lofp_end(void);
-extern int __vskipto2_lofp_end(void);
+extern int32 __rd_moddef(struct symtab_t *, int32);
+extern struct gref_t *__alloc_grtab(struct gref_t *, int32);
+extern int32 __rd_udpdef(struct symtab_t *);
+extern int32 __vskipto_modend(int32);
+extern int32 __vskipto_lofp_end(void);
+extern int32 __vskipto2_lofp_end(void);
 extern void __add_sym(char *, struct tnode_t *);
-extern int __rd_decl_rng(struct expr_t **, struct expr_t **);
-extern int __chk_redef_err(char *, struct sy_t *, char *, unsigned);
+extern int32 __rd_decl_rng(struct expr_t **, struct expr_t **);
+extern int32 __chk_redef_err(char *, struct sy_t *, char *, word32);
 extern void __remove_undef_mod(struct sy_t *);
-extern void __my_free(char *, int);
-extern int __vskipto2_any(int, int);
-extern int __vskipto3_any(int, int, int);
-extern int __vskipto4_any(int, int, int, int);
+extern void __my_free(char *, int32);
+extern int32 __vskipto2_any(int32, int32);
+extern int32 __vskipto3_any(int32, int32, int32);
+extern int32 __vskipto4_any(int32, int32, int32, int32);
 extern void __unget_vtok(void);
-extern int __col_parenexpr(int);
-extern int __col_connexpr(int);
-extern void __bld_xtree(int);
-extern int __rd_spfy(struct mod_t *);
-extern int __fr_wtnam(int);
-extern int __vskipto_any(int);
-extern int __col_rangeexpr(void);
-extern int __is_capstren(int);
-extern int __col_comsemi(int);
-extern void __set_numval(struct expr_t *, word, word, int);
-extern int __col_lval(void);
-extern int __col_newparamrhsexpr(void);
-extern int __col_lofp_paramrhsexpr(void);
-extern int __bld_tsk(char *, int);
-extern int __rd_tfdecls(char *);
-extern int __bld_expnode(void);
+extern int32 __col_parenexpr(int32);
+extern int32 __col_connexpr(int32);
+extern void __bld_xtree(int32);
+extern int32 __rd_spfy(struct mod_t *);
+extern int32 __fr_wtnam(int32);
+extern int32 __vskipto_any(int32);
+extern int32 __col_rangeexpr(void);
+extern int32 __is_capstren(int32);
+extern int32 __col_comsemi(int32);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
+extern int32 __col_lval(void);
+extern int32 __col_newparamrhsexpr(void);
+extern int32 __col_lofp_paramrhsexpr(void);
+extern int32 __bld_tsk(char *, int32);
+extern int32 __rd_tfdecls(char *);
+extern int32 __bld_expnode(void);
 extern void __set_xtab_errval(void);
-extern int __col_delexpr(void);
-extern int __vskipto3_modend(int, int, int);
-extern void __set_opempty(int);
+extern int32 __col_delexpr(void);
+extern int32 __vskipto3_modend(int32, int32, int32);
+extern void __set_opempty(int32);
 extern void __free_xtree(struct expr_t *);
 extern void __free2_xtree(struct expr_t *);
-extern int __src_rd_chk_paramexpr(struct expr_t *, int);
-extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **, int);
-extern int __chk_paramexpr(struct expr_t *, int);
+extern int32 __src_rd_chk_paramexpr(struct expr_t *, int32);
+extern int32 __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **,
+ int32);
+extern int32 __chk_paramexpr(struct expr_t *, int32);
 extern void __eval_param_rhs_tonum(struct expr_t *);
-extern int __nd_ndxnum(struct expr_t *, char *, int);
+extern int32 __nd_ndxnum(struct expr_t *, char *, int32);
 extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *);
-extern void __init_stmt(struct st_t *, int);
+extern void __init_stmt(struct st_t *, int32);
 
-extern int __expr_has_glb(struct expr_t *);
-extern int __isleaf(struct expr_t *);
-extern struct expr_t *__dup_concat(int, struct expr_t *);
+extern int32 __expr_has_glb(struct expr_t *);
+extern int32 __isleaf(struct expr_t *);
+extern struct expr_t *__dup_concat(int32, struct expr_t *);
 extern struct expr_t *__find_catend(struct expr_t *);
 extern void __free_namedparams(struct namparam_t *);
 extern struct cell_t *__alloc_cell(struct sy_t *);
-extern struct cell_pin_t *__alloc_cpin(int);
+extern struct cell_pin_t *__alloc_cpin(int32);
 extern void __add_syp_to_undefs(struct sy_t *);
-extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *, int);
+extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *, int32);
 extern void __src_rd_cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __sizchgxs(struct xstk_t *, int);  
-extern void __narrow_sizchg(register struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern int __wide_vval_is0(register word *, int);
-extern int __alloc_cval(int);
-extern int __alloc_shareable_cval(word, word, int);
-extern int __alloc_shareable_rlcval(double);
-extern char *__to1_stren_nam(char *, int, int);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __sizchgxs(struct xstk_t *, int32);  
+extern void __narrow_sizchg(register struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
+extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __alloc_shareable_rlcval(double);
+extern char *__to1_stren_nam(char *, int32, int32);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern int __cmp_xpr(struct expr_t *, struct expr_t *);
+extern int32 __cmp_xpr(struct expr_t *, struct expr_t *);
 extern struct attr_t *__rd_parse_attribute(struct attr_t *);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
 
 
 extern void __cv_msg(char *, ...);
 extern void __crit_msg(char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __finform(int, char *, ...);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __finform(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_fterr(char *, int);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_fterr(char *, int32);
 
 /*
  * read one top level module or udp definition
@@ -319,7 +324,7 @@ extern void __rd_cfg_ver_mod(void)
  * upon return current token must be synced to file level token
  * return F if parse errors, T even if other errors
  */
-extern int __rd_moddef(struct symtab_t *cfg_sytab, int isconfig)
+extern int32 __rd_moddef(struct symtab_t *cfg_sytab, int32 isconfig)
 {
  struct sy_t *syp;
  struct symtab_t *sp_sytp;
@@ -358,8 +363,8 @@ no_read:
   }
  else syp = __add_modsym(__token);
 
- syp->cfg_needed = FALSE;
  if (syp == NULL) goto no_read;
+ syp->cfg_needed = FALSE;
  syp->sytyp = SYM_M;
 
  mdp = __alloc_mod(syp);
@@ -397,6 +402,7 @@ no_read:
  __end_cp = NULL; __end_tbp = NULL; __end_paramnp = NULL;
  __end_ca = NULL; __end_ialst = NULL; __end_dfp = NULL;
  __end_impparamnp = NULL;
+ __end_mod_varinitlst = NULL; 
  __cur_declobj = MODULE;
  __mod_specparams = 0;
  /* initialize symbol table stack so module on bottom */
@@ -579,9 +585,8 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mod_parms_gd = FALSE;
  mdp->mod_lofp_decl = FALSE;
  /* values not used by cver but set so vpi_ routines can return */
- mdp->mod_dfltntyp = (unsigned) __dflt_ntyp;
- mdp->mod_uncdrv =  (unsigned) __unconn_drive;
-
+ mdp->mod_dfltntyp = (word32) __dflt_ntyp;
+ mdp->mod_uncdrv =  (word32) __unconn_drive;
  mdp->mhas_frcassgn = FALSE;
  mdp->flatinum = 0;
  mdp->mpnum = 0;
@@ -592,6 +597,7 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->minum = 0;
  mdp->mgnum = 0;
  mdp->mcas = NULL;
+ mdp->mcanum = 0;
  mdp->minsts = NULL;
  mdp->miarr = NULL;
  mdp->mnets = NULL;
@@ -603,6 +609,7 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->mnxt = NULL;
 
  mdp->mattrs = NULL;
+ mdp->mvarinits = NULL;
  mdp->mgateout_cbs = NULL;
 
  mdp->ialst = NULL;
@@ -630,12 +637,11 @@ extern void __init_mod(struct mod_t *mdp, struct sy_t *syp)
  mdp->smpins = NULL;
  mdp->iploctab = NULL;
  mdp->mdfps = NULL;
-
 }
 
 /*
  * NET LIST FIX UP ROUTINES CALLED DURING INPUT PROCESSING
-*/
+ */
 
 /*
  * declare all undeclared wires connected to module insts and gates
@@ -741,7 +747,7 @@ static void freeze_mod_syms(struct symtab_t *sytp,
  */
 extern void __freeze_1symtab(struct symtab_t *sytp)
 {
- int bytes;
+ int32 bytes;
 
  /* DBG remove */
  if (!sytp->freezes) __misc_terr(__FILE__, __LINE__);
@@ -787,9 +793,9 @@ static void travfreeze_lowsymtab(register struct symtab_t *sytp)
  */
 static void bld_mdpin_table(struct mod_t *mdp)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int pnum;
+ int32 pnum;
  struct mod_pin_t *mphdr, *mpp2;
 
  if ((pnum = mdp->mpnum) == 0) return;
@@ -812,8 +818,8 @@ static void bld_mdpin_table(struct mod_t *mdp)
 /*
  * check for and emit a redefinition error
  */
-extern int __chk_redef_err(char *nam, struct sy_t *syp,
- char *newtnam, unsigned styp)
+extern int32 __chk_redef_err(char *nam, struct sy_t *syp,
+ char *newtnam, word32 styp)
 {
  if (!syp->sydecl)
   {
@@ -844,7 +850,7 @@ extern int __chk_redef_err(char *nam, struct sy_t *syp,
  * if return T, even if error parsing can continue in module
  * sometimes guesses that continuing ok, error caught by next routine
  */
-static int rd_modhdr(struct mod_t *mp)
+static int32 rd_modhdr(struct mod_t *mp)
 {
  struct mod_pin_t *mpp, *last_mpp;
 
@@ -982,7 +988,7 @@ nxt_port:
  * format is: module xx #([parameter decl list], ...) (port list) ...
  * notice that only legal for module definitions
  */
-static int rd_hdrpnd_parmdecls(void)
+static int32 rd_hdrpnd_parmdecls(void)
 {
  __get_vtok();
  if (__toktyp != LPAR)
@@ -1016,9 +1022,9 @@ static int rd_hdrpnd_parmdecls(void)
  *
  * medium level - caller syncs if returns error F
  */
-static int rd_portref(void)
+static int32 rd_portref(void)
 {
- int nd_rpar;
+ int32 nd_rpar;
 
  if (__toktyp == DOT)
   {
@@ -1169,15 +1175,16 @@ extern struct mod_pin_t *__alloc_modpin(void)
  * if return T, even if error parsing can continue in module
  * on error must sync to semi and back up one - mod item which just returns
  */
-static int rd_list_of_ports_decl(struct mod_t *mp)
+static int32 rd_list_of_ports_decl(struct mod_t *mp)
 {
- int first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
+ int32 first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
  struct sy_t *syp;
  struct net_t *np;
  struct expr_t *x1, *x2, *ox1, *ox2;
  struct mod_pin_t *mpp, *last_mpp;
  char s1[RECLEN];
 
+ ptyp = -1;
  /* even if syntax error, T once a port type keyword appears in hdr */
  mp->mod_lofp_decl = TRUE;
  __lofp_port_decls = TRUE;
@@ -1278,7 +1285,7 @@ static int rd_list_of_ports_decl(struct mod_t *mp)
      if ((np = __decl_wirereg(wtyp, x1, x2, NULL)) == NULL) goto nxt_port;
 
      /* if previously used will be treated as reg - must set to compatible */
-     /* wire type if declared as time or int */
+     /* wire type if declared as time or int32 */
      np->ntyp = wtyp;
      syp = np->nsym;
 
@@ -1361,9 +1368,9 @@ nxt_net:
  *
  * if returns T must be synced on end mod 
  */
-static int rd_modbody(void)
+static int32 rd_modbody(void)
 {
- int rv, iattyp, ialcnt, iafnind, wtyp;
+ int32 rv, iattyp, ialcnt, iafnind, wtyp;
  struct st_t *stp;
  struct ialst_t *ialp;
  char typnam[IDLEN];
@@ -1489,7 +1496,7 @@ moditem_stmt:
       {
        /* false here means out of sync - must skip rest of module */
        /* if T will have skipped to semi */
-       if (!rd_vardecl((unsigned) wtyp)) goto moditem_resync;
+       if (!rd_vardecl((word32) wtyp)) goto moditem_resync;
        /* needed to add attribute to every net in list - can now reset */
        __wrk_attr.attr_seen = FALSE;
        continue;
@@ -1523,15 +1530,17 @@ moditem_stmt:
  * mostly sets the iotyp field
  * I/O decl. does not declare symbol even though wire decl. not required
  */
-static int rd_iodecl(unsigned typ)
+static int32 rd_iodecl(word32 typ)
 {
- int first_time, ttyp, has_attr, decl_signed;
+ int32 first_time, ttyp, has_attr, decl_signed, is_complete, wtyp;
  struct sy_t *syp;
  struct net_t *np;
  struct expr_t *x1, *x2, *ox1, *ox2;
  char s1[RECLEN];
 
+ wtyp = -1;
  decl_signed = FALSE;
+ is_complete = FALSE;
  /* vectored or scalared keywords only appear on wire decls */
  __get_vtok();
  if (__toktyp == SIGNED)
@@ -1539,6 +1548,21 @@ static int rd_iodecl(unsigned typ)
    decl_signed = TRUE;
    __get_vtok();
   }
+ /* AIV 07/20/04 port decl can now contain net type making it complete  */
+ else if ((wtyp = __fr_wtnam(__toktyp)) != -1)
+  {
+    /* if complete set the flag set the type */
+    is_complete = TRUE;
+    __get_vtok();
+    /* must check for sign again */
+    if (__toktyp == SIGNED)
+     {
+      decl_signed = TRUE;
+      __get_vtok();
+     }
+   }
+  /* type defaults to reg if undefined */
+  else wtyp = N_REG;
 
  /* even if error if 1 past ending ] continue */
  if (!__rd_decl_rng(&ox1, &ox2))
@@ -1624,8 +1648,13 @@ not_a_port:
    /* 2 cases, if so far only appeared in port header wirtypknown F */
    /* and need to set as wire not reg (default for ports), else already set */
    /* but notice if set, type still not known just implicitly wire */
-
-   if (!np->nu.ct->n_wirtypknown) np->ntyp = N_WIRE;
+   if (is_complete)
+    {
+     np->ntyp = wtyp;
+     /* must make as  */
+     np->nu.ct->n_iscompleted = TRUE;
+    }
+   else if (!np->nu.ct->n_wirtypknown) np->ntyp = N_WIRE;
 
    syp->sydecl = TRUE;
    /* need I/O decl. place not header or wire decl. */
@@ -1659,7 +1688,7 @@ nxt_var:
  * on error caller handles skipping
  * x1 and x2 only point to non nil if succeeds
  */
-extern int __rd_decl_rng(struct expr_t **x1, struct expr_t **x2)
+extern int32 __rd_decl_rng(struct expr_t **x1, struct expr_t **x2)
 {
  *x1 = *x2 = NULL;
 
@@ -1685,7 +1714,7 @@ extern int __rd_decl_rng(struct expr_t **x1, struct expr_t **x2)
  * add a net attribute 
  * SJM - 03/20/00 - if I/O decl attrs really net attrs for port net
  */
-static void add_net_attr(struct net_t *np, int ttyp)
+static void add_net_attr(struct net_t *np, int32 ttyp)
 {
  register struct attr_t *attrp, *new_attrp, *last_attrp;
 
@@ -1725,9 +1754,9 @@ static void add_net_attr(struct net_t *np, int ttyp)
  *
  * if returns F synced to next module, else synced to SEMI
  */
-static int rd_vardecl(unsigned wtyp)
+static int32 rd_vardecl(word32 wtyp)
 {
- int first_time, split_state, decl_signed, has_attr;
+ int32 first_time, split_state, decl_signed, has_attr;
  struct expr_t *x1, *x2, *ox1, *ox2, *xm1, *xm2;
  struct sy_t *syp;
  struct net_t *np;
@@ -1831,23 +1860,32 @@ bad_end:
      __get_vtok();
      goto bad_end;
     }
+  
+  /* if hdr list of port form used, decls giving additional info illegal */
+  if ((syp = __get_sym_env(__token)) != NULL && syp->sytyp == SYM_N
+   && syp->el.enp->iotyp != NON_IO)
+   {
+    if (__lofp_port_decls || syp->el.enp->nu.ct->n_iscompleted)
+     {
+      if (__lofp_port_decls)
+       {
+        __pv_ferr(3421,
+         "%s declaration of port \"%s\" illegal - module uses list of ports declarations form",
+         __to_wtnam2(s1, wtyp), __prt_kywrd_vtok());
+       }
+      else
+       {
+        __pv_ferr(3424,
+         "%s declaration of port \"%s\" illegal - net type is previously defined",
+         __to_wtnam2(s1, wtyp), __prt_kywrd_vtok()); 
+       }
 
-   if (__lofp_port_decls)
-    {
-     /* if hdr list of port form used, decls giving additional info illegal */
-     if ((syp = __get_sym_env(__token)) != NULL && syp->sytyp == SYM_N
-      && syp->el.enp->iotyp != NON_IO)
-      {
-       __pv_ferr(3421,
-        "%s declaration of port \"%s\" illegal - module uses list of ports declarations form",
-        __to_wtnam2(s1, wtyp), __prt_kywrd_vtok());
-
-       /* ignore rest of declaration - should resync if no syntax error */
-       if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
-       if (__toktyp == SEMI) return(TRUE);
-       goto nxt_wire;
-      }
-    }
+      /* ignore rest of declaration - should resync if no syntax error */
+      if (!__vskipto2_any(COMMA, SEMI)) return(FALSE); 
+      if (__toktyp == SEMI) return(TRUE);
+      goto nxt_wire;
+     }
+   }
 
    /* set implied range for time and integer */
    /* each time through need to call this to make copy */
@@ -1866,7 +1904,7 @@ try_resync:
      goto nxt_wire;
     }
    /* if previously used will be treated as reg - must set to compatible */
-   /* wire type if declared as time or int */
+   /* wire type if declared as time or int32 */
    np->ntyp = wtyp;
    syp = np->nsym;
 
@@ -1907,9 +1945,23 @@ try_resync:
    /* must not turn off since if port and turned on there, stays on */
    if (decl_signed) np->n_signed = TRUE;
 
+   /* AIV 09/29/04 - now if there is an = not necessarily a cont assgn */
+   /* could be a variable initialization i.e. integer i = 12; */
    if (__toktyp == EQ)
     {
-     if (!do_wdecl_assgn(syp, pmphdr, first_time)) goto try_resync;
+     if (np->ntyp >= NONWIRE_ST)
+      {
+       /* cannot init an array - illegal syntax */
+       if (np->n_isarr)  
+        {
+         __pv_ferr(3429,
+          "variable assign initialize form illegal for %s - arrays cannot be initialized",
+          syp->synam); 
+         goto try_resync;
+        }
+       if (!rdbld_mod_varinitlst(syp)) goto try_resync;
+      }
+     else if (!do_wdecl_assgn(syp, pmphdr, first_time)) goto try_resync;
     }
    else
     {
@@ -1951,7 +2003,7 @@ nxt_wire:
 /*
  * check cap. wire declaration strength - no strength appeared
  */
-static void chk_capwdecl_strens(unsigned wtyp)
+static void chk_capwdecl_strens(word32 wtyp)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -1979,7 +2031,7 @@ static void chk_capwdecl_strens(unsigned wtyp)
 /*
  * know non assign wire decl. has strength - emit error
  */
-static void chk_drvstren(unsigned wtyp)
+static void chk_drvstren(word32 wtyp)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -2012,7 +2064,7 @@ static void chk_drvstren(unsigned wtyp)
  * this routine returns F on sync error - caller must resync
  * but in places with known delimiter attempt to resync to delim 
  */
-static int rd_oparamdels(struct paramlst_t **pmphdr)
+static int32 rd_oparamdels(struct paramlst_t **pmphdr)
 {
  struct paramlst_t *pmp, *last_pmp;
 
@@ -2090,12 +2142,12 @@ extern struct paramlst_t *__alloc_pval(void)
  * notice # delays and strengths are put into globals
  * also notice wire values in this case moved here no wire delay
  */
-static int do_wdecl_assgn(struct sy_t *syp, struct paramlst_t *pmphdr,
- int first_time)
+static int32 do_wdecl_assgn(struct sy_t *syp, struct paramlst_t *pmphdr,
+ int32 first_time)
 {
  struct conta_t *cap;
  struct expr_t *lhs_ndp;
- int sfnind, slcnt;
+ int32 sfnind, slcnt;
 
  /* need lhs wire as location of conta */
  sfnind = syp->syfnam_ind;
@@ -2120,6 +2172,37 @@ static int do_wdecl_assgn(struct sy_t *syp, struct paramlst_t *pmphdr,
 }
 
 /*
+ * read the initialize to expr and add to mod's var init list 
+ * format example: reg r = 12;
+ *
+ * build the net and expr pair lists here - check to make sure constant
+ * expr during fixup and initialize as first sim step in pv_sim
+ *
+ * notice can't check the constant expr here since parameter decl may 
+ * follow in source order
+ */
+static int32 rdbld_mod_varinitlst(struct sy_t *syp)
+{
+ struct varinitlst_t *initp;
+
+ /* collect rhs and build expression tree */
+ __get_vtok();
+ if (!__col_comsemi(-1)) return(FALSE);
+ __bld_xtree(0);
+
+ initp = (struct varinitlst_t *) __my_malloc(sizeof(struct varinitlst_t));
+ initp->init_syp = syp;
+ initp->init_xp = __root_ndp;
+ initp->varinitnxt = NULL;
+
+ if (__end_mod_varinitlst == NULL) __inst_mod->mvarinits = initp;
+ else __end_mod_varinitlst->varinitnxt = initp;
+ __end_mod_varinitlst = initp;
+
+ return(TRUE);
+}
+
+/*
  * add the wire type decl. symbol and associated wire/reg
  *
  * caller must set wire type after checking for duplicates
@@ -2130,7 +2213,7 @@ static int do_wdecl_assgn(struct sy_t *syp, struct paramlst_t *pmphdr,
  *
  * for non vendor 1 specific dsyp will always be nil
  */
-extern struct net_t *__decl_wirereg(unsigned wtyp, struct expr_t *x1,
+extern struct net_t *__decl_wirereg(word32 wtyp, struct expr_t *x1,
  struct expr_t *x2, struct sy_t *dsyp)
 {
  struct net_t *np;
@@ -2165,7 +2248,7 @@ extern struct net_t *__decl_wirereg(unsigned wtyp, struct expr_t *x1,
    if (np->iotyp != NON_IO)
     {
      /* if wire decl. for I/O port use it */
-     /* any wire type, reg, int, and time ok here, but not real or event */
+     /* any wire type, reg, int32, and time ok here, but not real or event */
      if (wtyp == N_REAL || wtyp == N_EVENT)
       {
        __pv_ferr(1009,
@@ -2241,7 +2324,7 @@ extern struct net_t *__add_net(struct sy_t *syp)
  np->nu.ct->n_onlhs = FALSE;
  np->nu.ct->n_2ndonlhs = FALSE;
  np->nu.ct->num_prtconns = 0;
- /* this is default implies word a/b type also for reals */
+ /* this is default implies word32 a/b type also for reals */
  np->srep = SR_VEC;
 
  /* fields for parameters only */
@@ -2250,7 +2333,7 @@ extern struct net_t *__add_net(struct sy_t *syp)
  np->nu.ct->p_specparam = FALSE;
  np->nu.ct->p_rhs_has_param = FALSE;
  np->nu.ct->p_locparam = FALSE;
- np->nu.ct->p_setby_defparam = FALSE;
+ np->nu.ct->p_setby_defpnd = FALSE;
  np->nu.ct->prngdecl = FALSE;
  np->nu.ct->ptypdecl = FALSE;
  np->nu.ct->psigndecl = FALSE;
@@ -2272,6 +2355,7 @@ extern struct net_t *__add_net(struct sy_t *syp)
  /* cap. strength of non cap. strength strong is no cap. strength */
  np->n_capsiz = CAP_NONE;
  np->n_signed = FALSE;
+ np->nu.ct->n_iscompleted = FALSE;
  np->nu.ct->n_spltstate = SPLT_DFLT;
  /* this gets sets in v_prep if vector - vectored is scalared */
  np->vec_scalared = TRUE;
@@ -2337,8 +2421,8 @@ extern struct ncomp_t *__alloc_arrncomp(void)
  * called for declaration when symbol is not new
  * for symbols that are like variables
  */
-static int is_decl_err(struct sy_t *syp, unsigned dclsytyp,
- unsigned dclwtyp)
+static int32 is_decl_err(struct sy_t *syp, word32 dclsytyp,
+ word32 dclwtyp)
 {
  struct net_t *np;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
@@ -2365,10 +2449,10 @@ static int is_decl_err(struct sy_t *syp, unsigned dclsytyp,
 /*
  * set a register width
  */
-static void set_reg_widths(unsigned wtyp, struct expr_t **x1,
+static void set_reg_widths(word32 wtyp, struct expr_t **x1,
  struct expr_t **x2)
 {
- word rhigh;
+ word32 rhigh;
 
  if (wtyp == N_INT) rhigh = WBITS - 1;
  else if (wtyp == N_TIME) rhigh = TIMEBITS - 1;
@@ -2384,7 +2468,7 @@ static void set_reg_widths(unsigned wtyp, struct expr_t **x1,
  *
  * LOOKATME - siz must be <= WBITS so why pass it 
  */
-extern struct expr_t *__bld_rng_numxpr(word av, word bv, int siz)
+extern struct expr_t *__bld_rng_numxpr(word32 av, word32 bv, int32 siz)
 {
  struct expr_t *ndp;
 
@@ -2397,10 +2481,10 @@ extern struct expr_t *__bld_rng_numxpr(word av, word bv, int siz)
 /*
  * check and possibly set wire range
  */
-static int chkset_wdrng(struct net_t *np, struct expr_t *x1,
+static int32 chkset_wdrng(struct net_t *np, struct expr_t *x1,
  struct expr_t *x2)
 {
- int cval;
+ int32 cval;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
 
  /* know range - either previous I/O or wire decl. with range */
@@ -2434,7 +2518,7 @@ static int chkset_wdrng(struct net_t *np, struct expr_t *x1,
  * compare 2 range exprs during compilation - before params known
  * equal if same known numbers (or numeric expr.) or if exprs the same
  */
-static int cmp_rng(struct expr_t *x1, struct expr_t *x2,
+static int32 cmp_rng(struct expr_t *x1, struct expr_t *x2,
  struct expr_t *nx1, struct expr_t *nx2)
 {
  if (!__cmp_xpr(x1, nx1)) return(1);
@@ -2446,10 +2530,10 @@ static int cmp_rng(struct expr_t *x1, struct expr_t *x2,
  * compare 2 expressions for identicalness
  * if incorrect real, same and error caught later
  */
-extern int __cmp_xpr(struct expr_t *nx, struct expr_t *ox)
+extern int32 __cmp_xpr(struct expr_t *nx, struct expr_t *ox)
 {
- int retval, owlen, nwlen;
- word *owp, *nwp;
+ int32 retval, owlen, nwlen;
+ word32 *owp, *nwp;
 
  switch ((byte) nx->optyp) { 
   case NUMBER:
@@ -2485,9 +2569,9 @@ extern int __cmp_xpr(struct expr_t *nx, struct expr_t *ox)
  * checked later
  * set globals __v0stren and __v1stren
  */
-static int rd_verstrens(void)
+static int32 rd_verstrens(void)
 {
- int strentyp;
+ int32 strentyp;
 
  __v0stren = __v1stren = NO_STREN;
  /* this sets __v0stren and __v1stren F means structural problem */
@@ -2539,9 +2623,9 @@ static int rd_verstrens(void)
  * __v0stren or __v1stren depending on token type
  * returns F on token error else F, if bad sets to none
  */
-static int rd_1verstren(int *strentyp)
+static int32 rd_1verstren(int32 *strentyp)
 {
- int strenval;
+ int32 strenval;
 
  *strentyp = NO_STREN;
  if ((*strentyp = is_tokstren(__toktyp)) == CAP_STREN)
@@ -2588,7 +2672,7 @@ static int rd_1verstren(int *strentyp)
 /*
  * determine if token type strength and whether 0 or 1 group
  */
-static int is_tokstren(int ttyp)
+static int32 is_tokstren(int32 ttyp)
 {
  switch ((byte) ttyp) {
   case SUPPLY0: case STRONG0: case PULL0: case WEAK0: case HIGHZ0:
@@ -2620,11 +2704,11 @@ static int is_tokstren(int ttyp)
  * for modules parameter declarations and unlike header list of ports both
  * types can be combined 
  */
-static int rd_paramdecl(int is_hdr_form)
+static int32 rd_paramdecl(int32 is_hdr_form)
 {
- int ptyp_decl, prng_decl, pwtyp, pwid, r1, r2, wlen;
- int psign_decl; 
- word *wp;
+ int32 ptyp_decl, prng_decl, pwtyp, pwid, r1, r2, wlen;
+ int32 psign_decl; 
+ word32 *wp;
  struct expr_t *dx1, *dx2, *x1, *x2, *ax1, *ax2;
  struct net_t *np;
  struct xstk_t *xsp;
@@ -2652,8 +2736,8 @@ static int rd_paramdecl(int is_hdr_form)
    if (!__rd_opt_param_vec_rng(&dx1, &dx2, is_hdr_form)) return(FALSE);
    if (dx1 == NULL || dx2 == NULL) goto rd2_param_list;
 
-   r1 = (int) __contab[dx1->ru.xvi];
-   r2 = (int) __contab[dx2->ru.xvi];
+   r1 = (int32) __contab[dx1->ru.xvi];
+   r2 = (int32) __contab[dx2->ru.xvi];
    pwid = (r1 >= r2) ? r1 - r2 + 1 : r2 - r1 + 1; 
    pwtyp = N_REG;
    x1 = dx1; x2 = dx2;
@@ -2698,7 +2782,7 @@ chk_norng:
      if (dx1 != NULL)
       {
        __pv_ferr(686, "%s declaration range illegal for opt_type %s",
-        ptnam, __to_wtnam2(__xs, (unsigned) pwtyp));
+        ptnam, __to_wtnam2(__xs, (word32) pwtyp));
       }
      x1 = __bld_rng_numxpr(pwid - 1, 0L, WBITS);
      x2 = __bld_rng_numxpr(0L, 0L, WBITS);
@@ -2908,7 +2992,7 @@ bad_end:
        np->nu.ct->nx1 = __bld_rng_numxpr(np->nwid - 1, 0L, WBITS);
        np->nu.ct->nx2 = __bld_rng_numxpr(0L, 0L, WBITS);
       }
-     /* always true for real and int - maybe true from others */
+     /* always true for real and int32 - maybe true from others */
      if (__root_ndp->is_string) np->nu.ct->pstring = TRUE;
      /* this works because param expr checking always sets ibase */ 
      np->nu.ct->pbase = __root_ndp->ibase;
@@ -2932,7 +3016,7 @@ bad_end:
    /* assign the value as SR PNUM form because now always "declared" - has */
    /* kown type so can store as net value */
    wlen = wlen_(xsp->xslen);
-   wp = (word *) __my_malloc(2*WRDBYTES*wlen);
+   wp = (word32 *) __my_malloc(2*WRDBYTES*wlen);
    memcpy(wp, xsp->ap, 2*wlen*WRDBYTES);
    np->nva.wp = wp;
    np->srep = SR_PNUM;
@@ -3002,7 +3086,7 @@ nxt_param:
  * set ncomp rhs has param bit causes re-eval of param value 
  * to use new pound and defparam values if changed
  */
-extern int __xpr_has_param(struct expr_t *ndp)
+extern int32 __xpr_has_param(struct expr_t *ndp)
 {
  struct sy_t *syp;
  struct net_t *np;
@@ -3035,9 +3119,9 @@ extern int __xpr_has_param(struct expr_t *ndp)
  * version of chk paramexpr that is called for parameters during
  * source input 
  */
-extern int __src_rd_chk_paramexpr(struct expr_t *ndp, int xwid)
+extern int32 __src_rd_chk_paramexpr(struct expr_t *ndp, int32 xwid)
 {
- int rv, sav_sfnam_ind, sav_slin_cnt;
+ int32 rv, sav_sfnam_ind, sav_slin_cnt;
 
  /* SJM 10/01/99 - improve error location for param checking */
  /* chk param expr needs sim locations set - set temporary guess here */
@@ -3059,10 +3143,10 @@ extern int __src_rd_chk_paramexpr(struct expr_t *ndp, int xwid)
  *
  * know [ read and reads one past ]
  */
-extern int __rd_opt_param_vec_rng(struct expr_t **ax1, struct expr_t **ax2,
- int is_hdr_form)
+extern int32 __rd_opt_param_vec_rng(struct expr_t **ax1, struct expr_t **ax2,
+ int32 is_hdr_form)
 {
- int rngerr;
+ int32 rngerr;
  struct expr_t *x1, *x2;
  char ptnam[RECLEN], s1[RECLEN];
 
@@ -3133,10 +3217,10 @@ done:
  *
  * know [ read and reads one past ]
  */
-static int rd_opt_param_array_rng(struct expr_t **ax1, struct expr_t **ax2,
- int is_hdr_form)
+static int32 rd_opt_param_array_rng(struct expr_t **ax1, struct expr_t **ax2,
+ int32 is_hdr_form)
 {
- int rngerr;
+ int32 rngerr;
  struct expr_t *x1, *x2;
  
  rngerr = FALSE;
@@ -3204,14 +3288,14 @@ done:
  * also sets initial array value
  * know cur mod set when this is called
  */
-static struct net_t *chkadd_array_param(char *paramnam, int pwtyp, int pwid,
- int psign, struct expr_t *x1, struct expr_t *x2, struct expr_t *ax1,
+static struct net_t *chkadd_array_param(char *paramnam, int32 pwtyp, int32 pwid,
+ int32 psign, struct expr_t *x1, struct expr_t *x2, struct expr_t *ax1,
   struct expr_t *ax2)
 {
- register int ai;
- word *wp;
- int unnorm_ai, r1, r2, awid, wlen;
- int initerr, some_str, all_str;
+ register int32 ai;
+ word32 *wp;
+ int32 unnorm_ai, r1, r2, awid, wlen;
+ int32 initerr, some_str, all_str;
  struct expr_t *catndp, *xp, **avalxtab;
  struct net_t *np;
  struct xstk_t *xsp;
@@ -3225,8 +3309,8 @@ static struct net_t *chkadd_array_param(char *paramnam, int pwtyp, int pwid,
    return(NULL);
   }
  /* build table of parameters */
- r1 = (int) __contab[ax1->ru.xvi];
- r2 = (int) __contab[ax2->ru.xvi];
+ r1 = (int32) __contab[ax1->ru.xvi];
+ r2 = (int32) __contab[ax2->ru.xvi];
  /* number of cells in array */
  awid = (r1 >= r2) ? r1 - r2 + 1 : r2 - r1 + 1; 
  avalxtab = (struct expr_t **) __my_malloc(awid*sizeof(struct expr_t *));
@@ -3321,7 +3405,7 @@ static struct net_t *chkadd_array_param(char *paramnam, int pwtyp, int pwid,
 
  /* allocate and fill parameter array */
  wlen = wlen_(np->nwid);
- np->nva.wp = (word *) __my_malloc(2*WRDBYTES*awid*wlen);
+ np->nva.wp = (word32 *) __my_malloc(2*WRDBYTES*awid*wlen);
  for (ai = awid - 1; ai >= 0; ai--)
   {
    unnorm_ai = (r1 >= r2) ? (r2 + ai) : (r2 - ai);
@@ -3474,7 +3558,7 @@ static void unwind_param_array_constructor(struct expr_t *ndp)
        continue;
       case CATREP:
        {
-        int repval;
+        int32 repval;
 	struct expr_t *dupndp;
 	struct xstk_t *xsp;
 
@@ -3488,7 +3572,7 @@ static void unwind_param_array_constructor(struct expr_t *ndp)
 	     || xsp->bp[0] != 0L) goto bad_rep;
 	   }
           else if (xsp->bp[0] != 0) goto bad_rep;
-	  repval = (int) xsp->ap[0];
+	  repval = (int32) xsp->ap[0];
           if (repval == 1) 
            __finform(442,
             "array constructore repeat value of 1 has no effect");
@@ -3527,7 +3611,7 @@ bad_rep:
 /*
  * check one array initializer expression
  */
-static void chk1_arrinit_expr(struct expr_t *xp, char *paramnam, int ai)
+static void chk1_arrinit_expr(struct expr_t *xp, char *paramnam, int32 ai)
 {
  if (__expr_has_glb(xp) || !__src_rd_chk_paramexpr(xp, 0))
   {
@@ -3544,7 +3628,7 @@ static void chk1_arrinit_expr(struct expr_t *xp, char *paramnam, int ai)
 /*
  * return T if expression has any global reference
  */
-extern int __expr_has_glb(struct expr_t *xp)
+extern int32 __expr_has_glb(struct expr_t *xp)
 {
  if (__isleaf(xp))
   {
@@ -3565,9 +3649,8 @@ extern int __expr_has_glb(struct expr_t *xp)
  */
 extern void __eval_param_rhs_tonum(struct expr_t *ndp)
 { 
- int wlen, is_str, xbase;
+ int32 wlen, is_str, xbase;
  double d1;
- word *wp;
  struct xstk_t *xsp;
 
  if (ndp->is_string) is_str = TRUE; else is_str = FALSE;
@@ -3603,9 +3686,7 @@ extern void __eval_param_rhs_tonum(struct expr_t *ndp)
    }
   else
    {
-    ndp->ru.xvi = __alloc_cval(2*wlen);
-    wp = &(__contab[ndp->ru.xvi]);
-    memcpy(wp, xsp->ap, 2*wlen*WRDBYTES);
+    ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, wlen);
    }
   __pop_xstk();
   /* notice string from rhs param expr. impossible */
@@ -3637,7 +3718,7 @@ extern void __eval_param_rhs_tonum(struct expr_t *ndp)
 extern struct net_t *__add_param(char *nam, struct expr_t *x1,
  struct expr_t *x2)
 {
- int is_spec;
+ int32 is_spec;
  struct tnode_t *tnp;
  struct sy_t *syp;
  struct net_t *np;
@@ -3735,12 +3816,12 @@ extern struct net_t *__add_param(char *nam, struct expr_t *x1,
  * return F if cannot sync to ending ;, if F will be sync to next mod/prim
  * list of assignments allowed here
  */
-static int rd_contassign(void)
+static int32 rd_contassign(void)
 {
  struct expr_t *lhsndp, *rhsndp;
  struct paramlst_t *pmphdr;
  struct conta_t *cap;
- int first_time, sfnind, slcnt;
+ int32 first_time, sfnind, slcnt;
 
  /* must read drive strength and delay */
  pmphdr = NULL;
@@ -3807,7 +3888,7 @@ bad_end:
  * even if lhs 1 bit stored in non gate form here
  */
 static struct conta_t *add_conta(struct expr_t *lhsndp,
- struct expr_t *rhsndp, int sfnind, int slcnt)
+ struct expr_t *rhsndp, int32 sfnind, int32 slcnt)
 {
  struct conta_t *cap;
  struct sy_t *syp;
@@ -3836,10 +3917,12 @@ static struct conta_t *add_conta(struct expr_t *lhsndp,
  cap->caschd_tevs = NULL; 
  cap->ca_drv_wp.wp = NULL;
  cap->schd_drv_wp.wp = NULL;
- cap->pbcau.pbcaps = NULL;
- cap->canxt = NULL;
+ /* SJM 12/19/04 - when chk contas done - contas now tab of size m ca num */
+ /* removed nxt field from conta type - can be in pbca's built in prp pass */
+ cap->pbcau.canxt = NULL;
  /* link on to list */
- if (__end_ca == NULL) __inst_mod->mcas = cap; else __end_ca->canxt = cap;
+ if (__end_ca == NULL) __inst_mod->mcas = cap;
+ else __end_ca->pbcau.canxt = cap;
  __end_ca = cap;
  __conta_num++;
  return(cap);
@@ -3848,9 +3931,9 @@ static struct conta_t *add_conta(struct expr_t *lhsndp,
 /*
  * read an event declaration
  */
-static int rd_eventdecl(void)
+static int32 rd_eventdecl(void)
 {
- int first_time, has_attr;
+ int32 first_time, has_attr;
  struct net_t *np;
 
  /* use local has attr flag so can turn glb seen of before return */
@@ -3898,7 +3981,7 @@ try_resync:
  * allocate a statement entry
  * for empty statement (;) never get here
  */
-extern struct st_t *__alloc_stmt(int styp)
+extern struct st_t *__alloc_stmt(int32 styp)
 {
  struct st_t *stp;
  struct for_t *frp;
@@ -3911,18 +3994,31 @@ extern struct st_t *__alloc_stmt(int styp)
  /* DBG remove --
  if (__debug_flg)
   {
-    extern char *__to_sttyp(char *, unsigned);
+    extern char *__to_sttyp(char *, word32);
 
--* ---
-    __dbg_msg("%04d: AT %s %s - STMT ALLOC (%s)\n",
-     __inst_mod->mstnum - 1, __bld_lineloc(__xs, stp->stfnam_ind,
-     stp->stlin_cnt), __inst_mod->msym->synam, __to_sttyp(__xs2, styp));
---- *-
--* --- *-
+    __dbg_msg("AT %s %s - STMT ALLOC (%s)\n",
+     __bld_lineloc(__xs, stp->stfnam_ind, stp->stlin_cnt),
+     __inst_mod->msym->synam, __to_sttyp(__xs2, styp));
+  }
+ --- */
+ /* DBG remove --
+ if (__debug_flg)
+  {
+   extern char *__to_sttyp(char *, unsigned);
+
+   __dbg_msg("%04d: AT %s %s - STMT ALLOC (%s)\n",
+    __inst_mod->mstnum - 1, __bld_lineloc(__xs, stp->stfnam_ind,
+    stp->stlin_cnt), __inst_mod->msym->synam, __to_sttyp(__xs2, styp));
+  }
+ --- */
+ /* ALTERNATE DBG remove --
+ if (__debug_flg)
+  {
+   extern char *__to_sttyp(char *, unsigned);
+
    __dbg_msg("AT %s %s - STMT ALLOC %04d (%s)\n",
     __bld_lineloc(__xs, stp->stfnam_ind, stp->stlin_cnt),
     __inst_mod->msym->synam, __inst_mod->mstnum - 1, __to_sttyp(__xs2, styp));
--* -- *-
   }
  --- */
 
@@ -4026,7 +4122,7 @@ extern struct st_t *__alloc_stmt(int styp)
 /*
  * initialize stmt
  */
-extern void __init_stmt(struct st_t *stp, int styp)
+extern void __init_stmt(struct st_t *stp, int32 styp)
 {
  stp->stlin_cnt = __lin_cnt;
  stp->stfnam_ind = __cur_fnam_ind;
@@ -4037,7 +4133,9 @@ extern void __init_stmt(struct st_t *stp, int styp)
  stp->strb_seen_now = FALSE;
  stp->lpend_goto = FALSE;
  stp->dctrl_goto = FALSE;
+ stp->lstend_goto = FALSE;
  stp->st_schd_ent = FALSE;
+ stp->lpend_goto_dest = FALSE;
  /* assume if non blocking need the sched tev table */
  stp->stnxt = NULL;
 }
@@ -4059,15 +4157,17 @@ extern struct delctrl_t *__alloc_dctrl(void)
  dctp->repcntx = NULL;
  dctp->dceschd_tevs = NULL;
  dctp->actionst = NULL;
+ /* this is allocated during prep - nil for now */
+ dctp->dce_repcnts = NULL;
  return(dctp);
 }
 
 /*
  * variant of alloc stmt that takes "real" location as args
  */
-extern struct st_t *__alloc2_stmt(int styp, int fnind, int lcnt)
+extern struct st_t *__alloc2_stmt(int32 styp, int32 fnind, int32 lcnt)
 {
- int sav_fnami, sav_flini;
+ int32 sav_fnami, sav_flini;
  struct st_t *stp;
 
  sav_fnami = __cur_fnam_ind;
@@ -4094,7 +4194,7 @@ extern struct st_t *__alloc2_stmt(int styp, int fnind, int lcnt)
  * if returns F synced to next mod/prim else synced to ;
  * list of assignments allowed here
  */
-static int rd_dfparam_stmt(void)
+static int32 rd_dfparam_stmt(void)
 {
  struct dfparam_t *dfpp;
  struct expr_t *lhsndp;
@@ -4221,7 +4321,7 @@ static struct dfparam_t *alloc_dfpval(void)
  * know task or function keyword read, reads the endtask
  * no F return on error, since either build d.s. or not
  */
-static int rd_task(void)
+static int32 rd_task(void)
 {
  struct st_t *stp;
 
@@ -4306,9 +4406,9 @@ more_stmts:
  * expects task name and return task symbol - __cur_tsk set to inited task
  * notice that this does not link task into task chain
  */
-extern int __bld_tsk(char *tnam, int tsktok)
+extern int32 __bld_tsk(char *tnam, int32 tsktok)
 {
- int tstyp;
+ int32 tstyp;
  struct symtab_t *upsyt;
  struct sy_t *syp;
  char s1[RECLEN], s2[RECLEN];
@@ -4370,9 +4470,9 @@ extern int __bld_tsk(char *tnam, int tsktok)
 /*
  * convert one of the task token types to corresponding symbol type
  */
-static int unsigned to_tasksytyp(int ttyp)
+static word32 to_tasksytyp(int32 ttyp)
 {
- int styp;
+ int32 styp;
 
  styp = SYM_UNKN;
  switch ((byte) ttyp) {
@@ -4439,15 +4539,16 @@ static void init_task(struct task_t *tskp)
  * and sets sync class to right place to continue in t/f
  * may also sync to ; on error with T return
  */
-static int rd_tf_list_of_ports_decl(struct task_t *tskp, char *tftypnam)
+static int32 rd_tf_list_of_ports_decl(struct task_t *tskp, char *tftypnam)
 {
- int first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
+ int32 first_time, wtyp, ptyp, attr_ttyp, has_attr, decl_signed;
  struct sy_t *syp;
  struct net_t *np;
  struct expr_t *x1, *x2, *ox1, *ox2;
  struct task_pin_t *tpp;
  char s1[RECLEN];
 
+ ptyp = -1;
  /* even if syntax error, T once a port type keyword appears in hdr */
  tskp->tf_lofp_decl = TRUE;
  __lofp_port_decls = TRUE;
@@ -4569,7 +4670,7 @@ static int rd_tf_list_of_ports_decl(struct task_t *tskp, char *tftypnam)
      if ((np = decl_taskvar(wtyp, x1, x2)) == NULL) goto nxt_port;
 
      /* if previously used will be treated as reg - must set to compatible */
-     /* wire type if declared as time or int */
+     /* wire type if declared as time or int32 */
      syp = np->nsym;
 
      /* if saw an (* *) attribute for module item token, seen on */
@@ -4625,9 +4726,9 @@ nxt_var:
  * with one statement at end
  * expects first token to have been read and reads start of 1st statement
  */
-extern int __rd_tfdecls(char *tftypnam)
+extern int32 __rd_tfdecls(char *tftypnam)
 {
- unsigned wtyp, pntyp;
+ word32 wtyp, pntyp;
 
  for (;;)
   {
@@ -4670,7 +4771,7 @@ do_tfwdecl:
      break;
     case TIME: wtyp = N_TIME; goto do_tfwdecl;
     case INTEGER: wtyp = N_INT; goto do_tfwdecl;
-    case REAL: wtyp = N_REAL; goto do_tfwdecl;
+    case REAL: case REALTIME: wtyp = N_REAL; goto do_tfwdecl;
     case EVENT:
      if (!rd_eventdecl()) goto tfdecl_sync;
      break;
@@ -4688,10 +4789,10 @@ decl_end:
  * read and process a task reg/time/int/real declaration
  * know reg type read and reads final semi
  */
-static int rd_taskvardecl(unsigned regwtyp, int is_io, char *tftypnam)
+static int32 rd_taskvardecl(word32 regwtyp, int32 is_io, char *tftypnam)
 {
- int decl_signed, first_time, ttyp, has_attr;
- unsigned wtyp;
+ int32 decl_signed, first_time, ttyp, has_attr;
+ word32 wtyp;
  struct sy_t *syp;
  struct net_t *np;
  struct task_pin_t *tpp;
@@ -4867,7 +4968,7 @@ nxt_var:
  * caller must set reg type after checking for duplicates
  * returns null on error
  */
-static struct net_t *decl_taskvar(unsigned wtyp, struct expr_t *x1,
+static struct net_t *decl_taskvar(word32 wtyp, struct expr_t *x1,
  struct expr_t *x2)
 {
  struct net_t *np;
@@ -4955,10 +5056,10 @@ static struct task_pin_t *alloc_tskpin(void)
  * keyword function reads and reads decl. and final endfunction
  * no F return on error since either build d.s. or not
  */
-static int rd_func(void)
+static int32 rd_func(void)
 {
- int frwtyp, decl_signed;
- word rhigh;
+ int32 frwtyp, decl_signed;
+ word32 rhigh;
  struct st_t *stp;
  struct expr_t *x1, *x2, *dx1, *dx2;
 
@@ -5005,7 +5106,7 @@ chk_norng:
      {
       __pv_ferr(1149,
        "function returning %s range illegal", __to_wtnam2(__xs,
-       (unsigned) frwtyp));
+       (word32) frwtyp));
      }
     x1 = __bld_rng_numxpr(rhigh, 0L, WBITS);
     x2 = __bld_rng_numxpr(0L, 0L, WBITS);
@@ -5038,7 +5139,7 @@ no_sym:
     __to_wtnam2(__xs, frwtyp));
   }
  if (frwtyp == N_INT || frwtyp == N_REAL) decl_signed = TRUE;
- add_funcretdecl(__token, (unsigned) frwtyp, x1, x2, decl_signed);
+ add_funcretdecl(__token, (word32) frwtyp, x1, x2, decl_signed);
 
  __get_vtok();
  if (__toktyp == LPAR)
@@ -5112,8 +5213,8 @@ more_stmts:
 /*
  * add implicit first output port return value decl. to task d.s.
  */
-static void add_funcretdecl(char *rvnam, unsigned frwtyp,
- struct expr_t *x1, struct expr_t *x2, int decl_signed)
+static void add_funcretdecl(char *rvnam, word32 frwtyp,
+ struct expr_t *x1, struct expr_t *x2, int32 decl_signed)
 {
  struct sy_t *syp;
  struct net_t *np;
@@ -5167,9 +5268,9 @@ static void add_funcretdecl(char *rvnam, unsigned frwtyp,
  * at this point do not know if instance, gate or udp
  * return F if synced to next mod/prim else T if synced to ; even if err
  */
-static int rd_inst(char *typnam)
+static int32 rd_inst(char *typnam)
 {
- int first_time, has_iname, strenval, has_attr;
+ int32 first_time, has_iname, strenval, has_attr;
  struct cell_t *cp;
  struct sy_t *syp;
  struct tnode_t *tnp;
@@ -5299,7 +5400,7 @@ no_inam:
        __add_syp_to_undefs(syp);
       }
      else syp = tnp->ndp;
-     /* AIV 06/01/05 - mark all as not in config - config processing */ 
+     /* AIV 06/01/04 - mark all as not in config - config processing */ 
      /* will mark as true later */ 
      syp->cfg_needed = FALSE;
      /* instance must be named, error caught only after lib. processed */
@@ -5371,10 +5472,10 @@ static void add_cell_attr(struct cell_t *cp)
  * where two strengths given, drops unused one here
  * know ehen called first token is some kind of strength
  */
-static int rd_pull_stren(char *pullnam, int *strenval)
+static int32 rd_pull_stren(char *pullnam, int32 *strenval)
 {
- int st1typ, st1val, st2val, st2typ, err_seen; 
- int strentyp, strenval1, strenval2;
+ int32 st1typ, st1val, st2val, st2typ, err_seen; 
+ int32 strentyp, strenval1, strenval2;
 
  err_seen = FALSE;
  st1typ = st2typ = strentyp = NO_STREN;
@@ -5492,7 +5593,7 @@ static int rd_pull_stren(char *pullnam, int *strenval)
  */
 static struct namparam_t *rd_npndparams(void)
 {
- int prm_err;
+ int32 prm_err;
  struct namparam_t *npmphdr, *npmp, *last_npmp;
 
  __get_vtok();
@@ -5569,7 +5670,7 @@ bad_skipend:
  */
 static struct namparam_t *rd1_namedparam(void)
 {
- int namedparam_form, slcnt, sfnind;
+ int32 namedparam_form, slcnt, sfnind;
  struct namparam_t *npmp;
  char nam[IDLEN];
 
@@ -5667,7 +5768,7 @@ named_ok:
 extern void __free_namedparams(struct namparam_t *npmphdr)
 {
  register struct namparam_t *npmp, *npmp2;
- int slen;
+ int32 slen;
 
  for (npmp = npmphdr; npmp != NULL;)
   {
@@ -5705,7 +5806,6 @@ extern void __add_syp_to_undefs(struct sy_t *syp)
   {
    __undeftail = __undefhd = undefp;
    undefp->undefprev = NULL;
-   if (__undef_mods != 0) __misc_terr(__FILE__, __LINE__);
   }
  else 
   {
@@ -5790,7 +5890,7 @@ extern struct paramlst_t *__copy_dellst(struct paramlst_t *oplp)
  * read instance ports - probably no module def. at this point
  * know 1st token of port expr. read and reads final )
  */
-static int rd_iports(char *inam)
+static int32 rd_iports(char *inam)
 {
  for (__cphdr = NULL;;)
   {
@@ -5822,9 +5922,9 @@ bad_trynxt:
  * on error returns F, caller tries to resync on , and read next port
  * but on .[id](<some error> ..., this trys to resync to port ending ) 
  */
-static int rd_cpin_conn(void)
+static int32 rd_cpin_conn(void)
 {
- int namedport_form;
+ int32 namedport_form;
  struct cell_pin_t *cpp;
 
  if (__toktyp == DOT)
@@ -5902,7 +6002,7 @@ static int rd_cpin_conn(void)
 /*
  * allocate a cell pin - fill mostly from global data
  */
-extern struct cell_pin_t *__alloc_cpin(int has_name)
+extern struct cell_pin_t *__alloc_cpin(int32 has_name)
 {
  struct cell_pin_t *cpp;
 
@@ -5923,7 +6023,7 @@ extern struct cell_pin_t *__alloc_cpin(int has_name)
 static char *alloc_cpnam(char *s)
 {
  char *cp;
- int slen, rem, real_size;
+ int32 slen, rem, real_size;
  struct cpnblk_t *cpnbp;
 
  slen = strlen(s) + 1;

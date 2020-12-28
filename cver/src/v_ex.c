@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -51,62 +51,62 @@ static void exec_stmts(register struct st_t *);
 static void thrd_done_cleanup(register struct thread_t *);
 static void brktr_exec_stmts(register struct st_t *);
 static void step_exec_stmt(register struct st_t *);
-static int stepped_to_new_loc(struct st_t *);
-static void eval_tskassign_rhsexpr(register struct xstk_t *, register int,
- register int, register int, register int);
+static int32 stepped_to_new_loc(struct st_t *);
+static void eval_tskassign_rhsexpr(register struct xstk_t *, register int32,
+ register int32, register int32, register int32);
 static void tr_proc_assign(struct st_t *, struct xstk_t *);
 static void tr_nbproc_assign(struct st_t *, struct xstk_t *);
 static struct st_t *exec_rep_ectl_setup(struct st_t *stp);
-static int exec_dctrl(struct st_t *);
-static void sched_proc_delay(struct delctrl_t *, word *, int);
+static int32 exec_dctrl(struct st_t *);
+static void sched_proc_delay(struct delctrl_t *, word32 *, int32);
 static void sched_nbproc_delay(struct delctrl_t *, struct xstk_t *,
  struct st_t *);
-static void arm_event_dctrl(struct delctrl_t *, register word *, int);
+static void arm_event_dctrl(struct delctrl_t *, register word32 *, int32);
 static void arm_nbevent_dctrl(struct delctrl_t *, struct xstk_t *,
  struct st_t *);
 static struct st_t *exec_case(struct st_t *);
 static struct st_t *exec_real_case(struct st_t *);
-static void tr_case_st(struct xstk_t *, int);
+static void tr_case_st(struct xstk_t *, int32);
 static struct st_t *exec_casex(struct st_t *);
 static struct st_t *exec_casez(struct st_t *);
-static int exec_wait(register struct st_t *);
-static int for_not_done(struct for_t *);
+static int32 exec_wait(register struct st_t *);
+static int32 for_not_done(struct for_t *);
 static void exec_namblk(struct st_t *);
 static struct thread_t *sched_fj_subthread(struct st_t *stp);
 static void init_thrd(register struct thread_t *);
-static void tradd_tf_argval(int, struct net_t *, struct xstk_t *);
+static void tradd_tf_argval(int32, struct net_t *, struct xstk_t *);
 static void store_tskcall_outs(struct st_t *);
 static void grow_fcstk(void);
 static void exec_count_drivers(struct expr_t *);
 static void exec_testplusargs(struct expr_t *);
 static void exec_scanplusargs(struct expr_t *);
-static void exec_1arg_transcendental(int, struct expr_t *);
+static void exec_1arg_transcendental(int32, struct expr_t *);
 static void exec_transcendental_int(struct expr_t *);
 static void exec_transcendental_sign(struct expr_t *);
-static void exec_transcendental_powsign(int, struct expr_t *);
-static void exec_transcendental_minmax(int, struct expr_t *);
+static void exec_transcendental_powsign(int32, struct expr_t *);
+static void exec_transcendental_minmax(int32, struct expr_t *);
 static void exec_transcendental_atan2(struct expr_t *);
 static void exec_transcendental_hypot(struct expr_t *);
 static void exec_cause(struct st_t *);
 static struct thread_t *find_hgh_sametskthrd(struct thread_t *);
-static int thread_above_cur(struct thread_t *);
+static int32 thread_above_cur(struct thread_t *);
 static void free_thd_stuff(struct thread_t *);
 static void unlink_tskthd(struct thread_t *);
-static int chk_strobe_infloop(struct st_t *, struct sy_t *);
+static int32 chk_strobe_infloop(struct st_t *, struct sy_t *);
 static void mcd_do_fclose(struct expr_t *);
-static unsigned bld_open_mcd(void);
-static int unsigned mc_do_fopen(struct expr_t *);
+static word32 bld_open_mcd(void);
+static word32 mc_do_fopen(struct expr_t *);
 static void do_showvars_stask(struct expr_t *);
-static void do_warn_supp_chg(char *, struct expr_t *, int);
+static void do_warn_supp_chg(char *, struct expr_t *, int32);
 static void do_reset(struct expr_t *);
 static void do_showscopes(struct expr_t *);
 static void prt_1m_scopelist(struct itree_t *);
-static void prt_1tsk_scopelist(struct task_t *, int);
+static void prt_1tsk_scopelist(struct task_t *, int32);
 static void prt_1m_nestscopes(struct itree_t *);
 static void prt_1tsk_nestscopes(struct symtab_t *);
 static void exec_qfull(struct expr_t *);
 static void do_q_init(struct expr_t *);
-static struct q_hdr_t *find_q_from_id(int);
+static struct q_hdr_t *find_q_from_id(int32);
 static void init_q(struct q_hdr_t *);
 static void do_q_add(struct expr_t *);
 static void do_q_remove(struct expr_t *);
@@ -116,155 +116,157 @@ static void cmp_max_wait(word64 *, struct q_hdr_t *);
 static void cmp_mean_wait_tim(word64 *, struct q_hdr_t *);
 static void exec_prttimscale(struct expr_t *);
 static void exec_timefmt(struct expr_t *);
-static int get_opt_starg(struct expr_t *, int);
+static int32 get_opt_starg(struct expr_t *, int32);
 static void exec_log_fnamchg(struct expr_t *);
 static void exec_trace_fnamchg(struct expr_t *);
 static void exec_expr_schg(struct expr_t *);
 static void free_thd_subtree(struct thread_t *);
 static void suspend_curthd(struct st_t *);
 
-static unsigned fio_do_fopen(struct expr_t *, struct expr_t *);
-static unsigned fio_fopen(char *, char *);
-static int chk_cnvt_fd_modes(char *, char *);
+static word32 fio_do_fopen(struct expr_t *, struct expr_t *);
+static word32 fio_fopen(char *, char *);
+static int32 chk_cnvt_fd_modes(char *, char *);
 static void fio_do_fclose(struct expr_t *);
-static int chk_get_mcd_or_fd(struct expr_t *, int *);
+static int32 chk_get_mcd_or_fd(struct expr_t *, int32 *);
 static void fio_fflush(struct expr_t *);
-static int fio_ungetc(struct expr_t *, struct expr_t *);
-static int chk_get_ver_fd(struct expr_t *);
-static int fio_fgets(struct expr_t *, struct expr_t *);
-static int fio_rewind(struct expr_t *);
-static int fio_fseek(struct expr_t *, struct expr_t *, struct expr_t *);
-static int fio_ferror(struct expr_t *, struct expr_t *);
-static void fio_swrite(struct expr_t *, int);
+static int32 fio_ungetc(struct expr_t *, struct expr_t *);
+static int32 chk_get_ver_fd(struct expr_t *);
+static int32 fio_fgets(struct expr_t *, struct expr_t *);
+static int32 fio_rewind(struct expr_t *);
+static int32 fio_fseek(struct expr_t *, struct expr_t *, struct expr_t *);
+static int32 fio_ferror(struct expr_t *, struct expr_t *);
+static void fio_swrite(struct expr_t *, int32);
 static void fio_sformat(struct expr_t *);
-static int fio_fscanf(struct expr_t *);
-static int fio_sscanf(struct expr_t *);
-static int fio_exec_scanf(FILE *, struct expr_t *);
-static int fio_fread(struct expr_t *);
-static void fread_onto_stk(struct xstk_t *, byte *, int);
-static int fio_arr_fread(struct expr_t *, int, struct expr_t *,
+static int32 fio_fscanf(struct expr_t *);
+static int32 fio_sscanf(struct expr_t *);
+static int32 fio_exec_scanf(FILE *, struct expr_t *);
+static int32 fio_fread(struct expr_t *);
+static void fread_onto_stk(struct xstk_t *, byte *, int32);
+static int32 fio_arr_fread(struct expr_t *, int32, struct expr_t *,
  struct expr_t *);
-static int scanf_getc(FILE *);
-static void scanf_ungetc(int, FILE *);
-static int chk_scanf_fmt(char *);
-static int collect_scanf_num(int *, FILE *, int, int, int);
-static int collect_scanf_realnum(double *, FILE *, int, int, int);
-static struct xstk_t *collect_ufmt_binval(FILE *, struct expr_t *, int);
-static struct xstk_t *collect_zfmt_binval(FILE *, struct expr_t *, int );
-static int cnvt_scanf_stnam_to_val(char *); 
-extern void __str_do_disp(struct expr_t *, int);
-extern word __inplace_lnegate(register word *, int);
+static int32 scanf_getc(FILE *);
+static void scanf_ungetc(int32, FILE *);
+static int32 chk_scanf_fmt(char *);
+static int32 collect_scanf_num(int32 *, FILE *, int32, int32, int32);
+static int32 collect_scanf_realnum(double *, FILE *, int32, int32, int32);
+static struct xstk_t *collect_ufmt_binval(FILE *, struct expr_t *, int32);
+static struct xstk_t *collect_zfmt_binval(FILE *, struct expr_t *, int32 );
+static int32 cnvt_scanf_stnam_to_val(char *); 
+extern void __str_do_disp(struct expr_t *, int32);
+extern word32 __inplace_lnegate(register word32 *, int32);
 
 /* extern prototypes (maybe defined in this module) */
-extern int __comp_sigint_handler(void);
-extern char *__my_malloc(int);
+extern int32 __comp_sigint_handler(void);
+extern char *__my_malloc(int32);
 extern char *__pv_stralloc(char *);
-extern char *__my_realloc(char *, int, int);
+extern char *__my_realloc(char *, int32, int32);
 extern struct xstk_t *__eval_assign_rhsexpr(register struct expr_t *,
  register struct expr_t *);
 extern struct thread_t *__setup_tsk_thread(struct task_t *);
 extern void __sched_fork(struct st_t *);
 extern i_tev_ndx __bld_nb_tev(struct st_t *, struct xstk_t *, word64);
-extern int __lhsexpr_var_ndx(register struct expr_t *);
+extern int32 __lhsexpr_var_ndx(register struct expr_t *);
 extern void __eval_lhsexpr_var_ndxes(register struct expr_t *);
 extern struct st_t *__brktr_exec_1stmt(struct st_t *);
 extern struct thread_t *__alloc_thrd(void);
 extern struct st_t *__exec_tskcall(struct st_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
+extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct expr_t *__sim_copy_expr(struct expr_t *);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
 extern void __free_xtree(struct expr_t *);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__xregab_tostr(char *, word *, word *, int, struct expr_t *);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern char *__xregab_tostr(char *, word32 *, word32 *, int32, struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__to_idnam(struct expr_t *);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern char *__to_timunitnam(char *, unsigned);
+extern char *__bld_lineloc(char *, word32, int32);
+extern char *__to_timunitnam(char *, word32);
 extern char *__to_timstr(char *, word64 *);
-extern char *__to_tetyp(char *, unsigned); 
-extern char *__to_tsktyp(char *, unsigned);
+extern char *__to_tetyp(char *, word32); 
+extern char *__to_tsktyp(char *, word32);
 extern double __unscale_realticks(word64 *, struct mod_t *);
 extern FILE *__tilde_fopen(char *, char *);
 extern struct xstk_t *__ld_wire_driver(register struct net_pin_t *);
 extern struct xstk_t *__ld_stwire_driver(register struct net_pin_t *);
-extern int __has_vpi_driver(struct net_t *, struct net_pin_t *);
+extern int32 __has_vpi_driver(struct net_t *, struct net_pin_t *);
 extern char *__schop(char *, char *);
-extern char *__to_dcenam(char *, unsigned);
+extern char *__to_dcenam(char *, word32);
 extern struct xstk_t *__cstr_to_vval(char *);
 extern struct task_t *__getcur_scope_tsk(void);
-extern unsigned __mc1_fopen(char *, int, int);
-extern unsigned __close_mcd(unsigned, int);
+extern word32 __mc1_fopen(char *, int32, int32);
+extern word32 __close_mcd(word32, int32);
 extern void __wrap_puts(char *, FILE *);
-extern void __wrap_putc(int, FILE *);
+extern void __wrap_putc(int32, FILE *);
 extern void __evtr_resume_msg(void);
-extern void __do_iact_disable(struct hctrl_t *, int);
+extern void __do_iact_disable(struct hctrl_t *, int32);
 extern void __dmp_thrd_info(struct thread_t *);
 extern void __dmp_tskthd(struct task_t *, struct mod_t *);
-extern void __my_free(char *, int);
-extern void __exec2_proc_assign(struct expr_t *, register word *,
- register word *);
-extern int __cvt_lngbool(word *, word *, int);
-extern int __wide_vval_is0(register word *, int);
-extern void __exec_qc_assign(struct st_t *, int);
+extern void __my_free(char *, int32);
+extern void __exec2_proc_assign(struct expr_t *, register word32 *,
+ register word32 *);
+extern int32 __cvt_lngbool(word32 *, word32 *, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern void __exec_qc_assign(struct st_t *, int32);
 extern void __exec_qc_wireforce(struct st_t *);
-extern void __exec_qc_deassign(struct st_t *, int);
+extern void __exec_qc_deassign(struct st_t *, int32);
 extern void __exec_qc_wirerelease(struct st_t *);
-extern int __process_brkpt(struct st_t *);
-extern void __prt_src_lines(int, int, int);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
+extern int32 __process_brkpt(struct st_t *);
+extern void __prt_src_lines(int32, int32, int32);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __sizchgxs(struct xstk_t *, int);  
+extern void __sizchgxs(struct xstk_t *, int32);  
 extern void __narrow_to1wrd(register struct xstk_t *);
-extern void __narrow_sizchg(register struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __sgn_xtnd_wrd(register struct xstk_t *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern void __dmp_proc_assgn(FILE *, struct st_t *, struct delctrl_t *, int);
-extern void __trunc_exprline(int, int);
+extern void __narrow_sizchg(register struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __sgn_xtnd_wrd(register struct xstk_t *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __dmp_proc_assgn(FILE *, struct st_t *, struct delctrl_t *, int32);
+extern void __trunc_exprline(int32, int32);
 extern void __dmp_nbproc_assgn(FILE *, struct st_t *, struct delctrl_t *);
 extern void __dmp_dctrl(FILE *, struct delctrl_t *);
-extern void __chg_xprline_size(int);
-extern void __dmp_dcxpr(FILE *, union del_u, unsigned);
-extern void __get_del(register word64 *, register union del_u, unsigned);
+extern void __chg_xprline_size(int32);
+extern void __dmp_dcxpr(FILE *, union del_u, word32);
+extern void __get_del(register word64 *, register union del_u, word32);
 extern void __insert_event(register i_tev_ndx);
 extern void __dmp_forhdr(FILE *, struct for_t *);
 extern void __add_ev_to_front(register i_tev_ndx);
 extern void __dmp_tskcall(FILE *, struct st_t *);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
 extern void __adds(char *);
-extern void __chg_st_val(struct net_t *, register word *, register word *);
+extern void __chg_st_val(struct net_t *, register word32 *, register word32 *);
+extern void __st_val(struct net_t *, register word32 *, register word32 *);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __grow_tevtab(void);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
 extern void __do_interactive_loop(void);
 extern void __cnv_ticks_tonum64(word64 *, word64, struct mod_t *);
 extern void __exec_sfrand(struct expr_t *);
 extern void __exec_scale(struct expr_t *);
 extern void __pli_func_calltf(struct expr_t *);
 extern void __vpi_sysf_calltf(struct expr_t *);
-extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int *,
- int *);
-extern char *__get_eval_cstr(struct expr_t *, int *);
+extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int32 *,
+ int32 *);
+extern char *__get_eval_cstr(struct expr_t *, int32 *);
 extern void __free_1thd(struct thread_t *);
 extern struct st_t *__exec_stsk(struct st_t *, struct sy_t *,
  struct tskcall_t *);
 extern void __free_thd_list(struct thread_t *);
-extern int __exec_disable(struct expr_t *);
-extern void __do_disp(register struct expr_t *, int);
-extern void __fio_do_disp(register struct expr_t *, int, int, char *); 
+extern int32 __exec_disable(struct expr_t *);
+extern void __do_disp(register struct expr_t *, int32);
+extern void __fio_do_disp(register struct expr_t *, int32, int32, char *); 
 extern void __start_fmonitor(struct st_t *);
-extern void __dmpmod_nplst(struct mod_t *, int);
+extern void __dmpmod_nplst(struct mod_t *, int32);
 extern void __start_monitor(struct st_t *);
-extern void __exec_readmem(struct expr_t *, int);
-extern void __exec_sreadmem(struct expr_t *, int);
+extern void __exec_readmem(struct expr_t *, int32);
+extern void __exec_sreadmem(struct expr_t *, int32);
 extern void __exec_dumpvars(struct expr_t *);
-extern int __get_eval_word(struct expr_t *, word *);
+extern int32 __get_eval_word(struct expr_t *, word32 *);
 extern void __exec_input_fnamchg(struct expr_t *);
-extern void __exec_history_list(int);
+extern void __exec_history_list(int32);
 extern void __do_scope_list(void);
 extern void __exec_sdf_annotate_systsk(struct expr_t *);
 extern void __call_misctfs_finish(void);
@@ -272,8 +274,8 @@ extern void __vpi_endsim_trycall(void);
 extern void __emit_stsk_endmsg(void);
 extern void __maybe_open_trfile(void);
 extern void __escape_to_shell(char *);
-extern void __write_snapshot(int);
-extern void __prt2_mod_typetab(int);
+extern void __write_snapshot(int32);
+extern void __prt2_mod_typetab(int32);
 extern void __pli_task_calltf(struct st_t *);
 extern void __vpi_syst_calltf(struct st_t *);
 extern void __my_fclose(FILE *);
@@ -295,51 +297,51 @@ extern void __exec_dist_t(struct expr_t *);
 extern void __my_dv_flush(void);
 extern void __add_nchglst_el(register struct net_t *);
 extern void __add_dmpv_chglst_el(struct net_t *);
-extern void __wakeup_delay_ctrls(register struct net_t *, register int,
- register int);
+extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
+ register int32);
 extern void __dmp_all_thrds(void);
-extern double __cnvt_stk_to_real(struct xstk_t *, int);
-extern int __enum_is_suppressable(int);
-extern int __trim1_0val(word *, int);
-extern char *__vval_to_vstr(word *, int, int *);
-extern void __vstr_to_vval(word *, char *, int);
-extern int __is_vdigit(int, int);
-extern void __to_dhboval(int, int);
-extern double __my_strtod(char *, char **, int *);
+extern double __cnvt_stk_to_real(struct xstk_t *, int32);
+extern int32 __enum_is_suppressable(int32);
+extern int32 __trim1_0val(word32 *, int32);
+extern char *__vval_to_vstr(word32 *, int32, int32 *);
+extern void __vstr_to_vval(word32 *, char *, int32);
+extern int32 __is_vdigit(int32, int32);
+extern void __to_dhboval(int32, int32);
+extern double __my_strtod(char *, char **, int32 *);
 
 extern struct expr_t *__disp_1fmt_to_exprline(char *, struct expr_t *);
-extern void __getarr_range(struct net_t *, int *, int *, int *);
-extern void __st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
-extern void __chg_st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
-extern int __fd_do_fclose(int);
-extern void __add_select_nchglst_el(register struct net_t *, register int,
- register int);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
+extern void __st_arr_val(union pck_u, int32, int32, int32, register word32 *,
+ register word32 *);
+extern void __chg_st_arr_val(union pck_u, int32, int32, int32,
+ register word32 *, register word32 *);
+extern int32 __fd_do_fclose(int32);
+extern void __add_select_nchglst_el(register struct net_t *, register int32,
+ register int32);
 
 extern void __tr_msg(char *, ...);
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __sgferr(int, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_sgfterr(char *, int);
-extern void __my_exit(int, int);
+extern void __sgfinform(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_sgfterr(char *, int32);
+extern void __my_exit(int32, int32);
 extern void __my_fprintf(FILE *, char *, ...);
 
 /* reset mechanism long jump buffer */
 extern jmp_buf __reset_jmpbuf;
 
 /* system stuff */
-extern int errno;
+extern int32 errno;
 
 /* some general evaluation tables */
-word __masktab[] = {
- /* since 0 is the same as all used, mask must be entire word */
+word32 __masktab[] = {
+ /* since 0 is the same as all used, mask must be entire word32 */
  0xffffffffL, 0x00000001L, 0x00000003L, 0x00000007L,
  0x0000000fL, 0x0000001fL, 0x0000003fL, 0x0000007fL,
  0x000000ffL, 0x000001ffL, 0x000003ffL, 0x000007ffL,
@@ -414,10 +416,7 @@ extern void __process_thrd_ev(register struct tev_t *tevp)
        step_exec_stmt(stp);
       }
      /* but batch tracing traces */
-     else if (__st_tracing)
-      {
-        brktr_exec_stmts(stp);
-      }
+     else if (__st_tracing) brktr_exec_stmts(stp);
      else exec_stmts(stp);
 
      /* on suspend event itree location is right for exec */
@@ -502,6 +501,7 @@ extern void __process_thrd_ev(register struct tev_t *tevp)
  __cur_thd = NULL;
 }
 
+
 /*
  * routine to clean up linked thread control structure after thread done
  *
@@ -554,7 +554,7 @@ static void tr_resume_msg(void)
   {
    __tr_msg("==> tracing in %s (%s) line %s\n",
     __msg2_blditree(s1, __inst_ptr), __inst_ptr->itip->imsym->synam,
-    __bld_lineloc(s2, (unsigned) __sfnam_ind, __slin_cnt));
+    __bld_lineloc(s2, (word32) __sfnam_ind, __slin_cnt));
    __last_tritp = __inst_ptr;
   }
  if (__last_trtime != __simtime)
@@ -572,9 +572,9 @@ static void tr_resume_msg(void)
  */
 static void exec_stmts(register struct st_t *stp)
 {
- register word val;
+ register word32 val;
  register struct xstk_t *xsp;
- int tmp, wlen;
+ int32 tmp, wlen;
  struct st_t *stp2;
  struct for_t *forp;
  struct expr_t *cntx;
@@ -652,8 +652,9 @@ static void exec_stmts(register struct st_t *stp)
      __num_addedexec++; 
      cntx = stp->stnxt->st.srpt.repx;
      xsp = __eval_xpr(cntx);
-     /* SJM 04/02/02 - real count must be converted to word/int */
+     /* SJM 04/02/02 - real count must be converted to word/int32 */
      if (cntx->is_real) __cnv_stk_fromreal_toreg32(xsp);
+     /* SJM 12/05/04 - ### ??? FIXME - what if wide and low word good? */
      if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
      if (xsp->ap[1] != 0L)
       {
@@ -665,11 +666,11 @@ static void exec_stmts(register struct st_t *stp)
      else
       {
        /* SJM 04/02/02 - if repeat count signed and negative, never exec */ 
-       if (cntx->has_sign && ((int) xsp->ap[0]) <= 0) val = 0;
+       if (cntx->has_sign && ((int32) xsp->ap[0]) <= 0) val = 0;
        else val = xsp->ap[0];
       }
      __pop_xstk();
-     /* notice count must be converted to unsigned with neg set to 0 */
+     /* notice count must be converted to word32 with neg set to 0 */
      /* set to 0 so after inced here and initial repeat exec dec, */
      stp->stnxt->st.srpt.reptemp[__inum] = ++val;
      break;
@@ -895,9 +896,9 @@ static void step_exec_stmt(register struct st_t *stp)
      /* --- */
      __last_stepitp = __cur_thd->th_itp;
      __last_steptskp = __cur_thd->assoc_tsk;
-     __last_stepifi = (int) stp->stfnam_ind;
+     __last_stepifi = (int32) stp->stfnam_ind;
      __step_lini = stp->stlin_cnt;
-     __step_ifi = (int) stp->stfnam_ind;
+     __step_ifi = (int32) stp->stfnam_ind;
      /* must suspend */
      __stmt_suspend = TRUE;
      suspend_curthd(stp);
@@ -915,7 +916,7 @@ static void step_exec_stmt(register struct st_t *stp)
    if (__step_match_itp != NULL && __inst_ptr != __step_match_itp)
     continue;
    /* in same instance, make sure move to next line - keep exec ing */
-   if (stp->stlin_cnt == __step_lini && (int) stp->stfnam_ind == __step_ifi)
+   if (stp->stlin_cnt == __step_lini && (int32) stp->stfnam_ind == __step_ifi)
     continue;
    /* hit step point, need to enter iact */
    break;
@@ -923,13 +924,13 @@ static void step_exec_stmt(register struct st_t *stp)
  /* hit step stop know step non nil, suspend and return */
  /* set current step line in case in loop - most move to next line */
  __step_lini = stp->stlin_cnt;
- __step_ifi = (int) stp->stfnam_ind;
+ __step_ifi = (int32) stp->stfnam_ind;
  /* stepped to something to stop at */
  if (stepped_to_new_loc(stp))
   {
    __last_stepitp = __inst_ptr;
    __last_steptskp = __cur_thd->assoc_tsk;
-   __last_stepifi = (int) stp->stfnam_ind; 
+   __last_stepifi = (int32) stp->stfnam_ind; 
 
     /* FIXME - is this __tr_s tracing ??? */
    __cvsim_msg("%s (%s line %d)", __msg_blditree(__xs, __last_stepitp,
@@ -943,7 +944,7 @@ static void step_exec_stmt(register struct st_t *stp)
   }
  /* notice only change list location if print */
  if (__verbose_step)
-  __prt_src_lines((int) stp->stfnam_ind, stp->stlin_cnt, stp->stlin_cnt);
+  __prt_src_lines((int32) stp->stfnam_ind, stp->stlin_cnt, stp->stlin_cnt);
  __single_step = FALSE;
  /* if more stepping, continue using istep itp matching if needed */
  if (__step_rep_cnt <= 1) __step_match_itp = NULL; 
@@ -959,11 +960,11 @@ static void step_exec_stmt(register struct st_t *stp)
 /*
  * return T if stepped to new scope or new file
  */
-static int stepped_to_new_loc(struct st_t *stp)
+static int32 stepped_to_new_loc(struct st_t *stp)
 {
  if (__last_stepitp != __inst_ptr
   || __last_steptskp != __cur_thd->assoc_tsk
-  || __last_stepifi != (int) stp->stfnam_ind
+  || __last_stepifi != (int32) stp->stfnam_ind
   || __last_brktime != __simtime) return(TRUE); 
  return(FALSE);
 }
@@ -974,8 +975,8 @@ static int stepped_to_new_loc(struct st_t *stp)
  */
 extern struct st_t *__brktr_exec_1stmt(struct st_t *stp)
 {
- register word val;
- int tmp, wlen;
+ register word32 val;
+ int32 tmp, wlen;
  struct st_t *stp2;
  struct xstk_t *xsp;
  struct for_t *forp;
@@ -1067,7 +1068,7 @@ again:
    __num_addedexec++; 
    cntx = stp->stnxt->st.srpt.repx;
    xsp = __eval_xpr(cntx);
-   /* SJM 04/02/02 - real count must be converted to word/int */
+   /* SJM 04/02/02 - real count must be converted to word/int32 */
    if (cntx->is_real) __cnv_stk_fromreal_toreg32(xsp);
    if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
 
@@ -1083,11 +1084,11 @@ again:
    else
     {
      /* SJM 04/02/02 - if repeat count signed and negative, never exec */ 
-     if (cntx->has_sign && ((int) xsp->ap[0]) <= 0) val = 0;
+     if (cntx->has_sign && ((int32) xsp->ap[0]) <= 0) val = 0;
      else val = xsp->ap[0];
     }
    __pop_xstk();
-   /* notice count must be converted to unsigned with neg set to 0 */
+   /* notice count must be converted to word32 with neg set to 0 */
    stp->stnxt->st.srpt.reptemp[__inum] = ++val;
    break;
   case S_REPEAT:
@@ -1348,8 +1349,8 @@ extern struct xstk_t *__eval_assign_rhsexpr(register struct expr_t *xrhs,
  * evaulate task assign - only different if form of various flags 
  */
 static void eval_tskassign_rhsexpr(register struct xstk_t *xsp,
- register int lhsreal, register int lhswid, register int rhsreal,
- register int rhssign)
+ register int32 lhsreal, register int32 lhswid, register int32 rhsreal,
+ register int32 rhssign)
 {
  if (lhsreal)
   { 
@@ -1434,7 +1435,7 @@ static struct st_t *exec_rep_ectl_setup(struct st_t *stp)
  register struct xstk_t *xsp;
  register struct st_t *nxtstp, *astp;
  struct delctrl_t *rdctp;
- word val;
+ word32 val;
 
  __num_addedexec++; 
  nxtstp = stp->stnxt;
@@ -1443,7 +1444,7 @@ static struct st_t *exec_rep_ectl_setup(struct st_t *stp)
  /* --- */
  rdctp = nxtstp->st.sdc;
  xsp = __eval_xpr(rdctp->repcntx);
- /* SJM 04/02/02 - real count must be converted to word/int */
+ /* SJM 04/02/02 - real count must be converted to word/int32 */
  if (rdctp->repcntx->is_real) __cnv_stk_fromreal_toreg32(xsp);
 
  /* FIXME ??? - although know WBITS wide, should use bp here */
@@ -1472,9 +1473,9 @@ immed_ectl_exec:
    /* in this case */
    return(nxtstp->stnxt);
   }
- /* if signed and <= 0, or word equal to 0, becomes immediate assign */
- /* SJM 04/02/02 - need to use unsigned counter and convert neg to 0 */
- if (rdctp->repcntx->has_sign && (int) xsp->ap[0] <= 0) val = 0;
+ /* if signed and <= 0, or word32 equal to 0, becomes immediate assign */
+ /* SJM 04/02/02 - need to use word32 counter and convert neg to 0 */
+ if (rdctp->repcntx->has_sign && (int32) xsp->ap[0] <= 0) val = 0;
  else val = xsp->ap[0];
  __pop_xstk();
  if (val == 0) goto immed_ectl_exec;
@@ -1490,10 +1491,10 @@ immed_ectl_exec:
  * notice this arms or schedules something - caller suspends thread
  * this return T if non blocking assign needs to not schedule
  */
-static int exec_dctrl(struct st_t *stp)
+static int32 exec_dctrl(struct st_t *stp)
 {
- int bytes, wlen;
- word *wp;
+ int32 bytes, wlen;
+ word32 *wp;
  struct delctrl_t *dctp;
  struct xstk_t *xsp;
  struct st_t *astp;
@@ -1520,10 +1521,10 @@ static int exec_dctrl(struct st_t *stp)
 
  switch ((byte) dctp->dctyp) {
   case DC_DELAY:
-   sched_proc_delay(dctp, (word *) NULL, -1);
+   sched_proc_delay(dctp, (word32 *) NULL, -1);
    break;
   case DC_EVENT:
-   arm_event_dctrl(dctp, (word *) NULL, -1);
+   arm_event_dctrl(dctp, (word32 *) NULL, -1);
    break; 
   case DC_RHSDELAY: case DC_RHSEVENT:
    /* 10/28/00 SJM - only rhs event either blocking or non blocking */
@@ -1561,7 +1562,7 @@ static int exec_dctrl(struct st_t *stp)
    wlen = wlen_(astp->st.spra.lhsx->szu.xclen);
    bytes = 2*WRDBYTES*wlen;
    
-   wp = (word *) __my_malloc(bytes);
+   wp = (word32 *) __my_malloc(bytes);
    memcpy(wp, xsp->ap, bytes); 
 
    if (dctp->dctyp == DC_RHSDELAY) sched_proc_delay(dctp, wp, wlen);
@@ -1583,7 +1584,7 @@ static int exec_dctrl(struct st_t *stp)
  * notice on disable event canceled and any rhs value free but that is
  * all that is needed
  */
-static void sched_proc_delay(struct delctrl_t *dctp, word *wp, int wlen)
+static void sched_proc_delay(struct delctrl_t *dctp, word32 *wp, int32 wlen)
 {
  register i_tev_ndx tevpi;
  register struct tev_t *tevp;
@@ -1704,16 +1705,16 @@ extern i_tev_ndx __bld_nb_tev(struct st_t *stp, struct xstk_t *xsp,
  word64 schtim)
 {
  register struct tenbpa_t *nbpap;
- register word *wp;
+ register word32 *wp;
  i_tev_ndx tevpi;
- int wlen; 
+ int32 wlen; 
  struct expr_t *lhsxp;
 
  alloc_tev_(tevpi, TE_NBPA, __inst_ptr, schtim);
  nbpap = (struct tenbpa_t *) __my_malloc(sizeof(struct tenbpa_t)); 
  __tevtab[tevpi].tu.tenbpa = nbpap;
  wlen = wlen_(stp->st.spra.lhsx->szu.xclen);
- wp = (word *) __my_malloc(2*wlen*WRDBYTES);
+ wp = (word32 *) __my_malloc(2*wlen*WRDBYTES);
 
  memcpy(wp, xsp->ap, 2*wlen*WRDBYTES);
 
@@ -1741,7 +1742,7 @@ extern i_tev_ndx __bld_nb_tev(struct st_t *stp, struct xstk_t *xsp,
  *
  * this assume only one level concats but maybe should
  */
-extern int __lhsexpr_var_ndx(register struct expr_t *xp)
+extern int32 __lhsexpr_var_ndx(register struct expr_t *xp)
 {
  switch ((byte) xp->optyp) {
   case GLBREF: case ID:
@@ -1781,7 +1782,7 @@ extern int __lhsexpr_var_ndx(register struct expr_t *xp)
  */
 extern void __eval_lhsexpr_var_ndxes(register struct expr_t *xp)
 {
- int biti;
+ int32 biti;
  struct expr_t *idndp;
  struct net_t *np;
  struct expr_t *ndx;
@@ -1800,7 +1801,7 @@ extern void __eval_lhsexpr_var_ndxes(register struct expr_t *xp)
      biti = __comp_ndx(np, xp->ru.x);
      /* out of range is x as index */
      if (biti == -1) ndx = __bld_rng_numxpr(ALL1W, ALL1W, WBITS);
-     else ndx = __bld_rng_numxpr((word) biti, 0, WBITS);
+     else ndx = __bld_rng_numxpr((word32) biti, 0, WBITS);
      __free_xtree(xp->ru.x);
      xp->ru.x = ndx;
     }
@@ -1831,8 +1832,8 @@ extern void __eval_lhsexpr_var_ndxes(register struct expr_t *xp)
  * here arming ref. instance even though only change of target wire will
  * trigger for xmr or col. case
  */
-static void arm_event_dctrl(struct delctrl_t *dctp, register word *wp,
- int wlen)
+static void arm_event_dctrl(struct delctrl_t *dctp, register word32 *wp,
+ int32 wlen)
 {
  register i_tev_ndx tevpi;
  struct tev_t *tevp;
@@ -1971,11 +1972,11 @@ static void arm_nbevent_dctrl(struct delctrl_t *dctp, struct xstk_t *xsp,
  */
 static struct st_t *exec_case(struct st_t *stp)
 {
- register word aw, bw;
+ register word32 aw, bw;
  register struct xstk_t *itemxsp;
  register struct exprlst_t *xplp;
  register struct csitem_t *csip;
- int selxlen, selwlen, i; 
+ int32 selxlen, selwlen, i; 
  struct xstk_t *selxsp;
  struct csitem_t *dflt_csip;
 
@@ -2005,7 +2006,7 @@ static struct st_t *exec_case(struct st_t *stp)
  if (selxsp->xslen < selxlen)
   {
    /* SJM 05/10/04 - LOOKATME - algorithm is that if any of the case match */
-   /* exprs are unsigned - case becomes unsigned */
+   /* exprs are word32 - case becomes word32 */
    if (stp->st.scs.csx->has_sign && !stp->st.scs.csx->unsgn_widen)
     __sgn_xtnd_widen(selxsp, selxlen);
    else __sizchg_widen(selxsp, selxlen);
@@ -2016,7 +2017,7 @@ static struct st_t *exec_case(struct st_t *stp)
  dflt_csip = stp->st.scs.csitems;
  csip = dflt_csip->csinxt;
 
- /* case case 1: fits in one word */
+ /* case case 1: fits in one word32 */
  if (selxlen <= WBITS)
   {
    aw = selxsp->ap[0];
@@ -2039,7 +2040,7 @@ static struct st_t *exec_case(struct st_t *stp)
    if (dflt_csip->csist != NULL) return(dflt_csip->csist);
    return(NULL);
   }
- /* case case 2: wider than 1 word */
+ /* case case 2: wider than 1 word32 */
  selwlen = wlen_(selxlen);
  for (; csip != NULL; csip = csip->csinxt)
   {
@@ -2079,11 +2080,11 @@ nxt_x:
 /*
  * special case routine to exec a case where any expr real
  *
- * SJM 12/12/03 - was converting real to word for cases with real but
+ * SJM 12/12/03 - was converting real to word32 for cases with real but
  * think that is wrong (although 2001 LRM does not say exactly) so now
  * if any of case select or case item real, all compares real
- * (following same rule, if any of select or match expr unsigned all)
- * (widening unsigned - compares are for equal so only widening changes)
+ * (following same rule, if any of select or match expr word32 all)
+ * (widening word32 - compares are for equal so only widening changes)
  */
 static struct st_t *exec_real_case(struct st_t *stp)
 {
@@ -2141,7 +2142,7 @@ static struct st_t *exec_real_case(struct st_t *stp)
 /*
  * trace a case (for any of case/casex/casez) 
  */
-static void tr_case_st(struct xstk_t *selxsp, int cas_sign)
+static void tr_case_st(struct xstk_t *selxsp, int32 cas_sign)
 {
  __tr_msg("trace: %-7d -- [selector: %d'h%s]\n",
   __slin_cnt, selxsp->xslen, __regab_tostr(__xs, selxsp->ap, selxsp->bp,
@@ -2153,11 +2154,11 @@ static void tr_case_st(struct xstk_t *selxsp, int cas_sign)
  */
 static struct st_t *exec_casex(struct st_t *stp)
 {
- register word aw, bw;
+ register word32 aw, bw;
  register struct xstk_t *itemxsp;
  register struct csitem_t *csip;
  register struct exprlst_t *xplp;
- int selxlen, selwlen, i;
+ int32 selxlen, selwlen, i;
  struct xstk_t *selxsp;
  struct csitem_t *dflt_csip;
 
@@ -2186,7 +2187,7 @@ static struct st_t *exec_casex(struct st_t *stp)
  dflt_csip = stp->st.scs.csitems;
  csip = dflt_csip->csinxt;
 
- /* case case 1: fits in one word */
+ /* case case 1: fits in one word32 */
  if (selxlen <= WBITS)
   {
    aw = selxsp->ap[0];
@@ -2211,7 +2212,7 @@ static struct st_t *exec_casex(struct st_t *stp)
    if (dflt_csip->csist != NULL) return(dflt_csip->csist);
    return(NULL);
   }
- /* case case 2: wider than 1 word */
+ /* case case 2: wider than 1 word32 */
  selwlen = wlen_(selxlen);
  for (; csip != NULL; csip = csip->csinxt)
   {
@@ -2255,12 +2256,12 @@ nxt_x:
  */
 static struct st_t *exec_casez(struct st_t *stp)
 {
- register word aw, bw;
+ register word32 aw, bw;
  register struct xstk_t *itemxsp;
  register struct csitem_t *csip;
  register struct exprlst_t *xplp;
- register word mask;
- int selxlen, selwlen, i;
+ register word32 mask;
+ int32 selxlen, selwlen, i;
  struct xstk_t *selxsp;
  struct csitem_t *dflt_csip;
 
@@ -2288,7 +2289,7 @@ static struct st_t *exec_casez(struct st_t *stp)
  dflt_csip = stp->st.scs.csitems;
  csip = dflt_csip->csinxt;
 
- /* case case 1: fits in one word */
+ /* case case 1: fits in one word32 */
  if (selxlen <= WBITS)
   {
    aw = selxsp->ap[0];
@@ -2313,7 +2314,7 @@ static struct st_t *exec_casez(struct st_t *stp)
    if (dflt_csip->csist != NULL) return(dflt_csip->csist);
    return(NULL);
   }
- /* case case 2: wider than 1 word */
+ /* case case 2: wider than 1 word32 */
  selwlen = wlen_(selxlen);
  for (; csip != NULL; csip = csip->csinxt)
   {
@@ -2362,9 +2363,9 @@ nxt_x:
  * evaluate and remove if T
  *
  */
-static int exec_wait(register struct st_t *stp)
+static int32 exec_wait(register struct st_t *stp)
 {
- int tmp, rv;
+ int32 tmp, rv;
  i_tev_ndx tevpi;
  struct xstk_t *xsp;
  struct delctrl_t *dctp;
@@ -2459,10 +2460,10 @@ tr_done:
  *
  * know inc. executed before here and never seen
  */
-static int for_not_done(struct for_t *frs)
+static int32 for_not_done(struct for_t *frs)
 {
- int tmp, has_xzs;
- word val;
+ int32 tmp, has_xzs;
+ word32 val;
  double d1;
  struct xstk_t *xsp;
 
@@ -2614,16 +2615,16 @@ extern struct thread_t *__setup_tsk_thread(struct task_t *tskp)
  */
 extern void __sched_fork(register struct st_t *stp)
 {
- register int fji;
+ register int32 fji;
  register struct thread_t *thp;
- int sav_slin_cnt, sav_sfnam_ind;
+ int32 sav_slin_cnt, sav_sfnam_ind;
  struct thread_t *last_thp;
  struct st_t *fjstp;
 
  /* DBG remove */
  if (__cur_thd->thofscnt != 0) __misc_terr(__FILE__, __LINE__); 
  /* --- */ 
- /* convert current thread (one-up) to fork joint header */
+ /* convert current thread (one-up) to fork joint32 header */
  /* and build (link in) list of per statement threads */  
  last_thp = NULL;
  for (fji = 0;; fji++)
@@ -2800,7 +2801,7 @@ extern struct st_t *__exec_tskcall(struct st_t *stp)
 {
  register struct expr_t *xp;
  register struct task_pin_t *tpp;
- int argi;
+ int32 argi;
  struct tskcall_t *tkcp;
  struct expr_t *tkxp, *rhsxp;
  struct sy_t *syp;
@@ -2946,10 +2947,10 @@ extern struct st_t *__exec_tskcall(struct st_t *stp)
 /*
  * print a task or function argument value    
  */
-static void tradd_tf_argval(int argi, struct net_t *np, struct xstk_t *xsp)
+static void tradd_tf_argval(int32 argi, struct net_t *np, struct xstk_t *xsp)
 {
  char s1[RECLEN];
- int signv, base;
+ int32 signv, base;
 
  if (argi != 0) __adds(", "); 
  if (!vval_is0_(xsp->bp, xsp->xslen) && np->ntyp != N_REAL)
@@ -2982,7 +2983,7 @@ static void store_tskcall_outs(struct st_t *tskcall_stp)
 {
  register struct expr_t *xp;
  register struct task_pin_t *tpp;
- int first_time, base, signv;
+ int32 first_time, base, signv;
  struct tskcall_t *tkcp;
  struct expr_t *tkxp, *lhsxp;
  struct task_t *tskp;
@@ -3065,12 +3066,12 @@ extern void __exec_func(struct sy_t *fsyp, register struct expr_t *ndp)
 {
  register struct expr_t *argxp;
  register struct task_pin_t *tpp;
- int savslin_cnt, savsfnam_ind, nd_thdfree;
+ int32 savslin_cnt, savsfnam_ind, nd_thdfree;
  struct itree_t *func_itp, *xmr_savitp;
  struct st_t *stp;
  struct task_t *tskp;
  struct tev_t *tevp;
- int argi;
+ int32 argi;
  struct gref_t *grp;
  struct xstk_t *xsp;
  struct net_t *np;
@@ -3222,7 +3223,7 @@ again:
 
  if (__st_tracing)
   {
-   int signv, base;
+   int32 signv, base;
 
    if (np->ntyp != N_REAL && !vval_is0_(xsp->bp, xsp->xslen))
     {
@@ -3253,9 +3254,9 @@ again:
  */
 static void grow_fcstk(void)
 {
- register int i;
- int old_maxnest;
- int osize, nsize;
+ register int32 i;
+ int32 old_maxnest;
+ int32 osize, nsize;
 
  old_maxnest = __maxfcnest;
  osize = old_maxnest*sizeof(struct task_t *);
@@ -3279,8 +3280,8 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
 {
  register struct xstk_t *xsp, *xsp2;
  register struct expr_t *fax;
- int ival, fd, c;
- unsigned uval;
+ int32 ival, fd, c;
+ word32 uval;
  word64 timval;
  double d1;
  struct sysfunc_t *sfbp;
@@ -3300,7 +3301,7 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
    else uval = mc_do_fopen(fax);
 
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) uval;  
+   xsp->ap[0] = (word32) uval;  
    xsp->bp[0] = 0L;
    break; 
   /* AIV 09/08/03 - new fileio system functions */
@@ -3314,8 +3315,8 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
      c = fgetc(__fio_fdtab[fd]->fd_s);
     }
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) c;  
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) c;  
    xsp->bp[0] = 0L;
    break;
   case STN_UNGETC:
@@ -3323,8 +3324,8 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
    /* know exactly 2 args or won't get here */
    ival = fio_ungetc(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;  
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;  
    xsp->bp[0] = 0L;
    break;
   case STN_FGETS:
@@ -3333,7 +3334,7 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
    ival= fio_fgets(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
    push_xstk_(xsp, WBITS);
    /* 0 on error esle number of chars read */
-   xsp->ap[0] = (word) ival;  
+   xsp->ap[0] = (word32) ival;  
    xsp->bp[0] = 0L;
    break;
   case STN_FTELL:
@@ -3346,16 +3347,16 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
      ival = ftell(__fio_fdtab[fd]->fd_s);
     }
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
   case STN_REWIND:
    /* format: fpos = $rewind([fd expr]) */
    ival = fio_rewind(ndp->ru.x->lu.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
   case STN_FSEEK:
@@ -3364,16 +3365,16 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
    ival = fio_fseek(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x,
     ndp->ru.x->ru.x->ru.x->lu.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
   case STN_FERROR:
    /* format: errnum = $ferror([fd expr], [lhs proc string]) */
    ival = fio_ferror(ndp->ru.x->lu.x, ndp->ru.x->ru.x->lu.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
   case STN_FREAD:
@@ -3381,24 +3382,24 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
    /* [num chars read] = $fread([mem name], [fd expr], [{starg}, {count}]) */
    ival = fio_fread(ndp->ru.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
   case STN_FSCANF:
    /* [num matched flds] = $fscanf([fd], [format], ...) */
    ival = fio_fscanf(ndp->ru.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0L;
    break;
  case STN_SSCANF:
    /* [num matched flds] = $sscanf([string expr], [format], ...) */
    ival = fio_sscanf(ndp->ru.x);
    push_xstk_(xsp, WBITS);
-   /* -1 becomes correct all unsigned all 1's until new signed added */
-   xsp->ap[0] = (word) ival;
+   /* -1 becomes correct all word32 all 1's until new signed added */
+   xsp->ap[0] = (word32) ival;
    xsp->bp[0] = 0;
    break;
   case STN_STIME: 
@@ -3417,14 +3418,14 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
        __sgfinform(411, "system function %s result does not fit in %d bits",
         fsyp->synam, WBITS);
       }
-     xsp->ap[0] = (word) (timval & WORDMASK_ULL);
+     xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
      xsp->bp[0] = 0L;
     }
    else
     {
      push_xstk_(xsp, TIMEBITS);
-     xsp->ap[0] = (word) (timval & WORDMASK_ULL);
-     xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL);
+     xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
+     xsp->ap[1] = (word32) ((timval >> 32) & WORDMASK_ULL);
      xsp->bp[0] = xsp->bp[1] = 0L;
     }
    break;
@@ -3442,13 +3443,13 @@ extern void __exec_sysfunc(register struct sy_t *fsyp,
      __sgfinform(411, "system function %s result does not fit in %d bits",
       fsyp->synam, WBITS);
     }
-   xsp->ap[0] = (word) (__simtime & WORDMASK_ULL);
+   xsp->ap[0] = (word32) (__simtime & WORDMASK_ULL);
    xsp->bp[0] = 0L;
    break;
   case STN_TICKSTIME:
    push_xstk_(xsp, TIMEBITS);
-   xsp->ap[0] = (word) (__simtime & WORDMASK_ULL);
-   xsp->ap[1] = (word) ((__simtime >> 32) & WORDMASK_ULL);
+   xsp->ap[0] = (word32) (__simtime & WORDMASK_ULL);
+   xsp->ap[1] = (word32) ((__simtime >> 32) & WORDMASK_ULL);
    xsp->bp[0] = xsp->bp[1] = 0L;
    break;
   case STN_BITSTOREAL:
@@ -3506,7 +3507,7 @@ conv_0:
     }
    else
     {
-     if (fax->has_sign) { ival = (int) xsp->ap[0]; d1 = (double) ival; } 
+     if (fax->has_sign) { ival = (int32) xsp->ap[0]; d1 = (double) ival; } 
      else d1 = (double) xsp->ap[0];
     }
    /* notice reusing xsp since know size of both is WBITS */
@@ -3520,10 +3521,10 @@ conv_0:
    /* DBG - LOOKATME - why here 
    if (finite(d1) == 0) __arg_terr(__FILE__, __LINE__);
    -- */
-   ival = (int) d1;
+   ival = (int32) d1;
    /* reuse expr. that know is WBITS */ 
    xsp->bp[0] = 0L;
-   xsp->ap[0] = (word) ival;
+   xsp->ap[0] = (word32) ival;
    break;
   case STN_SIGNED:
    /* this must eval its argument and then return its value */
@@ -3539,12 +3540,12 @@ conv_0:
    break;
   case STN_UNSIGNED:
    /* this must eval its argument and then return its value */
-   /* unsigned is just marking expr - no bit pattern change */
+   /* word32 is just marking expr - no bit pattern change */
    fax = ndp->ru.x->lu.x;
    xsp = __eval_xpr(fax);
 
    /* 05/26/04 - may need size change here to mach fcall node size */
-   /* but know result always unsigned */ 
+   /* but know result always word32 */ 
    if (xsp->xslen != ndp->szu.xclen) __sizchgxs(xsp, ndp->szu.xclen);
    
    /* because function return value has exactly same width as arg - never */
@@ -3605,13 +3606,13 @@ conv_0:
    break;
   case STN_RESET_COUNT:
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) __reset_count;
+   xsp->ap[0] = (word32) __reset_count;
    xsp->bp[0] = 0L;
    break;
   case STN_RESET_VALUE:
    push_xstk_(xsp, WBITS);
-   /* value may be int (signed) - caller will interpret */
-   xsp->ap[0] = (word) __reset_value;
+   /* value may be int32 (signed) - caller will interpret */
+   xsp->ap[0] = (word32) __reset_value;
    xsp->bp[0] = 0L;
    break;
   case STN_GETPATTERN:
@@ -3647,7 +3648,7 @@ conv_0:
    break;
   default:
    /* DBG remove --- */
-   if (sfbp->syfnum < BASE_VERIUSERTFS || (int) sfbp->syfnum > __last_systf)
+   if (sfbp->syfnum < BASE_VERIUSERTFS || (int32) sfbp->syfnum > __last_systf)
     __case_terr(__FILE__, __LINE__);
    /* --- */
    /* call pli system function calltf here - leave ret. value on stk */ 
@@ -3666,9 +3667,9 @@ static void exec_count_drivers(struct expr_t *ndp)
 {
  register struct net_pin_t *npp;
  register struct expr_t *axp;
- register int i;
- int ri1, ri2, nd_itpop, biti, indi, is_forced, numdrvs, drvcnt[4];
- unsigned val;
+ register int32 i;
+ int32 ri1, ri2, nd_itpop, biti, indi, is_forced, numdrvs, drvcnt[4];
+ word32 val;
  byte *sbp;
  struct net_t *np;
  struct xstk_t *xsp;
@@ -3775,12 +3776,12 @@ load_driver:
   {
    if (axp->lu.x->optyp == OPEMPTY) continue;
    switch ((byte) i) {
-    case 1: xsp->ap[0] = (word) is_forced; break;
-    case 2: xsp->ap[0] = (word) numdrvs; break;
+    case 1: xsp->ap[0] = (word32) is_forced; break;
+    case 2: xsp->ap[0] = (word32) numdrvs; break;
     /* next 3 are 0, 1, and x drivers */
-    case 3: xsp->ap[0] = (word) drvcnt[0]; break;
-    case 4: xsp->ap[0] = (word) drvcnt[1]; break;
-    case 5: xsp->ap[0] = (word) drvcnt[3]; break;
+    case 3: xsp->ap[0] = (word32) drvcnt[0]; break;
+    case 4: xsp->ap[0] = (word32) drvcnt[1]; break;
+    case 5: xsp->ap[0] = (word32) drvcnt[3]; break;
     default: __case_terr(__FILE__, __LINE__);
    }
    __exec2_proc_assign(axp->lu.x, xsp->ap, xsp->bp);
@@ -3796,10 +3797,10 @@ just_ret:
  */
 static void exec_testplusargs(struct expr_t *ndp)
 {
- int slen;
+ int32 slen;
  register struct optlst_t *olp;
  register char *chp, *argchp;
- int rv;
+ int32 rv;
  struct xstk_t *xsp;
 
  argchp = __get_eval_cstr(ndp->ru.x->lu.x, &slen);
@@ -3814,7 +3815,7 @@ static void exec_testplusargs(struct expr_t *ndp)
   }
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
- xsp->ap[0] = (word) rv;
+ xsp->ap[0] = (word32) rv;
  __my_free(argchp, slen + 1);
 }
 
@@ -3828,7 +3829,7 @@ static void exec_scanplusargs(struct expr_t *ndp)
 {
  register struct optlst_t *olp;
  register char *chp;
- int arglen, rv;
+ int32 arglen, rv;
  struct expr_t *fax;
  struct xstk_t *xsp;
  char *plusarg;
@@ -3872,7 +3873,7 @@ static void exec_scanplusargs(struct expr_t *ndp)
   }
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
- xsp->ap[0] = (word) rv;
+ xsp->ap[0] = (word32) rv;
  __my_free(plusarg, arglen + 1);
 }
 
@@ -3880,7 +3881,7 @@ static void exec_scanplusargs(struct expr_t *ndp)
  * execute 1 real in returns real transcendental
  * places computed real on to expr stack
  */
-static void exec_1arg_transcendental(int syfnum, struct expr_t *fax)
+static void exec_1arg_transcendental(int32 syfnum, struct expr_t *fax)
 {
  double d1, d2;
  struct xstk_t *xsp;
@@ -4000,11 +4001,11 @@ static void exec_1arg_transcendental(int syfnum, struct expr_t *fax)
 }
 
 /*
- * execute transcendental int (convert to int) routine
+ * execute transcendental int32 (convert to int32) routine
  */
 static void exec_transcendental_int(struct expr_t *ndp)
 {
- int ival;
+ int32 ival;
  double d1;
  struct expr_t *fax;
  struct xstk_t *xsp;
@@ -4017,7 +4018,7 @@ static void exec_transcendental_int(struct expr_t *ndp)
    if (xsp->xslen > WBITS) __narrow_to1wrd(xsp);
    else
     {
-     /* SJM 05/10/04 - old style convert to int - needs sign extension */
+     /* SJM 05/10/04 - old style convert to int32 - needs sign extension */
      if (xsp->xslen < WBITS) __sgn_xtnd_wrd(xsp, fax->szu.xclen);
     }
 
@@ -4025,16 +4026,16 @@ static void exec_transcendental_int(struct expr_t *ndp)
    else 
     {
      /* LOOKATME - does this do anything? */ 
-     ival = (int) xsp->ap[0];
-     xsp->ap[0] = (word) ival;
+     ival = (int32) xsp->ap[0];
+     xsp->ap[0] = (word32) ival;
     }
   }
  else
   {
    memcpy(&d1, xsp->ap, sizeof(double));
-   ival = (int) d1;
+   ival = (int32) d1;
    xsp->bp[0] = 0L;
-   xsp->ap[0] = (word) ival;
+   xsp->ap[0] = (word32) ival;
   }
  /* reuse xstk that know is now WBITS */ 
 }
@@ -4044,7 +4045,7 @@ static void exec_transcendental_int(struct expr_t *ndp)
  */
 static void exec_transcendental_sign(struct expr_t *ndp)
 {
- int ival;
+ int32 ival;
  double d1;
  struct expr_t *fax;
  struct xstk_t *xsp;
@@ -4058,16 +4059,16 @@ static void exec_transcendental_sign(struct expr_t *ndp)
  if (d1 < 0) ival = -1; else if (d1 > 0) ival = 1; else ival = 0;
  /* reuse xstk that know is WBITS */ 
  xsp->bp[0] = 0L;
- xsp->ap[0] = (word) ival;
+ xsp->ap[0] = (word32) ival;
 }
 
 /*
  * exec transcendental pow - takes 2 args
  * also hspice sign with 2 args here 
  */
-static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
+static void exec_transcendental_powsign(int32 sysfnum, struct expr_t *ndp)
 {
- int ival;
+ int32 ival;
  double d1, d2, d3;
  struct expr_t *fax, *fax2;
  struct xstk_t *xsp;
@@ -4092,8 +4093,8 @@ static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
     {
      double d4;
 
-     /* notice this uses hspice not Verilog conversion to int - matters not */
-     ival = (int) d2;
+     /* notice this uses hspice not Verilog conversion to int32 - matters not */
+     ival = (int32) d2;
      d4 = ival;
      /* != real */
      if ((d4 - d2) <= -EPSILON && (d4 - d2) >= EPSILON)
@@ -4109,8 +4110,8 @@ static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
   }
  else if (sysfnum == STN_HPOW)
   {
-   /* LOOKATME - notice this uses Hspice not Verilog conversion to int */
-   ival = (int) d2;
+   /* LOOKATME - notice this uses Hspice not Verilog conversion to int32 */
+   ival = (int32) d2;
    d2 = ival;
    d3 = pow(d1, d2);
   }
@@ -4122,7 +4123,7 @@ static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
   }
  else if (sysfnum == STN_HSIGN)
   {
-   /* notice $hsign returns double but $sign returns int */
+   /* notice $hsign returns double but $sign returns int32 */
    if (d2 > 0.0) d3 = fabs(d1);
    else if (d2 == 0.0) d3 = 0.0;
    else d3 = -fabs(d1);
@@ -4138,7 +4139,7 @@ static void exec_transcendental_powsign(int sysfnum, struct expr_t *ndp)
  * exec transcendental min/max - takes 2 args
  * LOOKATME - since can do with arg macro maybe unneeded
  */
-static void exec_transcendental_minmax(int syfnum, struct expr_t *ndp)
+static void exec_transcendental_minmax(int32 syfnum, struct expr_t *ndp)
 {
  double d1, d2, d3;
  struct expr_t *fax;
@@ -4236,7 +4237,7 @@ static void exec_transcendental_hypot(struct expr_t *ndp)
  */
 static void exec_cause(struct st_t *stp)
 {
- int nd_itpop;
+ int32 nd_itpop;
  struct expr_t *xp;
  struct net_t *np;
  struct gref_t *grp;
@@ -4286,10 +4287,10 @@ static void exec_cause(struct st_t *stp)
  * this code is not for functions there all disables converted to added gotos
  * disable argument is task name not ?? 
  */
-extern int __exec_disable(struct expr_t *dsxndp)
+extern int32 __exec_disable(struct expr_t *dsxndp)
 {
  register struct tskthrd_t *ttp, *ttp_real_r;
- int thread_finished, nd_itpop; 
+ int32 thread_finished, nd_itpop; 
  struct sy_t *syp;
  struct task_t *tskp; 
  struct thread_t *dsathp, *thp, *thd_1up, *sav_thd;
@@ -4427,7 +4428,7 @@ static struct thread_t *find_hgh_sametskthrd(struct thread_t *dsthp)
 /*
  * return T if thread is above current thread
  */
-static int thread_above_cur(struct thread_t *dsthp)
+static int32 thread_above_cur(struct thread_t *dsthp)
 {
  register struct thread_t *thp;
 
@@ -4562,8 +4563,8 @@ static void unlink_tskthd(struct thread_t *thp)
 extern struct st_t *__exec_stsk(struct st_t *stp, struct sy_t *tsyp,
  struct tskcall_t *tkcp)
 {
- int base, stav, oslen, slen;
- word wval;
+ int32 base, stav, oslen, slen;
+ word32 wval;
  struct systsk_t *stbp;
  struct strblst_t *strblp;
  struct expr_t *argvx;
@@ -4778,16 +4779,16 @@ s_write:
     {
      __sgferr(1069,
       "$dumplimit not set to %d - dump file already over previous limit %d",
-      (int) wval, __dv_dumplimit_size);
+      (int32) wval, __dv_dumplimit_size);
      break;
     }
    /* else inform if already set */
    if (__dv_dumplimit_size != 0)
     {
      __sgfinform(449, "$dumplimit changed from %d to %d",
-      __dv_dumplimit_size, (int) wval);
+      __dv_dumplimit_size, (int32) wval);
     }
-   __dv_dumplimit_size = (int) wval; 
+   __dv_dumplimit_size = (int32) wval; 
    break;
   case STN_DUMPON: 
    switch ((byte) __dv_state) {
@@ -4925,7 +4926,7 @@ no_key:
     {
      /* LOOKATME - why needed - if (!__quiet_msgs) __cv msg("\n"); */
      __cv_msg("Halted at location %s time %s from call to $finish.\n",   
-      __bld_lineloc(__xs2, (unsigned) __sfnam_ind, __slin_cnt),
+      __bld_lineloc(__xs2, (word32) __sfnam_ind, __slin_cnt),
       __to_timstr(__xs, &__simtime));
     }
    if (stav >= 2 || __verbose) __emit_stsk_endmsg();
@@ -4954,7 +4955,7 @@ no_key:
      __cv_msg(
       "$stop executed at time %s from source location %s.\n",
       __to_timstr(__xs, &__simtime), __bld_lineloc(__xs2,
-      (unsigned) __sfnam_ind, __slin_cnt));
+      (word32) __sfnam_ind, __slin_cnt));
     }
    if (stav >= 2) __emit_stsk_endmsg();
    __pending_enter_iact = TRUE;
@@ -5072,7 +5073,7 @@ no_key:
    break;
   default:
    /* DBG remove --- */
-   if (stbp->stsknum < BASE_VERIUSERTFS || (int) stbp->stsknum > __last_systf)
+   if (stbp->stsknum < BASE_VERIUSERTFS || (int32) stbp->stsknum > __last_systf)
      __case_terr(__FILE__, __LINE__);
    /* --- */
    /* exec (call) pli user tf system function here */ 
@@ -5096,10 +5097,10 @@ un_impl:
  * notice this only called if know strobe task enable statement repeated
  * checking for strobe repeated but in different instance 
  */
-static int chk_strobe_infloop(struct st_t *stp, struct sy_t *tsksyp)
+static int32 chk_strobe_infloop(struct st_t *stp, struct sy_t *tsksyp)
 {
  register struct strblst_t *strbp;
- int match;
+ int32 match;
  
  match = FALSE;
  for (strbp = __strobe_hdr; strbp != NULL; strbp = strbp->strbnxt)
@@ -5186,7 +5187,7 @@ extern void __maybe_open_trfile(void)
  */
 static void mcd_do_fclose(struct expr_t *axp)
 {
- word mcd;
+ word32 mcd;
  struct xstk_t *xsp;
 
  xsp = __eval_xpr(axp->lu.x);
@@ -5201,16 +5202,16 @@ static void mcd_do_fclose(struct expr_t *axp)
  /* system task does not return anything but vpi_ call does */
  mcd = xsp->ap[0]; 
  __pop_xstk();
- __close_mcd((unsigned) mcd, FALSE);
+ __close_mcd((word32) mcd, FALSE);
 }
 
 /*
  * close mcd
  */
-extern unsigned __close_mcd(unsigned mcd, int from_vpi)
+extern word32 __close_mcd(word32 mcd, int32 from_vpi)
 {
- register int i;
- int err;
+ register int32 i;
+ int32 err;
 
  err = FALSE;
  if (mcd == 0L)
@@ -5277,10 +5278,10 @@ extern unsigned __close_mcd(unsigned mcd, int from_vpi)
 /*
  * build a mc descriptor for open channels 
  */
-static unsigned bld_open_mcd(void)
+static word32 bld_open_mcd(void)
 { 
- unsigned mcd; 
- register int i;
+ word32 mcd; 
+ register int32 i;
 
  /* SJM 03/26/00 - high bit 32 reserved for new Verilog 2000 file I/O */
  for (i = 0, mcd = 0; i < 31; i++)
@@ -5298,9 +5299,9 @@ static unsigned bld_open_mcd(void)
  * this is system function that returns 0 on fail 
  * 1 (index 0) is stdout and log file, 2 (index 1) is stder
  */
-static int unsigned mc_do_fopen(struct expr_t *axp)
+static word32 mc_do_fopen(struct expr_t *axp)
 {
- int slen;
+ int32 slen;
  char *chp;
 
  chp = __get_eval_cstr(axp, &slen);
@@ -5310,12 +5311,12 @@ static int unsigned mc_do_fopen(struct expr_t *axp)
 /*
  * do the mcd fopen if possible
  */
-extern unsigned __mc1_fopen(char *chp, int slen, int from_vpi)
+extern word32 __mc1_fopen(char *chp, int32 slen, int32 from_vpi)
 {
- register int i; 
+ register int32 i; 
  FILE *tmp_s;
 
- /* SJm 03/26/00 - changed to match Verilog 2000 LRM */
+ /* SJM 03/26/00 - changed to match Verilog 2000 LRM */
  /* if name matches exactly return open - this is only heuristic */
  /* notice 2 is bit 3 (or value 4) that is first to use */
  /* bit 31 is rserved for new c style file open enhancement */
@@ -5334,7 +5335,7 @@ extern unsigned __mc1_fopen(char *chp, int slen, int from_vpi)
           chp, i + 1);
         __my_free(chp, slen + 1);
       }
-     return((unsigned) (1L << i));
+     return((word32) (1L << i));
     }
   }
 
@@ -5363,7 +5364,7 @@ found_free:
  /* know this is closed so no previous name to free */
  __mulchan_tab[i].mc_fnam = chp;
  /* notice first unused is 3 which is bit 4 on (if low bit is 1) */
- return((unsigned) (1L << i));
+ return((word32) (1L << i));
 }
 
 
@@ -5373,10 +5374,10 @@ found_free:
  */
 static void do_showvars_stask(struct expr_t *argxp)
 {
- register int ni;
+ register int32 ni;
  register struct expr_t *xp;
  register struct net_t *np;
- int nd_itpop;
+ int32 nd_itpop;
  struct gref_t *grp;
  struct task_t *tskp;
  struct expr_t *ndp;
@@ -5445,10 +5446,10 @@ static void do_showvars_stask(struct expr_t *argxp)
 /*
  * set new suppressed warnings during simulation
  */
-static void do_warn_supp_chg(char *stnam, struct expr_t *argxp, int supp)
+static void do_warn_supp_chg(char *stnam, struct expr_t *argxp, int32 supp)
 {
- int argi;
- word ernum;
+ int32 argi;
+ word32 ernum;
  struct expr_t *ndp;
 
  for (argi = 1; argxp != NULL; argxp = argxp->ru.x, argi++)
@@ -5474,7 +5475,7 @@ bad_num:
  */
 static void do_reset(struct expr_t *axp)
 {
- int enter_iact, reset_val, diag_val;
+ int32 enter_iact, reset_val, diag_val;
 
  /* assume interactive entry in case reset value (2nd) arg missing */
  enter_iact = TRUE;
@@ -5492,7 +5493,7 @@ do_it:
   {
    if (!__quiet_msgs) __cv_msg("\n");
    __cv_msg("$reset to time 0 called from location %s at time %s.\n",
-    __bld_lineloc(__xs2, (unsigned) __sfnam_ind, __slin_cnt),
+    __bld_lineloc(__xs2, (word32) __sfnam_ind, __slin_cnt),
     __to_timstr(__xs, &__simtime));
   }
  if (diag_val >= 2) __emit_stsk_endmsg();
@@ -5523,7 +5524,7 @@ do_it:
  */
 static void do_showscopes(struct expr_t *axp)
 {
- word flag;
+ word32 flag;
  struct task_t *tskp;
  struct mod_t *imdp;
  struct sy_t *syp;
@@ -5578,9 +5579,9 @@ static void do_showscopes(struct expr_t *axp)
  */
 static void prt_1m_scopelist(struct itree_t *itp)
 {
- register int i;
+ register int32 i;
  register struct task_t *tskp;
- int none, first_time;
+ int32 none, first_time;
  struct mod_t *imdp;
  struct inst_t *ip;
 
@@ -5669,11 +5670,11 @@ static void prt_1m_scopelist(struct itree_t *itp)
  * here can only be named blocks located from symbol table
  * separate routine for recursive named block listing
  */
-static void prt_1tsk_scopelist(struct task_t *tskp, int nd_msg)
+static void prt_1tsk_scopelist(struct task_t *tskp, int32 nd_msg)
 {
  register struct symtab_t *sytp2;
  struct symtab_t *sytp;
- int first_time;
+ int32 first_time;
  
  sytp = tskp->tsksymtab;
  if (sytp->sytofs == NULL && nd_msg) return;
@@ -5698,7 +5699,7 @@ static void prt_1tsk_scopelist(struct task_t *tskp, int nd_msg)
  */
 static void prt_1m_nestscopes(struct itree_t *itp)
 {
- register int i;
+ register int32 i;
  register struct task_t *tskp;
  struct mod_t *mdp;
  struct itree_t *down_itp;
@@ -5769,8 +5770,8 @@ static void prt_1tsk_nestscopes(struct symtab_t *up_sytp)
  */
 static void exec_qfull(struct expr_t *argxp)
 {
- int q_id, rv;
- word val;
+ int32 q_id, rv;
+ word32 val;
  struct q_hdr_t *q_p;
  struct expr_t *xp, *a1xp, *a2xp;
  struct xstk_t *xsp;
@@ -5795,7 +5796,7 @@ ret_x:
    rv = 2;
    goto done;
   }
- q_id = (int) val;
+ q_id = (int32) val;
 
  /* find q that matches passed q id */
  if ((q_p = find_q_from_id(q_id)) == NULL) goto ret_x;
@@ -5809,7 +5810,7 @@ done:
  if (a2xp->optyp == OPEMPTY) return;
 
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) rv; 
+ xsp->ap[0] = (word32) rv; 
  xsp->bp[0] = 0L;
 
  /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -5832,8 +5833,8 @@ done:
  */
 static void do_q_init(struct expr_t *argxp)
 {
- int q_id, q_type, q_maxlen, rv;
- word val;
+ int32 q_id, q_type, q_maxlen, rv;
+ word32 val;
  struct q_hdr_t *q_p;
  struct expr_t *xp, *a1xp, *a2xp, *a3xp, *a4xp;
  struct xstk_t *xsp;
@@ -5858,7 +5859,7 @@ static void do_q_init(struct expr_t *argxp)
    rv = 2;
    q_id = 0;
   }
- else q_id = (int) val;
+ else q_id = (int32) val;
  if (!__get_eval_word(a2xp, &val) || val < 1 || val > 2)
   {
    __sgfwarn(596,
@@ -5867,7 +5868,7 @@ static void do_q_init(struct expr_t *argxp)
    if (rv == 0) rv = 4;
    q_type = 0;
   }
- else q_type = (int) val;
+ else q_type = (int32) val;
  if (!__get_eval_word(a3xp, &val)) 
   {
 bad_qlen:
@@ -5879,7 +5880,7 @@ bad_qlen:
   }
  else
   {
-   q_maxlen = (int) val;
+   q_maxlen = (int32) val;
    if (q_maxlen <= 0) goto bad_qlen;
   }
  if (rv != 0) goto done;
@@ -5902,7 +5903,7 @@ done:
  if (a4xp->optyp == OPEMPTY) return;
 
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) rv; 
+ xsp->ap[0] = (word32) rv; 
  xsp->bp[0] = 0L;
 
  /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -5938,7 +5939,7 @@ static void init_q(struct q_hdr_t *q_p)
  *
  * LOOKATME - could use binary search but think will not be many queues
  */
-static struct q_hdr_t *find_q_from_id(int id)
+static struct q_hdr_t *find_q_from_id(int32 id)
 {
  register struct q_hdr_t *qp;
 
@@ -5956,8 +5957,8 @@ static struct q_hdr_t *find_q_from_id(int id)
  */
 static void do_q_add(struct expr_t *argxp)
 {
- int q_id, qjob_id, qinform_id, rv;
- word val;
+ int32 q_id, qjob_id, qinform_id, rv;
+ word32 val;
  struct q_hdr_t *q_p;
  struct q_val_t *qvp;
  struct expr_t *xp, *a1xp, *a2xp, *a3xp, *a4xp;
@@ -5983,7 +5984,7 @@ static void do_q_add(struct expr_t *argxp)
    rv = 2;
    q_id = 0;
   }
- else q_id = (int) val;
+ else q_id = (int32) val;
  if (a2xp->optyp == OPEMPTY) qjob_id = 0;
  else
   {
@@ -5994,7 +5995,7 @@ static void do_q_add(struct expr_t *argxp)
       __msgexpr_tostr(__xs, a2xp));
      val = 0;
     }
-   qjob_id = (int) val;
+   qjob_id = (int32) val;
   }
  if (a3xp->optyp == OPEMPTY) qinform_id = 0;
  else
@@ -6006,7 +6007,7 @@ static void do_q_add(struct expr_t *argxp)
       __msgexpr_tostr(__xs, a3xp));
      val = 0;
     }
-   qinform_id = (int) val;
+   qinform_id = (int32) val;
   }
  if (rv != 0) goto done;
 
@@ -6046,7 +6047,7 @@ done:
  if (a4xp->optyp == OPEMPTY) return;
 
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) rv; 
+ xsp->ap[0] = (word32) rv; 
  xsp->bp[0] = 0L;
 
  /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -6069,8 +6070,8 @@ done:
  */
 static void do_q_remove(struct expr_t *argxp)
 {
- int q_id, qjob_id, qinform_id, rv;
- word val;
+ int32 q_id, qjob_id, qinform_id, rv;
+ word32 val;
  word64 timval;
  struct q_hdr_t *q_p;
  struct q_val_t *qvp;
@@ -6097,7 +6098,7 @@ static void do_q_remove(struct expr_t *argxp)
    rv = 2;
    goto done;
   }
- else q_id = (int) val;
+ else q_id = (int32) val;
 
  /* find q that matches passed q id */
  if ((q_p = find_q_from_id(q_id)) == NULL) { rv = 2; goto done; }
@@ -6131,7 +6132,7 @@ static void do_q_remove(struct expr_t *argxp)
  if (a2xp->optyp != OPEMPTY)
   {
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) qjob_id; 
+   xsp->ap[0] = (word32) qjob_id; 
    xsp->bp[0] = 0L;
 
    /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -6150,7 +6151,7 @@ static void do_q_remove(struct expr_t *argxp)
  if (a3xp->optyp != OPEMPTY)
   {
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) qinform_id; 
+   xsp->ap[0] = (word32) qinform_id; 
    xsp->bp[0] = 0L;
 
    /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -6170,7 +6171,7 @@ done:
  if (a4xp->optyp == OPEMPTY) return;
 
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) rv; 
+ xsp->ap[0] = (word32) rv; 
  xsp->bp[0] = 0L;
 
  /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -6193,8 +6194,8 @@ done:
  */
 static void do_q_examine(struct expr_t *argxp)
 {
- int q_id, q_stat_code, rv;
- word val;
+ int32 q_id, q_stat_code, rv;
+ word32 val;
  word64 timval;
  struct q_hdr_t *q_p;
  struct expr_t *xp, *a1xp, *a2xp, *a3xp, *a4xp;
@@ -6220,7 +6221,7 @@ static void do_q_examine(struct expr_t *argxp)
    rv = 2;
    goto done;
   }
- q_id = (int) val;
+ q_id = (int32) val;
 
  if (!__get_eval_word(a2xp, &val) || val < 1 || val > 6)
   {
@@ -6231,7 +6232,7 @@ static void do_q_examine(struct expr_t *argxp)
    q_stat_code = 0;
    rv = 4;
   }
- else q_stat_code = (int) val;
+ else q_stat_code = (int32) val;
 
  if (rv != 0) goto done;
 
@@ -6242,7 +6243,7 @@ static void do_q_examine(struct expr_t *argxp)
   case 1:
    /* current size of q */
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) q_p->q_size;
+   xsp->ap[0] = (word32) q_p->q_size;
    xsp->bp[0] = 0L;
    break;
   case 2:
@@ -6250,20 +6251,20 @@ static void do_q_examine(struct expr_t *argxp)
    cmp_mean_interarriv_tim(&timval, q_p);
 push_cmp_tim:
    push_xstk_(xsp, 64);
-   xsp->ap[0] = (word) (timval & WORDMASK_ULL);
-   xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL); 
+   xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
+   xsp->ap[1] = (word32) ((timval >> 32) & WORDMASK_ULL); 
    xsp->bp[0] = xsp->bp[1] = 0L;
    break;
   case 3:
    /* maximum size queue ever attained */
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) q_p->q_maxsize;
+   xsp->ap[0] = (word32) q_p->q_maxsize;
    xsp->bp[0] = 0L;
    break;
   case 4:
    push_xstk_(xsp, 64);
-   xsp->ap[0] = (word) (q_p->q_minwait & WORDMASK_ULL);
-   xsp->ap[1] = (word) ((q_p->q_minwait >> 32) & WORDMASK_ULL);
+   xsp->ap[0] = (word32) (q_p->q_minwait & WORDMASK_ULL);
+   xsp->ap[1] = (word32) ((q_p->q_minwait >> 32) & WORDMASK_ULL);
    xsp->bp[0] = xsp->bp[1] = 0L;
    break;
   case 5:
@@ -6295,7 +6296,7 @@ done:
  if (a4xp->optyp == OPEMPTY) return;
 
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) rv; 
+ xsp->ap[0] = (word32) rv; 
  xsp->bp[0] = 0L;
 
  /* SJM 09/29/03 - change to handle sign extension and separate types */
@@ -6316,7 +6317,7 @@ done:
  */
 static void cmp_mean_interarriv_tim(word64 *timvalp, struct q_hdr_t *q_p)
 {
- register int qi, i;
+ register int32 qi, i;
  word64 avgtim, arrdif, quot, rem;
 
  /* for one or less size q mean always 0 */
@@ -6344,11 +6345,11 @@ static void cmp_mean_interarriv_tim(word64 *timvalp, struct q_hdr_t *q_p)
     }
   }
  /* divide - round - know q at least 2 elements to get here */
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- quot = avgtim/((word64) (((word) q_p->q_size) - 1)); 
- rem = avgtim % ((word64) (((word) q_p->q_size) - 1));
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ quot = avgtim/((word64) (((word32) q_p->q_size) - 1)); 
+ rem = avgtim % ((word64) (((word32) q_p->q_size) - 1));
  avgtim = quot;
- if (rem >= ((word64) (((word) q_p->q_size)/2))) avgtim++;
+ if (rem >= ((word64) (((word32) q_p->q_size)/2))) avgtim++;
  *timvalp = avgtim;
 }
 
@@ -6357,7 +6358,7 @@ static void cmp_mean_interarriv_tim(word64 *timvalp, struct q_hdr_t *q_p)
  */
 static void cmp_max_wait(word64 *timvalp, struct q_hdr_t *q_p)
 {
- register int qi, i;
+ register int32 qi, i;
  word64 inqtim;
 
  if (q_p->q_size <= 1) { *timvalp = 0ULL; return; }
@@ -6396,7 +6397,7 @@ static void cmp_max_wait(word64 *timvalp, struct q_hdr_t *q_p)
  */
 static void cmp_mean_wait_tim(word64 *timvalp, struct q_hdr_t *q_p)
 {
- register int qi, i;
+ register int32 qi, i;
  word64 avgtim, waitdif, quot, rem;
 
  if (q_p->q_size <= 0) { *timvalp = 0ULL; return; }
@@ -6420,10 +6421,10 @@ static void cmp_mean_wait_tim(word64 *timvalp, struct q_hdr_t *q_p)
     }
   }
  /* divide - round - know q at least 1 element to get here */
- quot = avgtim/((word64) ((word) q_p->q_size)); 
- rem = avgtim % ((word64) ((word) q_p->q_size));
+ quot = avgtim/((word64) ((word32) q_p->q_size)); 
+ rem = avgtim % ((word64) ((word32) q_p->q_size));
  avgtim = quot;
- if (rem >= ((word64) (((word) q_p->q_size)/2))) avgtim++;
+ if (rem >= ((word64) (((word32) q_p->q_size)/2))) avgtim++;
  *timvalp = avgtim;
 }
 
@@ -6477,8 +6478,8 @@ static void exec_prttimscale(struct expr_t *axp)
  */
 static void exec_timefmt(struct expr_t *argxp) 
 {
- int argi, i1, slen;
- word val, val1, val2, val3;
+ int32 argi, i1, slen;
+ word32 val, val1, val2, val3;
  struct expr_t *xp, *ndp;
  char *chp;
 
@@ -6491,19 +6492,19 @@ static void exec_timefmt(struct expr_t *argxp)
  ndp = xp->lu.x;
  if (ndp->optyp != OPEMPTY)
   {
-   /* eval. here is just word stored in 2 complement */
+   /* eval. here is just word32 stored in 2 complement */
    if (!__get_eval_word(ndp, &val)) goto bad_arg; 
-   i1 = (int) val;
+   i1 = (int32) val;
    if (i1 > 0 || i1 < -15) goto bad_arg;
    i1 = -i1;
-   val1 = (word) i1;
+   val1 = (word32) i1;
    if (val1 > __des_timeprec)
     { 
      __sgferr(1240,
       "$timeformat units %s (%d) impossible - must be larger than %s (%d) tick",
-       __to_timunitnam(__xs, (unsigned) val1), -((int) val1),
-       __to_timunitnam(__xs2, (unsigned) __des_timeprec),
-       -((int) __des_timeprec));
+       __to_timunitnam(__xs, (word32) val1), -((int32) val1),
+       __to_timunitnam(__xs2, (word32) __des_timeprec),
+       -((int32) __des_timeprec));
      /* change nothing if this does not change */
      return;
     }
@@ -6516,7 +6517,7 @@ static void exec_timefmt(struct expr_t *argxp)
  if (ndp->optyp != OPEMPTY)
   {
    if (!__get_eval_word(ndp, &val)) goto bad_arg;
-   i1 = (int) val;
+   i1 = (int32) val;
    if (i1 < 0 || i1 >= RECLEN) goto bad_arg;
    val2 = val;
   }
@@ -6550,7 +6551,7 @@ static void exec_timefmt(struct expr_t *argxp)
   }
  
 do_chg:
- if (slen > (int) (val3 + 1))  
+ if (slen > (int32) (val3 + 1))  
   {
    __sgferr(1047,
     "$timeformat suffix length %d wider than minimum field width (%d) - not changed",
@@ -6575,10 +6576,10 @@ bad_arg:
  * gets converted to machine int
  * this must be called with xp head of fcall list (comma operator)
  */
-static int get_opt_starg(struct expr_t *xp, int dflt_val)
+static int32 get_opt_starg(struct expr_t *xp, int32 dflt_val)
 {
- int val;
- word rval;
+ int32 val;
+ word32 rval;
  struct expr_t *axp;
 
  if (xp == NULL) return(dflt_val);
@@ -6591,31 +6592,31 @@ static int get_opt_starg(struct expr_t *xp, int dflt_val)
     "optional system task numeric argument has x/z bits - default used");
    return(dflt_val);
   }
- val = (int) rval;
+ val = (int32) rval;
  return(val); 
 }
 
 /*
- * evaluate a value to an int (return F if not a non x/z WBIT int)
+ * evaluate a value to an int32 (return F if not a non x/z WBIT int32)
  * this must be called with actual argument expr. not fcall comma expr.
  */
-extern int __get_eval_word(struct expr_t *xp, word *wval)
+extern int32 __get_eval_word(struct expr_t *xp, word32 *wval)
 {
- int rval;
+ int32 rval;
  struct xstk_t *xsp;
 
  *wval = 0;
  xsp = __eval_xpr(xp); 
- /* semantics says there is an implied conversion from real to int */
+ /* semantics says there is an implied conversion from real to int32 */
  /* but not across system task/func. arguments */
- /* however this routine is only called when int needed */
+ /* however this routine is only called when int32 needed */
  if (xp->optyp == REALNUM || xp->optyp == ISREALNUM)
   {
    double d1;
 
    /* truncating since for getting 32 bit value */
    memcpy(&d1, xsp->ap, sizeof(double));
-   *wval = (word) d1; 
+   *wval = (word32) d1; 
    rval = TRUE; 
    goto done;
   }
@@ -6640,7 +6641,7 @@ done:
  */
 static void exec_log_fnamchg(struct expr_t *axp)
 { 
- int slen;
+ int32 slen;
  FILE *tmp_s;
  char *chp;
 
@@ -6682,7 +6683,7 @@ static void exec_log_fnamchg(struct expr_t *axp)
  */
 static void exec_trace_fnamchg(struct expr_t *argvx)
 { 
- int slen;
+ int32 slen;
  FILE *tmp_s;
  char *chp;
 
@@ -6794,6 +6795,66 @@ extern void __emit_stsk_endmsg(void)
  __prt_end_msg();
 }
 
+/*
+ * ROUTINES TO MAKE VARIABLE DECLARATION INITIALIZE ASSIGNMENTS
+ */
+
+/*
+ * after init sim and any -i interactive running, set all var decl initials
+ *
+ * semantics is same as: reg [r1:r2] x; initial x = [expr]; 
+ */
+extern void __exec_var_decl_init_assigns(void)
+{
+ register struct varinitlst_t *initp;
+ register struct net_t *np;
+ register struct expr_t *xp; 
+ struct xstk_t *xsp;
+ struct mod_t *mdp;
+ int32 ii;
+
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   if (mdp->mvarinits == NULL) continue; 
+
+   for (ii = 0; ii < mdp->flatinum; ii++)
+    {
+     __push_itstk(mdp->moditps[ii]);
+     
+     for (initp = mdp->mvarinits; initp != NULL; initp = initp->varinitnxt)
+      { 
+       xp = initp->init_xp;
+       np = initp->init_syp->el.enp;
+       /* notice this code is almost same as eval assign rhsexpr except */ 
+       /* do not have lhs expr but instead have net */
+       xsp = __eval_xpr(initp->init_xp);
+       if (np->ntyp == N_REAL)
+        { 
+         if (!xp->is_real) __cnv_stk_fromreg_toreal(xsp, (xp->has_sign == 1));
+        }
+       else
+        { 
+         if (xp->is_real) __cnv_stk_fromreal_toreg32(xsp);
+
+         if (xsp->xslen > np->nwid) __narrow_sizchg(xsp, np->nwid);
+         else if (xsp->xslen < np->nwid)
+          {
+           if (xp->has_sign) __sgn_xtnd_widen(xsp, np->nwid);
+           else __sizchg_widen(xsp, np->nwid);
+          }
+        }
+
+       /* notice may need change store here - works because netchg list hd */
+       /* initialized in init stim so at end of first time 0 queue segment */
+       /* the changes will be processed */
+       if (np->nchg_nd_chgstore) __chg_st_val(np, xsp->ap, xsp->bp);
+       else __st_val(np, xsp->ap, xsp->bp);
+       __pop_xstk();
+      }
+     __pop_itstk();
+    }
+  }
+}
 
 /* 
  * ROUTINES TO IMPLEMENT FILE IO SYS TASKS AND FUNCS (INTERMIXED)
@@ -6803,10 +6864,10 @@ extern void __emit_stsk_endmsg(void)
  * open a OS file system and return the 32 bit file descriptor
  * fd is OS file descriptor although using buffered read/write I/O
  */
-static unsigned fio_do_fopen(struct expr_t *axp, struct expr_t *mode_xp)
+static word32 fio_do_fopen(struct expr_t *axp, struct expr_t *mode_xp)
 {
- int slen, slen2;
- unsigned rv;
+ int32 slen, slen2;
+ word32 rv;
  char *chp, *chp2;
 
  /* these always return something as a string - can never fail */ 
@@ -6826,9 +6887,9 @@ static unsigned fio_do_fopen(struct expr_t *axp, struct expr_t *mode_xp)
  *
  * notice the verilog file I/O number may not match the OS one
  */
-static unsigned fio_fopen(char *chp, char *fmode)
+static word32 fio_fopen(char *chp, char *fmode)
 {
- int fd;
+ int32 fd;
  FILE *fd_s;
  struct fiofd_t *fdtp;
  char os_mode[RECLEN];
@@ -6874,7 +6935,7 @@ static unsigned fio_fopen(char *chp, char *fmode)
  * ending 'b' allowed but never used for unix  
  * SJM 09/08/03 - must fix for other OSes
  */
-static int chk_cnvt_fd_modes(char *os_mode, char *ver_mode)
+static int32 chk_cnvt_fd_modes(char *os_mode, char *ver_mode)
 {
  /* assume ver mode string and OS mode string same */ 
  strcpy(os_mode, ver_mode); 
@@ -6905,7 +6966,7 @@ static int chk_cnvt_fd_modes(char *os_mode, char *ver_mode)
  */
 static void fio_do_fclose(struct expr_t *axp)
 {
- int fd, is_mcd;
+ int32 fd, is_mcd;
 
  /* this sets error nunber */
  if ((fd = chk_get_mcd_or_fd(axp->lu.x, &is_mcd)) == -1) return;
@@ -6925,9 +6986,9 @@ static void fio_do_fclose(struct expr_t *axp)
 /*
  * close a file descriptor and return 0 on success and 1 on error 
  */
-extern int __fd_do_fclose(int fd)
+extern int32 __fd_do_fclose(int32 fd)
 {
- int slen;
+ int32 slen;
  FILE *f;
 
  /* know fd in range but if not open error */ 
@@ -6956,9 +7017,9 @@ extern int __fd_do_fclose(int fd)
  *
  * there is implied truncation to 32 bits so if wider with x's ok
  */
-static int chk_get_mcd_or_fd(struct expr_t *fdxp, int *is_mcd)
+static int32 chk_get_mcd_or_fd(struct expr_t *fdxp, int32 *is_mcd)
 {
- unsigned fd;
+ word32 fd;
  struct xstk_t *xsp;
 
  /* assume new file descriptor passed */
@@ -6987,9 +7048,9 @@ static int chk_get_mcd_or_fd(struct expr_t *fdxp, int *is_mcd)
  */
 static void fio_fflush(struct expr_t *axp)
 {
- register int i;
- int fd, is_mcd;
- word mcd;
+ register int32 i;
+ int32 fd, is_mcd;
+ word32 mcd;
 
  /* this sets error nunber */
  if ((fd = chk_get_mcd_or_fd(axp, &is_mcd)) == -1) return;
@@ -6997,7 +7058,7 @@ static void fio_fflush(struct expr_t *axp)
  /* case close mcd */
  if (is_mcd)
   {
-   mcd = (word) fd;
+   mcd = (word32) fd;
    /* SJM 09/09/03 - bit 31 now not used for mcds */   
    for (i = 1; i < 30; i++)
     {
@@ -7026,16 +7087,16 @@ static void fio_fflush(struct expr_t *axp)
  * SJM 08/09/03 - LOOKATME - assuming OS will catch seeking on std[in,out,err]
  * files
  */
-static int fio_ungetc(struct expr_t *chxp, struct expr_t *fdxp)
+static int32 fio_ungetc(struct expr_t *chxp, struct expr_t *fdxp)
 {
- int c, fd, ival;
+ int32 c, fd, ival;
  struct xstk_t *xsp;
 
  /* implied assign to 8 bits - if b part non zero implied assign to 32 bits */
  xsp = __eval_xpr(chxp); 
  if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
  /* this insures good char */ 
- c = (int) (xsp->ap[0] & 0xff);
+ c = (int32) (xsp->ap[0] & 0xff);
  __pop_xstk();
  
  /* fd is OS file number with high bit anded off */
@@ -7052,9 +7113,9 @@ static int fio_ungetc(struct expr_t *chxp, struct expr_t *fdxp)
  *
  * there is implied truncation to 32 bits so if wider with x's ok
  */
-static int chk_get_ver_fd(struct expr_t *fdxp)
+static int32 chk_get_ver_fd(struct expr_t *fdxp)
 {
- int fd;
+ int32 fd;
  struct xstk_t *xsp;
 
  xsp = __eval_xpr(fdxp);
@@ -7072,9 +7133,9 @@ static int chk_get_ver_fd(struct expr_t *fdxp)
  *
  * SJM 09/08/03 - assuming following C lib fgets new line included in string
  */
-static int fio_fgets(struct expr_t *str_xp, struct expr_t *fdxp)
+static int32 fio_fgets(struct expr_t *str_xp, struct expr_t *fdxp)
 {
- int fd, slen, chlen;
+ int32 fd, slen, chlen;
  struct xstk_t *xsp;
  char *lp;
  
@@ -7121,9 +7182,9 @@ static int fio_fgets(struct expr_t *str_xp, struct expr_t *fdxp)
  *
  * equivalent to C lib fseek(FILE *, 0, SEEK_SET) 
  */
-static int fio_rewind(struct expr_t *fdxp)
+static int32 fio_rewind(struct expr_t *fdxp)
 {
- int fd;
+ int32 fd;
 
  /* fd is OS file number with high bit anded off - on error OS err num set */
  if ((fd = chk_get_ver_fd(fdxp)) == -1) return(-1);
@@ -7136,10 +7197,10 @@ static int fio_rewind(struct expr_t *fdxp)
 /* 
  * seek within an OS stream - returns -1 on error and 0 on success
  */
-static int fio_fseek(struct expr_t *fdxp, struct expr_t *ofs_xp,
+static int32 fio_fseek(struct expr_t *fdxp, struct expr_t *ofs_xp,
  struct expr_t *whence_xp)
 {
- int fd, offset, whence, seek_typ;
+ int32 fd, offset, whence, seek_typ;
  struct xstk_t *xsp;
 
  /* fd is OS file number with high bit anded off - on error OS err num set */
@@ -7149,14 +7210,14 @@ static int fio_fseek(struct expr_t *fdxp, struct expr_t *ofs_xp,
  xsp = __eval_xpr(ofs_xp);
  if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
  /* offset can be negative */
- offset = (int) xsp->ap[0];
+ offset = (int32) xsp->ap[0];
  __pop_xstk();
 
  /* there is an implied convert to 32 bits here */
  xsp = __eval_xpr(whence_xp);
  if (xsp->bp[0] != 0) { errno = EINVAL; __pop_xstk(); return(-1); }
  /* only 3 possibilities */
- whence = (int) xsp->ap[0];
+ whence = (int32) xsp->ap[0];
  __pop_xstk();
  /* check for legal whence seek type */ 
  if (whence == 0) seek_typ = SEEK_SET;
@@ -7179,14 +7240,11 @@ static int fio_fseek(struct expr_t *fdxp, struct expr_t *ofs_xp,
  *
  * SJM 08/09/03 - although LRM does not say it, returns -1 on error here
  */
-static int fio_ferror(struct expr_t *fdxp, struct expr_t *str_xp)
+static int32 fio_ferror(struct expr_t *fdxp, struct expr_t *str_xp)
 {
- int fd, rv, stream_err;
- char buf[RECLEN];
- struct xstk_t *xsp;
-#if defined(__SVR4)
+ int32 fd, rv, stream_err;
  char *cp;
-#endif
+ struct xstk_t *xsp;
   
  /* result string can't be empty "(, fd)" */
  if (str_xp->optyp == OPEMPTY) { errno = EINVAL; return(-1); }
@@ -7208,16 +7266,11 @@ err_ret:
   }
 
  /* use the reentrant posix form of str error function */
-#if defined(__SVR4)
+ /* SJM 01/26/05 - no reason for reentrant version strerr here */
  if ((cp = strerror(stream_err)) == NULL) { rv = -1; goto err_ret; }
- else strncpy(buf, cp, RECLEN);
-#else
- if (strerror_r(stream_err, buf, RECLEN) == NULL) { rv = -1; goto err_ret; }
-#endif
 
-
- /* know buf end with '\0' */
- xsp = __cstr_to_vval(buf);
+ /* know buf ends with '\0' */
+ xsp = __cstr_to_vval(cp);
  /* 05/16/04 - Verilog strings can't be signed */
  if (xsp->xslen != str_xp->szu.xclen) __sizchgxs(xsp, str_xp->szu.xclen);
 
@@ -7232,9 +7285,9 @@ err_ret:
  *
  * SJM 09/20/03 - LRM wrong for memories fread can't read addresses
  */
-static int fio_fread(struct expr_t *ndp)
+static int32 fio_fread(struct expr_t *ndp)
 {
- int fd, vlen, nbytes, bufi;
+ int32 fd, vlen, nbytes, bufi;
  byte *buf;
  struct expr_t *lhsx, *fdxp, *startxp, *cntxp;
  struct net_t *np;
@@ -7307,11 +7360,11 @@ static int fio_fread(struct expr_t *ndp)
  * know correct width location pushed onto x stack that is filled 
  * also know that f read buf value big enough and bufi starts at high end byte
  */
-static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int bufi)
+static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int32 bufi)
 {
- register int bi;
- int hbused, hbi, wi, bi2;  
- word bitval, bval;
+ register int32 bi;
+ int32 hbused, hbi, wi, bi2;  
+ word32 bitval, bval;
 
  /* know have char 0/1 value for every bit */
  /* handle partially filled high byte as special case */
@@ -7319,7 +7372,7 @@ static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int bufi)
  bi = xsp->xslen - 1;
  if (hbused != 0)
   {
-   bval = (word) buf[0];
+   bval = (word32) buf[0];
    for (hbi = hbused - 1; hbi >= 0; hbi--, bi--)
     {
      wi = get_wofs_(bi);
@@ -7333,7 +7386,7 @@ static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int bufi)
  /* bi correct next high bit to set from read byte */ 
  for (; bufi >= 0; bufi--)
   {
-   bval = (word) buf[bufi];
+   bval = (word32) buf[bufi];
    for (hbi = 7; hbi >= 0; hbi--, bi--) 
     {
      /* DBG remove -- */
@@ -7353,11 +7406,11 @@ static void fread_onto_stk(struct xstk_t *xsp, byte *buf, int bufi)
  * fread of memory differs from read mem because no addresses in file   
  * and can only read non x/z values
  */
-static int fio_arr_fread(struct expr_t *lhsx, int fd,
+static int32 fio_arr_fread(struct expr_t *lhsx, int32 fd,
  struct expr_t *startxp, struct expr_t *cntxp)
 {
- register int i, arri;
- int ri1, ri2, arrwid, starti, cnt, nbytes, tot_bytes, nd_itpop, vlen;
+ register int32 i, arri;
+ int32 ri1, ri2, arrwid, starti, cnt, nbytes, tot_bytes, nd_itpop, vlen;
  byte *buf;
  struct net_t *np;
  struct xstk_t *xsp;
@@ -7385,7 +7438,7 @@ static int fio_arr_fread(struct expr_t *lhsx, int fd,
         "array $fread of %s start value has x/z bits or wide - low a part used",
         np->nsym->synam);
       }
-     arri = (int) xsp->ap[0];
+     arri = (int32) xsp->ap[0];
      /* stsk arg. in Verilog source is actual index - must convert to h:0 */
      starti = normalize_ndx_(arri, ri1, ri2); 
      __pop_xstk();
@@ -7409,7 +7462,7 @@ static int fio_arr_fread(struct expr_t *lhsx, int fd,
         "array $fread of %s count value has x/z bits or wide - low a part used",
         np->nsym->synam);
       }
-     cnt = (int) xsp->ap[0];
+     cnt = (int32) xsp->ap[0];
      if (cnt < 0 || starti + cnt >= arrwid) 
       {
        errno = EINVAL;
@@ -7466,7 +7519,7 @@ done:
  * easy since because of mcds formatting always goes into c string
  * using the _expr line and cur sofs mechanism
  */
-static void fio_swrite(struct expr_t *axp, int dflt_fmt)
+static void fio_swrite(struct expr_t *axp, int32 dflt_fmt)
 {
  struct expr_t *str_xp; 
  struct xstk_t *xsp;
@@ -7500,7 +7553,7 @@ static void fio_swrite(struct expr_t *axp, int dflt_fmt)
  */
 static void fio_sformat(struct expr_t *axp)
 {
- int blen, flen;
+ int32 blen, flen;
  struct expr_t *str_xp, *fmt_xp; 
  struct xstk_t *xsp;
  char *fmtstr;
@@ -7558,9 +7611,9 @@ static void fio_sformat(struct expr_t *axp)
 /*
  * implement $fscanf for now using old scin_s scanf code
  */
-static int fio_fscanf(struct expr_t *ndp)
+static int32 fio_fscanf(struct expr_t *ndp)
 {
- int fd, blen, flen, rv;
+ int32 fd, blen, flen, rv;
  char *fmtstr;
  struct expr_t *fmt_xp;
  struct xstk_t *xsp;
@@ -7601,9 +7654,9 @@ static int fio_fscanf(struct expr_t *ndp)
 /*
  * implement $sscanf for now using old scin_s scanf code
  */
-static int fio_sscanf(struct expr_t *ndp)
+static int32 fio_sscanf(struct expr_t *ndp)
 {
- int blen, slen, flen, rv;
+ int32 blen, slen, flen, rv;
  char *instr, *fmtstr;
  struct expr_t *str_xp, *fmt_xp;
  struct xstk_t *xsp;
@@ -7679,12 +7732,12 @@ static int fio_sscanf(struct expr_t *ndp)
  * SJM 09/24/03 - seems that unlike c lib no \ escaping of % allowed - true?
  * now must check format syntax correctness here because format can be var 
  */
-static int fio_exec_scanf(FILE *f, struct expr_t *axp)
+static int32 fio_exec_scanf(FILE *f, struct expr_t *axp)
 {
  register char *wchp;
- register int c, fch, width;
- int len, num_matched, base, signc, ival;
- int retval, assgn_sup, stval, sav_sofs, lmatch; 
+ register int32 c, fch, width;
+ int32 len, num_matched, base, signc, ival;
+ int32 retval, assgn_sup, stval, sav_sofs, lmatch; 
  double d1;
  struct expr_t *lhsx; 
  struct xstk_t *xsp;
@@ -7795,7 +7848,7 @@ do_num:
          if (vval_is0_(__bcwrk, __itoklen))
           {
            if (__itoklen == WBITS)
-            { ival = (int) __acwrk[0]; __acwrk[0] = (word) -ival; }
+            { ival = (int32) __acwrk[0]; __acwrk[0] = (word32) -ival; }
            else __inplace_lnegate(__acwrk, __itoklen);
           }
         }
@@ -8032,9 +8085,9 @@ done:
 /*
  * version of getc that read from passed scanf input file or buf for sscanf
  */
-static int scanf_getc(FILE *f)
+static int32 scanf_getc(FILE *f)
 {
- int c;
+ int32 c;
 
  if (f == NULL)
   {
@@ -8049,7 +8102,7 @@ static int scanf_getc(FILE *f)
  * version of ungetc that backup up buffer for string file io operations 
  * BEWARE - can't call ungetc unless something read
  */
-static void scanf_ungetc(int c, FILE *f)
+static void scanf_ungetc(int32 c, FILE *f)
 {
  if (f == NULL) __fiolp--; else ungetc(c, f);
 }
@@ -8062,10 +8115,10 @@ static void scanf_ungetc(int c, FILE *f)
  *
  * LOOKATME - could check only once for constant fmt string
  */
-static int chk_scanf_fmt(char *fmt)
+static int32 chk_scanf_fmt(char *fmt)
 {
  register char *fp;
- int fmt_pos, rv, has_width;
+ int32 fmt_pos, rv, has_width;
 
  rv = TRUE;
  fp = fmt;
@@ -8140,7 +8193,7 @@ done:
  * collect a dhbo number from input into num token global 
  * returns F on error - if so num token invalid 
  */
-static int collect_scanf_num(int *signc, FILE *f, int c, int base, int width)
+static int32 collect_scanf_num(int32 *signc, FILE *f, int32 c, int32 base, int32 width)
 {
  register char *wchp;
 
@@ -8194,12 +8247,12 @@ static int collect_scanf_num(int *signc, FILE *f, int c, int base, int width)
  * collect a ral (f,g, e, and t) real number from input into num token global 
  * returns F on error - if so dret not changed
  */
-static int collect_scanf_realnum(double *dret, FILE *f, int c, int width,
- int fch)
+static int32 collect_scanf_realnum(double *dret, FILE *f, int32 c, int32 width,
+ int32 fch)
 {
  register char *wchp;
  double d1;
- int got_dot, got_e, signc, unit, errnum;
+ int32 got_dot, got_e, signc, unit, errnum;
  char *endp;
 
  /* collect the string */
@@ -8258,13 +8311,13 @@ static int collect_scanf_realnum(double *dret, FILE *f, int c, int width,
 }
 
 /*
- * collect 'u' format binary 0/1 one word values onto top of pushed xstk
+ * collect 'u' format binary 0/1 one word32 values onto top of pushed xstk
  */
-static struct xstk_t *collect_ufmt_binval(FILE *f, struct expr_t *lhsx, int c)
+static struct xstk_t *collect_ufmt_binval(FILE *f, struct expr_t *lhsx, int32 c)
 {
- register int wi;
- register word wrd;
- int b1, b2, b3, b4;
+ register int32 wi;
+ register word32 wrd;
+ int32 b1, b2, b3, b4;
  struct xstk_t *xsp;
 
  push_xstk_(xsp, lhsx->szu.xclen);
@@ -8272,13 +8325,13 @@ static struct xstk_t *collect_ufmt_binval(FILE *f, struct expr_t *lhsx, int c)
  zero_allbits_(xsp->bp, xsp->xslen);
  for (wi = 0; wi < wlen_(lhsx->szu.xclen); wi++)
   {
-   b1 = (word) c;
+   b1 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b2 = (word) c;
+   b2 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b3 = (word) c;
+   b3 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b4 = (word) c;
+   b4 = (word32) c;
 #if (BYTE_ORDER == BIG_ENDIAN)
    wrd = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
     | ((b4 & 0xff) << 24);
@@ -8292,27 +8345,27 @@ static struct xstk_t *collect_ufmt_binval(FILE *f, struct expr_t *lhsx, int c)
 }
 
 /*
- * collect 'z' format binary 4 value 2 word values onto top of pushed xstk
+ * collect 'z' format binary 4 value 2 word32 values onto top of pushed xstk
  */
 static struct xstk_t *collect_zfmt_binval(FILE *f, struct expr_t *lhsx,
- int c2)
+ int32 c2)
 {
- register int wi;
- register word wrd, wrd2;
- int c, b1, b2, b3, b4;
+ register int32 wi;
+ register word32 wrd, wrd2;
+ int32 c, b1, b2, b3, b4;
  struct xstk_t *xsp;
 
  push_xstk_(xsp, lhsx->szu.xclen);
  for (wi = 0; wi < wlen_(lhsx->szu.xclen); wi++)
   {
    /* binary format by convention is a/b pairs following PLI t_vecval */
-   b1 = (word) c2;
+   b1 = (word32) c2;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b2 = (word) c;
+   b2 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b3 = (word) c;
+   b3 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b4 = (word) c;
+   b4 = (word32) c;
 #if (BYTE_ORDER == BIG_ENDIAN)
    wrd = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
     | ((b4 & 0xff) << 24);
@@ -8323,13 +8376,13 @@ static struct xstk_t *collect_zfmt_binval(FILE *f, struct expr_t *lhsx,
    xsp->ap[wi] = wrd;
 
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b1 = (word) c;
+   b1 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b2 = (word) c;
+   b2 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b3 = (word) c;
+   b3 = (word32) c;
    if ((c = scanf_getc(f)) == EOF) return(NULL);
-   b4 = (word) c;
+   b4 = (word32) c;
 #if (BYTE_ORDER == BIG_ENDIAN)
    wrd2 = (b1 & 0xff) | ((b2 & 0xff) << 8) | ((b3 & 0xff) << 16)
     | ((b4 & 0xff) << 24);
@@ -8349,9 +8402,9 @@ static struct xstk_t *collect_zfmt_binval(FILE *f, struct expr_t *lhsx,
  * since scanf can only assign to regs, stren has stren removed
  * but must check for legal and then remove stren
  */
-static int cnvt_scanf_stnam_to_val(char *s) 
+static int32 cnvt_scanf_stnam_to_val(char *s) 
 {
- int stval, st0, st1;
+ int32 stval, st0, st1;
  char val;
  char stren[RECLEN];
 

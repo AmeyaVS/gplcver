@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -42,89 +42,90 @@
 /* local prototypes */
 static void delx_to_deltim(word64 *, struct expr_t *, struct xstk_t *);
 static void emit_reprepdev_verbmsg(struct gate_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, int);
+ struct mod_t *, struct itree_t *, int32);
 static void emit_reprepconta_verbmsg(struct conta_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, int);
+ struct mod_t *, struct itree_t *, int32);
 static void emit_reprepnet_verbmsg(struct net_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, int);
+ struct mod_t *, struct itree_t *, int32);
 static void emit_reprepstmt_verbmsg(struct st_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, int);
+ struct mod_t *, struct itree_t *, int32);
 static void emit_reprepiopath_verbmsg(struct spcpth_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, int);
+ struct mod_t *, struct itree_t *, int32);
 static void emit_repreptclim_verbmsg(struct tchk_t *, struct gate_t *,
- struct mod_t *, struct itree_t *, unsigned, int);
-static void prep2_delay(struct gate_t *, struct paramlst_t *, int, int);
+ struct mod_t *, struct itree_t *, word32, int32);
+static void prep2_delay(struct gate_t *, struct paramlst_t *, int32, int32);
 static void nonis_to_delval(word64 *, struct expr_t *);
 static void prep_1delform(struct gate_t *, struct expr_t *);
 static void convert_trireg_1vto4v(struct gate_t *);
-static void prep_prim_is_dels(struct gate_t *, struct expr_t **, int, int);
-static void prep_path_is_dels(struct gate_t *, struct expr_t **, int);
-static void fill_1col_isdel(word64 *, int, struct expr_t *, int);
+static void prep_prim_is_dels(struct gate_t *, struct expr_t **, int32, int32);
+static void prep_path_is_dels(struct gate_t *, struct expr_t **, int32);
+static void fill_1col_isdel(word64 *, int32, struct expr_t *, int32);
 static void chg1vform_1instdel(struct gate_t *, struct itree_t *,
  struct gate_t *);
-static void set_1is1val(struct gate_t *, int, int, word64 *, int);
+static void set_1is1val(struct gate_t *, int32, int32, word64 *, int32);
 static void chg4vform_1instdel(struct gate_t *, struct itree_t *,
  struct gate_t *);
-static void set_1is416val(struct gate_t *, int, int, word64 *, int);
+static void set_1is416val(struct gate_t *, int32, int32, word64 *, int32);
 static void chg16vform_1instdel(struct gate_t *, struct itree_t *,
  struct gate_t *);
-static void cnv_1is_to_4is(struct gate_t *, int, int, int);
-static void cnv_1is_to_16is(struct gate_t *, int, int, int);
-static void create_disv(struct gate_t *, int, int, word64 *, int);
-static int get_ispack(word64);
-static void unpack_isv1_to_isv2(struct gate_t *, int, int);
-static void unpack_isv1_to_isv(struct gate_t *, int, int);
-static void unpack_isv2_to_isv(struct gate_t *, int, int);
+static void cnv_1is_to_4is(struct gate_t *, int32, int32, int32);
+static void cnv_1is_to_16is(struct gate_t *, int32, int32, int32);
+static void create_disv(struct gate_t *, int32, int32, word64 *, int32);
+static int32 get_ispack(word64);
+static void unpack_isv1_to_isv2(struct gate_t *, int32, int32);
+static void unpack_isv1_to_isv(struct gate_t *, int32, int32);
+static void unpack_isv2_to_isv(struct gate_t *, int32, int32);
 static void zero_unused_16v(word64 *);
 static void real_to_ticks(word64 *, double, struct mod_t *);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __hizstrengate_getdel(word64 *, register struct gate_t *);
-extern void __get_del(register word64 *, register union del_u, unsigned);
-extern int __real_to_v64tim(word64 *, double);
+extern void __get_del(register word64 *, register union del_u, word32);
+extern int32 __real_to_v64tim(word64 *, double);
 extern void __cnv_ticks_tonum64(word64 *, word64, struct mod_t *);
 extern void __re_prep_dels(struct net_t *, struct itree_t *, struct mod_t *,
- int);
-extern void __prep_delay(struct gate_t *, struct paramlst_t *, int, int, char *, int, struct sy_t *, int);
-extern void __free_del(union del_u, unsigned, int);
+ int32);
+extern void __prep_delay(struct gate_t *, struct paramlst_t *, int32, int32, char *, int32, struct sy_t *, int32);
+extern void __free_del(union del_u, word32, int32);
 extern void __free_dellst(struct paramlst_t *);
-extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int, int);
-extern void __fill_16vconst(word64 *, word64 *, int);
+extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int32, int32);
+extern void __fill_16vconst(word64 *, word64 *, int32);
 extern void __chg_1inst_del(struct gate_t *, struct itree_t *, struct gate_t *);
-extern char *__bld_delay_str(char *, union del_u, unsigned);
-extern void __extract_delval(word64 *, int *, union del_u, unsigned);
+extern char *__bld_delay_str(char *, union del_u, word32);
+extern void __extract_delval(word64 *, int32 *, union del_u, word32);
 extern void __map_16v_to_12vform(word64 *, word64 *);
-extern void __try_reduce_16vtab(word64 *, int *);
+extern void __try_reduce_16vtab(word64 *, int32 *);
 extern void __do_showdel_stask(struct expr_t *, char *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__to_timstr(char *, word64 *);
-extern int __v64_to_real(double *, word64 *);
+extern int32 __v64_to_real(double *, word64 *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern char *__to_tcnam(char *, unsigned);
+extern char *__bld_lineloc(char *, word32, int32);
+extern char *__to_tcnam(char *, word32);
 extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
-extern int __chk_delparams(struct paramlst_t *, char *, int);
+extern int32 __chk_delparams(struct paramlst_t *, char *, int32);
 extern void __chk_spec_delay(struct expr_t *, char *);
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern void __free_xtree(struct expr_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
+extern int32 __is_lnegative(word32 *, int32); 
 
 extern void __cv_msg(char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __sgferr(int, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
 
-extern int errno;
-extern word __masktab[];
+extern int32 errno;
+extern word32 __masktab[];
 
 #if defined(__SVR4) || defined(__hpux)
 #define drem fmod
@@ -147,7 +148,7 @@ double __dbl_toticks_tab[] = { 1.0, 1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5,
  */
 extern void __hizstrengate_getdel(word64 *gdel, register struct gate_t *gp)
 { 
- register unsigned save_val, stren0;
+ register word32 save_val, stren0;
    
  save_val = __new_gateval;
  /* know one or other must be 0 strength */
@@ -173,16 +174,16 @@ extern void __hizstrengate_getdel(word64 *gdel, register struct gate_t *gp)
  * need to remove all but low 3 bits because can be used for strenght vals
  */
 extern void __get_del(register word64 *gdel, register union del_u du,
- unsigned drep)
+ word32 drep)
 {
- register int ind;
+ register int32 ind;
  word64 dv1, dv0;
  struct xstk_t *xsp;
  struct expr_t *dxp;
  struct thread_t *sav_curthp;
 
  /* -- DBG remove
-  extern void __dbg_dump_del(union del_u, unsigned);
+  extern void __dbg_dump_del(union del_u, word32);
 
  if (__debug_flg) __dbg_dump_del(du, drep);
  -- */
@@ -319,7 +320,7 @@ static void delx_to_deltim(word64 *dval, struct expr_t *dxp,
  */ 
 static void real_to_ticks(word64 *tim, double d1, struct mod_t *mdp)
 {
- int unit;
+ int32 unit;
 
  if (!mdp->mno_unitcnv)
   {
@@ -332,22 +333,22 @@ static void real_to_ticks(word64 *tim, double d1, struct mod_t *mdp)
 } 
 
 /*
- * convert a real value to a 64 bit unsigned time
+ * convert a real value to a 64 bit word32 time
  * uses normal Verilog rounding from 0.5
  * return F if error in conversion but still set some time value
  * illegal if called with negative real
  *
- * this now assumes that that double to unsigned long conversion works
+ * this now assumes that that double to word32 conversion works
  * used to not work on Machten 
  */
-extern int __real_to_v64tim(word64 *tim, double dv)
+extern int32 __real_to_v64tim(word64 *tim, double dv)
 {
  *tim = (word64) (dv + 0.500000);
  return(TRUE);
 
  /* ---
  double d1, d2, d3, dbase;
- int expbits, good;
+ int32 expbits, good;
 
  good = TRUE;
  tim->th = tim->tl = 0L;
@@ -367,11 +368,11 @@ extern int __real_to_v64tim(word64 *tim, double dv)
  if (expbits > 64) return(FALSE);
  dv += 0.500000000;
  -* base is 2**32 *-
- dbase = ((double) ((word) 0xffffffff)) + 1.0; 
+ dbase = ((double) ((word32) 0xffffffff)) + 1.0; 
  d1 = floor(dv/dbase);
  d2 = drem(dv, dbase);
- tim->th = (word) d1; 
- tim->tl = (word) d2; 
+ tim->th = (word32) d1; 
+ tim->tl = (word32) d2; 
  -* DBG remove ---
  __v64_to_real(&d3, tim);
  if (fabs(dv - d3) >= EPSILON) __misc_terr(__FILE__, __LINE__);
@@ -389,7 +390,7 @@ extern void __cnv_ticks_tonum64(word64 *usertim, word64 tickstim,
  struct mod_t *mdp)
 { 
  word64 quot, rem, tscale;
- int unit;
+ int32 unit;
 
  /* this subtract backwards here */
  unit = __des_timeprec - mdp->mtime_units;
@@ -417,10 +418,10 @@ extern void __cnv_ticks_tonum64(word64 *usertim, word64 tickstim,
  * reference to parameter - afer change re-prep each delay again
  */
 extern void __re_prep_dels(struct net_t *parmnp, struct itree_t *itp,
- struct mod_t *mdp, int from_vpi)
+ struct mod_t *mdp, int32 from_vpi)
 {
  register struct parmnet_pin_t *pnpp;  
- int sav_declobj;
+ int32 sav_declobj;
  struct gate_t gwrk;
  struct net_t *np;
  struct gate_t *gp;
@@ -578,7 +579,7 @@ ano_tchk:
  * emit changed param new primitive delay
  */
 static void emit_reprepdev_verbmsg(struct gate_t *gp, struct gate_t *ogp,
- struct mod_t *mdp, struct itree_t *itp, int from_vpi)
+ struct mod_t *mdp, struct itree_t *itp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[10];
@@ -599,7 +600,7 @@ static void emit_reprepdev_verbmsg(struct gate_t *gp, struct gate_t *ogp,
  * emit changed param new continuous assign delay
  */
 static void emit_reprepconta_verbmsg(struct conta_t *cap, struct gate_t *ogp,
- struct mod_t *mdp, struct itree_t *itp, int from_vpi)
+ struct mod_t *mdp, struct itree_t *itp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[10];
@@ -620,7 +621,7 @@ static void emit_reprepconta_verbmsg(struct conta_t *cap, struct gate_t *ogp,
  * emit changed param new net delay
  */
 static void emit_reprepnet_verbmsg(struct net_t *np, struct gate_t *ogp,
- struct mod_t *mdp, struct itree_t *itp, int from_vpi)
+ struct mod_t *mdp, struct itree_t *itp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[10];
@@ -641,7 +642,7 @@ static void emit_reprepnet_verbmsg(struct net_t *np, struct gate_t *ogp,
  * emit changed param new statement procedural delay control
  */
 static void emit_reprepstmt_verbmsg(struct st_t *stp, struct gate_t *ogp,
- struct mod_t *mdp, struct itree_t *itp, int from_vpi)
+ struct mod_t *mdp, struct itree_t *itp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[10];
@@ -670,7 +671,7 @@ static void emit_reprepstmt_verbmsg(struct st_t *stp, struct gate_t *ogp,
  * emit changed param new iopath delay
  */
 static void emit_reprepiopath_verbmsg(struct spcpth_t *pthp,
- struct gate_t *ogp, struct mod_t *mdp, struct itree_t *itp, int from_vpi)
+ struct gate_t *ogp, struct mod_t *mdp, struct itree_t *itp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[10];
@@ -690,7 +691,7 @@ static void emit_reprepiopath_verbmsg(struct spcpth_t *pthp,
  * emit changed param new timing check (either first or 2nd) 
  */
 static void emit_repreptclim_verbmsg(struct tchk_t *tcp, struct gate_t *ogp,
- struct mod_t *mdp, struct itree_t *itp, unsigned pnptyp, int from_vpi)
+ struct mod_t *mdp, struct itree_t *itp, word32 pnptyp, int32 from_vpi)
 {
  struct itree_t *itp2;
  char s1[RECLEN], s2[10], s3[RECLEN], s4[RECLEN], s5[10];
@@ -721,11 +722,11 @@ static void emit_repreptclim_verbmsg(struct tchk_t *tcp, struct gate_t *ogp,
  * use copy for delay expr. but then can change later so need to do again
  */
 extern void __prep_delay(struct gate_t *gp, struct paramlst_t *dhdr,
- int ispath, int is_trireg, char *emsg, int mustbeconst, struct sy_t *dsym, 
- int is_spec)
+ int32 ispath, int32 is_trireg, char *emsg, int32 mustbeconst, struct sy_t *dsym, 
+ int32 is_spec)
 {
  register struct paramlst_t *pmp;
- int sav_nowarns, sav_noinforms, sav_lcnt, sav_fnind, sav_ecnt;
+ int32 sav_nowarns, sav_noinforms, sav_lcnt, sav_fnind, sav_ecnt;
  struct paramlst_t *dhdr2;
 
  /* any warns or informs already emitted */ 
@@ -735,7 +736,7 @@ extern void __prep_delay(struct gate_t *gp, struct paramlst_t *dhdr,
  __no_informs = TRUE;
  sav_lcnt = __slin_cnt;
  sav_fnind = __sfnam_ind;
- __sfnam_ind = (int) dsym->syfnam_ind;
+ __sfnam_ind = (int32) dsym->syfnam_ind;
  __slin_cnt = dsym->sylin_cnt;
  sav_ecnt = __pv_err_cnt;
  
@@ -771,17 +772,17 @@ extern void __prep_delay(struct gate_t *gp, struct paramlst_t *dhdr,
  * of table look up algorithm (user may code 1,2,3,6,12) 
  */
 static void prep2_delay(struct gate_t *gp, struct paramlst_t *dhdr,
- int ispath, int is_trireg)
+ int32 ispath, int32 is_trireg)
 {
- register int i;
+ register int32 i;
  register struct paramlst_t *pmp;
- int nparams, has_xpr, has_is;
+ int32 nparams, has_xpr, has_is;
  word64 rise, fall, toz;
  word64 *dtab, xt[16];
  struct expr_t *xa[12], *xp1;
 
  /* DBG remove --
- extern void __dbg_dump_del(union del_u, unsigned);
+ extern void __dbg_dump_del(union del_u, word32);
  --- */
 
  /* no delays */
@@ -886,7 +887,7 @@ done:;
 static void nonis_to_delval(word64 *ticksval, struct expr_t *xp)
 {
  double d1;
- word *wp;
+ word32 *wp;
  word64 delval;
 
  if (xp->optyp == REALNUM)
@@ -904,12 +905,16 @@ neg_del:
   }
  wp = &(__contab[xp->ru.xvi]);
  delval = (word64) wp[0];
- /* notice 64 bit time value can never be signed */
- if (xp->szu.xclen > WBITS) delval |= (((word64) wp[1]) << 32);
+ /* * SJM 08/17/04 - now any value can be signed - need warning */
+ if (xp->szu.xclen > WBITS)
+  {
+   if (__is_lnegative(wp, xp->szu.xclen)) goto neg_del; 
+   delval |= (((word64) wp[1]) << 32);
+  }
  else
   {
-   if (xp->szu.xclen == WBITS && xp->has_sign
-    && (wp[0] & ~__masktab[31]) != 0L) goto neg_del;
+   if (xp->has_sign && (wp[0] & (1 << (xp->szu.xclen - 1))) != 0)
+    goto neg_del;
   }
  if (!__inst_mod->mno_unitcnv)
   cnv_num64to_ticks_(*ticksval, delval, __inst_mod);
@@ -921,9 +926,9 @@ neg_del:
  * union is 4 bytes in record, so do not need to free union
  * this is for after preparation freeing
  */
-extern void __free_del(union del_u du, unsigned drep, int numinsts)
+extern void __free_del(union del_u du, word32 drep, int32 numinsts)
 {
- register int i;
+ register int32 i;
 
  switch ((byte) drep) {
   case DT_1V:
@@ -997,9 +1002,9 @@ extern void __free_dellst(struct paramlst_t *dhdr)
  */
 static void prep_1delform(struct gate_t *gp, struct expr_t *xp1)
 {
- register int ii;
- int minsiz, nbytes;
- word *wp, *wp2, w1;
+ register int32 ii;
+ int32 minsiz, nbytes;
+ word32 *wp, *wp2, w1;
  double d1, *dp;
  word64 *dtab, *dtab2, ticksval, delval;
 
@@ -1025,6 +1030,13 @@ static void prep_1delform(struct gate_t *gp, struct expr_t *xp1)
      wp = &(__contab[xp1->ru.xvi]); 
      for (ii = 0; ii < __inst_mod->flatinum; ii++)
       {
+       /* SJM 08/17/04 - now any value can be signed - need warning */
+       if (__is_lnegative(wp, xp1->szu.xclen)) 
+        {
+         __nd_neg_del_warn = TRUE;
+         dtab[ii] = 0ULL;
+         continue;
+        }
        dtab[ii] = ((word64) wp[2*ii]) | (((word64) wp[2*ii + 1]) << 32);
        if (!__inst_mod->mno_unitcnv)
 	{
@@ -1039,13 +1051,15 @@ static void prep_1delform(struct gate_t *gp, struct expr_t *xp1)
      for (ii = 0; ii < __inst_mod->flatinum; ii++)
       {
        wp2 = &(wp[2*ii]);
-       dtab[ii] = 0ULL;
-       if (xp1->has_sign && xp1->szu.xclen == WBITS
-        && (wp2[0] & ~__masktab[31]) != 0L)  
+
+       /* SJM 08/17/04 - now any value can be signed - need warning */
+       if (xp1->has_sign && (wp2[0] & (1 << (xp1->szu.xclen - 1))) != 0)
         {
          __nd_neg_del_warn = TRUE;
-         continue; 
+         dtab[ii] = 0ULL;
+         continue;
         }
+
        dtab[ii] = (word64) wp2[0];
        if (!__inst_mod->mno_unitcnv)
 	{
@@ -1059,7 +1073,7 @@ try_narrow:
    for (minsiz = 1, ii = 0; ii < __inst_mod->flatinum; ii++)
     {
      if (dtab[ii] > WORDMASK_ULL) { minsiz = 8; break; }
-     w1 = (word) (dtab[ii] & WORDMASK_ULL);
+     w1 = (word32) (dtab[ii] & WORDMASK_ULL);
      if ((w1 & 0xffffff00L) == 0L) continue;
      if ((w1 & 0xffff0000L) == 0L) { minsiz = 2; continue; }
     }
@@ -1117,8 +1131,8 @@ try_narrow:
  */
 static void convert_trireg_1vto4v(struct gate_t *gp)
 {
- register int ii;
- int ninsts;
+ register int32 ii;
+ int32 ninsts;
  word64 *dtab;
  byte *btab;
  hword *htab;
@@ -1181,7 +1195,7 @@ static void convert_trireg_1vto4v(struct gate_t *gp)
  * 4v only for primitive and wire delays
  */
 extern void __fill_4vconst(word64 *dv4, word64 *rise, word64 *fall,
- word64 *toz, int nparams, int is_trireg)
+ word64 *toz, int32 nparams, int32 is_trireg)
 {
  word64 ltmp;
 
@@ -1249,7 +1263,7 @@ extern void __fill_4vconst(word64 *dv4, word64 *rise, word64 *fall,
  * fill a 16v table from table of expressions  
  * know need 16v because specify and nparams 2,3,6, or 12
  */
-extern void __fill_16vconst(word64 *dtab, word64 *xt, int nparams)
+extern void __fill_16vconst(word64 *dtab, word64 *xt, int32 nparams)
 {
  /* have all values just rearrange into nnoo form */
  if (nparams == 12)
@@ -1300,11 +1314,11 @@ move_to_dtab:
  * this always builds an IS4V table
  */
 static void prep_prim_is_dels(struct gate_t *gp, struct expr_t **xa,
- int nparams, int is_trireg)
+ int32 nparams, int32 is_trireg)
 { 
- register int ii;
- int minsiz, nbytes;
- word w1;
+ register int32 ii;
+ int32 minsiz, nbytes;
+ word32 w1;
  byte *btab;
  hword *htab;
  word64 ticksval;
@@ -1338,7 +1352,7 @@ static void prep_prim_is_dels(struct gate_t *gp, struct expr_t **xa,
  for (minsiz = 1, ii = 0; ii < 4*__inst_mod->flatinum; ii++) 
   {
    if (dtab[ii] > WORDMASK_ULL) { minsiz = 8; break; }
-   w1 = (word) (dtab[ii] & WORDMASK_ULL);
+   w1 = (word32) (dtab[ii] & WORDMASK_ULL);
    if ((w1 & 0xffffff00) == 0L) continue;
    if ((w1 & 0xffff0000) == 0L) { minsiz = 2; continue; }
   }
@@ -1380,13 +1394,13 @@ done:
  * dtab is 16 by flatinum table (need 0 delays for strength only change)
  */
 static void prep_path_is_dels(struct gate_t *gp, struct expr_t **xa,
- int nparams)
+ int32 nparams)
 {
- register int ii;
- int minsiz, nbytes;
+ register int32 ii;
+ int32 minsiz, nbytes;
  byte *btab;
  hword *htab;
- word w1;
+ word32 w1;
  word64 tim1, tim2;
  word64 *dtab, *dtab2;
 
@@ -1505,7 +1519,7 @@ minimize:
  for (minsiz = 1, ii = 0; ii < 16*__inst_mod->flatinum; ii++) 
   {
    if (dtab[ii] > WORDMASK_ULL) { minsiz = 8; break; }
-   w1 = (word) (dtab[ii] & WORDMASK_ULL);
+   w1 = (word32) (dtab[ii] & WORDMASK_ULL);
    if ((w1 & 0xffffff00) == 0L) continue;
    if ((w1 & 0xffff0000) == 0L) { minsiz = 2; continue; }
   }
@@ -1541,11 +1555,11 @@ done:
 /*
  * fill one column of the flatinum deep delay table
  */
-static void fill_1col_isdel(word64 *dtab, int coli, struct expr_t *xp,
- int stride)
+static void fill_1col_isdel(word64 *dtab, int32 coli, struct expr_t *xp,
+ int32 stride)
 {
- register int ii;
- word *wp;
+ register int32 ii;
+ word32 *wp;
  word64 ticksval, delval;
  double d1, *dp;
 
@@ -1576,11 +1590,20 @@ static void fill_1col_isdel(word64 *dtab, int coli, struct expr_t *xp,
      wp = &(__contab[xp->ru.xvi]);
      for (ii = 0; ii < __inst_mod->flatinum; ii++)
       {
-       ticksval = ((word64) wp[2*ii]) | (((word64) wp[2*ii + 1]) << 32);
-       if (!__inst_mod->mno_unitcnv)
-	{
-         delval = ticksval;
-         cnv_num64to_ticks_(ticksval, delval, __inst_mod);
+       /* SJM 08/17/04 - now for ver 2001 any width can be signed */
+       if (__is_lnegative(wp, xp->szu.xclen))
+        {
+         __nd_neg_del_warn = TRUE;
+         ticksval = 0ULL;
+        }
+       else
+        {
+         ticksval = ((word64) wp[2*ii]) | (((word64) wp[2*ii + 1]) << 32);
+         if (!__inst_mod->mno_unitcnv)
+	  {
+           delval = ticksval;
+           cnv_num64to_ticks_(ticksval, delval, __inst_mod);
+          }
         }
        dtab[stride*ii + coli] = ticksval;
       }
@@ -1591,8 +1614,9 @@ static void fill_1col_isdel(word64 *dtab, int coli, struct expr_t *xp,
      for (ii = 0; ii < __inst_mod->flatinum; ii++)
       {
        ticksval = (word64) wp[2*ii];
-       if (xp->szu.xclen == WBITS && xp->has_sign 
-        && (wp[2*ii] & ~__masktab[31]) != 0L)
+
+       /* SJM 08/17/04 - now for ver 2001 any width can be signed */
+       if (xp->has_sign && (wp[0] & (1 << (xp->szu.xclen - 1))) != 0)
         {
          ticksval = 0ULL;
          __nd_neg_del_warn = TRUE;
@@ -1640,8 +1664,8 @@ extern void __chg_1inst_del(struct gate_t *mgp, struct itree_t *mastitp,
 static void chg1vform_1instdel(struct gate_t *mgp, struct itree_t *mastitp,
  struct gate_t *ngp)
 {
- register int i;
- int numinsts, tmp, mwid;
+ register int32 i;
+ int32 numinsts, tmp, mwid;
  word64 ntim[16], mtim[16];
 
  numinsts = mastitp->itip->imsym->el.emdp->flatinum;
@@ -1817,10 +1841,10 @@ nd_is16v:
  * routine to set 1 instance of IS form value
  * here know only 0th element of ntim used since previous known 1 value
  */
-static void set_1is1val(struct gate_t *gp, int iti, int nvals, word64 *ntim, 
- int mwid)
+static void set_1is1val(struct gate_t *gp, int32 iti, int32 nvals, word64 *ntim, 
+ int32 mwid)
 {
- register int i, ivalnum;
+ register int32 i, ivalnum;
 
  /* set the new value */
  ivalnum = nvals*iti;
@@ -1865,8 +1889,8 @@ static void set_1is1val(struct gate_t *gp, int iti, int nvals, word64 *ntim,
 static void chg4vform_1instdel(struct gate_t *mgp, struct itree_t *mastitp,
  struct gate_t *ngp)
 {
- register int i;
- int numinsts, tmp, mwid;
+ register int32 i;
+ int32 numinsts, tmp, mwid;
  word64 ntim[16], mtim[16];
 
  numinsts = mastitp->itip->imsym->el.emdp->flatinum;
@@ -2003,10 +2027,10 @@ nd_is4v:
  * routine to set 1 instance of IS form value where ntim has right
  * width and nvals assigned for 1 changed instance
  */
-static void set_1is416val(struct gate_t *gp, int iti, int nvals, word64 *ntim, 
- int mwid)
+static void set_1is416val(struct gate_t *gp, int32 iti, int32 nvals, word64 *ntim, 
+ int32 mwid)
 {
- register int i, ivalnum;
+ register int32 i, ivalnum;
 
  /* set the new value */
  ivalnum = nvals*iti;
@@ -2051,8 +2075,8 @@ static void set_1is416val(struct gate_t *gp, int iti, int nvals, word64 *ntim,
 static void chg16vform_1instdel(struct gate_t *mgp, struct itree_t *mastitp,
  struct gate_t *ngp)
 {
- register int i;
- int numinsts, tmp, mwid;
+ register int32 i;
+ int32 numinsts, tmp, mwid;
  word64 tmptim, ntim[16], mtim[16];
 
  numinsts = mastitp->itip->imsym->el.emdp->flatinum;
@@ -2217,9 +2241,9 @@ nd_is16v:
 /*
  * convert 1 IS packed opck size to 4 IS form packed npck
  */
-static void cnv_1is_to_4is(struct gate_t *gp, int numinsts, int opck, int npck)
+static void cnv_1is_to_4is(struct gate_t *gp, int32 numinsts, int32 opck, int32 npck)
 {
- register int ii, i;
+ register int32 ii, i;
  union del_u sav_du;
  word64 ntim[16];
 
@@ -2258,9 +2282,9 @@ static void cnv_1is_to_4is(struct gate_t *gp, int numinsts, int opck, int npck)
  * convert 1 IS packed opck size to 6 IS form packed npck
  * separate routine becase 0, 5, 10 must be 0
  */
-static void cnv_1is_to_16is(struct gate_t *gp, int numinsts, int opck, int npck)
+static void cnv_1is_to_16is(struct gate_t *gp, int32 numinsts, int32 opck, int32 npck)
 {
- register int ii, i;
+ register int32 ii, i;
  union del_u sav_du;
  word64 ntim[16];
 
@@ -2302,10 +2326,10 @@ static void cnv_1is_to_16is(struct gate_t *gp, int numinsts, int opck, int npck)
  * nvals of tim must be filled
  * this always uses 16v form since just pointer to alloced array
  */
-static void create_disv(struct gate_t *gp, int numinsts, int nvals,
- word64 *tim, int wid)
+static void create_disv(struct gate_t *gp, int32 numinsts, int32 nvals,
+ word64 *tim, int32 wid)
 {
- register int ii, i;
+ register int32 ii, i;
 
  if (wid == 1)
   {
@@ -2341,11 +2365,11 @@ static void create_disv(struct gate_t *gp, int numinsts, int nvals,
 /*
  * get width
  */
-static int get_ispack(word64 tim)
+static int32 get_ispack(word64 tim)
 {
- register word w1;
+ register word32 w1;
 
- w1 = (word) (tim & WORDMASK_ULL);
+ w1 = (word32) (tim & WORDMASK_ULL);
  if (tim > WORDMASK_ULL || (w1 & 0xffff0000) != 0) return(8);
  if ((w1 & 0xffffff00) != 0) return(2);
  return(1);
@@ -2356,9 +2380,9 @@ static int get_ispack(word64 tim)
  * caller must insure unpack will fit 
  * uses 16v form since just pointer to array 
  */
-static void unpack_isv1_to_isv2(struct gate_t *gp, int numinsts, int nvals)
+static void unpack_isv1_to_isv2(struct gate_t *gp, int32 numinsts, int32 nvals)
 {
- register int ii, i;
+ register int32 ii, i;
  union del_u sav_du;
 
  sav_du = gp->g_du;
@@ -2377,9 +2401,9 @@ static void unpack_isv1_to_isv2(struct gate_t *gp, int numinsts, int nvals)
  * unpack from isv1 to isv, nvals determines if 1, 4, or 16 value form 
  * caller must insure unpack will fit 
  */
-static void unpack_isv1_to_isv(struct gate_t *gp, int numinsts, int nvals)
+static void unpack_isv1_to_isv(struct gate_t *gp, int32 numinsts, int32 nvals)
 {
- register int ii, i;
+ register int32 ii, i;
  union del_u sav_du;
 
  sav_du = gp->g_du;
@@ -2400,9 +2424,9 @@ static void unpack_isv1_to_isv(struct gate_t *gp, int numinsts, int nvals)
  * caller must insure unpack will fit 
  * uses 16v form since just ptr to array
  */
-static void unpack_isv2_to_isv(struct gate_t *gp, int numinsts, int nvals)
+static void unpack_isv2_to_isv(struct gate_t *gp, int32 numinsts, int32 nvals)
 {
- register int ii, i;
+ register int32 ii, i;
  union del_u sav_du;
 
  sav_du = gp->g_du;
@@ -2434,10 +2458,10 @@ static void zero_unused_16v(word64 *tim)
  * can not be called until delays prepared
  * uses current itree loc for instance if delay per inst. 
  */
-extern char *__bld_delay_str(char *s, union del_u du, unsigned drep)
+extern char *__bld_delay_str(char *s, union del_u du, word32 drep)
 {
- register int i;
- int ndels, sav_nd_timstr_suf;
+ register int32 i;
+ int32 ndels, sav_nd_timstr_suf;
  word64 tim[12], timval;
  struct mod_t *mdp;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
@@ -2499,10 +2523,10 @@ extern char *__bld_delay_str(char *s, union del_u du, unsigned drep)
  * can return 1,3,6, or 12 delays
  * (or 0 for DT NONE - used for SDF or vpi_ annotate adding new)
  *
- * SJM 02/03/00 - cast to word64 word because packed form always unsigned
+ * SJM 02/03/00 - cast to word64 word32 because packed form always unsigned
  */
-extern void __extract_delval(word64 *tim, int *ndels, union del_u du,
- unsigned drep)
+extern void __extract_delval(word64 *tim, int32 *ndels, union del_u du,
+ word32 drep)
 {
  struct xstk_t *xsp;
 
@@ -2650,7 +2674,7 @@ extern void __map_16v_to_12vform(word64 *ntim, word64 *tim)
  * for tim narrow just ignore higher values
  * reducible to 1 value will never be 16v in first place
  */
-extern void __try_reduce_16vtab(word64 *tim, int *nvals)
+extern void __try_reduce_16vtab(word64 *tim, int32 *nvals)
 {
  word64 tmin, tmax;
 
@@ -2707,9 +2731,9 @@ extern void __try_reduce_16vtab(word64 *tim, int *nvals)
  * DBG only routine
  */
 /* ---
-extern void __dbg_dump_del(union del_u du, unsigned drep)
+extern void __dbg_dump_del(union del_u du, word32 drep)
 {
- register int i;
+ register int32 i;
  struct xstk_t *xsp;
  struct expr_t *dxp;
  word64 dtab[16], tdel, dv0, dv1, dvx, dvz;

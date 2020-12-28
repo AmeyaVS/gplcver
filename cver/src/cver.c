@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@
 #include "cvmacros.h"
 
 static char copyright[]
- = "Copyright (c) 1991-2004 Pragmatic C Software Corp.";
+ = "Copyright (c) 1991-2005 Pragmatic C Software Corp.";
 
 /* declares from v.h */
 /* various simulation counting variables */
@@ -78,56 +78,56 @@ time_t __end_mstime;   /* start and end wall clock times */
 
 /* various file variables and global data base flags (i/o vars) */
 char **__in_fils;      /* malloced input file list from args */
-int __siz_in_fils;     /* current size of input files */
-int __last_inf;        /* last input file in list */
-int __last_optf;       /* last option file */
-int __last_lbf;        /* last lib/inc file (starts last_inf + 1) */
-int __last_srcf;       /* last src containing file for debugger */
+int32 __siz_in_fils;   /* current size of input files */
+int32 __last_inf;      /* last input file in list */
+int32 __last_optf;     /* last option file */
+int32 __last_lbf;      /* last lib/inc file (starts last_inf + 1) */
+int32 __last_srcf;     /* last src containing file for debugger */
 struct incloc_t *__inclst_hdr; /* header of included files list */
 struct incloc_t *__inclst_end; /* end of included files list */
 struct filpos_t *__filpostab; /* in fils size tab of file line pos. */
 FILE *__save_log_s;    /* if $nolog executed, value to use if log */
-int __echo_iactcmds_tolog; /* T => echo interactive cmds to log file */
+int32 __echo_iactcmds_tolog; /* T => echo interactive cmds to log file */
 FILE *__save_key_s;    /* if $nolog executed, value to use if log */
-int __nokey_seen;      /* $nokey executed and no key */
+int32 __nokey_seen;    /* $nokey executed and no key */
 FILE *__in_s;
 FILE *__log_s;
 FILE *__cmd_s;         /* command file source or null for tty */ 
 FILE *__key_s;         /* if key_s nil but key_fnam not, must open */
 struct optlst_t *__opt_hdr;   /* header of expanded option list */
 struct optlst_t *__opt_end;   /* wrk end of expanded option list */
-word *__wsupptab;      /* tab (1 bit/msg) for warn and iact suppress */
+word32 *__wsupptab;    /* tab (1 bit/msg) for warn and iact suppress */
 char *__blnkline;      /* work blank line */
 char __pv_homedir[RECLEN]; /* home dir - . if HOME env. not set */
 struct mcchan_t __mulchan_tab[32];/* mc desc. tab (32 built in Ver) */ 
-struct fiofd_t **__fio_fdtab; /* table of ptrs to file io stream */
+struct fiofd_t **__fio_fdtab; /* array of ptrs to file io stream */
 char *__fiolp;         /* fio file input work string ptr */
 char *__fiofp;         /* fio file input work fmt string ptr */
 long __scanf_pos;      /* byte offset position of scanf in file */
 sighandler *__old_int_sig;  /* value of quit (^c) signal on entry */
-int __force_base;      /* for output force base if not BASENONE */
+int32 __force_base;    /* for output force base if not BASENONE */
 struct vinstk_t **__vinstk;/* open file/macro list in stack form */
 struct vinstk_t *__visp;/* pointer to top of open input stack */
-int __vin_top;         /* index of top of current file stack */
+int32 __vin_top;       /* index of top of current file stack */
 char *__log_fnam;      /* log file for all terminal output */
 char *__sdf_opt_log_fnam; /* sdf log file if set by cmd arg */
 FILE *__sdf_opt_log_s; /* and open file ptr */
-int __sdf_no_warns;    /* T => don't print any SDF warning msgs */
-int __sdf_no_errs;     /* T => don't print any SDF error msgs */
-int __sdf_from_cmdarg; /* T => SDF annotation call from cmd option */
+int32 __sdf_no_warns;  /* T => don't print any SDF warning msgs */
+int32 __sdf_no_errs;   /* T => don't print any SDF error msgs */
+int32 __sdf_from_cmdarg; /* T => SDF annotation call from cmd option */
 char *__cmd_fnam;      /* command interact. input file name */
 char *__cmd_start_fnam;/* -i startup interactive input file name */
 char *__key_fnam;      /* key file name and stream */
 FILE *__tr_s;          /* trace output file - can be stdout */
 char *__tr_fnam;
-int __cmd_ifi;         /* constant command in_fils index */
+int32 __cmd_ifi;       /* constant command in_fils index */
 char *__lic_path;      /* +licpath [path] if option used */
 FILE *__sdf_s;         /* current SDF back annotate file/stream */
 struct sdfnamlst_t *__sdflst; /* list of sdf annotate option files */
-int __sdf_sav_enum;    /* saved error num. for annotate inhibit */
-int __sdf_sav_maxerrs; /* saved max errors so won't stop */
-int __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
-int __sdf_active;      /* T => annotating SDF - for PLI erro code  */
+int32 __sdf_sav_enum;  /* saved error num. for annotate inhibit */
+int32 __sdf_sav_maxerrs; /* saved max errors so won't stop */
+int32 __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
+int32 __sdf_active;    /* T => annotating SDF - for PLI erro code  */
 struct mod_t *__sdf_mdp; /* special sdf context mod */
 
 /* cfg variables */
@@ -140,37 +140,37 @@ struct cfg_t *__cfg_hd;/* head of list of cfgs */
 struct cfg_t *__cur_cfg;/* current cfg */
 struct mod_t *__cfg_mdp;/* SJM - remove me - why global */
 char **__bind_inam_comptab;/* during cfg binding, comp descent comps */ 
-int __siz_bind_comps;  /* current malloc size of table */
-int __last_bind_comp_ndx;/* last currently used comp end index */ 
-int __cfg_verbose;     /* T => emit cfg reading verbose messages */ 
+int32 __siz_bind_comps;/* current malloc size of table */
+int32 __last_bind_comp_ndx;/* last currently used comp end index */ 
+int32 __cfg_verbose;   /* T => emit cfg reading verbose messages */ 
 
 /* file variables */
-int __cur_infi;        /* index in in_fils of current file */
+int32 __cur_infi;      /* index in in_fils of current file */
 struct optlst_t *__new_opt_hdr;/* header of expanded option list */
 struct optlst_t *__new_opt_end;/* wrk end of expanded option list */
 struct optlst_t *__log_olp;   /* log option, nil if none */
 struct optlst_t *__help_olp;  /* help option, nil if none */
 struct optlst_t *__quiet_olp; /* quiet option, nil if none */
 struct optlst_t *__verb_olp;  /* verbose option, nil if none */  
-int __vpi_argc;        /* global arg count for vpi */
+int32 __vpi_argc;      /* global arg count for vpi */
 char **__vpi_argv;     /* global arg array for vpi */
 char *__vpi_argv0;     /* argv execed program name */
 char *__cur_fnam;      /* being read file name for errors */
-int __cur_fnam_ind;    /* index in in_fils of cur_fnam */
-int __sfnam_ind;       /* global file index for current stmt. */
-int __slin_cnt;        /* global line no. for currently check stmt */
-int __vpifnam_ind;     /* vpi_ global current file index */
-int __vpilin_cnt;      /* vpi_ global current line no. */
+int32 __cur_fnam_ind;  /* index in in_fils of cur_fnam */
+int32 __sfnam_ind;     /* global file index for current stmt. */
+int32 __slin_cnt;      /* global line no. for currently check stmt */
+int32 __vpifnam_ind;   /* vpi_ global current file index */
+int32 __vpilin_cnt;    /* vpi_ global current line no. */
 struct expr_t *__srm_xp; /* current string 'file' for sreadmem */
 char *__srm_strp;      /* char. pos. in sreadmem string */
 char *__srm_strp_beg;  /* work alloced location for sreadmem string */
-int __srm_strp_len;    /* alloced length */
-int __srm_stargi;      /* current string position number */
-int __in_ifdef_level;  /* current processing `ifdef level */ 
-int __ifdef_skipping;  /* T = skipping not included ifdef section */
+int32 __srm_strp_len;  /* alloced length */
+int32 __srm_stargi;    /* current string position number */
+int32 __in_ifdef_level;/* current processing `ifdef level */ 
+int32 __ifdef_skipping;/* T = skipping not included ifdef section */
 char *__langstr;       /* work string for `language */
-int __doing_langdir;   /* T => processing `language directive */ 
-int __rding_top_level; /* T => reading outside top level construct */
+int32 __doing_langdir; /* T => processing `language directive */ 
+int32 __rding_top_level; /* T => reading outside top level construct */
 
 /* variables for batch tracing */
 word64 __last_trtime;  /* last trace statement time */
@@ -178,9 +178,9 @@ word64 __last_evtrtime;/* last event trace time */
 struct itree_t *__last_tritp;/* last event traced inst. itree loc. */ 
 
 /* command processing variables and temps */
-int __pv_err_cnt, __pv_warn_cnt; /* error counts */
-int __inform_cnt;      /* number of informs */
-int __outlinpos;       /* current trunc. output line pos. */
+int32 __pv_err_cnt, __pv_warn_cnt; /* error counts */
+int32 __inform_cnt;    /* number of informs */
+int32 __outlinpos;     /* current trunc. output line pos. */
 long __mem_use;        /* counts allocated mem for debugging */
 long __mem_allocated;  /* bytes allocated */
 long __mem_freed;      /* bytes freed */
@@ -188,147 +188,149 @@ long __memstr_use;     /* counts allocated string mem for debugging */
 long __arrvmem_use;    /* allocated bytes for Verilog arrays */
 long __mem_udpuse;     /* number of bytes used by udp tables */
 word64 __tim_zero;     /* place for time of constant 0 */
-int __num_glbs;        /* total no. of globals in design */
-int __num_inmodglbs;   /* glbs thar resolve to intra module refs. */
-int __num_uprel_glbs;  /* number of upward relative globals */
-int __nets_removable;  /* flat no. of deletable nets */
-int __flnets_removable;/* removable static nets */
-int __gates_removable; /* removable static gates */
-int __flgates_removable; /* flat no. of deletable gates */
-int __contas_removable; /* removabale static cont. assigns */
-int __flcontas_removable; /* flat no. of deletable cont. assigns */
+int32 __num_glbs;      /* total no. of globals in design */
+int32 __num_inmodglbs; /* glbs thar resolve to intra module refs. */
+int32 __num_uprel_glbs;/* number of upward relative globals */
+int32 __nets_removable;/* flat no. of deletable nets */
+int32 __flnets_removable;/* removable static nets */
+int32 __gates_removable; /* removable static gates */
+int32 __flgates_removable; /* flat no. of deletable gates */
+int32 __contas_removable; /* removabale static cont. assigns */
+int32 __flcontas_removable; /* flat no. of deletable cont. assigns */
 
 /* special allocate free variables */
 struct ncablk_t *__hdr_ncablks; /* blocks used for ncomp recs */
-int __ncablk_nxti;     /* index of next free pos. */
+int32 __ncablk_nxti;   /* index of next free pos. */
 struct cpblk_t *__hdr_cpblks; /* blocks used for cell recs*/
-int __cpblk_nxti;      /* index of next free pos. */
+int32 __cpblk_nxti;    /* index of next free pos. */
 struct cppblk_t *__hdr_cppblks; /* blocks used for cell pin recs*/
-int __cppblk_nxti;     /* index of next free pos. */
+int32 __cppblk_nxti;   /* index of next free pos. */
 struct tnblk_t *__hdr_tnblks;  /* blocks of symb table tree nodes */
-int __tnblk_nxti;      /* index of next free pos. */ 
+int32 __tnblk_nxti;    /* index of next free pos. */ 
 struct cpnblk_t *__hdr_cpnblks;  /* blocks of explicit cell pnames */
 
 /* source processing variables */
-int __lin_cnt;         /* line number while reading a file */
-int __saverr_cnt;      /* counter to inhibit more than a err in xpr */
-int __max_errors;      /* maximum errors before stopping */
-int __rding_comment;   /* flag so comment non printable chars ok */
-int __total_rd_lines;  /* total number of lines read */
-int __total_lang_dirs; /* total num `language directives read */
+int32 __lin_cnt;       /* line number while reading a file */
+int32 __saverr_cnt;    /* counter to inhibit more than a err in xpr */
+int32 __max_errors;    /* maximum errors before stopping */
+int32 __rding_comment; /* flag so comment non printable chars ok */
+int32 __total_rd_lines;/* total number of lines read */
+int32 __total_lang_dirs; /* total num `language directives read */
 
 /* booleans for program options (flags) */
-int __verbose;         /* T => emit various extra messages */
-int __quiet_msgs;      /* T => do not emit msgs just errors */
-int __no_warns;        /* T => don't print warning msgs */
-int __no_errs;         /* T => don't print error msgs */
-int __no_informs;      /* T => don't print inform msgs (dflt) */
-int __debug_flg;       /* T => turn on debugging output */
-int __opt_debug_flg;   /* T => turn on vm compiler debugging output */
-int __st_tracing;      /* T => trace statement execution */
-int __ev_tracing;      /* T => trace event schedules and processes */
-int __pth_tracing;     /* T => trace path delays in detail */
-int __prt_stats;       /* T => print design statics tables */
-int __prt_allstats;    /* T => print design and mod content tabs */
-int __show_cancel_e;   /* T => chg val to x on pulse cancelled event */
-int __showe_onevent;   /* T => if showing cancel e, drive x on event */
-int __warn_cancel_e;   /* T => emit warn cancel_e (indep. of cancel) */
-int __rm_gate_pnd0s;   /* T => remove #0 from all gates */
-int __rm_path_pnd0s;   /* T => (default) remove all 0 delay paths */
-int __dmpvars_all;     /* T => dumpvars all variables */
+int32 __verbose;       /* T => emit various extra messages */
+int32 __quiet_msgs;    /* T => do not emit msgs just errors */
+int32 __no_warns;      /* T => don't print warning msgs */
+int32 __no_errs;       /* T => don't print error msgs */
+int32 __no_informs;    /* T => don't print inform msgs (dflt) */
+int32 __debug_flg;     /* T => turn on debugging output */
+int32 __opt_debug_flg; /* T => turn on vm compiler debugging output */
+int32 __st_tracing;    /* T => trace statement execution */
+int32 __ev_tracing;    /* T => trace event schedules and processes */
+int32 __pth_tracing;   /* T => trace path delays in detail */
+int32 __prt_stats;     /* T => print design statics tables */
+int32 __prt_allstats;  /* T => print design and mod content tabs */
+int32 __show_cancel_e; /* T => chg val to x on pulse cancelled event */
+int32 __showe_onevent; /* T => if showing cancel e, drive x on event */
+int32 __warn_cancel_e; /* T => emit warn cancel_e (indep. of cancel) */
+int32 __rm_gate_pnd0s; /* T => remove #0 from all gates */
+int32 __rm_path_pnd0s; /* T => (default) remove all 0 delay paths */
+int32 __dmpvars_all;   /* T => dumpvars all variables */
 
 /* command option booleans */
-int __lib_verbose;     /* T => emit src.file/lib source messages */
-int __sdf_verbose;     /* T => emit msgs for SDF annotated delays */
-int __switch_verbose;  /* T => emit msgs for switch/tran chan build */
-int __chg_portdir;     /* T => chg port dir to bid. for XL compat */
-int __decompile;       /* T => decompile and print Verilog source */
-int __compile_only;    /* T => check syntax (inc. lib.) no quads */
-int __parse_only;      /* T => first pass parse only to chk sep mod */
-int __dflt_ntyp;       /* Verilog wire type for normal nets */
-int __mintypmax_sel;   /* for (e:e:e) expressions value to use */
-int __sdf_mintypmax_sel; /* min:nom_max over-ride for $sdf_annotate */
-int __gateeater_on;    /* T => attempt to remove (disconnect) gates */ 
-int __no_expand;       /* T => make all wire vectors vectored */
-int __in_cell_region;  /* T => turn on cell bit for every module */
-int __unconn_drive;    /* if none TOK_NONE else PULL 0 or PULL 1 */
-int __no_specify;      /* T => check but no simulate with specify */
-int __no_tchks;        /* T => check but no simulate with tim chks */
-int __lib_are_cells;   /* T => if in lib, the mark as cell (dflt.) */
-int __design_has_cells;/* T => cells somewhere in design */
-int __accelerate;      /* T => use short circuits g/prt code if can */
-int __pli_keep_src;    /* T => keep more source stmt info for pli */
-int __use_impthdels;   /* T => use src-dst im path dels */
+int32 __lib_verbose;   /* T => emit src.file/lib source messages */
+int32 __sdf_verbose;   /* T => emit msgs for SDF annotated delays */
+int32 __switch_verbose;/* T => emit msgs for switch/tran chan build */
+int32 __chg_portdir;   /* T => chg port dir to bid. for XL compat */
+int32 __decompile;     /* T => decompile and print Verilog source */
+int32 __compile_only;  /* T => check syntax (inc. lib.) no quads */
+int32 __parse_only;    /* T => first pass parse only to chk sep mod */
+int32 __dflt_ntyp;     /* Verilog wire type for normal nets */
+int32 __mintypmax_sel; /* for (e:e:e) expressions value to use */
+int32 __sdf_mintypmax_sel; /* min:nom_max over-ride for $sdf_annotate */
+int32 __gateeater_on;  /* T => attempt to remove (disconnect) gates */ 
+int32 __no_expand;     /* T => make all wire vectors vectored */
+int32 __in_cell_region;/* T => turn on cell bit for every module */
+int32 __unconn_drive;  /* if none TOK_NONE else PULL 0 or PULL 1 */
+int32 __no_specify;    /* T => check but no simulate with specify */
+int32 __no_tchks;      /* T => check but no simulate with tim chks */
+int32 __lib_are_cells; /* T => if in lib, the mark as cell (dflt.) */
+int32 __design_has_cells;/* T => cells somewhere in design */
+int32 __accelerate;    /* T => use short circuits g/prt code if can */
+int32 __pli_keep_src;  /* T => keep more source stmt info for pli */
+int32 __use_impthdels; /* T => use src-dst im path dels */
 
 /* source input variables and temps */
 char __lasttoken[IDLEN];/* current last pushed back symbol name */
 char __token[IDLEN];   /* current symbol (in canonical (lc) form) */
-int __toktyp;          /* place for current toktyp value */
-int __lasttoktyp;      /* push back token type (= UNDEF if none) */
-int __last_attr_prefix;/* push back pending attr prefix state */
-int __itoklen;         /* current number token bit length */
-int __itoksized;       /* T => token is sized */
-int __itokbase;        /* base constant for number token */
-int __itoksizdflt;     /* '[base] form with width (uses dflt.) */
-int __itok_signed;     /* T => token is signed number */
+int32 __toktyp;        /* place for current toktyp value */
+int32 __lasttoktyp;    /* push back token type (= UNDEF if none) */
+int32 __last_attr_prefix;/* push back pending attr prefix state */
+int32 __itoklen;       /* current number token bit length */
+int32 __itoksized;     /* T => token is sized */
+int32 __itokbase;      /* base constant for number token */
+int32 __itoksizdflt;   /* '[base] form with width (uses dflt.) */
+int32 __itok_signed;   /* T => token is signed number */
 double __itok_realval; /* actual scannoer double val */
 char *__strtoken;      /* growable token to hold string */
-int __strtok_wid;      /* current size of string token */    
+int32 __strtok_wid;    /* current size of string token */    
 char *__numtoken;      /* growable token to hold numbers */
-int __numtok_wid;      /* current size of number token */    
-int __letendnum_state; /* T => letter can end unsized num. */
-int __macro_sep_width; /* T => possible beginning of macro 2 tok num */
-int __maybe_2tok_sized_num; /* T => seeing number after macro num */
-int __macro_sav_nwid;  /* value of saved first tok width */
-int __first_linetok;   /* T => token first on line */
-int __file_just_op;    /* T => new file and no token yet returned */
-int __first_num_eol;   /* T => first tok because number ended line */
+int32 __numtok_wid;    /* current size of number token */    
+int32 __letendnum_state; /* T => letter can end unsized num. */
+int32 __macro_sep_width; /* T => possible beginning of macro 2 tok num */
+int32 __maybe_2tok_sized_num; /* T => seeing number after macro num */
+int32 __macro_sav_nwid;/* value of saved first tok width */
+int32 __first_linetok; /* T => token first on line */
+int32 __file_just_op;  /* T => new file and no token yet returned */
+int32 __first_num_eol; /* T => first tok because number ended line */
 char *__macwrkstr;     /* work string for macros */ 
-int __mac_line_len;    /* actual length of macro line in wrk str */   
-int __macwrklen;       /* allocated len of mac. work string */
+int32 __mac_line_len;  /* actual length of macro line in wrk str */   
+int32 __macwrklen;     /* allocated len of mac. work string */
 struct macarg_t *__macarg_hdr; /* hdr of list of format mac. args */
+int32 __macbs_flag;    /* T=> 8'h`DEFINE catch multiple bases errors */
 char *__attrwrkstr;    /* work string for attributes */
-int __attr_line_len;   /* actual length of attribute string */ 
-int __attrwrklen;      /* alloced len of attr work string - grows */
+int32 __attr_line_len; /* actual length of attribute string */ 
+int32 __attrwrklen;    /* alloced len of attr work string - grows */
 char *__attrparsestr;  /* string to parse attr out of */
-int __attrparsestrlen; /* string to parse attr out of */
-int __attr_prefix;     /* T => token has attribute prefix */
-int __attr_fnam_ind;   /* location of attr inst. */
-int __attr_lin_cnt;    /* location of attr inst. */
+int32 __attrparsestrlen; /* string to parse attr out of */
+int32 __attr_prefix;   /* T => token has attribute prefix */
+int32 __attr_fnam_ind; /* location of attr inst. */
+int32 __attr_lin_cnt;  /* location of attr inst. */
 struct attr_t __wrk_attr; /* latest read attribute */
 char *__xs, *__xs2;    /* places to put expr to str trunc messages */
-int __pv_ctv;          /* tmp for white space skipping macros */
-int __syncto_class;    /* token class sync skipping halted at */
+int32 __pv_ctv;        /* tmp for white space skipping macros */
+int32 __syncto_class;  /* token class sync skipping halted at */
 char *__exprline;      /* expr. output line work string */
-int __exprlinelen;     /* expr. line length */
-int __cur_sofs;        /* ndx of next ofs (position) in expr line */
-word *__acwrk;         /* a value work string for scanning number */
-word *__bcwrk;         /* b value work string for scanning number */
-word __addrtmp[2];     /* up to 32 bit temp with addr. */
-int __abwrkwlen;       /* current acwrk a half length in words */
+int32 __exprlinelen;   /* expr. line length */
+int32 __cur_sofs;      /* ndx of next ofs (position) in expr line */
+word32 *__acwrk;       /* a value work string for scanning number */
+word32 *__bcwrk;       /* b value work string for scanning number */
+word32 __addrtmp[2];   /* up to 32 bit temp with addr. */
+int32 __abwrkwlen;     /* current acwrk a half length in words */
 char __portnam[IDLEN];
-char __pv_varnam[IDLEN];  /* variable name */
-int __expr_is_lval;    /* T => parsing proc. assign lhs */
-int __allow_scope_var; /* T => process systask arg can be scope */
+char __pv_varnam[IDLEN]; /* variable name */
+int32 __expr_is_lval;  /* T => parsing proc. assign lhs */
+int32 __allow_scope_var; /* T => process systask arg can be scope */
 
 /* vars needed for pushing back numbers (see var. comment) */
-int __lastitokbase;
-int __lastitoksized;
-int __lastitoksizdflt;
-int __lastitok_signed;
-int __lastitoklen;
-word *__lastacwrk;  /* special malloced push back num value */
-word *__lastbcwrk; 
+int32 __lastitokbase;
+int32 __lastitoksized;
+int32 __lastitoksizdflt;
+int32 __lastitok_signed;
+int32 __lastitoklen;
+word32 *__lastacwrk;   /* special malloced push back num value */
+word32 *__lastbcwrk; 
 double __lastitok_realval;
 
 /* the module and module subtask specific work variables */
 struct mod_t *__oinst_mod;/* ptr. to old current module for copying */
 struct mod_t *__end_mdp; /* end of module def. list */
 struct cell_t *__end_cp; /* end of module inst. list */
-int __cp_num;          /* counter for unnamed gate/inst pos. */ 
+int32 __cp_num;          /* counter for unnamed gate/inst pos. */ 
 struct conta_t *__end_ca; /* end of module conta list */
-int __conta_num;       /* counter for building symbol for conta */
-
+int32 __conta_num;     /* counter for building symbol for conta */
+struct varinitlst_t *__end_mod_varinitlst; /* end of mod var inits */
+struct symtab_t *__tfcall_wrksytp;/* wrk tf tab for undecl xmr uprel */  
 
 struct dfparam_t *__end_dfp;/* module current end of defparam list */
 struct task_pin_t *__end_tpp; /* end of task port list */
@@ -340,59 +342,59 @@ struct net_t *__end_glbparamnp; /* end of ordered glb parm decl. lst */
 struct net_t *__end_tskparamnp; /* end of task param decl. list */
 struct ialst_t *__end_ialst; /* end of module initial/always list */
 struct gref_t *__grwrktab;  /* work table for building mod glbs */
-int __grwrktabsiz;          /* its size */
-int __grwrknum;        /* current number of glbs in work table */ 
-int __cur_declobj;     /* token type of declared mod or task */
-int __pv_stlevel;      /* tmp. for current stmt nesting level */
-int __design_no_strens;/* T => no strengths used in design */
-int __strenprop_chg;   /* during propagate pass at least one chged */
-int __splitting;       /* T => in process of splitting module */
-int __processing_pnd0s;/* T => in time unit, in end #0 region */
+int32 __grwrktabsiz;        /* its size */
+int32 __grwrknum;      /* current number of glbs in work table */ 
+int32 __cur_declobj;   /* token type of declared mod or task */
+int32 __pv_stlevel;    /* tmp. for current stmt nesting level */
+int32 __design_no_strens;/* T => no strengths used in design */
+int32 __strenprop_chg; /* during propagate pass at least one chged */
+int32 __splitting;     /* T => in process of splitting module */
+int32 __processing_pnd0s;/* T => in time unit, in end #0 region */
 struct dce_expr_t *__cur_dce_expr; /* glb for edge events eval expr */
-int __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
+int32 __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
 struct exprlst_t *__impl_evlst_hd; /* hdr of impl @(*) ev expr list */
 struct exprlst_t *__impl_evlst_tail; /* and its tail */
-int __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
+int32 __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
 
 /* variables for dumpvars */
-int __dv_seen;         /* dumpvars seen but not yet setup */
-int __dv_state;        /* processing state of dumpvars */
+int32 __dv_seen;       /* dumpvars seen but not yet setup */
+int32 __dv_state;      /* processing state of dumpvars */
 word64 __dv_calltime;  /* time dump var. first (and only) called */
-int __dv_dumplimit_size; /* user set limit of dv file size (0 none) */
-int __dv_file_size;    /* current size of dumpvars file */
-int __dv_time_emitted; /* flag to stop repeated same #[time] */
+int32 __dv_dumplimit_size; /* user set limit of dv file size (0 none) */
+int32 __dv_file_size;  /* current size of dumpvars file */
+int32 __dv_time_emitted; /* flag to stop repeated same #[time] */
 char *__dv_fnam;       /* name of dumpvars output file */
-int __dv_func;         /* global set with type of dumpvar dumping */
+int32 __dv_func;       /* global set with type of dumpvar dumping */
 struct mdvmast_t *__dv_hdr; /* hdr of mast dumpvar rec. list */
 struct mdvmast_t *__dv_end; /* end of dumpvar rec. list */
 struct dvchgnets_t *__dv_netfreelst; /* free list of time var chges */
-int __dv_fd;           /* file number of dmpvars fd */
+int32 __dv_fd;         /* file number of dmpvars fd */
 char *__dv_buffer;     /* buffer to speed up dumpvars output */
-int __dv_nxti;         /* next free location */
-int __dv_outlinpos;    /* line postion in dump vars file */ 
-int __next_dvnum;      /* highest so far used dumpvars number */
+int32 __dv_nxti;       /* next free location */
+int32 __dv_outlinpos;  /* line postion in dump vars file */ 
+int32 __next_dvnum;    /* highest so far used dumpvars number */
 struct dvchgnets_t *__dv_chgnethdr;  /* curr. time var chg list hdr */
-int __dv_isall_form;   /* T doing all of design dumpvar setup */
-int __dv_allform_insrc;/* T dumpvars all form in source */
+int32 __dv_isall_form; /* T doing all of design dumpvar setup */
+int32 __dv_allform_insrc;/* T dumpvars all form in source */
 
 /* time scale - precision variables */
-unsigned __cur_units;  /* current units (0 (1s) - 15 (1ft) */ 
-unsigned __cur_prec;   /* current digits of precision (0-15) */
-unsigned __des_timeprec;/* assume -, 0-15 design sim. tick prec. */
-unsigned __tfmt_units; /* %t output units (also interact. units) */
-unsigned __tfmt_precunits;/* %t number of prec. digits */
-int __des_has_timescales;/* T => design has at least one timescale */
+word32 __cur_units;    /* current units (0 (1s) - 15 (1ft) */ 
+word32 __cur_prec;     /* current digits of precision (0-15) */
+word32 __des_timeprec; /* assume -, 0-15 design sim. tick prec. */
+word32 __tfmt_units;   /* %t output units (also interact. units) */
+word32 __tfmt_precunits;/* %t number of prec. digits */
+int32 __des_has_timescales;/* T => design has at least one timescale */
 char *__tfmt_suf;      /* suffix for %t */
-int __tfmt_minfwid;    /* minimum field width for %t */
+int32 __tfmt_minfwid;  /* minimum field width for %t */
 word64 __itoticks_tab[16];/* table of scales amount from prec. */
 char __timstr_unitsuf[4];/* to_timstr units suffix if needed */
 word64 __timstr_mult;  /* multiplier if needed */
-int  __nd_timstr_suf;  /* T => need to_timstr units */
+int32  __nd_timstr_suf;/* T => need to_timstr units */
 
-/* veriuser tfs pli user function and task work variables */ 
+/* veriusertfs pli user function and task work variables */ 
 /* SJM 07/16/02 - need internal veriuser tfs for new +loadpli1 option */
 struct t_tfcell *__shadow_veriusertfs; /* internal copy of table */
-int __last_veriusertf; /* last user veriuser tfs tf number */
+int32 __last_veriusertf; /* last user veriusertfs tf number */
 struct tfinst_t *__tfinst;/* current tf_ inst loc. */
 struct tfrec_t *__tfrec;/* current tf_ record */ 
 struct dceauxlst_t *__pvc_dcehdr; /* header of current pvc dces */
@@ -400,19 +402,19 @@ struct tfrec_t *__tfrec_hdr; /* header of design wide tfrec list */
 struct tfrec_t *__tfrec_end; /* last el of design wide tfrec list */ 
 i_tev_ndx __tehdr_rosynci; /* hdr ndx of slot end ro sync ev lst */ 
 i_tev_ndx __teend_rosynci; /* end of slot end ro sync ev lst */ 
-int __now_resetting;   /* reset in progress - for cbs and misctf */  
-int __rosync_slot;     /* T => processing tf or vpi  ro synch events */
-struct loadpli_t *__vpi_dynlib_hd; /* hd of ld vpi dynamic lib list */
-struct loadpli_t *__vpi_dynlib_end;/* and its end */
+int32 __now_resetting; /* reset in progress - for cbs and misctf */  
+int32 __rosync_slot;   /* T => processing tf or vpi  ro synch events */
+struct loadpli_t *__pli1_dynlib_hd; /* hd of ld pli1 dynamic lb list */
+struct loadpli_t *__pli1_dynlib_end; /* and its end */
 
 /* vpi_ work variables */
-int __last_systf;      /* last vpi_ registered sytfs number */
-int __num_vpi_force_cbs; /* number of registered vpi force cbs */
-int __vpi_force_cb_always; /* T => always call back on force */
-int __num_vpi_rel_cbs; /* number of registered vpi rel cbs */
-int __vpi_rel_cb_always; /* T => always call back on release */
-int __allforce_cbs_off; /* T => can't reenter any of all force cbs */
-int __allrel_cbs_off;   /* T => can't reenter any of all release cbs */
+int32 __last_systf;    /* last vpi_ registered sytfs number */
+int32 __num_vpi_force_cbs; /* number of registered vpi force cbs */
+int32 __vpi_force_cb_always; /* T => always call back on force */
+int32 __num_vpi_rel_cbs; /* number of registered vpi rel cbs */
+int32 __vpi_rel_cb_always; /* T => always call back on release */
+int32 __allforce_cbs_off; /* T => can't reenter any of all force cbs */
+int32 __allrel_cbs_off;/* T => can't reenter any of all release cbs */
 char *__wrks1;         /* work string - can not use xs if func */
 char *__wrks2;
 char __wrk_vpiemsg[IDLEN];/* error msg. work string */
@@ -421,10 +423,10 @@ char __wrk_vpi_product[256];/* product version */
 char __wrk_vpi_errcode[256];/* error codes are Cver err num as str */
 double __wrk_vpi_timedbl;/* time double for vpi error rec */
 char *__wrkvalbufp;    /* buf for vpi get value value_p contents */ 
-int __wrkval_buflen;   /* and current length */
-int __vpi_vlog_start_done;/* T => startup done, no systf registering */
+int32 __wrkval_buflen; /* and current length */
+int32 __vpi_vlog_start_done;/* T => startup done, no systf registering */
 struct systftab_t *__systftab; /* table of vpi_ systf records */
-int __size_systftab;   /* current size of systf data rec. table */
+int32 __size_systftab; /* current size of systf data rec. table */
 struct xstk_t *__cur_sysf_xsp; /* tmp stk_t for vpi sysf ret val */
 struct expr_t *__cur_sysf_expr;/* tmp calling expr. for vpi sysf*/
 struct st_t *__cur_syst_stp; /* tmp stmt for vpi syst*/
@@ -435,115 +437,117 @@ struct rfcblst_t *__force_allcb_hdr;
 struct rfcblst_t *__force_allcb_end;
 i_tev_ndx *__vpicb_tehdri; /* hdr of fixed cb tev list - 1 per class */
 i_tev_ndx *__vpicb_teendi; /* end of fixed cb tev list - 1 per class */
-int __have_vpi_actions;/* some use of __vpi actions */
-int __have_vpi_gateout_cbs;/* some use of gate out term cbs */
+int32 __have_vpi_actions;/* some use of __vpi actions */
+int32 __have_vpi_gateout_cbs;/* some use of gate out term cbs */
 struct h_t *__vpi_hfree_hdr;  /* handle free list hdr */ 
 struct hrec_t *__vpi_hrecfree_hdr;  /* handle record free list hdr */ 
 struct cbrec_t *__vpi_cbrec_hdr; /* all cbs list header */
-int __ithtsiz;         /* size of global work ld/drv handle table */
+int32 __ithtsiz;       /* size of global work ld/drv handle table */
 struct h_t *__ithtab;  /* and the work ld/drv handle table */
 struct hrec_t *__ithrectab; /* and hrec contents of it */
-int __ithtsiz2;        /* size of global work ld/drv handle table */
-struct h_t *__ithtab2;  /* 2nd work for in subtree handles */
+int32 __ithtsiz2;      /* size of global work ld/drv handle table */
+struct h_t *__ithtab2; /* 2nd work for in subtree handles */
 struct hrec_t *__ithrectab2; /* and hrec contents of it */
 struct vpisystf_t *__vpi_sysf_hdr; /* hdr sys func call src locs */
 struct vpisystf_t *__vpi_syst_hdr; /* hdr sys task enable src locs */
-int __in_vpi_errorcb;  /* T => if sim ctrl, suppress error msg error */
-int __vpierr_cb_active; /* T => at least one cbError reged */
-int __acc_vpi_erroff;  /* acc_ flag to stop internal acc_ error cbs */
-int __errorcb_suppress_msg; /* T => sim control suppress error msg */
+int32 __in_vpi_errorcb;/* T => if sim ctrl, suppress error msg error */
+int32 __vpierr_cb_active; /* T => at least one cbError reged */
+int32 __acc_vpi_erroff;/* acc_ flag to stop internal acc_ error cbs */
+int32 __errorcb_suppress_msg; /* T => sim control suppress error msg */
 struct h_t *__cur_vpi_inst;
 struct hrec_t *__cur_vpi_obj;
-struct loadpli_t *__pli1_dynlib_hd; /* hd of ld pli1 dynamic lb list */
-struct loadpli_t *__pli1_dynlib_end;/* and its end */
+struct loadpli_t *__vpi_dynlib_hd; /* hd of ld vpi dynamic lib list */
+struct loadpli_t *__vpi_dynlib_end; /* and its end */
 
 /* specify work variables */
 struct spfy_t *__cur_spfy;/* current specify block */
 struct spcpth_t *__end_spcpths; /* end of specify path st. list */
-int __path_num;        /* counter for unnamed paths */
+int32 __path_num;      /* counter for unnamed paths */
 struct tchk_t *__end_tchks;/* end of specify time check st. list */
 struct net_t *__end_msprms;/* end of specify specparam net list */
 struct tchk_t *__cur_tchk;
-int __tchk_num;        /* counter for unnamed paths */
+int32 __tchk_num;      /* counter for unnamed paths */
 struct symtab_t *__sav_spsytp;/* save loc. of sym tab in spfy sect. */
 
 /* work compile global variables accessed by routines */
-int __v1stren;         /* wire/inst. Ver. 1 strength */
-int __v0stren;         /* wire/inst. Ver. 0 strength */
-unsigned __pr_iodir;   /* glb. for port ref. expr. I/O direction */
-int __pr_wid;          /* global for total port ref. expr. width */
-int __mpref_explicit;  /* T => mod def header port ref explicit */
-int __sym_is_new;      /* set when new symbol added */
+int32 __v1stren;       /* wire/inst. Ver. 1 strength */
+int32 __v0stren;       /* wire/inst. Ver. 0 strength */
+word32 __pr_iodir;     /* glb. for port ref. expr. I/O direction */
+int32 __pr_wid;        /* global for total port ref. expr. width */
+int32 __mpref_explicit;/* T => mod def header port ref explicit */
+int32 __sym_is_new;    /* set when new symbol added */
 struct sy_t **__wrkstab;/* malloced work symbol table area */
-int __last_sy;         /* last symbol in work area */
-int __mod_specparams;  /* number of declared specparams in mod */
-int __name_assigned_to;/* glb set if func. def. name assigned to */
+int32 __last_sy;       /* last symbol in work area */
+int32 __mod_specparams;/* number of declared specparams in mod */
+int32 __name_assigned_to;/* glb set if func. def. name assigned to */
 struct sy_t *__locfnamsyp; /* place for func. def. chk func. symbol */
-int __processing_func; /* T => prep or exec of function occuring */
+int32 __processing_func; /* T => prep or exec of function occuring */
 struct st_t **__nbstk; /* func. nest nblock stack (nxt for exec) */
-int __nbsti;      
+int32 __nbsti;      
 struct sy_t *__ca1bit_syp; /* gmsym for 1 bit conta converted gate */
-int __chking_conta;    /* T => checking a continuous assignment */
-int __rhs_isgetpat;    /* T => flag for checking stylized getpat */
-int __lhs_changed;     /* T => assignment changed lhs */
-word __badind_a;       /* place for a part of in error index value */
-word __badind_b;       /* and for b part */
-int __badind_wid;      /* width for bad ind (<32 expr can eval to x) */
-int __expr_has_real;   /* T => know some real in expr. */
-word *__isform_biwp;   /* global for IS net pin bit index word arr. */
-int __lhsxpr_has_ndel; /* T => component wire of lhs has wire del */
-int __checking_only;   /* T => no error msg, looking for something */ 
-int __task_has_tskcall;/* T => task calls other task (not name blk) */
-int __func_has_fcall;  /* T => func contains has non sys fcall */
-int __task_has_delay;  /* T => task call has del. needs thread */
-int __iact_must_sched; /* T => iact stmt(s) have $stop or loop */
-int __expr_rhs_decl;   /* T current expr. is decl. not proc. rhs */ 
-int __chg_rng_direct;  /* T => change rng dir. for implicitly decl */
-int __has_top_mtm;     /* T => for parameter rhs non () m:t:m */
-int __nd_0width_catel_remove; /* fx3 file 0 width concat glb */
+int32 __chking_conta;  /* T => checking a continuous assignment */
+int32 __rhs_isgetpat;  /* T => flag for checking stylized getpat */
+int32 __lhs_changed;   /* T => assignment changed lhs */
+word32 __badind_a;     /* place for a part of in error index value */
+word32 __badind_b;     /* and for b part */
+int32 __badind_wid;    /* width for bad ind (<32 expr can eval to x) */
+int32 __expr_has_real; /* T => know some real in expr. */
+int32 __isform_bi_xvi; /* glbl for IS net pin bit index in contab */
+int32 __lhsxpr_has_ndel; /* T => component wire of lhs has wire del */
+int32 __checking_only; /* T => no error msg, looking for something */ 
+int32 __task_has_tskcall;/* T => task calls other task (not name blk) */
+int32 __task_has_delay;/* T => task call has del. needs thread */
+int32 __func_has_fcall;/* T => func contains has non sys fcall */
+int32 __iact_must_sched; /* T => iact stmt(s) have $stop or loop */
+int32 __expr_rhs_decl; /* T current expr. is decl. not proc. rhs */ 
+int32 __chg_rng_direct;/* T => change rng dir. for implicitly decl */
+int32 __has_top_mtm;   /* T => for parameter rhs non () m:t:m */
+int32 __nd_0width_catel_remove; /* fx3 file 0 width concat glb */
 
 /* current Verilog module/task/block symbol environment */
 struct symtab_t **__venviron;
-int __top_sti;
+int32 __top_sti;
 struct symtab_t *__modsyms;/* separate symbol table for type names */
 struct symtab_t *__pv_defsyms;/* global table for `defines */
 struct symtab_t *__syssyms;/* global tab for system tasks and funcs */
 struct sy_t **__glbsycmps; /* work global name symbols */
 struct expr_t **__glbxcmps;/* work glbal exprs */
-int __last_gsc;
+int32 __last_gsc;
 
 /* n.l. access headers and tables */
-struct mod_t *__modhdr;  /* header of top level module list */
+struct mod_t *__modhdr;/* header of top level module list */
 struct udp_t *__udphead; /* header udps */
 struct udp_t *__udp_last;/* end udp list */
 struct inst_t **__top_itab; /* tab of virt inst ptrs of top mods */
-int *__top_ipind;      /* binary searchable top insts index */
-int __numtopm;         /* number of uninstanciated top modules */
+int32 *__top_ipind;    /* binary searchable top insts index */
+int32 __numtopm;       /* number of uninstanciated top modules */
 struct itree_t **__it_roots; /* table of root itree entries */
-int __ualtrepipnum;    /* udp rep. change threshold */
+int32 __ualtrepipnum;  /* udp rep. change threshold */
 struct thread_t *__initalw_thrd_hdr; /* list hd of per inst in/al thds */
 struct tev_t *__tevtab;/* reallocable tab of events and free evs */
-int __numused_tevtab;  /* num used at least once in tev tab */
-int __size_tevtab;     /* num tev's allocated in tev tab */ 
-word *__contab;        /* design wide constant table */
-int __contabwsiz;      /* currrent size of const tab in words */
-int __contabwi;        /* next free word slot in const tab */
-int __opempty_contabi; /* special contab index for opempty expr leaf */
+int32 __numused_tevtab;/* num used at least once in tev tab */
+int32 __size_tevtab;   /* num tev's allocated in tev tab */ 
+word32 *__contab;      /* design wide constant table */
+int32 __contabwsiz;    /* currrent size of const tab in words */
+int32 __contabwi;      /* next free word32 slot in const tab */
+int32 __opempty_contabi; /* special contab index for opempty expr leaf */
+int32 __b32_minus1;    /* special contab ndx for 32 bit -1 */
 double *__rlcontab;    /* design wide constant table for reals*/
-int __rlcontabdsiz;    /* currrent size of const tab in no. of dbls */
-int __rlcontabdi;      /* next free double slot in real const tab */
+int32 __rlcontabdsiz;  /* currrent size of const tab in no. of dbls */
+int32 __rlcontabdi;    /* next free double slot in real const tab */
+struct contab_info_t **__contab_hash; /* contab hash information */
 
 /* n.l. access routines */  
 struct dfparam_t *__dfphdr; /* design wide defparam list header */
-int __num_dfps;        /* number of defparams in source */
-int __num_glbdfps;     /* number of defparams in design */
-int __num_locdfps;     /* number of local defparams */
-int __num_inst_pndparams;/* static number of inst. pound params */
-int __design_gia_pndparams;/* T => at least one gia range pnd params */
-int __design_gi_arrays;  /* T => design has arrays of g/i */ 
-int __pndparam_splits; /* T => at least one split from pound params */
-int __defparam_splits; /* T => at least one split from def params */
-int __dagmaxdist;      /* max. nested mod. inst. level */
+int32 __num_dfps;      /* number of defparams in source */
+int32 __num_glbdfps;   /* number of defparams in design */
+int32 __num_locdfps;   /* number of local defparams */
+int32 __num_inst_pndparams;/* static number of inst. pound params */
+int32 __design_gia_pndparams;/* T => at least one gia range pnd params */
+int32 __design_gi_arrays;  /* T => design has arrays of g/i */ 
+int32 __pndparam_splits; /* T => at least one split from pound params */
+int32 __defparam_splits; /* T => at least one split from def params */
+int32 __dagmaxdist;    /* max. nested mod. inst. level */
 struct mod_t **__mdlevhdr; /* array of ptrs to ith lev linked mods */ 
 struct cell_pin_t *__cphdr;   /* header of temp. cell pin list */
 struct cell_pin_t *__cpp_last;/* current last cell pin*/
@@ -552,140 +556,144 @@ struct tnode_t *__tmp_head;
 struct xldlnpp_t *__xldl_hdr; /* other side unproc. xl drv/ld npps */
 struct xldlnpp_t *__last_xldl;/* end of list - place to add after */
 struct xldlvtx_t **__xldlvtxind; /* table of xl drv/ld net/bit vtx */
-int __num_xldlvtxs;    /* number of lements in table */
-int __siz_xldlvtxtab;  /* current size of table */
+int32 __num_xldlvtxs;  /* number of lements in table */
+int32 __siz_xldlvtxtab;/* current size of table */
 
 /* udp table building variables */
 struct wcard_t *__wcardtab; /* level wildcard table */
-int __last_wci;        /* last wild card index for line */
-word *__cur_utab;      /* current udp table */
+int32 __last_wci;      /* last wild card index for line */
+word32 *__cur_utab;    /* current udp table */
 struct utline_t *__cur_utlp; /* current line info struct */
-word __cur_uoval;      /* current udp line output value */
-int __cur_unochange;   /* T => cur line has '-' no change output */
+word32 __cur_uoval;    /* current udp line output value */
+int32 __cur_unochange; /* T => cur line has '-' no change output */
 struct udp_t *__cur_udp; /* current udp struct */
-word __cur_upstate;    /* current last input (state) for wide */
-int __cur_ueipnum;     /* cur. input pos. num of edge (NO_VAL none) */
-int __cur_utabsel;     /* current edge 1st char - 2nd in state line */
+word32 __cur_upstate;  /* current last input (state) for wide */
+int32 __cur_ueipnum;   /* cur. input pos. num of edge (NO_VAL none) */
+int32 __cur_utabsel;   /* current edge 1st char - 2nd in state line */
 
 /* expression and function processing variables */
-int __xndi;            /* next place in collected expression list */
+int32 __xndi;          /* next place in collected expression list */
 struct expr_t **__exprtab;/* table to collect expressions into */
 struct expridtab_t **__expr_idtab; /* expr parse id name info */ 
-int __exprtabsiz;      /* current operator precedence expr tab siz */
-int __last_xtk;
+int32 __exprtabsiz;    /* current operator precedence expr tab siz */
+int32 __last_xtk;
 struct expr_t *__root_ndp;/* root of built and alloced expression */
 struct xstk_t **__xstk;/* expr work vals */
-int __xspi;            /* expr. pointer */
-int __maxxnest;        /* current size of expr. stack - must grow */ 
-int __maxfcnest;       /* size of func. call task stk - must grow */
+int32 __xspi;          /* expr. pointer */
+int32 __maxxnest;      /* current size of expr. stack - must grow */ 
+int32 __maxfcnest;     /* size of func. call task stk - must grow */
 struct task_t **__fcstk; /* function call nesting stack */
-int __fcspi;           /* fcall tos index */
+int32 __fcspi;           /* fcall tos index */
 
 /* -y and -v library variables */
 struct vylib_t *__vyhdr; /* header of lib. file list */
 struct vylib_t *__end_vy;/* last entry on vy lib. list */
-int __num_ylibs;       /* number of ylibs in options */
-int __num_vlibs;       /* number of vlibs in options */
+int32 __num_ylibs;     /* number of ylibs in options */
+int32 __num_vlibs;     /* number of vlibs in options */
 
 struct undef_t *__undefhd;/* head of undefined mod/udp list */   
 struct undef_t *__undeftail; /* tail of undefined mod/udp list */
-int __undef_mods;      /* count of undefined modules */
+int32 __undef_mods;    /* count of undefined modules */
 
-int __lib_rescan;      /* T => rescan from start after each */
-int __cur_passres;     /* num mods resolved in current pass */
-int __rescanning_lib;  /* T => for `language exclude after 1st pass */ 
-int __num_ys;          /* number of -y options in lib. */
+int32 __lib_rescan;    /* T => rescan from start after each */
+int32 __cur_passres;   /* num mods resolved in current pass */
+int32 __rescanning_lib;/* T => for `language exclude after 1st pass */ 
+int32 __num_ys;        /* number of -y options in lib. */
 char **__lbexts;       /* tab of -y library extension suffixes */
-int __last_lbx;
+int32 __last_lbx;
 char **__incdirs;      /* tab of +incdir paths (always / end) */
-int __last_incdir;
+int32 __last_incdir;
 
 /* simulation preparation variables */
-int __cur_npii;        /* current index of inst. in cur. mod */
+int32 __cur_npii;      /* current index of inst. in cur. mod */
 struct gate_t *__cur_npgp;/* current net-pin processing gate */
 struct mod_t *__cur_npmdp;/* current net-pin processing module */
 struct conta_t *__cur_npcap; /* current net pin proc. conta */
 struct tfrec_t *__cur_nptfrp; /* current net pin tf arg drvr rec */
 struct net_t *__cur_npnp; /* current net pin net for vpi putv driver */
-int __cur_npnum;       /* current port number (from 0) */
-int __cur_pbi;         /* current bit number for PB ICONN npp */
-int __cur_lhscati1;    /* if lhs concat, high rhs psel index */
-int __cur_lhscati2;    /* if lhs concat, low rhs psel index */
+int32 __cur_npnum;     /* current port number (from 0) */
+int32 __cur_pbi;       /* current bit number for PB ICONN npp */
+int32 num_optim_cats;  /* number of optimized concats */
+int32 num_optim_catels;/* number of all elements in optim concats */
+int32 __cur_lhscati1;  /* if lhs concat, high rhs psel index */
+int32 __cur_lhscati2;  /* if lhs concat, low rhs psel index */
 struct st_t **__prpstk;/* during prep., continue stp */
-int __prpsti;          /* top of nested stmt. stack */
-int __nd_parmpnp_free; /* T => after 1st parmnpp need copy not orig */
-int __num_rem_gate_pnd0s; /* number of removed source #0 gates */
-int __num_flat_rem_gate_pnd0s; /* and flat number */
-int __num_rem_mipds;   /* number of per bit flat MIPDs 0 delays rmed */
-int __last_modxi;      /* global counter used by n.l expr xform code */
-int __last_modsti;     /* and counter for statements */
-int __optimized_sim;   /* generate c code - compile and dl link */
+int32 __prpsti;        /* top of nested stmt. stack */
+int32 __nd_parmpnp_free; /* T => after 1st parmnpp need copy not orig */
+int32 __num_rem_gate_pnd0s; /* number of removed source #0 gates */
+int32 __num_flat_rem_gate_pnd0s; /* and flat number */
+int32 __num_rem_mipds; /* number of per bit flat MIPDs 0 delays rmed */
+int32 __last_modxi;    /* global counter used by n.l expr xform code */
+int32 __last_modsti;   /* and counter for statements */
+int32 __optimized_sim; /* generate c code - compile and dl link */
+int32 __dump_flowg;    /* dump flow graph for debugging */
 
 /* timing queue scheduling variables */
 word64 __whetime;      /* current timing wheel end time */
 word64 __simtime;      /* current simulaton time (make 64 bits ?) */
-unsigned __num_execstmts;   /* total number of executed statements */
-unsigned __num_addedexec;   /* number of executed added statements */
-unsigned __num_proc_tevents;/* total num simulation events processed */
-unsigned __num_cancel_tevents; /* total num sim events processed */
-int __num_twhevents;   /* num of evs currently in timing wheel */
-int __num_ovflqevents; /* num of events currently in ovflow q */
-unsigned __inertial_cancels; /* num resched form later inertial del */
-unsigned __newval_rescheds; /* num rescheduled for same time */
-unsigned __num_netchges;   /* num of processed net change records */
-unsigned __immed_assigns;  /* num immed assign (not scheduled) */ 
-unsigned __proc_thrd_tevents;/* number of processed thread events */
+word32 __num_execstmts;/* total number of executed statements */
+word32 __num_addedexec;/* number of executed added statements */
+word32 __num_proc_tevents;/* total num simulation events processed */
+word32 __nxtstmt_freq_update; /* next ev count for xbig freq upd. */ 
+word32 __num_cancel_tevents; /* total num sim events processed */
+int32 __num_twhevents; /* num of evs currently in timing wheel */
+int32 __num_ovflqevents; /* num of events currently in ovflow q */
+word32 __inertial_cancels; /* num resched form later inertial del */
+word32 __newval_rescheds; /* num rescheduled for same time */
+word32 __num_netchges; /* num of processed net change records */
+word32 __immed_assigns;/* num immed assign (not scheduled) */ 
+word32 __proc_thrd_tevents;/* number of processed thread events */
 struct q_hdr_t *__qlist_hdr; /* for $q_ system task q list header */
-int __num_switch_vtxs_processed; /* total num tranif chan vtx done */
-int __num_switch_chans; /* total num tranif channels in design */ 
+int32 __num_switch_vtxs_processed; /* total num tranif chan vtx done */
+int32 __num_switch_chans; /* total num tranif channels in design */ 
 
 /* storage tables variables */
 byte *__btab;          /* design wide scalar (byte) storage table */
-int __btabbsiz;        /* scalar storage byte table size in bytes */
-int __btabbi;          /* during var init next word index to use */ 
-word *__wtab;          /* design wide var but not mem storage area */
-int __wtabwsiz;        /* precomputed size (need ptrs into) in words */
-int __wtabwi;          /* during var init next word index to use */ 
+int32 __btabbsiz;      /* scalar storage byte table size in bytes */
+int32 __btabbi;        /* during var init next word32 index to use */ 
+word32 *__wtab;        /* design wide var but not mem storage area */
+int32 __wtabwsiz;      /* precomputed size (need ptrs into) in words */
+int32 __wtabwi;        /* during var init next word32 index to use */ 
 word64 *__lwtab;       /* design wide long long var storage area */
-int __lwtabwsiz;       /* precomputed size (need ptrs into) in lwords */
-int __lwtabwi;         /* during var init next lword index to use */ 
+int32 __lwtabwsiz;     /* precomputed size (need ptrs into) in lwords */
+int32 __lwtabwi;       /* during var init next lword index to use */ 
 double *__rltab;       /* design wide real var storage area */
-int __rltabdsiz;       /* precomputed size in doubles (nd ptr into)  */
-int __rltabdi;         /* during var init next double index to use */ 
+int32 __rltabdsiz;     /* precomputed size in doubles (nd ptr into)  */
+int32 __rltabdi;       /* during var init next double index to use */ 
 
 /* simulation control and state values */
-int __stmt_suspend;    /* set when behavioral code suspends */
-int __run_state;       /* state of current simulation run */
-int __can_exec;        /* T => for vpi sim ctrl - can now exec */
-int __wire_init;       /* T => initializing wires */
-int __no_tmove_levels; /* T => infinite 0 delay loop warn path dist */
+int32 __stmt_suspend;  /* set when behavioral code suspends */
+int32 __run_state;     /* state of current simulation run */
+int32 __can_exec;      /* T => for vpi sim ctrl - can now exec */
+int32 __wire_init;     /* T => initializing wires */
+int32 __no_tmove_levels; /* T => infinite 0 delay loop warn path dist */
 struct thread_t *__cur_thd;  /* currently executing thread addr. */
 struct thread_t *__suspended_thd; /* cur thread before suspend */
 struct itree_t *__suspended_itp; /* cur inst ptr before suspend */
 struct itree_t *__inst_ptr; /* current if flattened itree place */ 
 struct mod_t *__inst_mod;   /* module of current itree inst */
-int __inum;            /* iti num  of current inst (always set) */
+int32 __inum;          /* iti num  of current inst (always set) */
 struct itree_t **__itstk; /* stack of saved itrees */
-int __itspi;           /* top of itree stack */
+int32 __itspi;         /* top of itree stack */
 i_tev_ndx __fsusp_tevpi;/* in func. step, event to undo(cancel) */
 struct itree_t *__tmpitp_freelst; /* free list of wrk itps */
 struct inst_t *__tmpip_freelst; /* free list of wrk ips */
 struct mod_t *__last_libmdp; /* libary module just read */
-int __seed;            /* SJM 01/27/04 - glb seed needed if no arg */
+int32 __seed;          /* SJM 01/27/04 - glb seed needed if no arg */
 
 /* execution state variables */
-unsigned __new_gateval; /* new gate out val (st. possible) */
-unsigned __old_gateval; /* before gate change (st. possible) */
-unsigned __new_inputval;/* new input value for tracing message */
-unsigned __old_inputval;/* prev. value of input for wide udp eval */
+word32 __new_gateval;  /* new gate out val (st. possible) */
+word32 __old_gateval;  /* before gate change (st. possible) */
+word32 __new_inputval; /* new input value for tracing message */
+word32 __old_inputval; /* prev. value of input for wide udp eval */
 word64 __pdlatechgtim; /* for path tracing latest path chg time */
 word64 __pdmindel;     /* for path minimum path delay */
-int __nd_neg_del_warn; /* T => must emit warn (or err) for <0 del */ 
-int __force_active;    /* T => for trace deassign while force */ 
-int __assign_active;   /* T => for trace release activates assgn */
+int32 __nd_neg_del_warn; /* T => must emit warn (or err) for <0 del */ 
+int32 __force_active;  /* T => for trace deassign while force */ 
+int32 __assign_active; /* T => for trace release activates assgn */
 struct dceauxlst_t *__qcaf_dcehdr; /* header of current qcaf dces */
-int __nxt_chan_id;     /* cnter and size for assigning chan ids */
-int __chanallocsize;   /* size of allocated chan tables */
+int32 __nxt_chan_id;   /* cnter and size for assigning chan ids */
+int32 __chanallocsize; /* size of allocated chan tables */
 struct chanrec_t *__chantab;/* tab of channel records (one per id) */
 struct vtxlst_t *__stvtxtab[8]; /* per stren value vertex list */ 
 struct vtxlst_t *__stvtxtabend[8]; /* and ptr to last el on each */
@@ -697,9 +705,9 @@ struct vtxlst_t *__vtxlst_freelst; /* free list for vtx lists */
 struct vtx_t *__vtx_freelst;  /* free list for re-using vtxs */   
 struct edge_t *__edge_freelst; /* free list for re-using edges */
 
-word __acum_sb;        /* accumulator for stren tran chan combined */
-word __acum_a;         /* accumulator for tran chan non stren */
-word __acum_b;
+word32 __acum_sb;      /* accumulator for stren tran chan combined */
+word32 __acum_a;       /* accumulator for tran chan non stren */
+word32 __acum_b;
 byte *__acum_sbp;      /* ptr to stacked strength byte */
 struct xstk_t *__acum_xsp; /* ptr to stacked strength byte */
 
@@ -709,8 +717,8 @@ struct strblst_t *__strobe_end; /* end of strobe display list */
 struct strblst_t *__strb_freelst; /* head of free strobe elements */
 struct st_t *__monit_stp;/* monit if chg display at slot end stmt */
 struct itree_t *__monit_itp; /* current monitor itree element */
-unsigned __slotend_action; /* word of 1 bit switches set for action */
-int __monit_active;    /* T => monitor can trigger (default) */
+word32 __slotend_action; /* word32 of 1 bit switches set for action */
+int32 __monit_active;  /* T => monitor can trigger (default) */
 struct dceauxlst_t *__monit_dcehdr; /* header of current dces */
 struct fmonlst_t *__fmon_hdr; /* list of execed (enabled) fmonitors */
 struct fmonlst_t *__fmon_end;
@@ -724,66 +732,66 @@ struct itree_t *__scope_ptr; /* from $scope itree place */
 struct task_t *__scope_tskp; /* from $scope task if present */ 
 struct symtab_t *__last_iasytp; /* last found symbol symbol table */
 struct iahist_t *__iahtab;/* table of history commands */
-int __iahsiz;          /* current size of history cmd table */
-int __iah_lasti;       /* current (latest) command */
+int32 __iahsiz;        /* current size of history cmd table */
+int32 __iah_lasti;     /* current (latest) command */
 struct hctrl_t *__hctrl_hd; /* head of active iact stmts */
 struct hctrl_t *__hctrl_end;/* and end */
-int __history_on;      /* collecting and saving history is on */
-int __hist_cur_listnum;/* number to list for :history command */
-int __iasetup;         /* F until interactive entered */
-int __ia_entered;      /* F (also for reset) until iact entered */
-int __iact_state;      /* T => in interactive processing */
-int __iact_can_free;   /* T => non monitor/strobe, can free */
-int __no_iact;         /* T => no interactive processing for run */
-int __intsig_prt_snapshot; /* T => on no iact end, print shapshot */
-int __reset_count;     /* count of the number of rests ($reset) */
-int __reset_value;     /* 2nd $reset value preserved after reset */ 
-int __list_cur_ifi;    /* index in in fils of current source file */
-int __list_cur_fd;     /* current opened file no. (-1 if none) */
-int __list_cur_lini;   /* current line no. in current dbg file */
-int __list_cur_listnum;/* number of lines to list at once */
-int __list_arg_lini;   /* for :b (:ib), user list argument */
-int __iact_scope_chg;  /* T => always move scope to cur on iact st. */
+int32 __history_on;    /* collecting and saving history is on */
+int32 __hist_cur_listnum;/* number to list for :history command */
+int32 __iasetup;       /* F until interactive entered */
+int32 __ia_entered;    /* F (also for reset) until iact entered */
+int32 __iact_state;    /* T => in interactive processing */
+int32 __iact_can_free; /* T => non monitor/strobe, can free */
+int32 __no_iact;       /* T => no interactive processing for run */
+int32 __intsig_prt_snapshot; /* T => on no iact end, print shapshot */
+int32 __reset_count;   /* count of the number of rests ($reset) */
+int32 __reset_value;   /* 2nd $reset value preserved after reset */ 
+int32 __list_cur_ifi;  /* index in in fils of current source file */
+int32 __list_cur_fd;   /* current opened file no. (-1 if none) */
+int32 __list_cur_lini; /* current line no. in current dbg file */
+int32 __list_cur_listnum;/* number of lines to list at once */
+int32 __list_arg_lini; /* for :b (:ib), user list argument */
+int32 __iact_scope_chg;/* T => always move scope to cur on iact st. */
 struct brkpt_t *__bphdr;/* header of breakpoint list */ 
-int __nxt_bpnum;       /* next breakpoint number to use */
+int32 __nxt_bpnum;     /* next breakpoint number to use */
 struct dispx_t *__dispxhdr;/* header of display list */ 
-int __nxt_dispxnum;    /* next display number to use */
+int32 __nxt_dispxnum;  /* next display number to use */
 struct itree_t *__last_stepitp;/* last step inst. itree loc. */ 
 struct task_t *__last_steptskp;/* last step task */
-int __last_stepifi;    /* last step in fils index */
+int32 __last_stepifi;  /* last step in fils index */
 word64 __last_brktime; /* last break or step time */
-int __dbg_dflt_base;   /* :print debugger default base */ 
-int __iact_stmt_err;   /* T => syntax error for iact stmt */
+int32 __dbg_dflt_base; /* :print debugger default base */ 
+int32 __iact_stmt_err; /* T => syntax error for iact stmt */
 struct mod_t *__iact_mdp; /* current iact dummy module */
-int __sav_mtime_units; /* prep of iact statements needs tfmt units */
+int32 __sav_mtime_units; /* prep of iact statements needs tfmt units */
 
 /* interactive variables */
 char *__iahwrkline;    /* interactive command line work area */
-int __iahwrklen;       /* allocated len of iah work string */
-int __pending_enter_iact;/* T => enter iact as soon as can */
-int __iact_reason;     /* reason for entering interactive state */
-int __single_step;     /* T => need to single step */
-int __step_rep_cnt;    /* number of times to repeat step */
-int __step_from_thread;/* T step from non thread loc. (^c?) */
+int32 __iahwrklen;     /* allocated len of iah work string */
+int32 __pending_enter_iact;/* T => enter iact as soon as can */
+int32 __iact_reason;   /* reason for entering interactive state */
+int32 __single_step;   /* T => need to single step */
+int32 __step_rep_cnt;  /* number of times to repeat step */
+int32 __step_from_thread;/* T step from non thread loc. (^c?) */
 struct itree_t *__step_match_itp; /* for istep, exec itp must match */
-int __step_lini;       /* line stepping from (must step to next) */  
-int __step_ifi;        /* and file */ 
-int __verbose_step;    /* T => emit location each step */
-int __stop_before_sim; /* T => enter interactive before sim */
-int __dbg_stop_before; /* if >100, T (-100) stop before sim */ 
+int32 __step_lini;     /* line stepping from (must step to next) */  
+int32 __step_ifi;      /* and file */ 
+int32 __verbose_step;  /* T => emit location each step */
+int32 __stop_before_sim; /* T => enter interactive before sim */
+int32 __dbg_stop_before; /* if >100, T (-100) stop before sim */ 
 struct st_t *__blklast_stp; /* stmt loc. saved last stmt in block */
 struct dceauxlst_t *__iact_dcehdr; /* header of current iact dces */
 
 /* event list variables */
 struct telhdr_t **__twheel;
-int __twhsize;         /* current size for timing wheel */   
-int __cur_twi;
-i_tev_ndx __p0_te_hdri; /* pound 0 event list header */
-i_tev_ndx __p0_te_endi; /* pound 0 event list end */
+int32 __twhsize;       /* current size for timing wheel */   
+int32 __cur_twi;
+i_tev_ndx __p0_te_hdri;/* pound 0 event list header */
+i_tev_ndx __p0_te_endi;/* pound 0 event list end */
 i_tev_ndx __cur_te_hdri;
-i_tev_ndx __cur_tevpi;  /* ptr to event list for adding to front */
+i_tev_ndx __cur_tevpi; /* ptr to event list for adding to front */
 i_tev_ndx __cur_te_endi;
-i_tev_ndx __tefreelsti; /* free list for events */
+i_tev_ndx __tefreelsti;/* free list for events */
 struct tedputp_t *__tedpfreelst; /* tf_ putp rec free list header */
 struct teputv_t *__teputvfreelst; /* vpi_ put value free list hdr */ 
 struct nchglst_t *__nchgfreelst; /* change element free list */
@@ -797,8 +805,8 @@ struct nchglst_t *__nchg_futend; /* end (for add) of future net chgs */
 struct tc_pendlst_t *__tcpendlst_hdr; /* header of pending */ 
 struct tc_pendlst_t *__tcpendlst_end; /* end of pending */
 i_tev_ndx *__wrkevtab; /* for exit, trace of pending events */
-int __last_wevti;      /* last filled */
-int __size_wrkevtab;   /* and current allocated size */ 
+int32 __last_wevti;    /* last filled */
+int32 __size_wrkevtab; /* and current allocated size */ 
 
 /* b tree variables */
 struct bt_t *__btqroot;/* root of timing overflow q */
@@ -806,10 +814,9 @@ struct bt_t *__btqroot;/* root of timing overflow q */
 /* storage for path to fringe - node passed thru if not fringe */
 struct bt_t **__btndstk; /* nodes with node list length */
 struct bt_t **__btndhdrstk;
-int __topi;
-int __max_level;
-int __nd_level;
-
+int32 __topi;
+int32 __max_level;
+int32 __nd_level;
 
 
 static void open_logfile(void);
@@ -817,24 +824,24 @@ static void init_glbs(void);
 static void set_tfmt_dflts(void);
 static void init_ds(void);
 static void init_cfg(void);
-static void xpnd_args(int, char **);
+static void xpnd_args(int32, char **);
 static struct optlst_t *alloc_optlst(void);
 static void copy_xpnd_onelev_args(void);
-static void ins_optlst_marker(int, int);
+static void ins_optlst_marker(int32, int32);
 static void dmp_xpnd_olist(register struct optlst_t *);
-static int find_opt(char *);
+static int32 find_opt(char *);
 static void do_args(void);
 static void bld_inflist(void);
-static void do_sdflocdef(char *, char *, int);
+static void do_sdflocdef(char *, char *, int32);
 static void do_cmdmacdef(char *, struct optlst_t *);
-static int bld_incdtab(char *, struct optlst_t *);
-static struct loadpli_t *bld_loadpli_lbs(char *, struct optlst_t *, int);
-static int bld_boot_rout_list(struct loadpli_t *, char *);
-static int check_rnam_str(char *);
-static int bld_lbxtab(char *, struct optlst_t *);
+static int32 bld_incdtab(char *, struct optlst_t *);
+static struct loadpli_t *bld_loadpli_lbs(char *, struct optlst_t *, int32);
+static int32 bld_boot_rout_list(struct loadpli_t *, char *);
+static int32 check_rnam_str(char *);
+static int32 bld_lbxtab(char *, struct optlst_t *);
 static void add_lbfil(char *, char);
 static struct vylib_t *alloc_vylib(char *);
-static int add_suppwarn(char *, struct optlst_t *);
+static int32 add_suppwarn(char *, struct optlst_t *);
 static void wrhelp(void);
 static void init_modsymtab(void);
 static void init_stsymtab(void);
@@ -842,76 +849,76 @@ static void add_systsksym(struct systsk_t *);
 static void add_sysfuncsym(struct sysfunc_t *);
 static void prep_vflist(void);
 static void do_timescale(void);
-static int prt_summary(void);
+static int32 prt_summary(void);
 static void prt_deswide_stats(void);
-static int count_tran_nets(void);
-static void mem_use_msg(int);
+static int32 count_tran_nets(void);
+static void mem_use_msg(int32);
 static void prt_alldesmod_tabs(void);
 static void prt2_desmod_tab(void);
-static void bld_modnam(char *, struct mod_t *, int);
-static void count_mods(int *, int *);
-static int count_cells(struct mod_t *);
-static int count_gates(struct mod_t *, int *);
-static int count_contas(struct mod_t *);
+static void bld_modnam(char *, struct mod_t *, int32);
+static void count_mods(int32 *, int32 *);
+static int32 count_cells(struct mod_t *);
+static int32 count_gates(struct mod_t *, int32 *);
 static void prt2_permod_wiretab(void);
-static int cnt_modprt_bits(struct mod_t *);
-static void cnt_modwires(struct mod_t *, int *, int *, int *, int *, int *,
- int *, int *);
+static int32 cnt_modprt_bits(struct mod_t *);
+static void cnt_modwires(struct mod_t *, int32 *, int32 *, int32 *, int32 *, int32 *,
+ int32 *, int32 *);
 static void st_prt2_permod_wiretab(void);
-static void st_cnt_modprt_bits(struct mod_t *, int *, int *, int *);
-static void st_cnt_modwires(struct mod_t *, int *, int *, int *, int *);
+static void st_cnt_modprt_bits(struct mod_t *, int32 *, int32 *, int32 *);
+static void st_cnt_modwires(struct mod_t *, int32 *, int32 *, int32 *, int32 *);
 static void prt2_permod_tasktabs(void);
-static void cnt_modtasks(struct mod_t *, int *, int *, int *, int *, int *,
- int *);
+static void cnt_modtasks(struct mod_t *, int32 *, int32 *, int32 *, int32 *, int32 *,
+ int32 *);
 static void prt_modhdr(struct mod_t *);
-static void reset_cntabs(int *, int *, int *, int *, int *, int, int *,
- int *, int *, int);
-static void accum_usecnts(struct mod_t *, int *, int *, int *, int *, int *,
- int *, int *, int *, int *);
+static void reset_cntabs(int32 *, int32 *, int32 *, int32 *, int32 *, int32, int32 *,
+ int32 *, int32 *, int32);
+static void accum_usecnts(struct mod_t *, int32 *, int32 *, int32 *, int32 *, int32 *,
+ int32 *, int32 *, int32 *, int32 *);
 
 
 
 /* extern prototypes (maybe defined in this module) */
-extern int __dig_main(int, char **);
+extern int32 __dig_main(int32, char **);
 extern void __setup_dbmalloc(void);
 extern void __start_chkchain(void);
 extern void __my_ftime(time_t *, time_t *);
 extern void __prt_end_msg(void);
 extern void __add_infil(char *);
-extern void __grow_infils(int);
-extern int __open_sfil(void);
+extern void __grow_infils(int32);
+extern int32 __open_sfil(void);
 extern void __push_vinfil(void);
-extern int __pop_vifstk(void);
+extern int32 __pop_vifstk(void);
 extern void __do_decompile(void);
 extern void __process_cdir(void);
-extern char *__get_tmult(char *, unsigned *);
-extern void __prt2_mod_typetab(int);
-extern int __enum_is_suppressable(int);
+extern char *__get_tmult(char *, word32 *);
+extern void __prt2_mod_typetab(int32);
+extern int32 __enum_is_suppressable(int32);
 
 /* extern prototypes defined in other module */
-extern int __comp_sigint_handler(void);
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int , int);
+extern void __xform_nl_to_modtabs(void);
+extern int32 __comp_sigint_handler(void);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32 , int32);
 /* pv stralloc is fast small section string alloc but can't be freed */ 
 extern char *__pv_stralloc(char *);
-extern struct symtab_t *__alloc_symtab(int);
+extern struct symtab_t *__alloc_symtab(int32);
 extern char *__prt_vtok(void);
-extern char *__to_wtnam2(char *, unsigned);
-extern int __fr_wtnam(int);
-extern int __get_arrwide(struct net_t *);
+extern char *__to_wtnam2(char *, word32);
+extern int32 __fr_wtnam(int32);
+extern int32 __get_arrwide(struct net_t *);
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
 extern void __do_foreign_lang(void);
 extern void __init_acc(void);
 extern void __my_dv_flush(void);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
 extern void __setup_contab(void);
-extern void __my_exit(int, int);
+extern void __my_exit(int32, int32);
 
 
-extern char *__to_timunitnam(char *, unsigned);
+extern char *__to_timunitnam(char *, word32);
 extern FILE *__tilde_fopen(char *, char *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern char *__schop(char *, char *);
 extern void __my_fprintf(FILE *, char *, ...);
 extern void __cv_msg(char *s, ...);
@@ -919,44 +926,43 @@ extern void __dbg_msg(char *, ...);
 extern void __crit_msg(char *s, ...);
 extern void __ip_msg(char *s, ...);
 extern void __ip2_msg(char *s, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __finform(int, char *, ...);
-extern void __fterr(int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern int __fixup_nl(void);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __finform(int32, char *, ...);
+extern void __fterr(int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern int32 __fixup_nl(void);
 extern void __prep_sim(void);
 extern void __unget_vtok(void);
 extern void __call_all_checktfs(void);
-extern int __get1_vtok(FILE *);
+extern int32 __get1_vtok(FILE *);
 extern void __skipover_line(void);
-extern int __chk_beg_line(int);
+extern int32 __chk_beg_line(int32);
 extern void __collect_line(void);
 extern void __process_sdf_files(void);
 extern void __exec_all_compiletf_routines(void);
 extern void __vpi_endcomp_trycall(void);
 extern void __free_design_pnps(void);
 extern void __rem_0path_dels(void);
-extern void __cmpld_nl(void);
 extern void __init_sim(void);
 extern void __call_misctfs_streset(void);
 extern void __vpi_startreset_trycall(void);
 extern void __reset_to_time0(void);
 extern void __pv_sim(void);
 extern void __vpi_endsim_trycall(void);
-extern void __alloc_xsval(struct xstk_t *, int);
+extern void __alloc_xsval(struct xstk_t *, int32);
 extern void __my_fclose(FILE *);
-extern void __my_free(char *, int);
+extern void __my_free(char *, int32);
 extern void __maybe_open_trfile(void);
-extern int __get_cmdtok(FILE *);
+extern int32 __get_cmdtok(FILE *);
 extern void __do_macdefine(char *, char *);
 extern void __add_sym(char *, struct tnode_t *);
 extern void __setup_veriusertf_systfs(void);
@@ -966,9 +972,9 @@ extern void __dmp_udp(FILE *, struct udp_t *);
 extern void __get_vtok(void);
 extern void __rd_ver_src(void);
 extern void __rd_ver_mod(void);
-extern int __bqline_emptytail(register char *);
+extern int32 __bqline_emptytail(register char *);
 extern void __process_pli_dynamic_libs(struct loadpli_t *);
-extern int __rd_cfg(void);
+extern int32 __rd_cfg(void);
 extern void __expand_lib_wildcards(void); 
 extern void __rd_ver_cfg_src(void);
 extern void __sym_addprims(void);
@@ -976,7 +982,7 @@ extern void __sym_addprims(void);
 
 
 /* externs for system error messages */
-extern int errno;
+extern int32 errno;
 
 /* special external for setjmp environment - reset environment */ 
 extern jmp_buf __reset_jmpbuf;
@@ -987,9 +993,9 @@ extern char __pv_ctab[];
 /*
  * main
  */
-extern int __dig_main(int argc, char **argv)
+extern int32 __dig_main(int32 argc, char **argv)
 {
- int rv, save_quiet;
+ int32 rv, save_quiet;
  long t1;
  double timd1;
  char s1[RECLEN];
@@ -1000,7 +1006,7 @@ extern int __dig_main(int argc, char **argv)
 
  __start_sp = __end_sp = NULL;
  __log_s = NULL;
- /* set compilation int signal and save entry signal so can restore */
+ /* set compilation int32 signal and save entry signal so can restore */
 #if defined(INTSIGS)
  __old_int_sig = (sighandler *) signal(SIGINT, __comp_sigint_handler);
 #else
@@ -1061,13 +1067,17 @@ extern int __dig_main(int argc, char **argv)
  __platform = __pv_stralloc("hpux");
 #endif
 
+#ifdef __CYGWIN32__
+ __platform = __pv_stralloc("Cygwin32");
+#endif
+
  __vers = __pv_stralloc(VERS);
  __vers2 = __pv_stralloc(VERS2);
  __ofdt = __pv_stralloc(OFDT);
  __ip2_msg("%s%s of %s (%s).\n", __vers, __vers2, __ofdt, __platform);
 
  /* SJM 08/27/03 - change so have separate commercial and open source msgs */ 
- __ip_msg("Copyright (c) 1991-2004 Pragmatic C Software Corp.\n");
+ __ip_msg("Copyright (c) 1991-2005 Pragmatic C Software Corp.\n");
  __ip_msg(
   "  All Rights reserved.  Licensed under the GNU General Public License (GPL).\n");
  __ip_msg(
@@ -1315,10 +1325,8 @@ set_etime:
    __cv_msg("  %d flattened bits of 0 delay MIPDS removed - no effect.\n",
     __num_rem_mipds);
   }
-  
- /* always do tranformations for compiling since also interpreted from */
- __cmpld_nl();
-
+ /* always do transformations to group elements into per module tables */
+ __xform_nl_to_modtabs();
 
 
  __init_sim();
@@ -1341,6 +1349,7 @@ set_etime:
    __reset_to_time0();
    /* by here state back to SIM */
   }
+
 
  __pv_sim();
  /* LOOKATME - think also call end sim cb here but LRM says $finish */
@@ -1411,17 +1420,17 @@ extern void __setup_dbmalloc(void)
 
  /* 0 means don't check str/mem func args */
  /* --- */
- /* --- default is on - uncomment to turn off
- m.i = 0;
+ /* --- default is on - uncomment to turn off */
+ m.i = 1;
  dbmallopt(MALLOC_CKDATA,&m);
- --- */
+ /* --- */
  /* --- */
  m.i = 1;
  dbmallopt(MALLOC_REUSE,&m);
  /* --- */
- /* --- */
+ /* -- */
+ /* m.i = 2; */
  m.i = 3;
- /* m.i = 0; */
  dbmallopt(MALLOC_FILLAREA, &m);
  /* -- */
 }
@@ -1450,7 +1459,7 @@ extern void __start_chkchain(void)
 /*
  * routine to compute current time in seconds and milliseconds (if possible)
  */
-extern void __my_ftime(long *secs, long *msecs)
+extern void __my_ftime(time_t *secs, time_t *msecs)
 {
  struct timeval tv;
  struct timezone tz;
@@ -1466,10 +1475,10 @@ extern void __my_ftime(long *secs, long *msecs)
  */
 extern void __prt_end_msg()
 {
- int t1;
+ int32 t1;
  double timd1, timd2, timd3;
 
- t1 = (int) __num_proc_tevents - (int) __proc_thrd_tevents;
+ t1 = (int32) __num_proc_tevents - (int32) __proc_thrd_tevents;
  if (t1 < 0) t1 = 0;
  __cv_msg(
   "%d simulation events and %u declarative immediate assigns processed.\n",
@@ -1582,6 +1591,7 @@ static void init_glbs(void)
  __compile_only = FALSE;
  __parse_only = FALSE;
  __optimized_sim = FALSE;
+ __dump_flowg = FALSE;
  __opt_debug_flg = FALSE;
  __iact_state = FALSE;
  __no_iact = FALSE;
@@ -1723,8 +1733,8 @@ static void set_tfmt_dflts(void)
  */
 static void init_ds(void)
 {
- register int i;
- int len;
+ register int32 i;
+ int32 len;
  word64 p, u;
  char *chp;
 
@@ -1794,6 +1804,7 @@ static void init_ds(void)
  __macwrkstr = __my_malloc(__macwrklen);
  __mac_line_len = 0;
  __macarg_hdr = NULL;
+ __macbs_flag = FALSE;
 
  /* allocate attribute collection work string (it grows)*/
  __attrwrklen = IDLEN;
@@ -1816,8 +1827,8 @@ static void init_ds(void)
  __numtok_wid = IDLEN + 1;
 
  /* need malloc since need to be re-allocated */ 
- __acwrk = (word *) __my_malloc(WRDBYTES*DFLTIOWORDS);
- __bcwrk = (word *) __my_malloc(WRDBYTES*DFLTIOWORDS);
+ __acwrk = (word32 *) __my_malloc(WRDBYTES*DFLTIOWORDS);
+ __bcwrk = (word32 *) __my_malloc(WRDBYTES*DFLTIOWORDS);
  __abwrkwlen = DFLTIOWORDS;
  /* to turn off number, set to TRUE but must be left in F state */
  __exprline = __my_malloc(IDLEN);
@@ -1874,7 +1885,7 @@ static void init_ds(void)
  __undefhd = __undeftail = NULL;
  __undef_mods = 0;
 
- __wsupptab = (word *) __my_malloc(MAXWSWRDS*sizeof(word));
+ __wsupptab = (word32 *) __my_malloc(MAXWSWRDS*sizeof(word32));
  for (i = 0; i < MAXWSWRDS; i++) __wsupptab[i] = 0L;
  __in_ifdef_level = 0;
  __ifdef_skipping = FALSE;
@@ -1937,7 +1948,7 @@ static void init_ds(void)
  __wtab = NULL;
  __wtabwsiz = -1;
  __wtabwi = -1;
- /* long word table only used during thrded interpreter sim */
+ /* long word32 table only used during thrded interpreter sim */
  __lwtab = NULL;
  __lwtabwsiz = -1;
  __lwtabwi = -1;
@@ -2085,7 +2096,7 @@ static void init_cfg(void)
  * OPTION AND COMMAND FILE ARGUMENT PROCESSING ROUTINES
  */
 
-/* these must be positive unsigned up to 16 bit values - gaps ok */
+/* these must be positive word32 up to 16 bit values - gaps ok */
 #define CO_HELP 1
 #define CO_F 2
 #define CO_LOG 3
@@ -2163,6 +2174,7 @@ static void init_cfg(void)
 #define CO_LOADVPI 71
 #define CO_LIBLIST 72
 #define CO_LIBMAP 73
+#define CO_DMP_FLOWG 74
 
 /* command line option table */
 /* this does not need to be alphabetical */
@@ -2217,10 +2229,6 @@ static struct namlst_t cmdopts[] = {
  { CO_NOTCHKS, "+notimingchecks" },
  { CO_NOTCHKS, "+notimingcheck" },
  { CO_LIBNOCELL, "+libnocell" },
-#ifdef USE_CVLILC
- { CO_EXPDT, "+expiredate" },
- { CO_LICPTH, "+licpath" },
-#endif
  { CO_SPIKEANAL, "+spikes" },
  { CO_SHOWCANCELE, "+show_canceled_e" },
  { CO_NOSHOWCANCELE, "+noshow_canceled_e" },
@@ -2234,6 +2242,7 @@ static struct namlst_t cmdopts[] = {
  { CO_OPT_SIM, "+optimized_sim" },
  { CO_OPT_SIM, "-O" },
  { CO_OPT_DEBUG, "+Odebug" },
+ { CO_DMP_FLOWG, "+dumpfg"},
  { CO_SNAPSHOT, "+snapshot" },
  { CO_FRSPICE, "+fromspice" },
  { CO_SWITCHVERB, "+switchverbose" },
@@ -2250,10 +2259,10 @@ static struct namlst_t cmdopts[] = {
  *
  * only fatal errors here since still no log file
  */
-static void xpnd_args(int argc, char **argv)
+static void xpnd_args(int32 argc, char **argv)
 {
- register int i;
- int oi;
+ register int32 i;
+ int32 oi;
  struct optlst_t *olp;
  char *chp;
 
@@ -2271,7 +2280,7 @@ static void xpnd_args(int argc, char **argv)
 
  for (olp = NULL, i = 1; i < argc; i++)
   {
-   if ((int) strlen(argv[i]) >= IDLEN - 1)
+   if ((int32) strlen(argv[i]) >= IDLEN - 1)
     {
      __lin_cnt = i;
      __pv_ferr(919, "command argument too long (%d) - ignored", IDLEN - 1);
@@ -2342,7 +2351,7 @@ static struct optlst_t *alloc_optlst(void)
 static void copy_xpnd_onelev_args(void)
 {
  register struct optlst_t *olp;
- int savlast_inf, savlin_cnt, some_expanded, lev;
+ int32 savlast_inf, savlin_cnt, some_expanded, lev;
  struct optlst_t *olp2, *new_olp;
  FILE *opt_s;
  char *chp;
@@ -2432,7 +2441,7 @@ static void copy_xpnd_onelev_args(void)
 /*
  * insert a marker
  */
-static void ins_optlst_marker(int is_bmark, int lev)
+static void ins_optlst_marker(int32 is_bmark, int32 lev)
 {
  struct optlst_t *new_olp;
  
@@ -2454,7 +2463,7 @@ static void ins_optlst_marker(int is_bmark, int lev)
  */
 static void dmp_xpnd_olist(register struct optlst_t *olp)
 {
- int olnum;
+ int32 olnum;
 
  if (olp == NULL)
   {
@@ -2492,14 +2501,14 @@ static void dmp_xpnd_olist(register struct optlst_t *olp)
  * scheme assume no options with arguments but directions can have arguments
  * assuming then end with ;
  */
-static int find_opt(char *aval)
+static int32 find_opt(char *aval)
 {
- register int i;
+ register int32 i;
 
  /* first search for normal option (if arg white space separated) */ 
  for (i = 0; i < NCMDOPTS; i++)
   {
-   if (strcmp(aval, cmdopts[i].lnam) == 0) return((int) cmdopts[i].namid);
+   if (strcmp(aval, cmdopts[i].lnam) == 0) return((int32) cmdopts[i].namid);
   }
  /* notice these special options are not in cmdopts table */
  if (strncmp(aval, "+libext+", 8) == 0) return(CO_LBEXT);
@@ -2570,7 +2579,7 @@ done:;
 static void do_args(void )
 {
  register struct optlst_t *olp; 
- int oi, tmp, len;
+ int32 oi, tmp, len;
  FILE *f;
  struct optlst_t *sav_olp;
  struct loadpli_t *ldp;
@@ -3229,6 +3238,7 @@ lib_mth:
     /* just ignore if optimization not compiled in */
     case CO_OPT_DEBUG:
     case CO_OPT_SIM:
+    case CO_DMP_FLOWG:
      __gfwarn(3121, olp->optfnam_ind, olp->optlin_cnt,
       " -O native assembly code simulation not enabled in this version.\n");
      break;
@@ -3290,11 +3300,11 @@ extern void __add_infil(char *fnam)
 /*
  * re allocate in fils pointer table 
  */
-extern void __grow_infils(int new_last)
+extern void __grow_infils(int32 new_last)
 {
- int osize, nsize;
+ int32 osize, nsize;
 
- /* file index must fit in unsigned 16 bits still */
+ /* file index must fit in word32 16 bits still */
  if (new_last >= 0xfffe)
   {
    __fterr(305,
@@ -3314,7 +3324,7 @@ extern void __grow_infils(int new_last)
 /*
  * extract SDF annotation file name and optional scope and save in list
  */
-static void do_sdflocdef(char *sdfloc, char *optfnam, int oplin_cnt)
+static void do_sdflocdef(char *sdfloc, char *optfnam, int32 oplin_cnt)
 {
  register char *chp;
  struct sdfnamlst_t *sdfp, *sdfp2, *last_sdfp;
@@ -3384,7 +3394,7 @@ sep_done:
  */
 static void do_cmdmacdef(char *defarg, struct optlst_t *olp) 
 {
- int slen; 
+ int32 slen; 
  char *chp, *chp2, *chp3;
  char optnam[IDLEN], optval[IDLEN], s1[3*IDLEN];
 
@@ -3465,9 +3475,9 @@ bad_nam:
  * if path does not end in / one is added - `include cated on end
  * and attempt is made to open that path
  */
-static int bld_incdtab(char *incdirptr, struct optlst_t *olp) 
+static int32 bld_incdtab(char *incdirptr, struct optlst_t *olp) 
 {
- int len;
+ int32 len;
  char *cp, *cpbg, *chp2;
  char s1[IDLEN], s2[IDLEN];
 
@@ -3528,9 +3538,9 @@ static int bld_incdtab(char *incdirptr, struct optlst_t *olp)
  * quoting on command line (not in -f files) but quotes stripped by shell 
  */
 static struct loadpli_t *bld_loadpli_lbs(char *loadpliptr,
- struct optlst_t *olp, int is_pli1)
+ struct optlst_t *olp, int32 is_pli1)
 {
- int len;
+ int32 len;
  char *cp;
  char lbnam[IDLEN], rnams[IDLEN], onam[RECLEN];
  struct loadpli_t *ldp;
@@ -3617,9 +3627,9 @@ static struct loadpli_t *bld_loadpli_lbs(char *loadpliptr,
 /*
  * routine to check 
  */
-static int bld_boot_rout_list(struct loadpli_t *ldp, char *rnams)
+static int32 bld_boot_rout_list(struct loadpli_t *ldp, char *rnams)
 {
- int len;
+ int32 len;
  struct dynboot_t *dnbp, *last_dnbp;
  char *chp2, *chp;
  char s1[RECLEN];
@@ -3657,9 +3667,9 @@ static int bld_boot_rout_list(struct loadpli_t *ldp, char *rnams)
 /*
  * check to make sure boot routine has legal no space , sep list
  */
-static int check_rnam_str(char *rnams)
+static int32 check_rnam_str(char *rnams)
 {
- int len;
+ int32 len;
  char *chp, *chp2;
 
  if (strlen(rnams) == 1 && rnams[0] == ',') return(FALSE);
@@ -3687,9 +3697,9 @@ static int check_rnam_str(char *rnams)
  * LOOKATME - following XL only one +libext+ option allowed - maybe should
  * allow more (this routine never called if __last lbx > -1)
  */
-static int bld_lbxtab(char *lbxptr, struct optlst_t *olp)
+static int32 bld_lbxtab(char *lbxptr, struct optlst_t *olp)
 {
- int len;
+ int32 len;
  char *cp, *cpbg, *chp2;
  char s1[IDLEN], s2[IDLEN];
 
@@ -3760,8 +3770,8 @@ static struct vylib_t *alloc_vylib(char *nam)
 }
 
 struct warnsup_t {
-  int rngbeg;
-  int rngend;
+  int32 rngbeg;
+  int32 rngend;
 };
 
 struct warnsup_t warnsuptab[] = {
@@ -3794,9 +3804,9 @@ struct warnsup_t warnsuptab[] = {
 /*
  * return T if error message is suppressable (i.e. inform or warn)
  */
-extern int __enum_is_suppressable(int errnum)
+extern int32 __enum_is_suppressable(int32 errnum)
 {
- register int i;
+ register int32 i;
 
  for (i = 0;; i++)
   {
@@ -3813,9 +3823,9 @@ extern int __enum_is_suppressable(int errnum)
  * this returns F on error 
  * know if + at end left off, will have been added
  */
-static int add_suppwarn(char *pluslst, struct optlst_t *olp) 
+static int32 add_suppwarn(char *pluslst, struct optlst_t *olp) 
 {
- int ernum, len, noerr;
+ int32 ernum, len, noerr;
  char *cp, *cpbg;
  char s1[IDLEN];
 
@@ -4203,7 +4213,7 @@ static char *txhelp[] =
  */
 static void wrhelp(void)
 {
- int i;
+ int32 i;
 
  for (i = 0; *txhelp[i] != '\0'; i++) __crit_msg("%s\n", txhelp[i]);
 }
@@ -4266,7 +4276,7 @@ static void init_modsymtab(void)
  */
 extern void __sym_addprims(void)
 {
- register int i;
+ register int32 i;
  struct sy_t *syp;
  struct tnode_t *tnp;
  struct primtab_t *primp;
@@ -4463,7 +4473,7 @@ struct sysfunc_t __vsysfuncs[] = {
  { STN_ASINH, N_REAL, 1, SYSF_BUILTIN, WBITS, "$asinh"},
  { STN_ATANH, N_REAL, 1, SYSF_BUILTIN, WBITS, "$atanh"},
  /* LOOKATME - think this should be removed - other ways to get sign */
- /* next 2 new transcendental except returns int */
+ /* next 2 new transcendental except returns int32 */
  { STN_SGN, N_REG, 1, SYSF_BUILTIN, WBITS, "$sgn"},
  { STN_INT, N_REG, 1, SYSF_BUILTIN, WBITS, "$int"},
  { STN_LN, N_REAL, 1, SYSF_BUILTIN, WBITS, "$ln"},
@@ -4503,7 +4513,7 @@ struct sysfunc_t __vsysfuncs[] = {
  */
 static void init_stsymtab(void)
 {
- register int i;
+ register int32 i;
  struct systsk_t *stbp;
  struct sysfunc_t *sfbp;
 
@@ -4596,7 +4606,7 @@ static void add_sysfuncsym(struct sysfunc_t *sfbp)
  */
 static void prep_vflist(void)
 {
- register int fi;
+ register int32 fi;
 
  /* no files since 0  and 1 are special */
  if (__last_inf == __last_optf)
@@ -4624,7 +4634,7 @@ static void prep_vflist(void)
  * file must be openable and have contents
  * return F on no sucess in opening any of succeeding files
  */
-extern int __open_sfil(void)
+extern int32 __open_sfil(void)
 {
 again:
  /* if not first time, close previous file */
@@ -4692,7 +4702,7 @@ extern void __push_vinfil(void)
 /*
  * previous file(s) eof encounted pop stack (know thing under open)
  */
-extern int __pop_vifstk(void)
+extern int32 __pop_vifstk(void)
 {
  /* first pop previous */
  if (__vin_top == 0)
@@ -4759,7 +4769,7 @@ extern void __do_decompile(void)
 {
  register struct mod_t *mdp;
  register struct udp_t *udpp;
- int first_time;
+ int32 first_time;
 
  __cv_msg("  Reconstructing post compilation source:\n");
 
@@ -4832,7 +4842,7 @@ extern void __rd_ver_src(void)
  */
 extern void __process_cdir(void)
 {
- int wtyp, savlin_cnt;
+ int32 wtyp, savlin_cnt;
  char s1[RECLEN];
 
  if (!__chk_beg_line(__toktyp))
@@ -4864,7 +4874,7 @@ extern void __process_cdir(void)
    else if (wtyp >= NONWIRE_ST || wtyp == N_SUPPLY0 || wtyp == N_SUPPLY1)
     {
      __pv_ferr(705, "`defaultnettype compiler directive wire type %s illegal",
-      __to_wtnam2(s1, (unsigned) wtyp)); 
+      __to_wtnam2(s1, (word32) wtyp)); 
     }
    else __dflt_ntyp = wtyp;
    break;
@@ -4964,7 +4974,7 @@ extern void __process_cdir(void)
 static void do_timescale(void)
 {
  register char *cp, *cp2;
- unsigned tuexp, tpexp, tunit, tprec;
+ word32 tuexp, tpexp, tunit, tprec;
  char *s1;
 
  __collect_line();
@@ -5028,7 +5038,7 @@ done:
 /*
  * get a time unit - returns NULL on error else ending cp
  */
-extern char *__get_tmult(char *cp, unsigned *num_zeros)
+extern char *__get_tmult(char *cp, word32 *num_zeros)
 {
  switch (*cp) {
   case 'f': *num_zeros = 15; break;
@@ -5055,7 +5065,7 @@ extern char *__get_tmult(char *cp, unsigned *num_zeros)
 /*
  * routine to print the summary for entire run
  */
-static int prt_summary(void)
+static int32 prt_summary(void)
 {
  if (__pv_err_cnt != 0 || __pv_warn_cnt != 0 || __inform_cnt != 0)
   __cv_msg("  There were %d error(s), %d warning(s), and %d inform(s).\n",
@@ -5077,7 +5087,7 @@ static void prt_deswide_stats(void)
 {
  register struct udp_t *udpp;
  register struct mod_t *mdp;
- int numudps, nummods, numsplitmods, num_tran_nets;
+ int32 numudps, nummods, numsplitmods, num_tran_nets;
 
  for (numudps = 0, udpp = __udphead; udpp != NULL; udpp = udpp->udpnxt)
   numudps++;
@@ -5137,12 +5147,12 @@ static void prt_deswide_stats(void)
 /*
  * count design total nets in transistor or inout channels
  */
-static int count_tran_nets(void)
+static int32 count_tran_nets(void)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
  register struct mod_t *mdp;
- int ntrnets;
+ int32 ntrnets;
 
  for (ntrnets = 0, mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -5157,7 +5167,7 @@ static int count_tran_nets(void)
 /*
  * print a message giving memory use
  */
-static void mem_use_msg(int also_mems)
+static void mem_use_msg(int32 also_mems)
 { 
  double d1;
 
@@ -5206,11 +5216,11 @@ static void prt_alldesmod_tabs(void)
 static void prt2_desmod_tab(void)
 {
  register struct mod_t *mdp;
- int num_mods, num_tops, num_cells, num_insts, num_gates, num_contas;
- int num_nets, tot_num_cells, tot_num_insts, tot_num_gates;
- int tot_num_contas, tot_num_nets;
- int fltot_num_cells, fltot_num_insts, fltot_num_gates, fltot_num_contas;
- int fltot_num_nets, num1bcas, fltot_insts_in;
+ int32 num_mods, num_tops, num_cells, num_insts, num_gates, num_contas;
+ int32 num_nets, tot_num_cells, tot_num_insts, tot_num_gates;
+ int32 tot_num_contas, tot_num_nets;
+ int32 fltot_num_cells, fltot_num_insts, fltot_num_gates, fltot_num_contas;
+ int32 fltot_num_nets, num1bcas, fltot_insts_in;
  char s1[RECLEN];
  
  tot_num_cells = tot_num_insts = tot_num_gates = 0;
@@ -5228,20 +5238,20 @@ static void prt2_desmod_tab(void)
   {
    num_cells = count_cells(mdp);
    tot_num_cells += num_cells;
-   fltot_num_cells += num_cells*(int) mdp->flatinum;
-   num_insts = (int) mdp->minum - num_cells;
+   fltot_num_cells += num_cells*(int32) mdp->flatinum;
+   num_insts = (int32) mdp->minum - num_cells;
    tot_num_insts += num_insts;
-   fltot_num_insts += num_insts*(int) mdp->flatinum;
+   fltot_num_insts += num_insts*(int32) mdp->flatinum;
    num_gates = count_gates(mdp, &num1bcas);
    tot_num_gates += num_gates;
-   fltot_num_gates += num_gates*(int) mdp->flatinum;
+   fltot_num_gates += num_gates*(int32) mdp->flatinum;
    num_contas = num1bcas;
-   num_contas += count_contas(mdp);
+   num_contas += mdp->mcanum;
    tot_num_contas += num_contas;
-   fltot_num_contas += num_contas*(int) mdp->flatinum;
+   fltot_num_contas += num_contas*(int32) mdp->flatinum;
    num_nets = mdp->mnnum;
    tot_num_nets += num_nets;
-   fltot_num_nets += num_nets*(int) mdp->flatinum;
+   fltot_num_nets += num_nets*(int32) mdp->flatinum;
    fltot_insts_in += mdp->flatinum; 
    bld_modnam(s1, mdp, 20);
    __cv_msg("%-20s%3d   %6d   %6d     %6d   %6d  %6d    %6d\n", s1,
@@ -5262,9 +5272,9 @@ static void prt2_desmod_tab(void)
  * build mod name with trunc. and add (C) for cells
  * s must be big enough
  */
-static void bld_modnam(char *s, struct mod_t *mdp, int fldsiz)
+static void bld_modnam(char *s, struct mod_t *mdp, int32 fldsiz)
 {
- int mlen;
+ int32 mlen;
   
  if (mdp->m_iscell)
   {
@@ -5291,7 +5301,7 @@ static void bld_modnam(char *s, struct mod_t *mdp, int fldsiz)
 /*
  * count number of modules and top modules in circuit
  */
-static void count_mods(int *nummods, int *numtops)
+static void count_mods(int32 *nummods, int32 *numtops)
 {
  register struct mod_t *mdp;
 
@@ -5307,10 +5317,10 @@ static void count_mods(int *nummods, int *numtops)
 /*
  * count number of instances in module that are cells
  */
-static int count_cells(struct mod_t *mdp)
+static int32 count_cells(struct mod_t *mdp)
 {
- register int ii;
- int cnum;
+ register int32 ii;
+ int32 cnum;
  struct inst_t *ip;
  struct mod_t *imdp;
 
@@ -5328,11 +5338,11 @@ static int count_cells(struct mod_t *mdp)
  * 
  * cannot just use number because 1 bit contas in gate array
  */
-static int count_gates(struct mod_t *mdp, int *num1bitcas)
+static int32 count_gates(struct mod_t *mdp, int32 *num1bitcas)
 {
- register int gi;
+ register int32 gi;
  register struct gate_t *gp;
- int gcnt, n1bcas;
+ int32 gcnt, n1bcas;
 
  for (gcnt = 0, n1bcas = 0, gi = 0; gi < mdp->mgnum; gi++)
   {
@@ -5345,27 +5355,14 @@ static int count_gates(struct mod_t *mdp, int *num1bitcas)
 }
 
 /*
- * count the number of continuous assignments
- * only non 1 bit here
- */
-static int count_contas(struct mod_t *mdp)
-{
- register struct conta_t *cap;
- int cacnt;
-
- for (cacnt = 0, cap = mdp->mcas; cap != NULL; cap = cap->canxt) cacnt++;
- return(cacnt);
-}
-
-/*
  * print the per module wiring table
  */
 static void prt2_permod_wiretab(void)
 {
  register struct mod_t *mdp;
- int prts, prtbits, wires, wirebits, regs, regbits, arrs, arrcells, arrbits;
- int tot_prts, tot_prtbits, tot_wires, tot_wirebits, tot_regs;
- int tot_regbits, tot_arrs, tot_arrcells, tot_arrbits;
+ int32 prts, prtbits, wires, wirebits, regs, regbits, arrs, arrcells, arrbits;
+ int32 tot_prts, tot_prtbits, tot_wires, tot_wirebits, tot_regs;
+ int32 tot_regbits, tot_arrs, tot_arrcells, tot_arrbits;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN], s5[RECLEN];
 
  tot_prts = tot_prtbits = 0;
@@ -5376,20 +5373,20 @@ static void prt2_permod_wiretab(void)
  __cv_msg(" Memory(Cells, Bits)\n");
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
-   prts = (int) mdp->mpnum;
+   prts = (int32) mdp->mpnum;
    prtbits = cnt_modprt_bits(mdp);
    cnt_modwires(mdp, &wires, &wirebits, &regs, &regbits, &arrs, &arrcells,
     &arrbits);
    
-   tot_prts += prts*(int) mdp->flatinum;
-   tot_prtbits += prtbits*(int) mdp->flatinum;    
-   tot_wires += wires*(int) mdp->flatinum;
-   tot_wirebits += wirebits*(int) mdp->flatinum;
-   tot_regs += regs*(int) mdp->flatinum;
-   tot_regbits += regbits*(int) mdp->flatinum;
-   tot_arrs += arrs*(int) mdp->flatinum;
-   tot_arrcells += arrcells*(int) mdp->flatinum;
-   tot_arrbits += arrbits*(int) mdp->flatinum;
+   tot_prts += prts*(int32) mdp->flatinum;
+   tot_prtbits += prtbits*(int32) mdp->flatinum;    
+   tot_wires += wires*(int32) mdp->flatinum;
+   tot_wirebits += wirebits*(int32) mdp->flatinum;
+   tot_regs += regs*(int32) mdp->flatinum;
+   tot_regbits += regbits*(int32) mdp->flatinum;
+   tot_arrs += arrs*(int32) mdp->flatinum;
+   tot_arrcells += arrcells*(int32) mdp->flatinum;
+   tot_arrbits += arrbits*(int32) mdp->flatinum;
    if (prts == 0) strcpy(s1, ""); else sprintf(s1, "%d(%d)", prts, prtbits);
    if (wires == 0) strcpy(s2, "");
    else sprintf(s2, "%d(%d)", wires, wirebits);
@@ -5415,16 +5412,16 @@ static void prt2_permod_wiretab(void)
 /*
  * count the number of module port bits
  */
-static int cnt_modprt_bits(struct mod_t *mdp)
+static int32 cnt_modprt_bits(struct mod_t *mdp)
 { 
- register int pi;
- int modpbits;
+ register int32 pi;
+ int32 modpbits;
  struct mod_pin_t *mpp;
 
  for (modpbits = 0, pi = 0; pi < mdp->mpnum; pi++)  
   {
    mpp = &(mdp->mpins[pi]);
-   modpbits += (int) mpp->mpwide;
+   modpbits += (int32) mpp->mpwide;
   }
  return(modpbits);
 }
@@ -5432,12 +5429,12 @@ static int cnt_modprt_bits(struct mod_t *mdp)
 /*
  * count the number of top level (non in task/func) wires and bits
  */
-static void cnt_modwires(struct mod_t *mdp, int *wires, int *wirebits,
- int *regs, int *regbits, int *arrs, int *arrcells, int *arrbits)
+static void cnt_modwires(struct mod_t *mdp, int32 *wires, int32 *wirebits,
+ int32 *regs, int32 *regbits, int32 *arrs, int32 *arrcells, int32 *arrbits)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
- int acells;
+ int32 acells;
 
  *wires = 0;
  *wirebits = 0;
@@ -5462,7 +5459,7 @@ static void cnt_modwires(struct mod_t *mdp, int *wires, int *wirebits,
    if (np->n_isarr)
     {
      (*arrs)++;
-     acells = (int) __get_arrwide(np);
+     acells = (int32) __get_arrwide(np);
      *arrcells += acells;
      *arrbits += acells*np->nwid;
      continue;
@@ -5478,11 +5475,11 @@ static void cnt_modwires(struct mod_t *mdp, int *wires, int *wirebits,
 static void st_prt2_permod_wiretab(void)
 {
  register struct mod_t *mdp;
- int first_time;
- int prts, prtbits, wires, wirebits;
- int st_prts, st_prtbits, st_wires, st_wirebits;
- int tot_prts, tot_prtbits, tot_wires, tot_wirebits;
- int st_tot_prts, st_tot_prtbits, st_tot_wires, st_tot_wirebits;
+ int32 first_time;
+ int32 prts, prtbits, wires, wirebits;
+ int32 st_prts, st_prtbits, st_wires, st_wirebits;
+ int32 tot_prts, tot_prtbits, tot_wires, tot_wirebits;
+ int32 st_tot_prts, st_tot_prtbits, st_tot_wires, st_tot_wirebits;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN], s5[RECLEN];
 
  if (__design_no_strens) return;
@@ -5493,13 +5490,13 @@ static void st_prt2_permod_wiretab(void)
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
    /* always need to count wires and ports even if no strengths */
-   prts = (int) mdp->mpnum;
+   prts = (int32) mdp->mpnum;
    st_cnt_modprt_bits(mdp, &prtbits, &st_prts, &st_prtbits);
    st_cnt_modwires(mdp, &wires, &wirebits, &st_wires, &st_wirebits);
-   tot_prts += prts*(int) mdp->flatinum;
-   tot_prtbits += prtbits*(int) mdp->flatinum;    
-   tot_wires += wires*(int) mdp->flatinum;
-   tot_wirebits += wirebits*(int) mdp->flatinum;
+   tot_prts += prts*(int32) mdp->flatinum;
+   tot_prtbits += prtbits*(int32) mdp->flatinum;    
+   tot_wires += wires*(int32) mdp->flatinum;
+   tot_wirebits += wirebits*(int32) mdp->flatinum;
 
    /* even if module no strengths, goes in total wires */
    if (!mdp->mhassts) continue;
@@ -5511,10 +5508,10 @@ static void st_prt2_permod_wiretab(void)
      __cv_msg("       Percent\n");
      first_time = FALSE;
     }
-   st_tot_prts += st_prts*(int) mdp->flatinum;
-   st_tot_prtbits += st_prtbits*(int) mdp->flatinum;    
-   st_tot_wires += st_wires*(int) mdp->flatinum;
-   st_tot_wirebits += st_wirebits*(int) mdp->flatinum;
+   st_tot_prts += st_prts*(int32) mdp->flatinum;
+   st_tot_prtbits += st_prtbits*(int32) mdp->flatinum;    
+   st_tot_wires += st_wires*(int32) mdp->flatinum;
+   st_tot_wirebits += st_wirebits*(int32) mdp->flatinum;
 
    if (st_prts == 0) { strcpy(s1, ""); strcpy(s2, ""); }
    else
@@ -5556,12 +5553,12 @@ static void st_prt2_permod_wiretab(void)
 /*
  * count the number of strength module ports and bits
  */
-static void st_cnt_modprt_bits(struct mod_t *mdp, int *prtbits, int *st_prts,
- int *st_prtbits)
+static void st_cnt_modprt_bits(struct mod_t *mdp, int32 *prtbits, int32 *st_prts,
+ int32 *st_prtbits)
 { 
- register int pi;
+ register int32 pi;
  register struct expr_t *catxp; 
- int st_modpbits, modpbits, st_modprts;
+ int32 st_modpbits, modpbits, st_modprts;
  struct mod_pin_t *mpp;
  struct expr_t *mxp;
 
@@ -5569,15 +5566,15 @@ static void st_cnt_modprt_bits(struct mod_t *mdp, int *prtbits, int *st_prts,
  for (modpbits = st_modpbits = 0, pi = 0; pi < mdp->mpnum; pi++)  
   {
    mpp = &(mdp->mpins[pi]);
-   modpbits += (int) mpp->mpwide;
+   modpbits += (int32) mpp->mpwide;
    mxp = mpp->mpref;
    if (!mxp->x_stren) continue;
    st_modprts++;
-   if (mxp->optyp != LCB) { st_modpbits += (int) mpp->mpwide; continue; }
+   if (mxp->optyp != LCB) { st_modpbits += (int32) mpp->mpwide; continue; }
 
    /* notice for concats some ports may be strength others not ? */
    for (catxp = mxp->ru.x; catxp != NULL; catxp = catxp->ru.x) 
-    { if (catxp->lu.x->x_stren) st_modpbits += (int) catxp->lu.x->szu.xclen; }
+    { if (catxp->lu.x->x_stren) st_modpbits += (int32) catxp->lu.x->szu.xclen; }
   }
  *prtbits = modpbits;
  *st_prts = st_modprts;
@@ -5587,12 +5584,12 @@ static void st_cnt_modprt_bits(struct mod_t *mdp, int *prtbits, int *st_prts,
 /*
  * count the number of top level (non in task/func) wires and bits
  */
-static void st_cnt_modwires(struct mod_t *mdp, int *wires, int *wirebits,
- int *st_wires, int *st_wirebits)
+static void st_cnt_modwires(struct mod_t *mdp, int32 *wires, int32 *wirebits,
+ int32 *st_wires, int32 *st_wirebits)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
- int mwires, mwirebits, st_mwires, st_mwirebits;
+ int32 mwires, mwirebits, st_mwires, st_mwirebits;
 
  mwires = 0;
  mwirebits = 0;
@@ -5626,9 +5623,9 @@ static void st_cnt_modwires(struct mod_t *mdp, int *wires, int *wirebits,
 static void prt2_permod_tasktabs(void)
 {
  register struct mod_t *mdp;
- int inits, always, tasks, funcs, begblks, frks;
- int tot_inits, tot_always, tot_tasks, tot_funcs, tot_begblks, tot_frks;
- int first_time;
+ int32 inits, always, tasks, funcs, begblks, frks;
+ int32 tot_inits, tot_always, tot_tasks, tot_funcs, tot_begblks, tot_frks;
+ int32 first_time;
  char s1[RECLEN];
 
  tot_inits = tot_always = tot_tasks = tot_funcs = tot_begblks = tot_frks = 0;
@@ -5667,12 +5664,12 @@ static void prt2_permod_tasktabs(void)
 /*
  * count the number of tasks, named blocks and funcs
  */
-static void cnt_modtasks(struct mod_t *mdp, int *inits, int *always,
- int *tsks, int *funcs, int *begblks, int *frks)
+static void cnt_modtasks(struct mod_t *mdp, int32 *inits, int32 *always,
+ int32 *tsks, int32 *funcs, int32 *begblks, int32 *frks)
 {
  register struct ialst_t *ialp;
  register struct task_t *tskp;
- int iat;
+ int32 iat;
 
  *inits = *always = *tsks = *funcs = *begblks = *frks = 0;
  for (ialp = mdp->ialst; ialp != NULL; ialp = ialp->ialnxt)
@@ -5695,25 +5692,25 @@ static void cnt_modtasks(struct mod_t *mdp, int *inits, int *always,
 /*
  * dump every module's table of instantiated types and gate statistics
  */
-extern void __prt2_mod_typetab(int prt_all)
+extern void __prt2_mod_typetab(int32 prt_all)
 {
  register struct mod_t *mdp;
  register struct udp_t *udpp;
- register int i;
- int gid;
- int *gftab, *gstab, *cgftab, *mftab, *mstab, *uftab, *ustab, *cuftab;
- int num_mods, num_udps, mhasudps, first_time;
- int num_contas, tot_insts, tot_gates, tot_udps, tot_fcontas, tot_scontas;
- int tot_cells, tot_cellgates, tot_celludps, tot_cellassigns;
+ register int32 i;
+ int32 gid;
+ int32 *gftab, *gstab, *cgftab, *mftab, *mstab, *uftab, *ustab, *cuftab;
+ int32 num_mods, num_udps, mhasudps, first_time;
+ int32 num_contas, tot_insts, tot_gates, tot_udps, tot_fcontas, tot_scontas;
+ int32 tot_cells, tot_cellgates, tot_celludps, tot_cellassigns;
  struct mod_t *imdp;
  struct primtab_t *primp;
  struct sy_t *syp;
  char s1[RECLEN], s2[RECLEN], filref[RECLEN];
 
  /* allocate the needed tables */ 
- gftab = (int *) __my_malloc((LAST_GSYM + 1)*sizeof(int));
- gstab = (int *) __my_malloc((LAST_GSYM + 1)*sizeof(int));
- cgftab = (int *) __my_malloc((LAST_GSYM + 1)*sizeof(int));
+ gftab = (int32 *) __my_malloc((LAST_GSYM + 1)*sizeof(int32));
+ gstab = (int32 *) __my_malloc((LAST_GSYM + 1)*sizeof(int32));
+ cgftab = (int32 *) __my_malloc((LAST_GSYM + 1)*sizeof(int32));
 
  for (num_mods = 0, mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -5723,8 +5720,8 @@ extern void __prt2_mod_typetab(int prt_all)
    num_mods++;
   }
  /* know there will always be at least one inst or not get here */
- mftab = (int *) __my_malloc(num_mods*sizeof(int));
- mstab = (int *) __my_malloc(num_mods*sizeof(int));
+ mftab = (int32 *) __my_malloc(num_mods*sizeof(int32));
+ mstab = (int32 *) __my_malloc(num_mods*sizeof(int32));
 
  num_udps = 0;
  uftab = ustab = cuftab = NULL;
@@ -5736,9 +5733,9 @@ extern void __prt2_mod_typetab(int prt_all)
      udpp->uidnum = num_udps;
      num_udps++;
     }
-   uftab = (int *) __my_malloc(num_udps*sizeof(int));
-   ustab = (int *) __my_malloc(num_udps*sizeof(int));
-   cuftab = (int *) __my_malloc(num_udps*sizeof(int));
+   uftab = (int32 *) __my_malloc(num_udps*sizeof(int32));
+   ustab = (int32 *) __my_malloc(num_udps*sizeof(int32));
+   cuftab = (int32 *) __my_malloc(num_udps*sizeof(int32));
   }
  reset_cntabs(gftab, gstab, cgftab, mftab, mstab, num_mods, uftab, ustab,
   cuftab, num_udps);
@@ -5769,14 +5766,14 @@ extern void __prt2_mod_typetab(int prt_all)
    __cv_msg("%-24s  %-6s%7d %7d  %s:%d\n", s1, s2, mstab[imdp->lastinum],
     mftab[imdp->lastinum], __schop(filref, __in_fils[syp->syfnam_ind]),
     syp->sylin_cnt); 
-   tot_insts += (int) mftab[imdp->lastinum];
-   num_contas = count_contas(imdp);
+   tot_insts += (int32) mftab[imdp->lastinum];
+   num_contas = imdp->mcanum;
    if (imdp->m_iscell)
     { 
-     tot_cellassigns += (int) imdp->flatinum*num_contas;
-     tot_cells += (int) mftab[imdp->lastinum];
+     tot_cellassigns += (int32) imdp->flatinum*num_contas;
+     tot_cells += (int32) mftab[imdp->lastinum];
     }
-   tot_fcontas += (int) imdp->flatinum*num_contas;
+   tot_fcontas += (int32) imdp->flatinum*num_contas;
    tot_scontas += num_contas;
   }
  for (udpp = __udphead; udpp != NULL; udpp = udpp->udpnxt)
@@ -5790,8 +5787,8 @@ extern void __prt2_mod_typetab(int prt_all)
     uftab[udpp->uidnum], __schop(filref, __in_fils[syp->syfnam_ind]),
     syp->sylin_cnt); 
 
-   tot_udps += (int) uftab[udpp->uidnum];
-   tot_celludps += (int) cuftab[udpp->uidnum];
+   tot_udps += (int32) uftab[udpp->uidnum];
+   tot_celludps += (int32) cuftab[udpp->uidnum];
   }
  for (i = 0, primp = prims; i < NPRIMS; i++, primp++)
   {
@@ -5872,12 +5869,12 @@ extern void __prt2_mod_typetab(int prt_all)
         gstab[gid], gftab[gid]);
       }
     }
-   num_contas = count_contas(mdp);
+   num_contas = mdp->mcanum;
    if (num_contas != 0)
     {
      if (first_time) { prt_modhdr(mdp); first_time = FALSE; }
      __cv_msg("%-24s  %-12s  %10d      %10d\n", "wide-assign",
-      "assign", num_contas, num_contas*(int)mdp->flatinum);
+      "assign", num_contas, num_contas*(int32)mdp->flatinum);
     }
   }
  /* may somehow have no modules? */
@@ -5885,14 +5882,14 @@ extern void __prt2_mod_typetab(int prt_all)
 free_tabs:;
  /* if no alloca would need frees here */
 
- __my_free((char *) gftab, (LAST_GSYM + 1)*sizeof(int));
- __my_free((char *) gstab, (LAST_GSYM + 1)*sizeof(int));
- __my_free((char *) cgftab, (LAST_GSYM + 1)*sizeof(int));
- __my_free((char *) mftab, num_mods*sizeof(int));
- __my_free((char *) mstab, num_mods*sizeof(int));
- if (uftab != NULL) __my_free((char *) uftab, num_udps*sizeof(int)); 
- if (ustab != NULL) __my_free((char *) ustab, num_udps*sizeof(int)); 
- if (cuftab != NULL) __my_free((char *) cuftab, num_udps*sizeof(int)); 
+ __my_free((char *) gftab, (LAST_GSYM + 1)*sizeof(int32));
+ __my_free((char *) gstab, (LAST_GSYM + 1)*sizeof(int32));
+ __my_free((char *) cgftab, (LAST_GSYM + 1)*sizeof(int32));
+ __my_free((char *) mftab, num_mods*sizeof(int32));
+ __my_free((char *) mstab, num_mods*sizeof(int32));
+ if (uftab != NULL) __my_free((char *) uftab, num_udps*sizeof(int32)); 
+ if (ustab != NULL) __my_free((char *) ustab, num_udps*sizeof(int32)); 
+ if (cuftab != NULL) __my_free((char *) cuftab, num_udps*sizeof(int32)); 
 }
 
 /*
@@ -5913,18 +5910,18 @@ static void prt_modhdr(struct mod_t *mdp)
 /*
  * reset all count tables
  */
-static void reset_cntabs(int *gftab, int *gstab, int *cgftab, int *mftab,
- int *mstab, int nmods, int *uftab, int *ustab, int *cuftab, int nudps)
+static void reset_cntabs(int32 *gftab, int32 *gstab, int32 *cgftab, int32 *mftab,
+ int32 *mstab, int32 nmods, int32 *uftab, int32 *ustab, int32 *cuftab, int32 nudps)
 {
- if (gftab != NULL) memset(gftab, 0, (LAST_GSYM + 1)*sizeof(int));
- if (gstab != NULL) memset(gstab, 0, (LAST_GSYM + 1)*sizeof(int));
- if (cgftab != NULL) memset(cgftab, 0, (LAST_GSYM + 1)*sizeof(int));
+ if (gftab != NULL) memset(gftab, 0, (LAST_GSYM + 1)*sizeof(int32));
+ if (gstab != NULL) memset(gstab, 0, (LAST_GSYM + 1)*sizeof(int32));
+ if (cgftab != NULL) memset(cgftab, 0, (LAST_GSYM + 1)*sizeof(int32));
 
- if (mftab != NULL) memset(mftab, 0, nmods*sizeof(int));
- if (mstab != NULL) memset(mstab, 0, nmods*sizeof(int));
- if (uftab != NULL) memset(uftab, 0, nudps*sizeof(int));
- if (ustab != NULL) memset(ustab, 0, nudps*sizeof(int));
- if (cuftab != NULL) memset(cuftab, 0, nudps*sizeof(int));
+ if (mftab != NULL) memset(mftab, 0, nmods*sizeof(int32));
+ if (mstab != NULL) memset(mstab, 0, nmods*sizeof(int32));
+ if (uftab != NULL) memset(uftab, 0, nudps*sizeof(int32));
+ if (ustab != NULL) memset(ustab, 0, nudps*sizeof(int32));
+ if (cuftab != NULL) memset(cuftab, 0, nudps*sizeof(int32));
 }
 
 /*
@@ -5932,12 +5929,12 @@ static void reset_cntabs(int *gftab, int *gstab, int *cgftab, int *mftab,
  * must be reset to 0 before here - values accumulated 
  * if this module has udps sets has udp flag
  */
-static void accum_usecnts(struct mod_t *mdp, int *gftab, int *gstab,
- int *cgftab, int *mftab, int *mstab, int *uftab, int *ustab, int *cuftab,
- int *mhasudps)
+static void accum_usecnts(struct mod_t *mdp, int32 *gftab, int32 *gstab,
+ int32 *cgftab, int32 *mftab, int32 *mstab, int32 *uftab, int32 *ustab, int32 *cuftab,
+ int32 *mhasudps)
 {
- register int ii, gi;
- int gid;
+ register int32 ii, gi;
+ int32 gid;
  struct inst_t *ip;
  struct mod_t *imdp;
  struct gate_t *gp;
@@ -5952,7 +5949,7 @@ static void accum_usecnts(struct mod_t *mdp, int *gftab, int *gstab,
    imdp = ip->imsym->el.emdp;
    /* notice lastinum is just sequence no. assigned here - fld reused here */
    mstab[imdp->lastinum] += 1; 
-   mftab[imdp->lastinum] += (int) mdp->flatinum;
+   mftab[imdp->lastinum] += (int32) mdp->flatinum;
   }   
  /* finally do the counting */
  *mhasudps = FALSE;
@@ -5968,12 +5965,12 @@ static void accum_usecnts(struct mod_t *mdp, int *gftab, int *gstab,
      if (uftab == NULL) __misc_terr(__FILE__, __LINE__);
      /* --- */
      ustab[udpp->uidnum] += 1;
-     uftab[udpp->uidnum] += (int) mdp->flatinum;
+     uftab[udpp->uidnum] += (int32) mdp->flatinum;
      continue;
     }
    gid = gp->gmsym->el.eprimp->gateid;
    gstab[gid] += 1;
-   gftab[gid] += (int) mdp->flatinum;
+   gftab[gid] += (int32) mdp->flatinum;
   }
  if (!mdp->m_iscell) return;
  
@@ -5986,10 +5983,10 @@ static void accum_usecnts(struct mod_t *mdp, int *gftab, int *gstab,
      /* DBG remove --- */
      if (cuftab == NULL) __misc_terr(__FILE__, __LINE__);
      /* --- */
-     cuftab[udpp->uidnum] += (int) mdp->flatinum;
+     cuftab[udpp->uidnum] += (int32) mdp->flatinum;
      continue;
     }
    gid = gp->gmsym->el.eprimp->gateid;
-   cgftab[gid] += (int) mdp->flatinum;
+   cgftab[gid] += (int32) mdp->flatinum;
   }
 }

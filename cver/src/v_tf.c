@@ -1,4 +1,4 @@
-/* Copyright (c) 1992-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1992-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -49,157 +49,158 @@
 static void check_veriusertf_table(p_tfcell);
 static void add_veriusertf_task(struct t_tfcell *);
 static void add_veriusertf_func(struct t_tfcell *);
-static int chk_idnam_veriusertf(char *);
+static int32 chk_idnam_veriusertf(char *);
 static void pli_func_checktf(struct expr_t *);
 static void pli_task_checktf(struct st_t *);
-static void call_allinsts_misctfs(int);
-static void misc_call_misctf(struct tfrec_t *, int);
+static void call_allinsts_misctfs(int32);
+static void misc_call_misctf(struct tfrec_t *, int32);
 static struct t_tfcell *get_tfcell(struct tfrec_t *);
-static void allocset_vecval(struct t_tfnodeinfo *, struct xstk_t *, int);
-static int bad_nosimtf_err(char *);
-static int bad_notfcontext_err(char *);
-static int bad_rosync_err(char *);
+static void allocset_vecval(struct t_tfnodeinfo *, struct xstk_t *, int32);
+static int32 bad_nosimtf_err(char *);
+static int32 bad_notfcontext_err(char *);
+static int32 bad_rosync_err(char *);
 static void init_nodeinfo(struct t_tfnodeinfo *);
 static void init_exprinfo(struct t_tfexprinfo *);
-static int get_xinfo_typ(struct expr_t *);
-static struct xstk_t *tf_pushconvfromreal(double, int);
-static int delayed_str_putp(int, int, int, char *, word64, int);
-static int chk_putdstr(char *, int, int *);
-static struct xstk_t *tftostrenval(char *, int *);
-static int to_stval(char *);
+static int32 get_xinfo_typ(struct expr_t *);
+static struct xstk_t *tf_pushconvfromreal(double, int32);
+static int32 delayed_str_putp(int32, int32, int32, char *, word64, int32);
+static int32 chk_putdstr(char *, int32, int32 *);
+static struct xstk_t *tftostrenval(char *, int32 *);
+static int32 to_stval(char *);
 static void cancel_dputp_toend(struct tfarg_t *, struct dltevlst_t *);
-static int delayed_misctf_schd(word64);
-static void bld_pvc_dces(struct expr_t *, int);
-static void linkon_pvc_dce(struct net_t *, int, int, struct gref_t *, int);
+static int32 delayed_misctf_schd(word64);
+static void bld_pvc_dces(struct expr_t *, int32);
+static void linkon_pvc_dce(struct net_t *, int32, int32, struct gref_t *, int32);
 static void rosync_call_misctf(i_tev_ndx);
 static void exec_tfarg_assign(struct tfarg_t *, struct expr_t *,
- register word *, register word *);
+ register word32 *, register word32 *);
 static void emit_tputd_trmsg(struct tedputp_t *, struct tfarg_t *);
 static void reinit_1tfrec(struct tfrec_t *);
 static void vprt_tferr_msg(char *, va_list, va_list);
 static void vprt_tfwarn_msg(char *, va_list, va_list);
 
 /* tf_ P1364 prototypes from veriuser.h file */
-extern void io_mcdprintf(int mcd, char *format, ...);
+extern void io_mcdprintf(int32 mcd, char *format, ...);
 extern void io_printf(char *format, ...);
 extern char *mc_scan_plusargs(char *plusarg);
-extern void tf_add_long(int *aof_lowtime1, int *aof_hightime1, int lowtime2,
- int hightime2);
-extern int tf_asynchoff(void);
-extern int tf_asynchon(void);
-extern int tf_clearalldelays(void);
+extern void tf_add_long(int32 *aof_lowtime1, int32 *aof_hightime1, int32 lowtime2,
+ int32 hightime2);
+extern int32 tf_asynchoff(void);
+extern int32 tf_asynchon(void);
+extern int32 tf_clearalldelays(void);
 extern int tf_compare_long(unsigned int low1, unsigned int high1,
  unsigned int low2, unsigned int high2);
-extern int tf_copypvc_flag(int nparam);
-extern void tf_divide_long(int *aof_low1, int *aof_high1, int low2, int high2);
-extern int tf_dofinish(void);
-extern int tf_dostop(void);
-extern int tf_error(char *fmt, ...);
-extern int tf_evaluatep(int pnum);
-extern p_tfexprinfo tf_exprinfo(int pnum, p_tfexprinfo pinfo);
-extern char *tf_getcstringp(int nparam);
+extern int32 tf_copypvc_flag(int32 nparam);
+extern void tf_divide_long(int32 *aof_low1, int32 *aof_high1, int32 low2, int32 high2);
+extern int32 tf_dofinish(void);
+extern int32 tf_dostop(void);
+extern int32 tf_error(char *fmt, ...);
+extern int32 tf_evaluatep(int32 pnum);
+extern p_tfexprinfo tf_exprinfo(int32 pnum, p_tfexprinfo pinfo);
+extern char *tf_getcstringp(int32 nparam);
 extern char *tf_getinstance(void);
-extern int tf_getlongp(int *aof_highvalue, int pnum);
-extern int tf_getlongsimtime(int *aof_hightime);
-extern int tf_getlongtime(int *aof_hightime);
-extern int tf_getnextlongtime(int *aof_lowtime, int *aof_hightime);
-extern int tf_getp(int pnum);
-extern int tf_getpchange(int nparam);
-extern double tf_getrealp(int pnum);
+extern int32 tf_getlongp(int32 *aof_highvalue, int32 pnum);
+extern int32 tf_getlongsimtime(int32 *aof_hightime);
+extern int32 tf_getlongtime(int32 *aof_hightime);
+extern int32 tf_getnextlongtime(int32 *aof_lowtime, int32 *aof_hightime);
+extern int32 tf_getp(int32 pnum);
+extern int32 tf_getpchange(int32 nparam);
+extern double tf_getrealp(int32 pnum);
 extern double tf_getrealtime(void);
-extern int tf_getsimtime(void);
-extern int tf_gettime(void);
+extern int32 tf_getsimtime(void);
+extern int32 tf_gettime(void);
 extern char *tf_getworkarea(void);
-extern int tf_iasynchoff(char *inst);
-extern int tf_iasynchon(char *inst);
-extern int tf_iclearalldelays(char *inst);
-extern int tf_icopypvc_flag(int nparam, char *inst);
-extern int tf_ievaluatep(int pnum, char *inst);
-extern p_tfexprinfo tf_iexprinfo(int pnum, p_tfexprinfo pinfo, char *inst);
-extern char *tf_igetcstringp(int nparam, char *inst);
-extern int tf_igetlongp(int *aof_highvalue, int pnum, char *inst);
-extern int tf_igetlongsimtime(int *aof_hightime);
-extern int tf_igetlongtime(int *aof_hightime, char *inst);
-extern int tf_igetp(int pnum, char *inst);
-extern int tf_igetpchange(int nparam, char *inst);
-extern double tf_igetrealp(int pnum, char *inst);
+extern int32 tf_iasynchoff(char *inst);
+extern int32 tf_iasynchon(char *inst);
+extern int32 tf_iclearalldelays(char *inst);
+extern int32 tf_icopypvc_flag(int32 nparam, char *inst);
+extern int32 tf_ievaluatep(int32 pnum, char *inst);
+extern p_tfexprinfo tf_iexprinfo(int32 pnum, p_tfexprinfo pinfo, char *inst);
+extern char *tf_igetcstringp(int32 nparam, char *inst);
+extern int32 tf_igetlongp(int32 *aof_highvalue, int32 pnum, char *inst);
+extern int32 tf_igetlongsimtime(int32 *aof_hightime);
+extern int32 tf_igetlongtime(int32 *aof_hightime, char *inst);
+extern int32 tf_igetp(int32 pnum, char *inst);
+extern int32 tf_igetpchange(int32 nparam, char *inst);
+extern double tf_igetrealp(int32 pnum, char *inst);
 extern double tf_igetrealtime(char *inst);
-extern int tf_igettime(char *inst);
-extern int tf_igettimeprecision(char *inst);
-extern int tf_igettimeunit(char *inst);
+extern int32 tf_igettime(char *inst);
+extern int32 tf_igettimeprecision(char *inst);
+extern int32 tf_igettimeunit(char *inst);
 extern char *tf_igetworkarea(char *inst);
 extern char *tf_imipname(char *cell);
-extern int tf_imovepvc_flag(int nparam, char *inst);
-extern p_tfnodeinfo tf_inodeinfo(int pnum, p_tfnodeinfo pinfo, char *inst);
-extern int tf_inump(char *inst);
-extern int tf_ipropagatep(int pnum, char *inst);
-extern int tf_iputlongp(int pnum, int lowvalue, int highvalue, char *inst);
-extern int tf_iputp(int pnum, int value, char *inst);
-extern int tf_iputrealp(int pnum, double value, char *inst);
-extern int tf_irosynchronize(char *inst);
-extern int tf_isetdelay(int delay, char *inst);
-extern int tf_isetlongdelay(int lowdelay, int highdelay, char *inst);
-extern int tf_isetrealdelay(double realdelay, char *inst);
-extern int tf_isizep(int pnum, char *inst);
+extern int32 tf_imovepvc_flag(int32 nparam, char *inst);
+extern p_tfnodeinfo tf_inodeinfo(int32 pnum, p_tfnodeinfo pinfo, char *inst);
+extern int32 tf_inump(char *inst);
+extern int32 tf_ipropagatep(int32 pnum, char *inst);
+extern int32 tf_iputlongp(int32 pnum, int32 lowvalue, int32 highvalue, char *inst);
+extern int32 tf_iputp(int32 pnum, int32 value, char *inst);
+extern int32 tf_iputrealp(int32 pnum, double value, char *inst);
+extern int32 tf_irosynchronize(char *inst);
+extern int32 tf_isetdelay(int32 delay, char *inst);
+extern int32 tf_isetlongdelay(int32 lowdelay, int32 highdelay, char *inst);
+extern int32 tf_isetrealdelay(double realdelay, char *inst);
+extern int32 tf_isizep(int32 pnum, char *inst);
 extern char *tf_ispname(char *cell);
-extern int tf_istrdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int delay, int delaytype, char *inst);
-extern char *tf_istrgetp(int pnum, int format_char, char *inst);
-extern int tf_istrlongdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int lowdelay, int highdelay, int delaytype, char *inst);
-extern int tf_istrrealdelputp(int nparam, int bitlength, int format_char,
- char *value_p, double realdelay, int delaytype, char *inst);
-extern int tf_isynchronize(char *inst);
-extern int tf_itestpvc_flag(int nparam, char *inst);
-extern int tf_itypep(int pnum, char *inst);
-extern void tf_long_to_real(int int_lo, int int_hi, double *aof_real);
-extern char *tf_longtime_tostr(int lowtime, int hightime);
-extern int tf_message(int level, char *facility, char *messno,
+extern int32 tf_istrdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 delay, int32 delaytype, char *inst);
+extern char *tf_istrgetp(int32 pnum, int32 format_char, char *inst);
+extern int32 tf_istrlongdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 lowdelay, int32 highdelay, int32 delaytype, char *inst);
+extern int32 tf_istrrealdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, double realdelay, int32 delaytype, char *inst);
+extern int32 tf_isynchronize(char *inst);
+extern int32 tf_itestpvc_flag(int32 nparam, char *inst);
+extern int32 tf_itypep(int32 pnum, char *inst);
+extern void tf_long_to_real(int32 int_lo, int32 int_hi, double *aof_real);
+extern char *tf_longtime_tostr(int32 lowtime, int32 hightime);
+extern int32 tf_message(int32 level, char *facility, char *messno,
  char *message, ...);
 extern char *tf_mipname(void);
-extern int tf_movepvc_flag(int nparam);
-extern void tf_multiply_long(int *aof_low1, int *aof_high1, int low2,
- int high2);
-extern p_tfnodeinfo tf_nodeinfo(int pnum, p_tfnodeinfo pinfo);
-extern int tf_nump(void);
-extern int tf_propagatep(int pnum);
-extern int tf_putlongp(int pnum, int lowvalue, int highvalue);
-extern int tf_putp(int pnum, int value);
-extern int tf_putrealp(int pnum, double value);
-extern int tf_read_restart(char *blockptr, int blocklen);
-extern void tf_real_to_long(double real, int *aof_int_lo, int *aof_int_hi);
-extern int tf_rosynchronize(void);
-extern void tf_scale_longdelay(char *cell, int delay_lo, int delay_hi,
- int *aof_delay_lo, int *aof_delay_hi);
+extern int32 tf_movepvc_flag(int32 nparam);
+extern void tf_multiply_long(int32 *aof_low1, int32 *aof_high1, int32 low2,
+ int32 high2);
+extern p_tfnodeinfo tf_nodeinfo(int32 pnum, p_tfnodeinfo pinfo);
+extern int32 tf_nump(void);
+extern int32 tf_propagatep(int32 pnum);
+extern int32 tf_putlongp(int32 pnum, int32 lowvalue, int32 highvalue);
+extern int32 tf_putp(int32 pnum, int32 value);
+extern int32 tf_putrealp(int32 pnum, double value);
+extern int32 tf_read_restart(char *blockptr, int32 blocklen);
+extern void tf_real_to_long(double real, int32 *aof_int_lo, int32 *aof_int_hi);
+extern int32 tf_rosynchronize(void);
+extern void tf_scale_longdelay(char *cell, int32 delay_lo, int32 delay_hi,
+ int32 *aof_delay_lo, int32 *aof_delay_hi);
 extern void tf_scale_realdelay(char *cell, double realdelay,
  double *aof_realdelay);
-extern int tf_setdelay(int delay);
-extern int tf_setlongdelay(int lowdelay, int highdelay);
-extern int tf_setrealdelay(double realdelay);
-extern int tf_setworkarea(char *workarea);
-extern int tf_sizep(int pnum);
+extern int32 tf_setdelay(int32 delay);
+extern int32 tf_setlongdelay(int32 lowdelay, int32 highdelay);
+extern int32 tf_setrealdelay(double realdelay);
+extern int32 tf_setworkarea(char *workarea);
+extern int32 tf_sizep(int32 pnum);
 extern char *tf_spname(void);
-extern int tf_strdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int delay, int delaytype);
-extern char *tf_strgetp(int pnum, int format_char);
+extern int32 tf_strdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 delay, int32 delaytype);
+extern char *tf_strgetp(int32 pnum, int32 format_char);
 extern char *tf_strgettime(void);
-extern int tf_strlongdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int lowdelay, int highdelay, int delaytype);
-extern int tf_strrealdelputp(int nparam, int bitlength, int format_char,
- char *value_p, double realdelay, int delaytype);
-extern void tf_subtract_long(int *aof_lowtime1, int *aof_hightime1,
- int lowtime2, int hightime2);
-extern int tf_synchronize(void);
-extern int tf_testpvc_flag(int nparam);
-extern int tf_text(char *fmt, ...);
-extern int tf_typep(int pnum);
-extern void tf_unscale_longdelay(char *cell, int delay_lo, int delay_hi,
- int *aof_delay_lo, int *aof_delay_hi);
+extern int32 tf_strlongdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 lowdelay, int32 highdelay, int32 delaytype);
+extern int32 tf_strrealdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, double realdelay, int32 delaytype);
+extern void tf_subtract_long(int32 *aof_lowtime1, int32 *aof_hightime1,
+ int32 lowtime2, int32 hightime2);
+extern int32 tf_synchronize(void);
+extern int32 tf_testpvc_flag(int32 nparam);
+extern int32 tf_text(char *fmt, ...);
+extern int32 tf_typep(int32 pnum);
+extern void tf_unscale_longdelay(char *cell, int32 delay_lo, int32 delay_hi,
+ int32 *aof_delay_lo, int32 *aof_delay_hi);
 extern void tf_unscale_realdelay(char *cell, double realdelay,
  double *aof_realdelay);
-extern int tf_warning(char *fmt, ...);
-extern int tf_write_save(char *blockptr, int blocklen);
-extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int);  
+extern int32 tf_warning(char *fmt, ...);
+extern int32 tf_write_save(char *blockptr, int32 blocklen);
+extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
+extern int32 __is_lnegative(word32 *, int32); 
 
 /* extern prototypes (maybe defined in this module) */
 extern struct systsk_t *__alloc_systsk(void);
@@ -215,87 +216,87 @@ extern void __call_misctfs_scope(void);
 extern char *__get_tfcellnam(struct tfrec_t *);
 extern void __pli_func_calltf(struct expr_t *);
 extern void __pli_task_calltf(struct st_t *);
-extern char *__alloc_vval_to_cstr(word *, int, int, int);
-extern int __wide_vval_is0(register word *, int);
-extern struct xstk_t *__putdstr_to_val(char *, int, int, int);
+extern char *__alloc_vval_to_cstr(word32 *, int32, int32, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern struct xstk_t *__putdstr_to_val(char *, int32, int32, int32);
 extern struct dltevlst_t *__spliceout_last(register struct dltevlst_t *);
 extern struct dltevlst_t *__find_last_bdltevp(register struct dltevlst_t *, word64);
-extern void __pli_dofinish(int, char *);
+extern void __pli_dofinish(int32, char *);
 extern void __pvc_call_misctf(struct dcevnt_t *);
 extern void __exec_rosync_misctf(void);
 extern void __sync_call_misctf(struct tev_t *);
 extern void __setdel_call_misctf(i_tev_ndx);
 extern void __process_putpdel_ev(i_tev_ndx);
 extern void __reinit_tfrecs(void);
-extern char *__mytf_malloc(int);
+extern char *__mytf_malloc(int32);
 
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
 extern void __add_sym(char *, struct tnode_t *);
 extern void __grow_xstk(void);
 extern void __grow_tevtab(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern int __get_arrwide(struct net_t *);
-extern int __unnormalize_ndx(struct net_t *, int);
-extern void __xline_vval_to_cstr(word *, int, int, int, int);
-extern int __v64_to_real(double *, word64 *);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
+extern int32 __get_arrwide(struct net_t *);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
+extern void __xline_vval_to_cstr(word32 *, int32, int32, int32, int32);
+extern int32 __v64_to_real(double *, word64 *);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __sizchgxs(register struct xstk_t *, int);
-extern char *__alloc_getasfmt(struct expr_t *, struct tfrec_t *, int);
-extern void __lmult(register word *, register word *, register word *, int);
+extern void __sizchgxs(register struct xstk_t *, int32);
+extern char *__alloc_getasfmt(struct expr_t *, struct tfrec_t *, int32);
+extern void __lmult(register word32 *, register word32 *, register word32 *, int32);
 extern void __insert_event(register i_tev_ndx);
-extern void __strenwiden_sizchg(struct xstk_t *, int);
-extern int __to_base(int);
-extern void __to_dhboval(int, int);
-extern int __is_vdigit(int, int);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
-extern int __real_to_v64tim(word64 *, double);
-extern char *__st_regab_tostr(char *, byte *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
+extern void __strenwiden_sizchg(struct xstk_t *, int32);
+extern int32 __to_base(int32);
+extern void __to_dhboval(int32, int32);
+extern int32 __is_vdigit(int32, int32);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
+extern int32 __real_to_v64tim(word64 *, double);
+extern char *__st_regab_tostr(char *, byte *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern void __evtr_resume_msg(void);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern void __free_dceauxlst(struct dceauxlst_t *, int);
+extern void __free_dceauxlst(struct dceauxlst_t *, int32);
 extern void __cnv_ticks_tonum64(word64 *, word64, struct mod_t *);
 extern char *__to_timstr(char *, word64 *);
 extern void __disp_itree_path(register struct itree_t *, struct task_t *);
 extern void __emit_stsk_endmsg(void);
 extern void __vpi_endsim_trycall(void);
-extern void __ldivmod2(word *, word *, word *, word *, int);
+extern void __ldivmod2(word32 *, word32 *, word32 *, word32 *, int32);
 extern void __my_vfprintf(FILE *, char *, va_list, va_list);
-extern int __em_suppr(int);
+extern int32 __em_suppr(int32);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
 extern struct dcevnt_t *__alloc_dcevnt(struct net_t *);
 extern void __alloc_1instdce_prevval(struct dcevnt_t *);
 extern void __init_1instdce_prevval(struct dcevnt_t *);
-extern void __exec2_proc_assign(struct expr_t *, register word *, register word *);
-extern void __st_perinst_val(union pck_u, int, register word *, register word *);
+extern void __exec2_proc_assign(struct expr_t *, register word32 *, register word32 *);
+extern void __st_perinst_val(union pck_u, int32, register word32 *, register word32 *);
 extern void __mdr_assign_or_sched(register struct expr_t *);
-extern void __exec_conta_assign(struct expr_t *, register word *, register word *, int);
+extern void __exec_conta_assign(struct expr_t *, register word32 *, register word32 *, int32);
 extern void __init_tfdrv(struct tfarg_t *, struct expr_t *, struct mod_t *);
-extern int __trim1_0val(word *, int);
+extern int32 __trim1_0val(word32 *, int32);
 extern void __process_pli_dynamic_libs(struct loadpli_t *);
 extern void __dcelst_off(struct dceauxlst_t *);
-extern double __cnvt_signed64_to_real(word *, int);
+extern double __cnvt_signed64_to_real(word32 *, int32);
 
 extern void __tr_msg(char *, ...);
 extern void __crit_msg(char *, ...);
 extern void __cv_msg(char *, ...);
 extern void __my_fprintf(FILE *, char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *,...);
-extern void __sgfwarn(int, char *, ...);
-extern void __sgferr(int, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __my_exit(int, int);
-extern void __inform(int, char *, ...);
+extern void __sgfinform(int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __my_exit(int32, int32);
+extern void __inform(int32, char *, ...);
 
 /* needed here since causes compiler error in veriuser.h */
 #ifdef __STATIC_PLI__
@@ -303,7 +304,7 @@ extern struct t_tfcell veriusertfs[];
 #endif
 
 extern double __dbl_toticks_tab[];
-extern word __masktab[];
+extern word32 __masktab[];
 
 /*
  * ROUTINES TO PROCESS VERIUSERTFS D.S. BEFORE PVER STARTS
@@ -314,11 +315,11 @@ extern word __masktab[];
  */
 extern void __setup_veriusertf_systfs(void)
 {
- register int i;
+ register int32 i;
  register struct dynboot_t *dnbp;
  register struct loadpli_t *ldp;
  struct t_tfcell *veriusertf_ptr, *tfcp;
- int sav_last_veriusertf, num_pli1_systfs;
+ int32 sav_last_veriusertf, num_pli1_systfs;
 
  sav_last_veriusertf = __last_veriusertf;
 
@@ -376,7 +377,7 @@ extern void __setup_veriusertf_systfs(void)
 
    for (dnbp = ldp->dynblst; dnbp != NULL; dnbp = dnbp->dynbootnxt)
     {
-     int j;
+     int32 j;
 
      /* bootstrap routine can be nil */
      if (dnbp->ret_veriusertf == NULL) continue;
@@ -401,7 +402,7 @@ extern void __setup_veriusertf_systfs(void)
  */
 static void check_veriusertf_table(struct t_tfcell *boot_veriusertf)
 {
- register int i;
+ register int32 i;
  struct t_tfcell *tfcp;
 
  /* notice, must be at least one entry or will crash */
@@ -527,10 +528,10 @@ static void add_veriusertf_func(struct t_tfcell *tfcp)
 /*
  * check for legal user tf task or function name
  */
-static int chk_idnam_veriusertf(char *tfnam)
+static int32 chk_idnam_veriusertf(char *tfnam)
 {
  register char *chp;
- int len;
+ int32 len;
 
  chp = tfnam;
  if (*chp++ != '$') 
@@ -612,13 +613,13 @@ extern struct sysfunc_t *__alloc_sysfunc(void)
  */
 extern void __pli_func_sizetf(struct expr_t *fcallx)
 {
- int siz, nbytes;
- word *wp;
+ int32 siz, nbytes;
+ word32 *wp;
  double d1;
  struct sysfunc_t *sfbp;
  struct t_tfcell *tfcp;
  struct tfinst_t tfiwrk;
- int (*sizetf_func)();
+ int32 (*sizetf_func)();
 
  sfbp = fcallx->lu.x->lu.sy->el.esyftbp;
  tfcp = &(__shadow_veriusertfs[sfbp->syfnum - BASE_VERIUSERTFS]); 
@@ -637,7 +638,7 @@ extern void __pli_func_sizetf(struct expr_t *fcallx)
    /* set the 0th expression for tf userrealfunction */
    /* points to value not expr. that is initialzed to 0.0 */
    nbytes = 2*wlen_(__tfrec->fretsiz)*WRDBYTES;
-   wp = __tfrec->tfargs[0].arg.awp = (word *) __my_malloc(nbytes);
+   wp = __tfrec->tfargs[0].arg.awp = (word32 *) __my_malloc(nbytes);
    /* initialize to 0.0 since no internals for pli func and double */
    d1 = 0.0;
    memcpy(wp, &d1, nbytes); 
@@ -660,7 +661,7 @@ extern void __pli_func_sizetf(struct expr_t *fcallx)
  __tfinst->tfitp = __inst_ptr; 
 
  /* FIXME ??? - not 64 bit clean */
- siz = (*sizetf_func)((int) tfcp->data, REASON_SIZETF);
+ siz = (*sizetf_func)((int32) tfcp->data, REASON_SIZETF);
  __pop_itstk();
  if (siz < 1 || siz > MAXNUMBITS)
   {
@@ -681,7 +682,7 @@ have_size:
  /* set the 0th expression for tf function */
  /* points to value not expr. that is initialized to x */
  nbytes = 2*wlen_(__tfrec->fretsiz)*WRDBYTES;
- wp = __tfrec->tfargs[0].arg.awp = (word *) __my_malloc(nbytes);
+ wp = __tfrec->tfargs[0].arg.awp = (word32 *) __my_malloc(nbytes);
  /* initialize to x since no internals for pli functions */
  one_allbits_(wp, 2*__tfrec->fretsiz); 
  fcallx->szu.xclen = __tfrec->fretsiz;
@@ -719,7 +720,7 @@ static void pli_func_checktf(struct expr_t *fcallx)
  struct t_tfcell *tfcp;
  struct sysfunc_t *sfbp;
  struct tfinst_t tfiwrk;
- int (*checktf_func)();
+ int32 (*checktf_func)();
 
  sfbp = fcallx->lu.x->lu.sy->el.esyftbp;
  tfcp = &(__shadow_veriusertfs[sfbp->syfnum - BASE_VERIUSERTFS]); 
@@ -742,7 +743,7 @@ static void pli_func_checktf(struct expr_t *fcallx)
  __tfinst->tfitp = __inst_ptr; 
 
  /* FIXME ??? - not 64 bit clean */
- (*checktf_func)((int) tfcp->data, REASON_CHECKTF);
+ (*checktf_func)((int32) tfcp->data, REASON_CHECKTF);
 
  __tfinst = NULL;
  __tfrec = NULL;
@@ -756,12 +757,12 @@ static void pli_func_checktf(struct expr_t *fcallx)
  */ 
 static void pli_task_checktf(struct st_t *stp) 
 {
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct tskcall_t *tkcp;
  struct t_tfcell *tfcp;
  struct systsk_t *stbp;
  struct tfinst_t tfiwrk;
- int (*checktf_func)();
+ int32 (*checktf_func)();
 
  /* statement is task call not task definition */
  tkcp = &(stp->st.stkc);
@@ -773,7 +774,7 @@ static void pli_task_checktf(struct st_t *stp)
 
  __tfrec = tkcp->tkcaux.trec;
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
  __vpifnam_ind = __sfnam_ind; 
  __vpilin_cnt = __slin_cnt;
 
@@ -789,7 +790,7 @@ static void pli_task_checktf(struct st_t *stp)
  __tfinst->tfitp = __inst_ptr; 
 
  /* FIXME ??? - not 64 bit clean */
- (*checktf_func)((int) tfcp->data, REASON_CHECKTF);
+ (*checktf_func)((int32) tfcp->data, REASON_CHECKTF);
 
  __pop_itstk();
  __tfrec = NULL;
@@ -840,7 +841,7 @@ extern void __call_misctfs_scope(void)
  * go through list of all task and function tf_ calls
  * and call misctf for every instance of every call
  */
-static void call_allinsts_misctfs(int reason)
+static void call_allinsts_misctfs(int32 reason)
 {
  register struct tfrec_t *tfrp;
 
@@ -851,14 +852,14 @@ static void call_allinsts_misctfs(int reason)
 /*
  * call the misctf routine for misceallaneous reason
  */
-static void misc_call_misctf(struct tfrec_t *tfrp, int reason)
+static void misc_call_misctf(struct tfrec_t *tfrp, int32 reason)
 {
- register int ii;
- int sav_fnam_ind, sav_slin_cnt;
+ register int32 ii;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct t_tfcell *tfcp;
  struct tfinst_t tfiwrk;
  struct mod_t *mdp;
- int (*misctf)(int, int, int);
+ int32 (*misctf)(int32, int32, int32);
 
  __tfrec = tfrp;
  /* if no misc. tf routine just turn off, nothing to do */
@@ -866,7 +867,7 @@ static void misc_call_misctf(struct tfrec_t *tfrp, int reason)
  if ((misctf = tfcp->misctf) == NULL) return;
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
  __vpifnam_ind = __sfnam_ind; 
  __vpilin_cnt = __slin_cnt;
 
@@ -889,7 +890,7 @@ static void misc_call_misctf(struct tfrec_t *tfrp, int reason)
    /* SJM 06/13/1999 - misctf always requires 3rd argument although */
    /* ignored except for syncon callbacks ?? */
    /* FIXME ??? - not 64 bit clean */
-   (*misctf)((int) tfcp->data, reason, 0);
+   (*misctf)((int32) tfcp->data, reason, 0);
    __pop_itstk();
   }
  __tfrec = NULL;
@@ -941,12 +942,12 @@ static struct t_tfcell *get_tfcell(struct tfrec_t *tfrp)
  */
 extern void __pli_func_calltf(struct expr_t *fcallx)
 {
- int nbytes, sav_fnam_ind, sav_slin_cnt;
+ int32 nbytes, sav_fnam_ind, sav_slin_cnt;
  struct t_tfcell *tfcp;
  struct sysfunc_t *sfbp;
  struct xstk_t *xsp;
  struct tfinst_t tfiwrk;
- int (*calltf_func)();
+ int32 (*calltf_func)();
       
  sfbp = fcallx->lu.x->lu.sy->el.esyftbp;
  tfcp = &(__shadow_veriusertfs[sfbp->syfnum - BASE_VERIUSERTFS]); 
@@ -962,7 +963,7 @@ extern void __pli_func_calltf(struct expr_t *fcallx)
   }
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
  __vpifnam_ind = __sfnam_ind; 
  __vpilin_cnt = __slin_cnt;
 
@@ -974,7 +975,7 @@ extern void __pli_func_calltf(struct expr_t *fcallx)
  __tfinst->tfitp = __inst_ptr; 
 
  /* FIXME ??? - not 64 bit clean */
- (*calltf_func)((int) tfcp->data, REASON_CALLTF);
+ (*calltf_func)((int32) tfcp->data, REASON_CALLTF);
 
  /* must store return value from caller's itree loc. */ 
  nbytes = 2*wlen_(__tfrec->fretsiz)*WRDBYTES;
@@ -995,12 +996,12 @@ extern void __pli_func_calltf(struct expr_t *fcallx)
  */
 extern void __pli_task_calltf(struct st_t *stp)
 {
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct tskcall_t *tkcp;
  struct t_tfcell *tfcp;
  struct systsk_t *stbp;
  struct tfinst_t tfiwrk;
- int (*calltf_tsk)();
+ int32 (*calltf_tsk)();
       
  tkcp = &(stp->st.stkc);
  stbp = tkcp->tsksyx->lu.sy->el.esytbp;
@@ -1010,7 +1011,7 @@ extern void __pli_task_calltf(struct st_t *stp)
 
  __tfrec = tkcp->tkcaux.trec;
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
  __vpifnam_ind = __sfnam_ind; 
  __vpilin_cnt = __slin_cnt;
 
@@ -1022,7 +1023,7 @@ extern void __pli_task_calltf(struct st_t *stp)
  __tfinst->tfitp = __inst_ptr; 
 
  /* FIXME ??? - not 64 bit clean */
- (*calltf_tsk)((int) tfcp->data, REASON_CALLTF);
+ (*calltf_tsk)((int32) tfcp->data, REASON_CALLTF);
 
  __tfrec = NULL;
  __tfinst = NULL;
@@ -1044,7 +1045,7 @@ extern void __pli_task_calltf(struct st_t *stp)
  * if checked done by user routine
  * LOOKATME - does this really need to be other inst?
  */
-extern int tf_inump(char *inst)
+extern int32 tf_inump(char *inst)
 {
  struct tfinst_t *tfip;
  struct tfrec_t *tfrp;
@@ -1058,7 +1059,7 @@ extern int tf_inump(char *inst)
 /*
  * number of params from saved system task call
  */
-extern int tf_nump(void)
+extern int32 tf_nump(void)
 {
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_nump"));
  return(__tfrec->tfanump1 - 1);
@@ -1067,9 +1068,9 @@ extern int tf_nump(void)
 /*
  * get parameter type 
  */
-extern int tf_itypep(int pnum, char *inst)
+extern int32 tf_itypep(int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1083,7 +1084,7 @@ extern int tf_itypep(int pnum, char *inst)
  return(rv);
 }
 
-extern int tf_typep(int pnum)
+extern int32 tf_typep(int32 pnum)
 {
  struct expr_t *xp;
 
@@ -1112,9 +1113,9 @@ extern int tf_typep(int pnum)
  * return bit length of parameter
  * return size of parameter in bits - 0 for real
  */
-extern int tf_isizep(int pnum, char *inst)
+extern int32 tf_isizep(int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1128,7 +1129,7 @@ extern int tf_isizep(int pnum, char *inst)
  return(rv);
 }
 
-extern int tf_sizep(int pnum)
+extern int32 tf_sizep(int32 pnum)
 {
  struct expr_t *xp;
  
@@ -1168,7 +1169,7 @@ extern int tf_sizep(int pnum)
  * for now strength illegal since standard document method for storing
  * strength impossible (provided by 2.0 so leave)
  */
-extern p_tfnodeinfo tf_inodeinfo(int pnum, p_tfnodeinfo pinfo, char *inst)
+extern p_tfnodeinfo tf_inodeinfo(int32 pnum, p_tfnodeinfo pinfo, char *inst)
 {
  struct t_tfnodeinfo *pinfo2;
  struct tfinst_t *sav_tfip;
@@ -1183,11 +1184,11 @@ extern p_tfnodeinfo tf_inodeinfo(int pnum, p_tfnodeinfo pinfo, char *inst)
  return(pinfo2);
 }
 
-extern p_tfnodeinfo tf_nodeinfo(int pnum, p_tfnodeinfo pinfo)
+extern p_tfnodeinfo tf_nodeinfo(int32 pnum, p_tfnodeinfo pinfo)
 {
  register struct xstk_t *xsp;
  register struct net_t *np;
- int wlen, mwid, r1, r2, biti, bitj;
+ int32 wlen, mwid, r1, r2, biti, bitj;
  double d1;
  struct tfarg_t *tfap;
  struct expr_t *xp;
@@ -1321,9 +1322,9 @@ extern p_tfnodeinfo tf_nodeinfo(int pnum, p_tfnodeinfo pinfo)
  * allocate and set the vecval_p field
  */
 static void allocset_vecval(struct t_tfnodeinfo *pinfo, struct xstk_t *xsp,
- int wlen)
+ int32 wlen)
 {
- register int wi;
+ register int32 wi;
  struct t_vecval *vecp;
 
  pinfo->node_value.vecval_p = (struct t_vecval *)
@@ -1331,8 +1332,8 @@ static void allocset_vecval(struct t_tfnodeinfo *pinfo, struct xstk_t *xsp,
  vecp = pinfo->node_value.vecval_p;
  for (wi = 0; wi < wlen; wi++)
   {
-   vecp[wi].avalbits = (int) xsp->ap[wi]; 
-   vecp[wi].bvalbits = (int) xsp->bp[wi]; 
+   vecp[wi].avalbits = (int32) xsp->ap[wi]; 
+   vecp[wi].bvalbits = (int32) xsp->bp[wi]; 
   }
 }
 
@@ -1340,7 +1341,7 @@ static void allocset_vecval(struct t_tfnodeinfo *pinfo, struct xstk_t *xsp,
  * emit error for illegal routine called from checktf or sizetf
  * or before start of ims
  */
-static int bad_nosimtf_err(char *rnam) 
+static int32 bad_nosimtf_err(char *rnam) 
 {
  __sgferr(1289,
   "%s routine not callable before start of sim, during reset, or from checktf or sizetf because sets value or delay",
@@ -1351,7 +1352,7 @@ static int bad_nosimtf_err(char *rnam)
 /*
  * emit error for tf calls when there is no tf context
  */
-static int bad_notfcontext_err(char *rnam)
+static int32 bad_notfcontext_err(char *rnam)
 {
  __sgferr(1289,
   "%s routine not callable because user code not invoked by PLI 1.0 - was systf registered using vpi_?",
@@ -1362,7 +1363,7 @@ static int bad_notfcontext_err(char *rnam)
 /*
  * emit error for illegal routine called from checktf or sizetf
  */
-static int bad_rosync_err(char *rnam) 
+static int32 bad_rosync_err(char *rnam) 
 {
  __sgferr(1299,
   "%s routine not callable during ro sync - it schedules or writes", rnam);
@@ -1391,7 +1392,7 @@ static void init_nodeinfo(struct t_tfnodeinfo *ninfop)
 /*
  * fill passed exprinfo struct from nparam
  */
-extern p_tfexprinfo tf_iexprinfo(int pnum, p_tfexprinfo pinfo, char *inst)
+extern p_tfexprinfo tf_iexprinfo(int32 pnum, p_tfexprinfo pinfo, char *inst)
 {
  struct t_tfexprinfo *pinfo2;
  struct tfinst_t *sav_tfip;
@@ -1406,11 +1407,11 @@ extern p_tfexprinfo tf_iexprinfo(int pnum, p_tfexprinfo pinfo, char *inst)
  return(pinfo2);
 }
 
-extern p_tfexprinfo tf_exprinfo(int pnum, p_tfexprinfo pinfo)
+extern p_tfexprinfo tf_exprinfo(int32 pnum, p_tfexprinfo pinfo)
 {
- register int wi;
- int wlen, slen;
- word *wp;
+ register int32 wi;
+ int32 wlen, slen;
+ word32 *wp;
  double d1;
  struct expr_t *xp;
  struct xstk_t *xsp;
@@ -1468,15 +1469,15 @@ extern p_tfexprinfo tf_exprinfo(int pnum, p_tfexprinfo pinfo)
  /* so has sign will be correctly set */
  else if (xp->has_sign) pinfo->expr_sign = TRUE;
   
- pinfo->expr_vec_size = (int) xp->szu.xclen;
+ pinfo->expr_vec_size = (int32) xp->szu.xclen;
  wlen = wlen_(xp->szu.xclen);
- pinfo->expr_ngroups = (int) wlen;
+ pinfo->expr_ngroups = (int32) wlen;
  pinfo->expr_value_p = (struct t_vecval *)
   __mytf_malloc(wlen*sizeof(struct t_vecval));
  for (wi = 0; wi < wlen; wi++)
   { 
-   pinfo->expr_value_p[wi].avalbits = (int) xsp->ap[wi];
-   pinfo->expr_value_p[wi].bvalbits = (int) xsp->bp[wi];
+   pinfo->expr_value_p[wi].avalbits = (int32) xsp->ap[wi];
+   pinfo->expr_value_p[wi].bvalbits = (int32) xsp->bp[wi];
   } 
 
 done:
@@ -1490,10 +1491,10 @@ done:
  * need to leave prefix of exprline since may be called from nested func.
  * or as display argument
  */
-extern char *__alloc_vval_to_cstr(word *ap, int blen, int nd_quotes,
- int space_0)
+extern char *__alloc_vval_to_cstr(word32 *ap, int32 blen, int32 nd_quotes,
+ int32 space_0)
 {
- int sav_sofs, slen;
+ int32 sav_sofs, slen;
  char *chp;
 
  sav_sofs = __cur_sofs;
@@ -1526,7 +1527,7 @@ static void init_exprinfo(struct t_tfexprinfo *xinfop)
 /*
  * routine to get exprinfo type
  */
-static int get_xinfo_typ(struct expr_t *xp)
+static int32 get_xinfo_typ(struct expr_t *xp)
 {
  struct net_t *np;
 
@@ -1563,9 +1564,9 @@ static int get_xinfo_typ(struct expr_t *xp)
  * PARAMETER ACCESS ROUTINES
  */
 
-extern int tf_igetp(int pnum, char *inst)
+extern int32 tf_igetp(int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1584,10 +1585,10 @@ extern int tf_igetp(int pnum, char *inst)
  * LOOKATME - document that ingores b val 
  * according to LRM just return the low 32 bits without any checking
  */
-extern int tf_getp(int pnum)
+extern int32 tf_getp(int32 pnum)
 {
- int rv;
- word *wp;
+ int32 rv;
+ word32 *wp;
  struct expr_t *xp;
  struct xstk_t *xsp;
  char *chp;
@@ -1608,7 +1609,7 @@ extern int tf_getp(int pnum)
    if (__tfrec->fretreal) goto do_real;
 
    /* SJM 08/31/00 - misread LRM for 2 value PLI 1.0 routines x/z is 0 */
-   if (!vval_is0_(xsp->bp, xsp->xslen)) rv = 0; else rv = (int) xsp->ap[0];
+   if (!vval_is0_(xsp->bp, xsp->xslen)) rv = 0; else rv = (int32) xsp->ap[0];
    goto done;  
   }
 
@@ -1622,30 +1623,30 @@ extern int tf_getp(int pnum)
 do_real:
    /* this implements Verilog style rounding */
    __cnv_stk_fromreal_toreg32(xsp);
-   rv = (int) xsp->ap[0];
+   rv = (int32) xsp->ap[0];
    goto done;
   }
  /* if any kind of literal string - cannot be expr - need c style */
- /* the return 32 bit int is pointer to string */
+ /* the return 32 bit int32 is pointer to string */
  if (xp->optyp == NUMBER && xp->is_string)
   {
    chp = __alloc_vval_to_cstr(xsp->ap, xsp->xslen, FALSE, FALSE);
    /* FIXME ??? - not 64 bit clean */
-   rv = (int) chp;
+   rv = (int32) chp;
    goto done; 
   }
 
  /* finally just return bit pattern - caller must interpret sign */
  /* SJM 08/31/00 - misread LRM for 2 value PLI 1.0 routines x/z is 0 */
- if (!vval_is0_(xsp->bp, xsp->xslen)) rv = 0; else rv = (int) xsp->ap[0];
+ if (!vval_is0_(xsp->bp, xsp->xslen)) rv = 0; else rv = (int32) xsp->ap[0];
 done:
  __pop_xstk();
  return(rv);
 }
 
-extern int tf_igetlongp(int *aof_highvalue, int pnum, char *inst)
+extern int32 tf_igetlongp(int32 *aof_highvalue, int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1663,10 +1664,10 @@ extern int tf_igetlongp(int *aof_highvalue, int pnum, char *inst)
  * if string return ptr in low 32 bits
  * if paremeter real return error, must use getrealp
  */
-extern int tf_getlongp(int *aof_highvalue, int pnum)
+extern int32 tf_getlongp(int32 *aof_highvalue, int32 pnum)
 {
- int rv;
- word *wp;
+ int32 rv;
+ word32 *wp;
  double d1;
  struct expr_t *xp;
  struct xstk_t *xsp;
@@ -1692,9 +1693,9 @@ extern int tf_getlongp(int *aof_highvalue, int pnum)
    if (!vval_is0_(xsp->bp, xsp->xslen)) { *aof_highvalue = 0; rv = 0; }
    else
     {
-     if (__tfrec->fretsiz > 32) *aof_highvalue = (int) xsp->ap[1];
+     if (__tfrec->fretsiz > 32) *aof_highvalue = (int32) xsp->ap[1];
      else *aof_highvalue = 0; 
-     rv = (int) xsp->ap[0];
+     rv = (int32) xsp->ap[0];
     }
    goto done;  
   }
@@ -1711,13 +1712,13 @@ do_real:
    goto done;
   }
  /* if any kind of literal string - cannot be expr - need c style */
- /* the return 32 bit int is pointer to string */
+ /* the return 32 bit int32 is pointer to string */
  if (xp->optyp == NUMBER && xp->is_string)
   {
    chp = __alloc_vval_to_cstr(xsp->ap, xsp->xslen, FALSE, FALSE);
 
    /* FIXME ??? - not 64 bit clean */
-   rv = (int) chp;
+   rv = (int32) chp;
    goto done; 
   }
 
@@ -1726,9 +1727,9 @@ do_real:
  if (!vval_is0_(xsp->bp, xsp->xslen)) { *aof_highvalue = 0; rv = 0; }
  else
   {
-   if (xsp->xslen > 32) *aof_highvalue = (int) xsp->ap[1];
+   if (xsp->xslen > 32) *aof_highvalue = (int32) xsp->ap[1];
    else *aof_highvalue = 0; 
-   rv = (int) xsp->ap[0];
+   rv = (int32) xsp->ap[0];
   }
 
 done:
@@ -1739,7 +1740,7 @@ done:
 /*
  * return double from passed routine    
  */
-extern double tf_igetrealp(int pnum, char *inst)
+extern double tf_igetrealp(int32 pnum, char *inst)
 {
  double d1;
  struct tfinst_t *sav_tfip;
@@ -1758,16 +1759,16 @@ extern double tf_igetrealp(int pnum, char *inst)
  * get value of nparam (convert to real if needed) and return
  * here return 0 if literal string and use signedness of node for sign of r 
  */
-extern double tf_getrealp(int pnum)
+extern double tf_getrealp(int32 pnum)
 {
- int i1;
- word *wp;
+ int32 i1;
+ word32 *wp;
  double d1;
  word64 t1;
- sword64 st1;
  struct expr_t *xp;
  struct xstk_t *xsp;
 
+ xp = NULL;
  if (__tfrec == NULL)
   {
    bad_notfcontext_err("tf_getrealp");
@@ -1796,8 +1797,8 @@ extern double tf_getrealp(int pnum)
  xsp = __eval_xpr(xp);
  /* if real, must round */
  if (xp->is_real) { memcpy(&d1, xsp->ap, sizeof(double)); goto done; }
- /* only true if int and exactly 32 bits */
- if (xp->has_sign) { i1 = (int) xsp->ap[0]; d1 = (double) i1; goto done; }   
+ /* only true if int32 and exactly 32 bits */
+ if (xp->has_sign) { i1 = (int32) xsp->ap[0]; d1 = (double) i1; goto done; }   
 
 do_non_real:
  /* SJM 05/10/04 - must handle conversion of signed 33-64 to signed double */
@@ -1820,7 +1821,7 @@ done:
 /*
  * convert signed 33 to 64 bit to real - tricky if narrow than 64
  */
-extern double __cnvt_signed64_to_real(word *ap, int blen)
+extern double __cnvt_signed64_to_real(word32 *ap, int32 blen)
 {
  word64 t1;
  sword64 st1;
@@ -1830,7 +1831,7 @@ extern double __cnvt_signed64_to_real(word *ap, int blen)
  if (blen <= WBITS) __misc_terr(__FILE__, __LINE__);
  /* -- */
 
- /* t1 is just the unsigned bit pattern */
+ /* t1 is just the word32 bit pattern */
  t1 = ((word64) ap[0]) | (((word64) ap[1]) << 32); 
  if (__is_lnegative(ap, blen))
   {
@@ -1852,9 +1853,9 @@ extern double __cnvt_signed64_to_real(word *ap, int blen)
  * TF_ PARAMETER STORE ROUTINES
  */
 
-extern int tf_iputp(int pnum, int value, char *inst)
+extern int32 tf_iputp(int32 pnum, int32 value, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1868,13 +1869,13 @@ extern int tf_iputp(int pnum, int value, char *inst)
 }
 
 /*
- * assign int value to parameter nparm
+ * assign int32 value to parameter nparm
  * return 0 on error else 1 and assign 
  */
-extern int tf_putp(int pnum, int value)
+extern int32 tf_putp(int32 pnum, int32 value)
 {
- int rv;
- word *wp;
+ int32 rv;
+ word32 *wp;
  struct tfarg_t *tfap;
  struct expr_t *xp;
  struct xstk_t *xsp;
@@ -1905,13 +1906,13 @@ extern int tf_putp(int pnum, int value)
  if (pnum == 0)
   {
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) value;
+   xsp->ap[0] = (word32) value;
    xsp->bp[0] = 0L;
 
    if (!__tfrec->tf_func) return(1);
    if (__tfrec->fretreal) __cnv_stk_fromreg_toreal(xsp, TRUE);
    /* contiguous bytes of stack have value after possible conversion */
-   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
    else if (xsp->xslen != __tfrec->fretsiz)
     {
      __sizchgxs(xsp, __tfrec->fretsiz);
@@ -1925,12 +1926,12 @@ extern int tf_putp(int pnum, int value)
  xp = tfap->arg.axp;
  if (!xp->tf_isrw) return(1);
  push_xstk_(xsp, WBITS);
- xsp->ap[0] = (word) value;
+ xsp->ap[0] = (word32) value;
  xsp->bp[0] = 0L;
 
  /* assigned to param is real must convert before assign */ 
  if (xp->is_real) __cnv_stk_fromreg_toreal(xsp, TRUE);
- /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
  else if (xsp->xslen != xp->szu.xclen) __sizchgxs(xsp, xp->szu.xclen);
  /* ok to assign (by continuous) to wire */
  exec_tfarg_assign(tfap, xp, xsp->ap, xsp->bp);
@@ -1938,9 +1939,9 @@ extern int tf_putp(int pnum, int value)
  return(0);
 }
 
-extern int tf_iputlongp(int pnum, int lowvalue, int highvalue, char *inst)
+extern int32 tf_iputlongp(int32 pnum, int32 lowvalue, int32 highvalue, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -1958,9 +1959,9 @@ extern int tf_iputlongp(int pnum, int lowvalue, int highvalue, char *inst)
  * may need to convert stack to right lhs width and type
  * return 0 on error else 1 and assign
  */
-extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
+extern int32 tf_putlongp(int32 pnum, int32 lowvalue, int32 highvalue)
 {
- int rv;
+ int32 rv;
  double d1;
  struct tfarg_t *tfap;
  struct expr_t *xp;
@@ -2002,11 +2003,11 @@ extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
     }   
 
    push_xstk_(xsp, 64);
-   xsp->ap[0] = (word) lowvalue;
-   xsp->ap[1] = (word) highvalue; 
+   xsp->ap[0] = (word32) lowvalue;
+   xsp->ap[1] = (word32) highvalue; 
    xsp->bp[0] = xsp->bp[1] = 0L;
    /* contiguous bytes of stack have value after possible conversion */
-   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
    if (xsp->xslen != __tfrec->fretsiz) __sizchgxs(xsp, __tfrec->fretsiz);
    memcpy(tfap->arg.awp, xsp->ap, 2*wlen_(__tfrec->fretsiz)*WRDBYTES);
    __pop_xstk();
@@ -2027,10 +2028,10 @@ extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
  else
   { 
    push_xstk_(xsp, 64);
-   xsp->ap[0] = (word) lowvalue;
-   xsp->ap[1] = (word) highvalue; 
+   xsp->ap[0] = (word32) lowvalue;
+   xsp->ap[1] = (word32) highvalue; 
    xsp->bp[0] = xsp->bp[1] = 0L;
-   /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+   /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
    if (xsp->xslen != xp->szu.xclen) __sizchgxs(xsp, xp->szu.xclen);
   }
  exec_tfarg_assign(tfap, xp, xsp->ap, xsp->bp);
@@ -2038,9 +2039,9 @@ extern int tf_putlongp(int pnum, int lowvalue, int highvalue)
  return(0);
 }
 
-extern int tf_iputrealp(int pnum, double value, char *inst)
+extern int32 tf_iputrealp(int32 pnum, double value, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2056,10 +2057,10 @@ extern int tf_iputrealp(int pnum, double value, char *inst)
 /*
  * assign real value to paramter nparm
  */
-extern int tf_putrealp(int pnum, double value)
+extern int32 tf_putrealp(int32 pnum, double value)
 {
  register struct tfarg_t *tfap;
- int rv;
+ int32 rv;
  struct expr_t *xp;
  struct xstk_t *xsp;
 
@@ -2124,27 +2125,27 @@ extern int tf_putrealp(int pnum, double value)
  * know only called 
  * returns nil with nothing on stack on error 
  */
-static struct xstk_t *tf_pushconvfromreal(double d1, int destsiz)
+static struct xstk_t *tf_pushconvfromreal(double d1, int32 destsiz)
 {
- int i, lo, hi;
+ int32 i, lo, hi;
  struct xstk_t *xsp;
 
  if (destsiz > WBITS)
   {
    tf_real_to_long(d1, &lo, &hi);
    push_xstk_(xsp, 64);
-   xsp->ap[0] = (word) lo;
-   xsp->ap[1] = (word) hi;
+   xsp->ap[0] = (word32) lo;
+   xsp->ap[1] = (word32) hi;
    xsp->bp[0] = xsp->bp[1] = 0L;
   }
  else
   {
    push_xstk_(xsp, WBITS);
-   i = (int) d1;
-   xsp->ap[0] = (word) i;
+   i = (int32) d1;
+   xsp->ap[0] = (word32) i;
    xsp->bp[0] = 0L;
   } 
- /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
  if (xsp->xslen != destsiz) __sizchgxs(xsp, destsiz);
  return(xsp);
 } 
@@ -2156,7 +2157,7 @@ static struct xstk_t *tf_pushconvfromreal(double d1, int destsiz)
 /*
  * get a formatted c style string
  */
-extern char *tf_istrgetp(int pnum, int format_char, char *inst)
+extern char *tf_istrgetp(int32 pnum, int32 format_char, char *inst)
 {
  char *chp;
  struct tfinst_t *sav_tfip;
@@ -2174,7 +2175,7 @@ extern char *tf_istrgetp(int pnum, int format_char, char *inst)
 /*
  * get a parameter into c style string  
  */ 
-extern char *tf_strgetp(int pnum, int format_char)
+extern char *tf_strgetp(int32 pnum, int32 format_char)
 {
  struct expr_t *xp;
 
@@ -2201,7 +2202,7 @@ extern char *tf_strgetp(int pnum, int format_char)
  * convert parameter to c string
  * i.e. force intrepretation as string
  */
-extern char *tf_igetcstringp(int nparam, char *inst)
+extern char *tf_igetcstringp(int32 nparam, char *inst)
 {
  char *chp;
  struct tfinst_t *sav_tfip;
@@ -2220,10 +2221,10 @@ extern char *tf_igetcstringp(int nparam, char *inst)
  * convert a value to a c string - evaluate expressions if needed
  * converts bit pattern to c string 
  */
-extern char *tf_getcstringp(int nparam)
+extern char *tf_getcstringp(int32 nparam)
 {
- int blen;
- word *wp;
+ int32 blen;
+ word32 *wp;
  struct expr_t *xp;
  struct xstk_t *xsp;
  char *chp;
@@ -2278,10 +2279,10 @@ extern char *tf_getcstringp(int nparam)
 /*
  * schedule set for other pli task
  */
-extern int tf_istrdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int delay, int delaytype, char *inst)
+extern int32 tf_istrdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 delay, int32 delaytype, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2295,10 +2296,10 @@ extern int tf_istrdelputp(int nparam, int bitlength, int format_char,
  return(rv);
 }
 
-extern int tf_strdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int delay, int delaytype)
+extern int32 tf_strdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 delay, int32 delaytype)
 {
- int rv;
+ int32 rv;
  word64 ticks, t1;
 
  /* scale from module delay to ticks */
@@ -2322,12 +2323,12 @@ extern int tf_strdelputp(int nparam, int bitlength, int format_char,
  * 1: transport - remove all delays later than scheduled
  * 2: pure transport - just add delay - never remove 
  */
-static int delayed_str_putp(int nparam, int blen, int fmtch, char *value,
- word64 ticksdel, int dtyp)
+static int32 delayed_str_putp(int32 nparam, int32 blen, int32 fmtch, char *value,
+ word64 ticksdel, int32 dtyp)
 {
  register struct tfarg_t *tfap;
  register struct dltevlst_t *dlp, *dlp2, *ins_after_dlp;
- int nbytes;
+ int32 nbytes;
  word64 schtim;
  i_tev_ndx tevpi;
  struct expr_t *xp;
@@ -2426,7 +2427,7 @@ bld_tev:
  __tevtab[tevpi].tu.tedputp = tedp;
  
  nbytes = 2*WRDBYTES*wlen_(xsp->xslen);
- tedp->tedwp = (word *) __my_malloc(nbytes);
+ tedp->tedwp = (word32 *) __my_malloc(nbytes);
  memcpy(tedp->tedwp, xsp->ap, nbytes);  
  __pop_xstk();
  /* schedule event */
@@ -2477,11 +2478,11 @@ bld_tev:
  *
  * allowing 'v'/'V' extension
  */
-extern struct xstk_t *__putdstr_to_val(char *s, int blen, int lhslen,
- int fmtch)
+extern struct xstk_t *__putdstr_to_val(char *s, int32 blen, int32 lhslen,
+ int32 fmtch)
 {
  register struct xstk_t *xsp;
- int slen, stlen;
+ int32 slen, stlen;
 
  /* value can be at most id len postions wide - used lhs part sel. for wider */
  if (fmtch == 'v' || fmtch == 'V')
@@ -2506,7 +2507,7 @@ extern struct xstk_t *__putdstr_to_val(char *s, int blen, int lhslen,
  cp_walign_(xsp->ap, __acwrk, __itoklen);
  cp_walign_(xsp->bp, __bcwrk, __itoklen);
  /* convert in preparation for storing in event for maybe later assign */
- /* SJM 05/10/04 - deprecated PLI 1.0 can only return unsigned regs */ 
+ /* SJM 05/10/04 - deprecated PLI 1.0 can only return word32 regs */ 
  /* SJM 05/10/04 FIXME ??? ### but here could use format to determine */ 
  if (xsp->xslen != lhslen) __sizchgxs(xsp, lhslen);
  return(xsp);
@@ -2516,16 +2517,16 @@ extern struct xstk_t *__putdstr_to_val(char *s, int blen, int lhslen,
  * check a number - also copies into token (only change is '_' removed)
  * returns F on error else T returned len only valid if T 
  */
-static int chk_putdstr(char *s, int base, int *len)
+static int32 chk_putdstr(char *s, int32 base, int32 *len)
 {
  register char *chp, *chp2;
- register int slen;
+ register int32 slen;
 
  /* SJM - 03/20/00 - know num token wide eough */
  for (*len = 0, slen = 0, chp = s, chp2 = __numtoken; *chp != '\0';)
   {
    if (*chp == '_') { chp++; continue; }
-   if (__is_vdigit((int) *chp, base) < 0) return(FALSE);
+   if (__is_vdigit((int32) *chp, base) < 0) return(FALSE);
    *chp2++ = *chp++;
    slen++;
   }
@@ -2538,10 +2539,10 @@ static int chk_putdstr(char *s, int base, int *len)
  * convert to strength value
  * returns nil on error and checks for good (vector space separated) 
  */
-static struct xstk_t *tftostrenval(char *s, int *bitlen)
+static struct xstk_t *tftostrenval(char *s, int32 *bitlen)
 {
- register int bi;
- int blen, done, stval;
+ register int32 bi;
+ int32 blen, done, stval;
  byte *sbp;
  struct xstk_t *xsp;
  char *chp, *chp2, s1[4];
@@ -2583,9 +2584,9 @@ strend:
  * convert from 3 character strength to 1 byte strength value
  * return F on error
  */
-static int to_stval(char *s)
+static int32 to_stval(char *s)
 {
- int st0, st1, stval;
+ int32 st0, st1, stval;
 
  if (strlen(s) != 3) return(FALSE);
  if (strcmp(s, "HiZ") == 0) return(ST_HIZ);
@@ -2656,7 +2657,7 @@ static void cancel_dputp_toend(struct tfarg_t *tfap, struct dltevlst_t *frdlp)
 {
  register struct dltevlst_t *dlp;
  register struct tev_t *tevp;
- int lhslen;
+ int32 lhslen;
  byte *sbp;
  struct tedputp_t *tedp;
  struct expr_t *xp;
@@ -2730,10 +2731,10 @@ extern struct dltevlst_t *__find_last_bdltevp(register struct dltevlst_t *dlp,
 /*
  * schedule set but use long time and other pli task
  */
-extern int tf_istrlongdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int lowdelay, int highdelay, int delaytype, char *inst)
+extern int32 tf_istrlongdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 lowdelay, int32 highdelay, int32 delaytype, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2750,15 +2751,15 @@ extern int tf_istrlongdelputp(int nparam, int bitlength, int format_char,
 /*
  * schedule set but use long time 
  */
-extern int tf_strlongdelputp(int nparam, int bitlength, int format_char,
- char *value_p, int lowdelay, int highdelay, int delaytype)
+extern int32 tf_strlongdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, int32 lowdelay, int32 highdelay, int32 delaytype)
 {
- int rv;
+ int32 rv;
  word64 t1, ticks;
 
  /* scale from module delay to ticks */
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- t1 = ((word64) ((word) lowdelay)) | (((word64) ((word) highdelay)) << 32);
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ t1 = ((word64) ((word32) lowdelay)) | (((word64) ((word32) highdelay)) << 32);
  if (!__inst_mod->mno_unitcnv) cnv_num64to_ticks_(ticks, t1, __inst_mod);
  else ticks = t1;
 
@@ -2770,10 +2771,10 @@ extern int tf_strlongdelputp(int nparam, int bitlength, int format_char,
 /*
  * schedule set but use real time and other pli task
  */
-extern int tf_istrrealdelputp(int nparam, int bitlength, int format_char,
- char *value_p, double realdelay, int delaytype, char *inst)
+extern int32 tf_istrrealdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, double realdelay, int32 delaytype, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2790,10 +2791,10 @@ extern int tf_istrrealdelputp(int nparam, int bitlength, int format_char,
 /*
  * schedule set but use real time 
  */
-extern int tf_strrealdelputp(int nparam, int bitlength, int format_char,
- char *value_p, double realdelay, int delaytype)
+extern int32 tf_strrealdelputp(int32 nparam, int32 bitlength, int32 format_char,
+ char *value_p, double realdelay, int32 delaytype)
 {
- int rv;
+ int32 rv;
  word64 t1, ticks;
 
  /* convert real to time */
@@ -2816,10 +2817,10 @@ extern int tf_strrealdelputp(int nparam, int bitlength, int format_char,
  * so if pending delay delays will happen as if only option is
  * pure transport that never cancels a delay
  */
-extern int tf_istrputp(int nparam, int bitlength, int format_char,
+extern int32 tf_istrputp(int32 nparam, int32 bitlength, int32 format_char,
  char *value_p, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2832,11 +2833,11 @@ extern int tf_istrputp(int nparam, int bitlength, int format_char,
  return(rv);
 }
 
-extern int tf_strputp(int nparam, int bitlength, int format_char,
+extern int32 tf_strputp(int32 nparam, int32 bitlength, int32 format_char,
  char *value_p)
 {
  struct tfarg_t *tfap;
- int lhslen;
+ int32 lhslen;
  struct expr_t *lhsxp;
  struct xstk_t *xsp;
 
@@ -2887,9 +2888,9 @@ extern int tf_strputp(int nparam, int bitlength, int format_char,
  * must scale for time scale
  * returns 0 on error else non 0
  */
-extern int tf_isetdelay(int delay, char *inst)
+extern int32 tf_isetdelay(int32 delay, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2906,14 +2907,14 @@ extern int tf_isetdelay(int delay, char *inst)
  * set delay for other pli task
  * SJM 12/17/02 - notice this returns 0 on error unlike most others 
  */
-extern int tf_setdelay(int delay)
+extern int32 tf_setdelay(int32 delay)
 {
- int rv;
+ int32 rv;
  word64 ticks, t1;
 
  /* scale from module delay to ticks */
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- t1 = (word64) ((word) delay);
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ t1 = (word64) ((word32) delay);
  if (!__inst_mod->mno_unitcnv) cnv_num64to_ticks_(ticks, t1, __inst_mod);
  else ticks = t1;
 
@@ -2927,7 +2928,7 @@ extern int tf_setdelay(int delay)
  *
  * SJM 12/17/02 - notice this returns 0 on error unlike most others 
  */
-static int delayed_misctf_schd(word64 ticksdel)
+static int32 delayed_misctf_schd(word64 ticksdel)
 {
  i_tev_ndx tevpi;
  struct tevlst_t *telp;
@@ -2963,9 +2964,9 @@ static int delayed_misctf_schd(word64 ticksdel)
  * schedule long form (for now just ignore high long)
  * SJM 12/17/02 - notice this returns 0 on error unlike most others 
  */
-extern int tf_isetlongdelay(int lowdelay, int highdelay, char *inst)
+extern int32 tf_isetlongdelay(int32 lowdelay, int32 highdelay, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -2981,15 +2982,15 @@ extern int tf_isetlongdelay(int lowdelay, int highdelay, char *inst)
 /*
  * other pli task form of schedule long delay
  */
-extern int tf_setlongdelay(int lowdelay, int highdelay)
+extern int32 tf_setlongdelay(int32 lowdelay, int32 highdelay)
 {
- int rv;
+ int32 rv;
  word64 t1, ticks;
 
  /* scale from module delay to ticks */
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- t1 = ((word64) ((word) lowdelay))
-  | (((word64) ((word) highdelay)) << 32);
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ t1 = ((word64) ((word32) lowdelay))
+  | (((word64) ((word32) highdelay)) << 32);
  if (!__inst_mod->mno_unitcnv) cnv_num64to_ticks_(ticks, t1, __inst_mod);
  else ticks = t1;
 
@@ -3000,9 +3001,9 @@ extern int tf_setlongdelay(int lowdelay, int highdelay)
 /*
  * set delay passed as real (double)
  */
-extern int tf_isetrealdelay(double realdelay, char *inst)
+extern int32 tf_isetrealdelay(double realdelay, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3019,9 +3020,9 @@ extern int tf_isetrealdelay(double realdelay, char *inst)
  * set delay passed as real (double)
  * SJM 12/17/02 - notice this returns 0 on error unlike most others 
  */
-extern int tf_setrealdelay(double realdelay)
+extern int32 tf_setrealdelay(double realdelay)
 {
- int rv;
+ int32 rv;
  word64 t1, ticks;
 
  /* convert real to time */
@@ -3044,7 +3045,7 @@ extern int tf_setrealdelay(double realdelay)
  * 
  * WRITEME
  */
-extern int tf_getnextlongtime(int *aof_lowtime, int *aof_hightime)
+extern int32 tf_getnextlongtime(int32 *aof_lowtime, int32 *aof_hightime)
 {
  if (__run_state != SS_SIM) return(bad_nosimtf_err("tf_getnextlongtime"));
  /* MYABE WRITEME */
@@ -3058,9 +3059,9 @@ extern int tf_getnextlongtime(int *aof_lowtime, int *aof_hightime)
  * mark every event as cancelled and frees tev list
  * must cancel and free for all arguments
  */
-extern int tf_iclearalldelays(char *inst)
+extern int32 tf_iclearalldelays(char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3073,7 +3074,7 @@ extern int tf_iclearalldelays(char *inst)
  return(rv);
 }
 
-extern int tf_clearalldelays(void)
+extern int32 tf_clearalldelays(void)
 {
  register struct tevlst_t *telp, *last_telp;
 
@@ -3094,9 +3095,9 @@ extern int tf_clearalldelays(void)
 /*
  * other pli form for synchronize call 
  */
-extern int tf_isynchronize(char *inst)
+extern int32 tf_isynchronize(char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3114,7 +3115,7 @@ extern int tf_isynchronize(char *inst)
  * this schedules routine at end of pound0 list when called
  * set flag that causes calling of misctf at end of time slot (very end?)
  */
-extern int tf_synchronize(void)
+extern int32 tf_synchronize(void)
 {
  i_tev_ndx tevpi;
 
@@ -3151,9 +3152,9 @@ extern int tf_synchronize(void)
  *
  * set flag that causes calling of misctf at end of time slot (very end?)
  */
-extern int tf_irosynchronize(char *inst)
+extern int32 tf_irosynchronize(char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3166,9 +3167,9 @@ extern int tf_irosynchronize(char *inst)
  return(rv);
 }
 
-extern int tf_rosynchronize(void)
+extern int32 tf_rosynchronize(void)
 {
- int rv;
+ int32 rv;
  i_tev_ndx tevpi;
 
  if (__run_state != SS_SIM)
@@ -3208,9 +3209,9 @@ extern int tf_rosynchronize(void)
 /*
  * turn off parameter change misctf calling
  */ 
-extern int tf_iasynchoff(char *inst)
+extern int32 tf_iasynchoff(char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3223,9 +3224,9 @@ extern int tf_iasynchoff(char *inst)
  return(rv);
 }
 
-extern int tf_asynchoff(void)
+extern int32 tf_asynchoff(void)
 {
- int rv;
+ int32 rv;
 
  if (__run_state != SS_SIM)
   {
@@ -3261,9 +3262,9 @@ extern int tf_asynchoff(void)
 /*
  * turn on calling of misctf routines on parameter change
  */ 
-extern int tf_iasynchon(char *inst)
+extern int32 tf_iasynchon(char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3276,10 +3277,10 @@ extern int tf_iasynchon(char *inst)
  return(rv);
 }
 
-extern int tf_asynchon(void)
+extern int32 tf_asynchon(void)
 {
- register int i;
- int rv;
+ register int32 i;
+ int32 rv;
 
  if (__run_state != SS_SIM)
   {
@@ -3317,9 +3318,9 @@ extern int tf_asynchon(void)
  * move old pvc to saved flag and clears old flag and return moved
  * -1 is all and return ored change value 
  */
-extern int tf_imovepvc_flag(int nparam, char *inst)
+extern int32 tf_imovepvc_flag(int32 nparam, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3332,11 +3333,11 @@ extern int tf_imovepvc_flag(int nparam, char *inst)
  return(rv);
 }
 
-extern int tf_movepvc_flag(int nparam)
+extern int32 tf_movepvc_flag(int32 nparam)
 {
- register int i, ii;
+ register int32 i, ii;
  byte oldpvc;
- int rv;
+ int32 rv;
  struct tfarg_t *tfap;
 
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_movepvc_flag"));
@@ -3368,9 +3369,9 @@ extern int tf_movepvc_flag(int nparam)
  * if nparams == -1 copy all and return logic or of all
  * notice copy does not result oldpvc that is set by verilog dctrls
  */
-extern int tf_icopypvc_flag(int nparam, char *inst)
+extern int32 tf_icopypvc_flag(int32 nparam, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3383,11 +3384,11 @@ extern int tf_icopypvc_flag(int nparam, char *inst)
  return(rv);
 }
 
-extern int tf_copypvc_flag(int nparam)
+extern int32 tf_copypvc_flag(int32 nparam)
 {
- register int i, ii;
+ register int32 i, ii;
  byte oldpvc;
- int rv;
+ int32 rv;
  struct tfarg_t *tfap;
 
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_copypvc_flag"));
@@ -3413,9 +3414,9 @@ extern int tf_copypvc_flag(int nparam)
 /*
  * returns saved flag, -1 means or of all 
  */
-extern int tf_itestpvc_flag(int nparam, char *inst)
+extern int32 tf_itestpvc_flag(int32 nparam, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3428,10 +3429,10 @@ extern int tf_itestpvc_flag(int nparam, char *inst)
  return(rv);
 }
 
-extern int tf_testpvc_flag(int nparam)
+extern int32 tf_testpvc_flag(int32 nparam)
 {
- register int i, ii;
- int rv;
+ register int32 i, ii;
+ int32 rv;
  struct tfarg_t *tfap;
 
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_testpvc_flag"));
@@ -3460,9 +3461,9 @@ extern int tf_testpvc_flag(int nparam)
  * must execute tf_movepfv_flag before using routine
  * DOCUMENTME - for Cver does not need to be called with 0 first time
  */
-extern int tf_igetpchange(int nparam, char *inst)
+extern int32 tf_igetpchange(int32 nparam, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -3475,9 +3476,9 @@ extern int tf_igetpchange(int nparam, char *inst)
  return(rv);
 }
 
-extern int tf_getpchange(int nparam)
+extern int32 tf_getpchange(int32 nparam)
 {
- register int i, ii;
+ register int32 i, ii;
  struct tfarg_t *tfap;
 
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_getpchange"));
@@ -3499,7 +3500,7 @@ extern int tf_getpchange(int nparam)
  * get current sim time but scaled to timescale of inst.
  * scaled from 
  */
-extern int tf_igettime(char *inst)
+extern int32 tf_igettime(char *inst)
 {
  word64 timval;
  struct tfinst_t *tfi;
@@ -3510,39 +3511,39 @@ extern int tf_igettime(char *inst)
  if (!mdp->mno_unitcnv)
   {
    __cnv_ticks_tonum64(&timval, __simtime, mdp);
-   return((int) (timval & WORDMASK_ULL));
+   return((int32) (timval & WORDMASK_ULL));
   }
- return((int) (__simtime & WORDMASK_ULL));
+ return((int32) (__simtime & WORDMASK_ULL));
 }
 
 /*
- * return current time as int (low 32 bits)  
- * user must cast to unsigned or will lose high bit
+ * return current time as int32 (low 32 bits)  
+ * user must cast to word32 or will lose high bit
  */
-extern int tf_gettime(void)
+extern int32 tf_gettime(void)
 {
  word64 timval;
 
  if (!__inst_mod->mno_unitcnv)
   __cnv_ticks_tonum64(&timval, __simtime, __inst_mod);
  else timval = __simtime;
- return((int) (timval & WORDMASK_ULL));
+ return((int32) (timval & WORDMASK_ULL));
 }
 
 /*
- * return current time as int (low 32 bits) in ticks not scaled  
- * user must cast to unsigned or will lose high bit
+ * return current time as int32 (low 32 bits) in ticks not scaled  
+ * user must cast to word32 or will lose high bit
  */
-extern int tf_getsimtime(void)
+extern int32 tf_getsimtime(void)
 {
- return((int) (__simtime & WORDMASK_ULL));
+ return((int32) (__simtime & WORDMASK_ULL));
 }
 
 /* 
  * get a long time using other instance for from ticks scaling
- * caller must cast to unsigned or will lose high bits
+ * caller must cast to word32 or will lose high bits
  */
-extern int tf_igetlongtime(int *aof_hightime, char *inst)
+extern int32 tf_igetlongtime(int32 *aof_hightime, char *inst)
 {
  word64 timval;
  struct tfinst_t *tfi;
@@ -3553,57 +3554,57 @@ extern int tf_igetlongtime(int *aof_hightime, char *inst)
  if (!mdp->mno_unitcnv)
   {
    __cnv_ticks_tonum64(&timval, __simtime, mdp);
-   *aof_hightime = (int) ((timval >> 32) & WORDMASK_ULL);
-   return((int) (timval & WORDMASK_ULL));
+   *aof_hightime = (int32) ((timval >> 32) & WORDMASK_ULL);
+   return((int32) (timval & WORDMASK_ULL));
   }
- *aof_hightime = (int) ((__simtime >> 32) & WORDMASK_ULL);
- return((int) (__simtime & WORDMASK_ULL));
+ *aof_hightime = (int32) ((__simtime >> 32) & WORDMASK_ULL);
+ return((int32) (__simtime & WORDMASK_ULL));
 }
 
 /* 
  * get a long time in ticks - lowest time precision in design
- * caller must cast to unsigned or will lose high bit
+ * caller must cast to word32 or will lose high bit
  *
  * routine added because present in XL - no inst form 
  */
-extern int tf_getlongsimtime(int *aof_hightime)
+extern int32 tf_getlongsimtime(int32 *aof_hightime)
 {
- *aof_hightime = (int) ((__simtime >> 32) & WORDMASK_ULL);
- return((int) (__simtime & WORDMASK_ULL));
+ *aof_hightime = (int32) ((__simtime >> 32) & WORDMASK_ULL);
+ return((int32) (__simtime & WORDMASK_ULL));
 }
 
 /* 
  * get a long time using other instance for from ticks scaling
- * caller must cast to unsigned or will lose high bit
+ * caller must cast to word32 or will lose high bit
  */
-extern int tf_getlongtime(int *aof_hightime)
+extern int32 tf_getlongtime(int32 *aof_hightime)
 {
  word64 timval;
 
  if (!__inst_mod->mno_unitcnv)
   {
    __cnv_ticks_tonum64(&timval, __simtime, __inst_mod);
-   *aof_hightime = (int) ((timval >> 32) & WORDMASK_ULL);
-   return((int) (timval & WORDMASK_ULL));
+   *aof_hightime = (int32) ((timval >> 32) & WORDMASK_ULL);
+   return((int32) (timval & WORDMASK_ULL));
   }
- *aof_hightime = (int) ((__simtime >> 32) & WORDMASK_ULL);
- return((int) (__simtime & WORDMASK_ULL));
+ *aof_hightime = (int32) ((__simtime >> 32) & WORDMASK_ULL);
+ return((int32) (__simtime & WORDMASK_ULL));
 }
 
 /*
  * convert long time to string - does not scale caller must pass scaled
  * also no time unit suffix
  */
-extern char *tf_longtime_tostr(int lowtime, int hightime)
+extern char *tf_longtime_tostr(int32 lowtime, int32 hightime)
 {
- int save_nd_tsuf, slen;
+ int32 save_nd_tsuf, slen;
  word64 t1;
  char *chp, s1[RECLEN];
  
  save_nd_tsuf = __nd_timstr_suf;
  __nd_timstr_suf = FALSE;
  
- t1 = ((word64) ((word) lowtime)) | (((word64) ((word) hightime)) << 32);
+ t1 = ((word64) ((word32) lowtime)) | (((word64) ((word32) hightime)) << 32);
  __to_timstr(s1, &t1);
  __nd_timstr_suf = save_nd_tsuf;
  slen = strlen(s1);
@@ -3649,7 +3650,7 @@ extern double tf_getrealtime(void)
  */
 extern char *tf_strgettime(void)
 {
- int save_nd_tsuf, slen;
+ int32 save_nd_tsuf, slen;
  word64 timval;
  char *chp, s1[RECLEN];
 
@@ -3671,22 +3672,22 @@ extern char *tf_strgettime(void)
  * convert delay into internal simulation time units
  * use the inst to find module that has delay
  */
-extern void tf_scale_longdelay(char *cell, int delay_lo, int delay_hi,
- int *aof_delay_lo, int *aof_delay_hi)
+extern void tf_scale_longdelay(char *cell, int32 delay_lo, int32 delay_hi,
+ int32 *aof_delay_lo, int32 *aof_delay_hi)
 {
  word64 t1, t2;
  struct tfinst_t *tfi;
  struct mod_t *mdp;
  
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- t1 = ((word64) ((word) delay_lo)) | (((word64) ((word) delay_hi)) << 32);
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ t1 = ((word64) ((word32) delay_lo)) | (((word64) ((word32) delay_hi)) << 32);
 
  tfi = (struct tfinst_t *) cell;
  mdp = tfi->tfitp->itip->imsym->el.emdp; 
  if (!mdp->mno_unitcnv) cnv_num64to_ticks_(t2, t1, mdp);
  else t2 = t1;
- *aof_delay_lo = (int) (t2 & WORDMASK_ULL);
- *aof_delay_hi = (int) ((t2 >> 32) & WORDMASK_ULL);
+ *aof_delay_lo = (int32) (t2 & WORDMASK_ULL);
+ *aof_delay_hi = (int32) ((t2 >> 32) & WORDMASK_ULL);
 }
 
 /*
@@ -3700,7 +3701,7 @@ extern void tf_scale_longdelay(char *cell, int delay_lo, int delay_hi,
 extern void tf_scale_realdelay(char *cell, double realdelay,
  double *aof_realdelay)
 {
- int unit;
+ int32 unit;
  struct tfinst_t *tfi;
  struct mod_t *mdp;
 
@@ -3719,8 +3720,8 @@ extern void tf_scale_realdelay(char *cell, double realdelay,
  * convert delay from internal simulation time units to delay of mod units
  * use the inst to find module that has delay
  */
-extern void tf_unscale_longdelay(char *cell, int delay_lo, int delay_hi,
- int *aof_delay_lo, int *aof_delay_hi)
+extern void tf_unscale_longdelay(char *cell, int32 delay_lo, int32 delay_hi,
+ int32 *aof_delay_lo, int32 *aof_delay_hi)
 {
  word64 t1, t2;
  struct tfinst_t *tfi;
@@ -3729,13 +3730,13 @@ extern void tf_unscale_longdelay(char *cell, int delay_lo, int delay_hi,
  tfi = (struct tfinst_t *) cell;
  mdp = tfi->tfitp->itip->imsym->el.emdp; 
 
- /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
- t1 = ((word64) ((word) delay_lo)) | (((word64) ((word) delay_hi)) << 32);
+ /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+ t1 = ((word64) ((word32) delay_lo)) | (((word64) ((word32) delay_hi)) << 32);
 
  if (!mdp->mno_unitcnv) __cnv_ticks_tonum64(&t2, t1, mdp);
  else t2 = t1;
- *aof_delay_hi = (int) ((t2 >> 32) & WORDMASK_ULL);
- *aof_delay_lo = (int) (t2 & WORDMASK_ULL);
+ *aof_delay_hi = (int32) ((t2 >> 32) & WORDMASK_ULL);
+ *aof_delay_lo = (int32) (t2 & WORDMASK_ULL);
 }
 
 /*
@@ -3744,7 +3745,7 @@ extern void tf_unscale_longdelay(char *cell, int delay_lo, int delay_hi,
 extern void tf_unscale_realdelay(char *cell, double realdelay,
  double *aof_realdelay)
 {
- int unit;
+ int32 unit;
  struct tfinst_t *tfi;
  struct mod_t *mdp;
  
@@ -3762,9 +3763,9 @@ extern void tf_unscale_realdelay(char *cell, double realdelay,
  * convert signed long to real
  * this is unusual in because converts 64 bit signed value
  * preserving sign to real
- * for most routines conversion is from int or word (32 bits) to real
+ * for most routines conversion is from int32 or word32 (32 bits) to real
  */
-extern void tf_long_to_real(int int_lo, int int_hi, double *aof_real)
+extern void tf_long_to_real(int32 int_lo, int32 int_hi, double *aof_real)
 {
  long long iv1;
 
@@ -3777,15 +3778,15 @@ extern void tf_long_to_real(int int_lo, int int_hi, double *aof_real)
 /*
  * normal real to as much of 64bit as possible conversion
  */
-extern void tf_real_to_long(double real, int *aof_int_lo, int *aof_int_hi)
+extern void tf_real_to_long(double real, int32 *aof_int_lo, int32 *aof_int_hi)
 {
  long long iv1;
 
  /* SJM 11/29/99 - must use long long arithmetic old routine wrong low 1 */
- /* in high word and 0 in low word (from double) */
+ /* in high word32 and 0 in low word32 (from double) */
  iv1 = (long long) real + 0.50000; 
- *aof_int_hi = (int) (iv1 >> 32);  
- *aof_int_lo = (int) (iv1 & 0xffffffff); 
+ *aof_int_hi = (int32) (iv1 >> 32);  
+ *aof_int_lo = (int32) (iv1 & 0xffffffff); 
 }
 
 /*
@@ -3793,65 +3794,65 @@ extern void tf_real_to_long(double real, int *aof_int_lo, int *aof_int_hi)
  * get from other instance module
  * if null, return design wide time unit (smallest) 
  */
-extern int tf_igettimeunit(char *inst)
+extern int32 tf_igettimeunit(char *inst)
 {
- int i;
+ int32 i;
  struct tfinst_t *tfi;
  struct mod_t *mdp;
  
  tfi = (struct tfinst_t *) inst;
  /* special case return smallest time precision (not units) in design */
- if (tfi == NULL) { i = -((int) __des_timeprec); return(i); } 
+ if (tfi == NULL) { i = -((int32) __des_timeprec); return(i); } 
 
  mdp = tfi->tfitp->itip->imsym->el.emdp; 
  /* this works because no unit conversion means design time prec (min. */
  /* but stored as positive inverse of neg. exponent) is same as unit */
- if (!mdp->mno_unitcnv) i = -((int) mdp->mtime_units);
- else i = -((int) __des_timeprec);
+ if (!mdp->mno_unitcnv) i = -((int32) mdp->mtime_units);
+ else i = -((int32) __des_timeprec);
  return(i);
 }
 
-extern int tf_gettimeunit(void)
+extern int32 tf_gettimeunit(void)
 {
- int i;
+ int32 i;
 
  if (!__inst_mod->mno_unitcnv)
-  i = -((int) (__inst_mod->mtime_units + __inst_mod->mtime_prec));
+  i = -((int32) (__inst_mod->mtime_units + __inst_mod->mtime_prec));
  /* if no time scale both precision and units the same */
- else i = -((int) __des_timeprec);
+ else i = -((int32) __des_timeprec);
  return(i);
 }
 
 /*
  * get the time precision for a module
  */
-extern int tf_igettimeprecision(char *inst)
+extern int32 tf_igettimeprecision(char *inst)
 {
- int i;
+ int32 i;
  struct tfinst_t *tfi;
  struct mod_t *mdp;
  
  tfi = (struct tfinst_t *) inst;
  /* special case return design precison (sim. tick) value */
  /* design time units is minimum of all units in design */
- if (tfi == NULL) { i = -((int) __des_timeprec); return(i); } 
+ if (tfi == NULL) { i = -((int32) __des_timeprec); return(i); } 
 
  mdp = tfi->tfitp->itip->imsym->el.emdp; 
- if (!mdp->mno_unitcnv) i = -((int) (mdp->mtime_units + mdp->mtime_prec));
- else i = -((int) __des_timeprec);
+ if (!mdp->mno_unitcnv) i = -((int32) (mdp->mtime_units + mdp->mtime_prec));
+ else i = -((int32) __des_timeprec);
  return(i);
 }
 
 /*
  * get the time precision for a module
  */
-extern int tf_gettimeprecision(void)
+extern int32 tf_gettimeprecision(void)
 {
- int i;
+ int32 i;
  
  if (!__inst_mod->mno_unitcnv)
-  i = -((int) (__inst_mod->mtime_units + __inst_mod->mtime_prec));
- else i = -((int) __des_timeprec);
+  i = -((int32) (__inst_mod->mtime_units + __inst_mod->mtime_prec));
+ else i = -((int32) __des_timeprec);
  return(i);
 }
 
@@ -3881,8 +3882,8 @@ extern char *tf_imipname(char *inst)
 extern char *tf_mipname(void)
 {
  char *chp;
- int slen;
- int sav_sofs = __cur_sofs;
+ int32 slen;
+ int32 sav_sofs = __cur_sofs;
 
  __disp_itree_path(__inst_ptr, (struct task_t *) NULL);
  slen = __cur_sofs - sav_sofs;
@@ -3916,8 +3917,8 @@ extern char *tf_ispname(char *cell)
  */
 extern char *tf_spname(void)
 {
- int slen;
- int sav_sofs = __cur_sofs;
+ int32 slen;
+ int32 sav_sofs = __cur_sofs;
  char *chp;
 
  if (__tfrec == NULL)
@@ -3939,7 +3940,7 @@ extern char *tf_spname(void)
  *
  * normal convention to check verbose mode but no argument for messages
  */
-extern int tf_dofinish(void)
+extern int32 tf_dofinish(void)
 {
  __pli_dofinish(0, "tf_dofinish");
  return(TF_NULLPARAM);
@@ -3948,9 +3949,9 @@ extern int tf_dofinish(void)
 /*
  * PLI either tf_ or vpi_ routine to stop simulation ($finish)
  */
-extern void __pli_dofinish(int diag_level, char *caller)
+extern void __pli_dofinish(int32 diag_level, char *caller)
 {
- int rv; 
+ int32 rv; 
 
  /* need to call PLI end of sim routines before finishing */
  if (__tfrec_hdr != NULL) __call_misctfs_finish();
@@ -3968,7 +3969,7 @@ extern void __pli_dofinish(int diag_level, char *caller)
   {
    __cv_msg(
     "Halted at location %s time %s from call to PLI %s.\n",   
-    __bld_lineloc(__wrks2, (unsigned) __sfnam_ind, __slin_cnt),
+    __bld_lineloc(__wrks2, (word32) __sfnam_ind, __slin_cnt),
     __to_timstr(__wrks1, &__simtime), caller);
    __emit_stsk_endmsg();
   }
@@ -3986,7 +3987,7 @@ endit:
  * cause $stop return to interactive mode
  * this is tricky since must run interactive environment under here
  */
-extern int tf_dostop(void)
+extern int32 tf_dostop(void)
 {
  if (__run_state != SS_SIM) return(bad_nosimtf_err("tf_dostop"));
  if (__no_iact)
@@ -4055,9 +4056,9 @@ extern char *tf_getworkarea(void)
 /*
  * store work area for other inst/loc pli task
  */
-extern int tf_isetworkarea(char *workarea, char *inst)
+extern int32 tf_isetworkarea(char *workarea, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -4074,7 +4075,7 @@ extern int tf_isetworkarea(char *workarea, char *inst)
  * store (associate) routine with pli task
  * just a pointer assignment
  */
-extern int tf_setworkarea(char *workarea)
+extern int32 tf_setworkarea(char *workarea)
 {
  if (__tfrec == NULL) return(bad_notfcontext_err("tf_setworkarea"));
  __tfrec->savwrkarea[__inum] = workarea;
@@ -4086,38 +4087,38 @@ extern int tf_setworkarea(char *workarea)
  */
 
 /*
- * add long's which even though passed as int are really unsigned
+ * add long's which even though passed as int32 are really unsigned
  * LOOKATME - is this supposed to be long but signed add
- * if really unsigned should change veriuser.h template 
+ * if really word32 should change veriuser.h template 
  */
-extern void tf_add_long(int *aof_lowtime1, int *aof_hightime1, int lowtime2,
- int hightime2)
+extern void tf_add_long(int32 *aof_lowtime1, int32 *aof_hightime1, int32 lowtime2,
+ int32 hightime2)
 {
- register int lowsum;
+ register int32 lowsum;
 
  lowsum = *aof_lowtime1 + lowtime2;
  *aof_hightime1 = *aof_hightime1 + hightime2
-  + ((unsigned) lowsum < (unsigned) *aof_lowtime1);
+  + ((word32) lowsum < (word32) *aof_lowtime1);
  *aof_lowtime1 = lowsum;
 }
 
 /*
  * 2's complement signed long subtract
- * built in 32 bit size for int and any borrow is lost
+ * built in 32 bit size for int32 and any borrow is lost
  * fails on machine that does not use 2's complement for signed ints
- * also assumes conversion from unsigned to int can make a negative int
+ * also assumes conversion from word32 to int32 can make a negative int
  * per normal c conventions
  */
-extern void tf_subtract_long(int *aof_lowtime1, int *aof_hightime1,
- int lowtime2, int hightime2)
+extern void tf_subtract_long(int32 *aof_lowtime1, int32 *aof_hightime1,
+ int32 lowtime2, int32 hightime2)
 {
- register int lowdif;
+ register int32 lowdif;
 
  lowdif = *aof_lowtime1 - lowtime2;
  /* tmp greater than subtracted from means wrap around and need borrow */
- /* unsigned borrow test since need to include high bit */
+ /* word32 borrow test since need to include high bit */
  *aof_hightime1 = *aof_hightime1 - hightime2
-  - (int) (((unsigned) lowdif > (unsigned) *aof_lowtime1));
+  - (int32) (((word32) lowdif > (word32) *aof_lowtime1));
  *aof_lowtime1 = lowdif;
 }
 
@@ -4141,57 +4142,57 @@ extern int tf_compare_long(unsigned int low1, unsigned int high1,
 
 /*
  * 2's complement long multiply of 2 64 bit values
- * this is built in 64 bits because int must be 32 bits for portability
+ * this is built in 64 bits because int32 must be 32 bits for portability
  * this removes and puts back sign
  */
-extern void tf_multiply_long(int *aof_low1, int *aof_high1, int low2,
- int high2)
+extern void tf_multiply_long(int32 *aof_low1, int32 *aof_high1, int32 low2,
+ int32 high2)
 {
- unsigned r[2], u[2], v[2];
- register int ir0, ir1;
- int minus;
+ word32 r[2], u[2], v[2];
+ register int32 ir0, ir1;
+ int32 minus;
 
  if (*aof_high1 < 0)
   {
    minus = TRUE;
-   u[0] = (unsigned) -(*aof_low1);
-   u[1] = (unsigned) (-(*aof_high1) - (u[0] != 0)); 
+   u[0] = (word32) -(*aof_low1);
+   u[1] = (word32) (-(*aof_high1) - (u[0] != 0)); 
   }
  else
   {
    minus = FALSE;
-   u[0] = (unsigned) *aof_low1;
-   u[1] = (unsigned) *aof_high1;
+   u[0] = (word32) *aof_low1;
+   u[1] = (word32) *aof_high1;
   }
  if (high2 < 0)
   {
    minus = !minus;
-   v[0] = (unsigned) -low2;
-   v[1] = (unsigned) (-high2 - (v[0] != 0));
+   v[0] = (word32) -low2;
+   v[1] = (word32) (-high2 - (v[0] != 0));
   }
- else { v[0] = (unsigned) low2; v[1] = (unsigned) high2; }
+ else { v[0] = (word32) low2; v[1] = (word32) high2; }
 
- __lmult((word *) r, (word *) u, (word *) v,  64);
+ __lmult((word32 *) r, (word32 *) u, (word32 *) v,  64);
  if (minus)
   {
-   ir0 = (int) r[0];
-   ir1 = (int) r[1];
+   ir0 = (int32) r[0];
+   ir1 = (int32) r[1];
    *aof_low1 = -ir0;
    *aof_high1 = -ir1 - (*aof_low1 != 0);
   }
- else { *aof_low1 = (int) r[0]; *aof_high1 = (int) r[1]; }
+ else { *aof_low1 = (int32) r[0]; *aof_high1 = (int32) r[1]; }
 }
 
 /*
- * long divide of unsigned times - assuming unsigned div not mod
- * LOOKATME - treating as unsigned why are arguments ints? and no way to
+ * long divide of word32 times - assuming word32 div not mod
+ * LOOKATME - treating as word32 why are arguments ints? and no way to
  * indicate divide by 0
  */
-extern void tf_divide_long(int *aof_low1, int *aof_high1, int low2, int high2)
+extern void tf_divide_long(int32 *aof_low1, int32 *aof_high1, int32 low2, int32 high2)
 {
- word res[02], u[2], v[2], dum[2];
- register int ir0, ir1;
- int minus;
+ word32 res[02], u[2], v[2], dum[2];
+ register int32 ir0, ir1;
+ int32 minus;
 
  /* divide by 0 must be 0 since no error mechanism */
  if (low2 == 0L && high2 == 0L) { *aof_low1 = *aof_high1 = 0L; return; } 
@@ -4199,31 +4200,31 @@ extern void tf_divide_long(int *aof_low1, int *aof_high1, int low2, int high2)
  if (*aof_high1 < 0)
   {
    minus = TRUE;
-   u[0] = (word) -(*aof_low1);
-   u[1] = (word) (-(*aof_high1) - (u[0] != 0)); 
+   u[0] = (word32) -(*aof_low1);
+   u[1] = (word32) (-(*aof_high1) - (u[0] != 0)); 
   }
  else
   {
    minus = FALSE;
-   u[0] = (word) *aof_low1;
-   u[1] = (word) *aof_high1;
+   u[0] = (word32) *aof_low1;
+   u[1] = (word32) *aof_high1;
   }
  if (high2 < 0)
   {
    minus = !minus;
-   v[0] = (word) -low2;
-   v[1] = (word) (-high2 - (v[0] != 0));
+   v[0] = (word32) -low2;
+   v[1] = (word32) (-high2 - (v[0] != 0));
   }
- else { v[0] = (word) low2; v[1] = (word) high2; }
+ else { v[0] = (word32) low2; v[1] = (word32) high2; }
  __ldivmod2(res, dum, u, v, 64);
  if (minus)
   {
-   ir0 = (int) res[0];
-   ir1 = (int) res[1];
+   ir0 = (int32) res[0];
+   ir1 = (int32) res[1];
    *aof_low1 = -ir0;
    *aof_high1 = -ir1 - (*aof_low1 != 0);
   }
- else { *aof_low1 = (int) res[0]; *aof_high1 = (int) res[1]; }
+ else { *aof_low1 = (int32) res[0]; *aof_high1 = (int32) res[1]; }
 }
 
 /*
@@ -4233,7 +4234,7 @@ extern void tf_divide_long(int *aof_low1, int *aof_high1, int low2, int high2)
 /*
  * emit error using cver mechanism
  */
-extern int tf_error(char *fmt, ...)
+extern int32 tf_error(char *fmt, ...)
 {
  va_list va, va2;
 
@@ -4267,7 +4268,7 @@ static void vprt_tferr_msg(char *fmt, va_list va, va_list va2)
  /* no maximum error count for these */
 }
 
-extern int tf_warning(char *fmt, ...)
+extern int32 tf_warning(char *fmt, ...)
 {
  va_list va, va2;
 
@@ -4303,7 +4304,7 @@ static void vprt_tfwarn_msg(char *fmt, va_list va, va_list va2)
 /*
  * unimplemented sprintf like routine  
  */
-extern int tf_text(char *fmt, ...)
+extern int32 tf_text(char *fmt, ...)
 {
  /* ---
  va_list va;
@@ -4319,7 +4320,7 @@ extern int tf_text(char *fmt, ...)
  * print a message using Cver style error message format
  * facility and messno ignored
  */
-extern int tf_message(int level, char *facility, char *messno,
+extern int32 tf_message(int32 level, char *facility, char *messno,
  char *message, ...)
 {
  va_list va, va2;
@@ -4365,17 +4366,17 @@ extern int tf_message(int level, char *facility, char *messno,
 /*
  * printf to multi-channel descriptor
  */
-extern void io_mcdprintf(int mcd, char *format, ...)
+extern void io_mcdprintf(int32 mcd, char *format, ...)
 {
- register int i;
+ register int32 i;
  va_list va, va2;
 
  /* SJM 09/09/03 - fd case easy because only one stream to write to */
  if ((mcd & FIO_MSB) == FIO_MSB)
   {
-   int fd;
+   int32 fd;
 
-   fd = (int) (mcd & ~FIO_MSB);
+   fd = (int32) (mcd & ~FIO_MSB);
    /* if fd does not correspond to open file, just set error indicator */
    if (__fio_fdtab[fd] == NULL)
     {
@@ -4455,7 +4456,7 @@ extern char *mc_scan_plusargs(char *plusarg)
 {
  register struct optlst_t *olp;
  register char *chp;
- int arglen, optlen;
+ int32 arglen, optlen;
 
  arglen = strlen(plusarg);
  /* all options expanded and saved so this is easy */
@@ -4500,9 +4501,9 @@ extern char tf_freeinstance(char *inst)
 /*
  * think this is no longer needed since assigning causes propagate
  */
-extern int tf_ievaluatep(int pnum, char *inst)
+extern int32 tf_ievaluatep(int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -4527,12 +4528,12 @@ extern int tf_ievaluatep(int pnum, char *inst)
  * legal ver expr.
  * notice this is fast because only changes value exprinfo fields 
  */
-extern int tf_evaluatep(int pnum)
+extern int32 tf_evaluatep(int32 pnum)
 {
- register int wi;
+ register int32 wi;
  register struct t_tfexprinfo *pinfo;
  register struct xstk_t *xsp;
- int wlen, rv;
+ int32 wlen, rv;
  double d1;
  struct tfarg_t *tfap;
  struct expr_t *xp;
@@ -4560,8 +4561,8 @@ extern int tf_evaluatep(int pnum)
    wlen = wlen_(xp->szu.xclen);
    for (wi = 0; wi < wlen; wi++)
     { 
-     pinfo->expr_value_p[wi].avalbits = (int) xsp->ap[wi];
-     pinfo->expr_value_p[wi].bvalbits = (int) xsp->bp[wi];
+     pinfo->expr_value_p[wi].avalbits = (int32) xsp->ap[wi];
+     pinfo->expr_value_p[wi].bvalbits = (int32) xsp->bp[wi];
     }  
   }
  __pop_xstk();
@@ -4572,9 +4573,9 @@ extern int tf_evaluatep(int pnum)
  * progogate a changed rhs value to all lhs?
  * what does this do and how is expr. stored ?
  */
-extern int tf_ipropagatep(int pnum, char *inst)
+extern int32 tf_ipropagatep(int32 pnum, char *inst)
 {
- int rv;
+ int32 rv;
  struct tfinst_t *sav_tfip;
  struct tfrec_t *sav_tfrp;
 
@@ -4596,13 +4597,13 @@ extern int tf_ipropagatep(int pnum, char *inst)
  * SJM 11/30/99 - changed to follow new LRM and use exprinfo for
  * save (from tf_exprinfo) instead of node info (from tf_nodeinfo)
  */
-extern int tf_propagatep(int pnum)
+extern int32 tf_propagatep(int32 pnum)
 {
- register int wi;
+ register int32 wi;
  register struct xstk_t *xsp;
  register struct t_vecval *vecp; 
  register struct t_tfexprinfo *xpinfo;
- int rv;
+ int32 rv;
  double d1;
  struct tfarg_t *tfap;
  struct expr_t *lhsxp;
@@ -4652,8 +4653,8 @@ extern int tf_propagatep(int pnum)
    vecp = xpinfo->expr_value_p;
    for (wi = 0; wi < xpinfo->expr_ngroups; wi++)
     {
-     xsp->ap[wi] = (word) vecp[wi].avalbits;
-     xsp->bp[wi] = (word) vecp[wi].bvalbits;
+     xsp->ap[wi] = (word32) vecp[wi].avalbits;
+     xsp->bp[wi] = (word32) vecp[wi].bvalbits;
     }
   } 
  exec_tfarg_assign(tfap, lhsxp, xsp->ap, xsp->bp);
@@ -4664,7 +4665,7 @@ extern int tf_propagatep(int pnum)
 /*
  * need $restart mechanism for this 
  */
-extern int tf_read_restart(char *blockptr, int blocklen)
+extern int32 tf_read_restart(char *blockptr, int32 blocklen)
 {
  /* UNIMPLMENTED */
  __sgferr(1287, 
@@ -4672,7 +4673,7 @@ extern int tf_read_restart(char *blockptr, int blocklen)
  return(0);
 }
 
-extern int tf_write_save(char *blockptr, int blocklen)
+extern int32 tf_write_save(char *blockptr, int32 blocklen)
 {
  /* UNIMPLMENTED */
  __sgferr(1287, 
@@ -4684,9 +4685,9 @@ extern int tf_write_save(char *blockptr, int blocklen)
  * other pli function/task call version of sleep ? 
  */
 /* ---
-extern int tf_isleep(int delay, char *inst)
+extern int32 tf_isleep(int32 delay, char *inst)
 {
- int rv;
+ int32 rv;
 }
 -- */
 
@@ -4696,7 +4697,7 @@ extern int tf_isleep(int delay, char *inst)
  * terminates ? - why not just set delay and return?
  */
 /* -- 
-extern int tf_sleep(int delay)
+extern int32 tf_sleep(int32 delay)
 {
  return(0);
 }
@@ -4709,7 +4710,7 @@ extern int tf_sleep(int delay)
 /*
  * routine to determine source location of tf_ instance
  */
-extern char *tf_igetsourceloc(int *lineno, char *inst)
+extern char *tf_igetsourceloc(int32 *lineno, char *inst)
 {
  char *chp;
  struct tfinst_t *sav_tfip;
@@ -4723,9 +4724,9 @@ extern char *tf_igetsourceloc(int *lineno, char *inst)
 }
 
 
-extern char *tf_getsourceloc(int *lineno)
+extern char *tf_getsourceloc(int32 *lineno)
 {
- int slen;
+ int32 slen;
  char *chp, *chp2;
 
  if (__tfrec == NULL)
@@ -4753,11 +4754,11 @@ extern char *tf_getsourceloc(int *lineno)
  *
  * notice since this dce does not fit into normal scheme dce 1inst T if
  * func or F if task, dce2 union is ptr to task call statement or fcall expr
- * and unused dce_downitp is cast to int for pnum (set when built)
+ * and unused dce_downitp is cast to int32 for pnum (set when built)
  */
 extern void __pvc_call_misctf(struct dcevnt_t *dcep)
 {
- int pnum, sav_fnam_ind, sav_slin_cnt;
+ int32 pnum, sav_fnam_ind, sav_slin_cnt;
  struct st_t *stp;
  struct expr_t *fcallx; 
  struct t_tfcell *tfcp;
@@ -4765,7 +4766,7 @@ extern void __pvc_call_misctf(struct dcevnt_t *dcep)
  struct systsk_t *stbp;
  struct sysfunc_t *sfbp;
  struct tfinst_t tfiwrk;
- int (*misctf)();
+ int32 (*misctf)();
 
  stp = NULL;
  fcallx = NULL;
@@ -4797,7 +4798,7 @@ extern void __pvc_call_misctf(struct dcevnt_t *dcep)
  if ((misctf = tfcp->misctf) == NULL) return;
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
  __vpifnam_ind = __sfnam_ind; 
  __vpilin_cnt = __slin_cnt;
 
@@ -4810,7 +4811,7 @@ extern void __pvc_call_misctf(struct dcevnt_t *dcep)
  if (dcep->dce_tfunc) __tfinst->callx = fcallx; else __tfinst->tfstp = stp;
 
  /* FIXME ??? - not 64 bit clean */
- (*misctf)((int) tfcp->data, REASON_PARAMVC, pnum);
+ (*misctf)((int32) tfcp->data, REASON_PARAMVC, pnum);
  __tfinst = NULL;
  __tfrec = NULL;
  __sfnam_ind = sav_fnam_ind; __slin_cnt = sav_slin_cnt;
@@ -4822,11 +4823,11 @@ extern void __pvc_call_misctf(struct dcevnt_t *dcep)
  * build and link on special pvc tf_ parameter change dce for one param
  * xp is param expr (can be rhs) - know __tfrec and instance loc. set
  */
-static void bld_pvc_dces(struct expr_t *xp, int pnum)
+static void bld_pvc_dces(struct expr_t *xp, int32 pnum)
 {
  struct net_t *np;
- int biti, bitj;
- word *wp;
+ int32 biti, bitj;
+ word32 *wp;
  struct expr_t *idndp, *ndx;
  struct expr_t *fax;
  
@@ -4854,7 +4855,7 @@ glb_dce:
    if (ndx->optyp == NUMBER)
     {
      wp = &(__contab[ndx->ru.xvi]);
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else if (ndx->optyp == ISNUMBER)
     {
@@ -4862,7 +4863,7 @@ glb_dce:
      wp = &(wp[2*__inum]);
 
      /* need length for IS number because can be wider - but get low */
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else
     {
@@ -4881,8 +4882,8 @@ glb_dce:
    np = idndp->lu.sy->el.enp;
    ndx = xp->ru.x;
    /* know part select never IS */
-   biti = (int) __contab[ndx->lu.x->ru.xvi];
-   bitj = (int) __contab[ndx->ru.x->ru.xvi];
+   biti = (int32) __contab[ndx->lu.x->ru.xvi];
+   bitj = (int32) __contab[ndx->ru.x->ru.xvi];
    if (!np->vec_scalared) biti = bitj = -1;
    if (idndp->optyp == GLBREF) goto glb_dce;
    linkon_pvc_dce(np, biti, bitj, (struct gref_t *) NULL, pnum);
@@ -4913,11 +4914,11 @@ glb_dce:
  * need old value for ranges since need exact change processing
  * not sure if ref. itp needed here but stored
  */
-static void linkon_pvc_dce(struct net_t *np, int biti, int bitj,
- struct gref_t *grp, int pnum)
+static void linkon_pvc_dce(struct net_t *np, int32 biti, int32 bitj,
+ struct gref_t *grp, int32 pnum)
 {
  register struct dcevnt_t *dcep;
- int nd_itpop;
+ int32 nd_itpop;
  struct itree_t *ref_itp;
  struct dceauxlst_t *dclp;
 
@@ -4979,7 +4980,6 @@ static void linkon_pvc_dce(struct net_t *np, int biti, int bitj,
  /* since nchg nd chgstore on, know nchg action right */
  if (np->ntyp >= NONWIRE_ST) np->nchg_has_dces = TRUE;
 
-
  if (nd_itpop) __pop_itstk();
 }
 
@@ -5010,10 +5010,10 @@ extern void __exec_rosync_misctf(void)
  */
 static void rosync_call_misctf(i_tev_ndx tevpi)
 {
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct t_tfcell *tfcp;
  struct tfinst_t tfiwrk;
- int (*misctf)();
+ int32 (*misctf)();
 
  __tfrec = __tevtab[tevpi].tu.tetfrec;
  tfcp = get_tfcell(__tfrec);
@@ -5026,7 +5026,7 @@ static void rosync_call_misctf(i_tev_ndx tevpi)
   }
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
 
  __push_itstk(__tevtab[tevpi].teitp);
  /* set up environment that is current implied tf instance */
@@ -5040,7 +5040,7 @@ static void rosync_call_misctf(i_tev_ndx tevpi)
 
  /* SJM 06/13/1999 - misctf always requires 3rd argument although ignored except for syncon callbacks ?? */
  /* FIXME ??? - not 64 bit clean */
- (*misctf)((int) tfcp->data, REASON_ROSYNCH, 0);
+ (*misctf)((int32) tfcp->data, REASON_ROSYNCH, 0);
 
  __tfrec->rosync_tevp[__inum] = -1;
  __pop_itstk();
@@ -5059,10 +5059,10 @@ static void rosync_call_misctf(i_tev_ndx tevpi)
  */
 extern void __sync_call_misctf(struct tev_t *tevp)
 {
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct t_tfcell *tfcp;
  struct tfinst_t tfiwrk;
- int (*misctf)();
+ int32 (*misctf)();
 
  __tfrec = tevp->tu.tetfrec;
  tfcp = get_tfcell(__tfrec);
@@ -5074,7 +5074,7 @@ extern void __sync_call_misctf(struct tev_t *tevp)
   }
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
 
  __push_itstk(tevp->teitp);
  /* set up environment that is current implied tf instance */
@@ -5088,7 +5088,7 @@ extern void __sync_call_misctf(struct tev_t *tevp)
 
  /* SJM 06/13/1999 - misctf always requires 3rd argument although ignored except for syncon callbacks ?? */
  /* FIXME ??? - not 64 bit clean */
- (*misctf)((int) tfcp->data, REASON_SYNCH, 0);
+ (*misctf)((int32) tfcp->data, REASON_SYNCH, 0);
 
  __tfrec->sync_tevp[__inum] = -1;
  __pop_itstk();
@@ -5105,10 +5105,10 @@ extern void __sync_call_misctf(struct tev_t *tevp)
 extern void __setdel_call_misctf(i_tev_ndx tevpi)
 {
  register struct tevlst_t *telp, *last_telp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct t_tfcell *tfcp;
  struct tfinst_t tfiwrk;
- int (*misctf)();
+ int32 (*misctf)();
 
  __tfrec = __tevtab[tevpi].tu.tetfrec;
  tfcp = get_tfcell(__tfrec);
@@ -5117,7 +5117,7 @@ extern void __setdel_call_misctf(i_tev_ndx tevpi)
  if ((misctf = tfcp->misctf) == NULL) goto free_telst;
 
  sav_fnam_ind = __sfnam_ind; sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
+ __sfnam_ind = (int32) __tfrec->tffnam_ind; __slin_cnt = __tfrec->tflin_cnt;
 
  __push_itstk(__tevtab[tevpi].teitp);
  /* set up environment that is current implied tf instance */
@@ -5131,7 +5131,7 @@ extern void __setdel_call_misctf(i_tev_ndx tevpi)
 
  /* SJM 06/13/1999 - misctf always requires 3rd argument although ignored except for syncon callbacks ?? */
  /* FIXME ??? - not 64 bit clean */
- (*misctf)((int) tfcp->data, REASON_REACTIVATE, 0);
+ (*misctf)((int32) tfcp->data, REASON_REACTIVATE, 0);
 
  __pop_itstk();
  __sfnam_ind = sav_fnam_ind; __slin_cnt = sav_slin_cnt;
@@ -5170,9 +5170,9 @@ extern void __process_putpdel_ev(i_tev_ndx tevpi)
 {
  register struct expr_t *lhsxp; 
  register struct tfarg_t *tfap;
- register int lhslen;
- int wlen;
- word *ap, *bp;
+ register int32 lhslen;
+ int32 wlen;
+ word32 *ap, *bp;
  byte *sbp;
  struct tfrec_t *tfrp;
  struct tedputp_t *tedp; 
@@ -5216,11 +5216,11 @@ extern void __process_putpdel_ev(i_tev_ndx tevpi)
  * __inst_ptr set to right instance
  */
 static void exec_tfarg_assign(struct tfarg_t *tfap, struct expr_t *lhsxp,
- register word *ap, register word *bp)
+ register word32 *ap, register word32 *bp)
 {
- register int lhslen;
+ register int32 lhslen;
  register byte *sbp;
- int schd_wire;
+ int32 schd_wire;
 
  /* case 1 procedural assign */ 
  if (tfap->anp->ntyp >= NONWIRE_ST)
@@ -5254,7 +5254,7 @@ static void exec_tfarg_assign(struct tfarg_t *tfap, struct expr_t *lhsxp,
  */
 static void emit_tputd_trmsg(struct tedputp_t *tedp, struct tfarg_t *tfap)
 { 
- word *ap, *bp;
+ word32 *ap, *bp;
  struct tfrec_t *tfrp;
  struct expr_t *lhsxp;
  char s1[RECLEN], s2[IDLEN];
@@ -5310,7 +5310,7 @@ extern void __reinit_tfrecs(void)
  */
 static void reinit_1tfrec(struct tfrec_t *tfrp)
 {
- register int i, pi;
+ register int32 i, pi;
  register struct dltevlst_t *dlp;
  register struct tevlst_t *tlp;
  struct dltevlst_t *last_dlp;
@@ -5385,11 +5385,11 @@ static void reinit_1tfrec(struct tfrec_t *tfrp)
  * call to malloc that dies if no memory available
  * these are normal OS memory allocation with error terminaton
  */
-extern char *__mytf_malloc(int size)
+extern char *__mytf_malloc(int32 size)
 {
  char *cp;
 
- if ((cp = (char *) malloc((unsigned) size)) == NULL)
+ if ((cp = (char *) malloc((word32) size)) == NULL)
   {
    __crit_msg(
    "**FATAL[1]: No more memory from tf_ call at file %s line %d - %ld bytes memory used\n",

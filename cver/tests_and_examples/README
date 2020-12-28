@@ -33,3 +33,7 @@ capacity.tst
   This option test runs a 3.2 million gate circuit to show advantages of
 non flattened algorithm.  It requires about 150MB of free memory.  Running
 it is optional.
+
+v2001
+  This directory contains some tests for new verilog 2001 features supported
+by GPL Cver 2.xx.

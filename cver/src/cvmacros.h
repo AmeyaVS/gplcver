@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@
  * notice these macros sometimes use globals and call procedures
  * that are assumed to be defined
  */
-
-#define bld_init_insn_(type) __bld_init_insn(type, __FILE__, __LINE__); 
 
 /* DBG remove - */
 extern void __push_itstk(struct itree_t *);
@@ -71,7 +69,7 @@ extern void __pop_xstk(void);
 /* -- */
 
 /* DBG ??? add -- 
-extern struct xstk_t *__push_xstk(int);
+extern struct xstk_t *__push_xstk(int32);
 #define push_xstk_(xsp, blen) (xsp) = __push_xstk((blen))
 --- */
 
@@ -95,7 +93,7 @@ extern struct xstk_t *__eval_xpr(struct expr_t *);
 /* --- */
 
 /* DBG ??? add --- */
-extern i_tev_ndx __alloc_tev(int, struct itree_t *, word64);
+extern i_tev_ndx __alloc_tev(int32, struct itree_t *, word64);
 #define alloc_tev_(tevpi, etyp, itp, absetime) \
  (tevpi) = __alloc_tev((etyp), (itp), (absetime))
 /*--- */
@@ -122,7 +120,7 @@ extern i_tev_ndx __alloc_tev(int, struct itree_t *, word64);
 
 #define ld_scalval_(ap, bp, bytp) \
  do { \
-  (ap)[0] = (word) ((bytp)[__inum]); \
+  (ap)[0] = (word32) ((bytp)[__inum]); \
   (bp)[0] = ((ap)[0] >> 1) & 1L; \
   (ap)[0] &= 1L; \
  } while(0)
@@ -135,19 +133,11 @@ extern i_tev_ndx __alloc_tev(int, struct itree_t *, word64);
 
 #define chg_st_scalval_(bp, av, bv) \
  do { \
-  register word nval__; \
+  register word32 nval__; \
   nval__ = (av) | ((bv) << 1); \
-  if (((word) (bp)[__inum]) != (nval__)) \
+  if (((word32) (bp)[__inum]) != (nval__)) \
    { (bp)[__inum] = (byte) (nval__); __lhs_changed = TRUE; } \
  } while(0)
-
-/* SJM 05/12/03 - eliminate nil pointer lint problem or stren scalar chg st */
-#define chg_st_strenscal_(bp, sbp) \
- do { \
-  register byte *netsbp__; \
-  netsbp__ = &((bp)[__inum]); \
-  if (*netsbp__ != *(sbp)) { *netsbp__ = *(sbp); __lhs_changed = TRUE; } \
- } while (0) 
 
 #define get_stwire_addr_(sbp, np) \
  (sbp) = &((np)->nva.bp[np->nwid*__inum])
@@ -179,7 +169,7 @@ extern void __record_nchg(struct net_t *);
 /* --- */
 
 /* DBG ??? add --- 
-extern void __record_sel_nchg(struct net_t *, int, int);
+extern void __record_sel_nchg(struct net_t *, int32, int32);
 #define record_sel_nchg_(np, i1, i2) __record_sel_nchg(np, i1, i2)
  --- */
 
@@ -203,10 +193,10 @@ extern void __record_sel_nchg(struct net_t *, int, int);
 
 /* conversion macros */
 #define valtoch_(c) (((c) < 10) ? '0' + (c) : 'a' + (c) - 10)
-/* conversion from real to int in Verilog is rounding away from 0 */
-#define ver_rint_(x) ((int) (((x) >= 0.0) \
+/* conversion from real to int32 in Verilog is rounding away from 0 */
+#define ver_rint_(x) ((int32) (((x) >= 0.0) \
   ? ((x) + 0.500000000) : ((x) - 0.500000000))) 
-#define ver_rword(x) ((word) ((x) + 0.500000000))
+#define ver_rword(x) ((word32) ((x) + 0.500000000))
 
 /* convert a 64 bit delay to no. of sim ticks */ 
 #define cnv_num64to_ticks_(tickstim, inttim, mdp) \
@@ -214,8 +204,8 @@ extern void __record_sel_nchg(struct net_t *, int, int);
 
 /* value extraction macros */
 #define get_packintowrd_(nva, inum, vecw) \
- (((vecw) <= 4) ? ((word) (nva).bp[(inum)]) \
- : (((vecw) > 8) ? (nva).wp[(inum)] : (word) (nva).hwp[(inum)]))
+ (((vecw) <= 4) ? ((word32) (nva).bp[(inum)]) \
+ : (((vecw) > 8) ? (nva).wp[(inum)] : (word32) (nva).hwp[(inum)]))
 
 #define st_packintowrd_(nva, ind, uwrd, vecw) \
  (((vecw) <= 4) ? ((nva).bp[(ind)] = (byte) (uwrd)) \
@@ -255,21 +245,21 @@ extern void __record_sel_nchg(struct net_t *, int, int);
 
 /* value change macros - can't assume no overlap here */
 #define cp_walign_(dwp, swp, blen) \
- memmove((dwp), (swp), (int) (WRDBYTES*(wlen_(blen)))); \
+ memmove((dwp), (swp), (int32) (WRDBYTES*(wlen_(blen)))); \
  (dwp)[wlen_(blen) - 1] &= __masktab[ubits_(blen)]
 
 #define zero_allbits_(wp, blen) memset(((wp)), 0, \
- (int) (WRDBYTES*(wlen_(blen))))
+ (int32) (WRDBYTES*(wlen_(blen))))
 
 #define one_allbits_(wp, blen) \
- do { register int __i; \
+ do { register int32 __i; \
   for (__i = 0; __i < wlen_(blen); __i++) (wp)[__i] = ALL1W; \
   (wp)[(wlen_(blen)) - 1] &= __masktab[ubits_(blen)]; \
  } while (0)
 
 /* macro must be passed a byte pointer */
 #define set_byteval_(sbp, len, stval) \
- do { register int __i; \
+ do { register int32 __i; \
   for (__i = 0; __i < (len); __i++) (sbp)[__i] = ((byte) (stval)); \
  } while (0)
 

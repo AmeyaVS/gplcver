@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -43,22 +43,20 @@
 #include "vpi_user.h"
 #include "cv_vpi_user.h"
 
-
-
 /* local prototypes */
-static int chk_delay_num(char *, struct h_t *, int, struct gate_t *);
-static int fillchk_tim(word64 *, int *, p_vpi_delay, struct itree_t *);
-static void fill_vpi_delay(p_vpi_delay, word64 *, int, unsigned,
+static int32 chk_delay_num(char *, struct h_t *, int32, struct gate_t *);
+static int32 fillchk_tim(word64 *, int32 *, p_vpi_delay, struct itree_t *);
+static void fill_vpi_delay(p_vpi_delay, word64 *, int32, word32,
  struct mod_t *);
 
 static void get_varorparam_val(struct h_t *, p_vpi_value);
-static void stscal_fill_valuep(p_vpi_value, register byte *, int);
-static void stvec_fill_valuep(p_vpi_value, register byte *, int);
+static void stscal_fill_valuep(p_vpi_value, register byte *, int32);
+static void stvec_fill_valuep(p_vpi_value, register byte *, int32);
 static void get_var_bit(struct h_t *, p_vpi_value);
 static void get_arrwrd_val(struct h_t *, p_vpi_value);  
 static void get_paramarrwrd_val(struct h_t *, p_vpi_value);  
 static void get_expr_val(struct h_t *, p_vpi_value);  
-static int valp_stren_err(struct hrec_t *, p_vpi_value);  
+static int32 valp_stren_err(struct hrec_t *, p_vpi_value);  
 static void get_primterm_val(struct h_t *, p_vpi_value);  
 static void get_vpisfcall_retval(struct h_t *, p_vpi_value);
 static void get_vpiudpdefn_val(struct h_t *, p_vpi_value);
@@ -73,245 +71,245 @@ static void get_vpiconta_drv_valuep(struct h_t *, p_vpi_value,
 static void get_vpiport_drv_valuep(struct h_t *, p_vpi_value,
  struct mod_pin_t *);
 static void get_vpiportbit_drv_valuep(struct h_t *, p_vpi_value,
- struct mod_pin_t *, int);
+ struct mod_pin_t *, int32);
 static void get_vpi_attrval(struct h_t *, p_vpi_value);
 
-static void correct_objtypval(p_vpi_value, unsigned, unsigned, unsigned, int);
+static void correct_objtypval(p_vpi_value, word32, word32, word32, int32);
 static void expr_correct_objtypval(struct expr_t *, p_vpi_value);
-static void fill_valuep(p_vpi_value, struct xstk_t *xsp, unsigned, int);
-static void wrkval_grow(int);
+static void fill_valuep(p_vpi_value, struct xstk_t *xsp, word32, int32);
+static void wrkval_grow(int32);
 static void udp_line_to_str(char *, struct udp_t *, struct utline_t *);
-static int putv_in_future(unsigned, p_vpi_time);
-static int chk_putv_args(unsigned, struct h_t *, p_vpi_value); 
-static char *putv_flag_to_str(char *, unsigned);
-static int net_ongetpat_lhs(struct net_t *);
-static int good_value_p(p_vpi_value);
+static int32 putv_in_future(word32, p_vpi_time);
+static int32 chk_putv_args(word32, struct h_t *, p_vpi_value); 
+static char *putv_flag_to_str(char *, word32);
+static int32 net_ongetpat_lhs(struct net_t *);
+static int32 good_value_p(p_vpi_value);
 static void free_putv_sched(struct h_t *);
 static void free_regwir_putv_sched(struct net_t *, struct itree_t *,
  i_tev_ndx); 
-static void free_netbitdrv_putv_sched(struct net_t *, int, struct itree_t *,
+static void free_netbitdrv_putv_sched(struct net_t *, int32, struct itree_t *,
  i_tev_ndx); 
 static struct h_t *add_net_driver(struct h_t *); 
 static struct h_t *add_netbit_driver(struct h_t *); 
-static struct vpi_drv_t *alloc_vpidrv(struct net_t *, int);
+static struct vpi_drv_t *alloc_vpidrv(struct net_t *, int32);
 static void putv_drvwp_allocinit(struct mod_t *, struct net_t *,
- struct vpi_drv_t *, int);
+ struct vpi_drv_t *, int32);
 static void chg_net_to_multfi(struct net_t *, struct mod_t *);
-static int get_vpibit_index(struct net_t **np, struct h_t *);
-static struct xstk_t *push_vpi_valuep(p_vpi_value, int, unsigned, int);
-static void reg_vpi_force(register struct net_t *, word *, word *);
+static int32 get_vpibit_index(struct net_t **np, struct h_t *);
+static struct xstk_t *push_vpi_valuep(p_vpi_value, int32, word32, int32);
+static void reg_vpi_force(register struct net_t *, word32 *, word32 *);
 static void reg_vpi_release(register struct net_t *);
-static void wire_vpi_force(register struct net_t *, word *, word *,
- register int);
-static void wire_vpi_release(struct net_t *, int);
+static void wire_vpi_force(register struct net_t *, word32 *, word32 *,
+ register int32);
+static void wire_vpi_release(struct net_t *, int32);
 static void set_vpisfcall_retval(struct h_t *, p_vpi_value);
 static void set_vpiparam_val(struct h_t *, p_vpi_value);
 static void set_vpiudpdef_ival(struct h_t *, p_vpi_value);
-static void immed_vpi_drv_assign(struct net_t *np, int, word *, word *); 
-static void immed_vpibit_drv_assign(struct net_t *np, int, int, word *,
- word *); 
-static void emit_vpiputv_evtrmsg(struct net_t *, struct teputv_t *, int);
-static void exec_putv_reg_assign(register struct net_t *, register word *,
- register word *, register int);
-static void exec_putv_wire_softforce(register struct net_t *, register word *,
- register word *, register int);
-static struct h_t *setschd_var_fromvaluep(p_vpi_value, struct net_t *, int, 
- word64, byte, int);
+static void immed_vpi_drv_assign(struct net_t *np, int32, word32 *, word32 *); 
+static void immed_vpibit_drv_assign(struct net_t *np, int32, int32, word32 *,
+ word32 *); 
+static void emit_vpiputv_evtrmsg(struct net_t *, struct teputv_t *, int32);
+static void exec_putv_reg_assign(register struct net_t *, register word32 *,
+ register word32 *, register int32);
+static void exec_putv_wire_softforce(register struct net_t *, register word32 *,
+ register word32 *, register int32);
+static struct h_t *setschd_var_fromvaluep(p_vpi_value, struct net_t *, int32, 
+ word64, byte, int32);
 static void emit_vpiputv_schd_trmsg(struct net_t *, struct xstk_t *,
- struct dltevlst_t *, word64 *, int, char *);
+ struct dltevlst_t *, word64 *, int32, char *);
 static void bld_regwir_putvrec(struct net_t *);
-static void cancel_vpievents_toend(struct net_t *, struct dltevlst_t *, int);
+static void cancel_vpievents_toend(struct net_t *, struct dltevlst_t *, int32);
 static struct h_t *setschd_drvr_fromvaluep(p_vpi_value, struct h_t *, word64,
- byte, int);
-static i_tev_ndx setschd_1bit_drvr(struct net_pin_t *, int, struct xstk_t *,
+ byte, int32);
+static i_tev_ndx setschd_1bit_drvr(struct net_pin_t *, int32, struct xstk_t *,
  word64, byte);
-static int chk_vpi_logicval(word);
-static int bld_vpinewdu(struct gate_t *, struct gate_t *, p_vpi_delay,
- struct itree_t *, int, int);
-static int do_vpi_iact_scopchg(vpiHandle);
-static int do_vpi_cb_onoff(vpiHandle, int);
-static void init_pli_einfo(struct t_vpi_error_info *, int, int);
-static int to_vpierr_level(int);
+static int32 chk_vpi_logicval(word32);
+static int32 bld_vpinewdu(struct gate_t *, struct gate_t *, p_vpi_delay,
+ struct itree_t *, int32, int32);
+static int32 do_vpi_iact_scopchg(vpiHandle);
+static int32 do_vpi_cb_onoff(vpiHandle, int32);
+static void init_pli_einfo(struct t_vpi_error_info *, int32, int32);
+static int32 to_vpierr_level(int32);
 
 
 /* extern prototypes (maybe defined in this module) */
-extern struct mipd_t *__get_mipd_from_port(struct mod_pin_t *, int);
-extern void __set_vpi_time(struct t_vpi_time *, word64 *, int, struct mod_t *);
-extern int __get_vpinet_index(struct net_t **, struct h_t *);
-extern int __vpitime_to_ticks(word64 *, p_vpi_time, struct mod_t *);
-extern void __reinit_regwir_putvrec(struct net_t *, int);
+extern struct mipd_t *__get_mipd_from_port(struct mod_pin_t *, int32);
+extern void __set_vpi_time(struct t_vpi_time *, word64 *, int32, struct mod_t *);
+extern int32 __get_vpinet_index(struct net_t **, struct h_t *);
+extern int32 __vpitime_to_ticks(word64 *, p_vpi_time, struct mod_t *);
+extern void __reinit_regwir_putvrec(struct net_t *, int32);
 extern void __reinit_netdrvr_putvrec(struct net_t *, struct mod_t *);
 extern void __process_vpi_varputv_ev(i_tev_ndx);
 extern void __process_vpidrv_ev(i_tev_ndx);
-extern void __pli_dofinish(int, char *);
+extern void __pli_dofinish(int32, char *);
 extern void __reinit_vpi(void);
 extern void __dmp_listof_handles(struct h_t *);
-extern char *__to_vpionam(char *, unsigned);
-extern int __validate_otyp(unsigned);
-extern char *__to_vpiopnam(char *, int);
-extern char *__to_vpiopchar(char *, int);
+extern char *__to_vpionam(char *, word32);
+extern int32 __validate_otyp(word32);
+extern char *__to_vpiopnam(char *, int32);
+extern char *__to_vpiopchar(char *, int32);
 extern void __sim_notbegun_err(char *);
 extern void __still_comp_err(char *);
 extern void __bad_rosync_err(char *);
-extern int __validate_handle(char *, register struct h_t *);
-extern int __validate_nonit_handle(char *, struct h_t *);
-extern int __validate_accessm(char *, int, char *);
-extern int __validate_time_type(char *, int);
-extern int __validate_value_fmt(char *, int);
+extern int32 __validate_handle(char *, register struct h_t *);
+extern int32 __validate_nonit_handle(char *, struct h_t *);
+extern int32 __validate_accessm(char *, int32, char *);
+extern int32 __validate_time_type(char *, int32);
+extern int32 __validate_value_fmt(char *, int32);
 extern void __free_iterator(vpiHandle);
 extern void __free_hp(struct h_t *); 
 
-extern vpiHandle __mk_handle(unsigned, void *, struct itree_t *,
+extern vpiHandle __mk_handle(word32, void *, struct itree_t *,
  struct task_t *);
-extern int __get_arrwide(struct net_t *);
+extern int32 __get_arrwide(struct net_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
-extern void __extract_delval(word64 *, int *, union del_u, unsigned);
-extern char *__to_tcnam(char *, unsigned);
-extern void __fill_16vconst(word64 *, word64 *, int);
+extern void __extract_delval(word64 *, int32 *, union del_u, word32);
+extern char *__to_tcnam(char *, word32);
+extern void __fill_16vconst(word64 *, word64 *, int32);
 extern void __map_16v_to_12vform(word64 *, word64 *);
-extern int __v64_to_real(double *, word64 *);
+extern int32 __v64_to_real(double *, word64 *);
 extern char *__to_timstr(char *, word64 *);
-extern int __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
+extern int32 __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
 extern void __chg_1inst_del(struct gate_t *, struct itree_t *, struct gate_t *);
-extern void __free_del(union del_u, unsigned, int);
+extern void __free_del(union del_u, word32, int32);
 extern char *__to_mpnam(char *, char *);
 extern void __add_alloc_mipd_npp(struct net_t *, struct mod_t *);
-extern void __setup_mipd(struct mipd_t *, struct net_t *, int);
-extern int __add_conta_pnd0del(struct conta_t *, struct mod_t *, char *);
-extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int, int);
-extern int __real_to_v64tim(word64 *, double);
+extern void __setup_mipd(struct mipd_t *, struct net_t *, int32);
+extern int32 __add_conta_pnd0del(struct conta_t *, struct mod_t *, char *);
+extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int32, int32);
+extern int32 __real_to_v64tim(word64 *, double);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __grow_tevtab(void);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
-extern void __ld_bit(register word *, register word *,
- register struct net_t *, int);
-extern void __ld_stval(register word *, register word *, register byte *, int);
-extern void __lhsbsel(register word *, register int, word);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
+extern void __ld_stval(register word32 *, register word32 *, register byte *, int32);
+extern void __lhsbsel(register word32 *, register int32, word32);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
 extern struct xstk_t *__ndst_eval_xpr(struct expr_t *);
-extern void __ld_arr_val(register word *, register word *, union pck_u,
- int, int, int);
+extern void __ld_arr_val(register word32 *, register word32 *, union pck_u,
+ int32, int32, int32);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __regab_disp(word *, word *, int, int, int, int);
+extern void __regab_disp(word32 *, word32 *, int32, int32, int32, int32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_wtnam2(char *, unsigned);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
-extern char *__alloc_vval_to_cstr(word *, int, int, int);
+extern char *__to_wtnam2(char *, word32);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
+extern char *__alloc_vval_to_cstr(word32 *, int32, int32, int32);
 extern struct xstk_t *__cstr_to_vval(char *);
-extern int __wide_vval_is0(register word *, int);
-extern int __vval_is1(register word *, int);
-extern char *__my_realloc(char *, int, int);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
-extern int __unnormalize_ndx(struct net_t *, int);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __vval_is1(register word32 *, int32);
+extern char *__my_realloc(char *, int32, int32);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
 extern struct dltevlst_t *__spliceout_last(register struct dltevlst_t *);
 extern struct dltevlst_t *__find_last_bdltevp(register struct dltevlst_t *,
  word64);
 extern void __insert_event(register i_tev_ndx);
-extern struct xstk_t *__putdstr_to_val(char *, int, int, int);
-extern double __cnvt_stk_to_real(struct xstk_t *, int);
-extern void __sizchgxs(register struct xstk_t *, int);
-extern struct net_pin_t *__alloc_npin(int, int, int);
-extern int __get_pcku_chars(int, int);
-extern void __st_perinst_val(union pck_u, int, register word *,
- register word *);
+extern struct xstk_t *__putdstr_to_val(char *, int32, int32, int32);
+extern double __cnvt_stk_to_real(struct xstk_t *, int32);
+extern void __sizchgxs(register struct xstk_t *, int32);
+extern struct net_pin_t *__alloc_npin(int32, int32, int32);
+extern int32 __get_pcku_chars(int32, int32);
+extern void __st_perinst_val(union pck_u, int32, register word32 *,
+ register word32 *);
 extern void __vpi_set_chg_proc(struct gate_t *);
-extern void __allocinit_perival(union pck_u *, int, int, int);
+extern void __allocinit_perival(union pck_u *, int32, int32, int32);
 extern void __vpi_set_upiconnport_proc(struct mod_pin_t *);
 extern void __vpi_set_downtomdport_proc(struct mod_pin_t *, struct net_t *);
 extern void __alloc_tfdrv_wp(struct tfarg_t *, struct expr_t *, struct mod_t *);
-extern void __chg_st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
-extern void __st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
-extern void __chg_st_val(struct net_t *, register word *, register word *);
-extern void __st_val(struct net_t *, register word *, register word *);
-extern void __chg_st_bit(struct net_t *, int, register word, register word);
-extern void __st_bit(struct net_t *, int, register word, register word);
-extern int __correct_forced_newwireval(struct net_t *, word *, word *);
-extern void __ld_perinst_val(register word *, register word *,
- union pck_u, int);
-extern word __ld_gate_out(register struct gate_t *, int *);
-extern word __ld_gate_in(struct gate_t *, int, int *);
-extern int __update_tran_harddrvs(struct net_t *);
-extern void __tran_wire_vpi_force(struct net_t *, word *, word *, int); 
-extern void __tran_wire_vpi_release(struct net_t *, int); 
-extern void __tran_exec_putv_wire_softforce(struct net_t *, word *, word *,
- int);
+extern void __chg_st_arr_val(union pck_u, int32, int32, int32, register word32 *,
+ register word32 *);
+extern void __st_arr_val(union pck_u, int32, int32, int32, register word32 *,
+ register word32 *);
+extern void __chg_st_val(struct net_t *, register word32 *, register word32 *);
+extern void __st_val(struct net_t *, register word32 *, register word32 *);
+extern void __chg_st_bit(struct net_t *, int32, register word32, register word32);
+extern void __st_bit(struct net_t *, int32, register word32, register word32);
+extern int32 __correct_forced_newwireval(struct net_t *, word32 *, word32 *);
+extern void __ld_perinst_val(register word32 *, register word32 *,
+ union pck_u, int32);
+extern word32 __ld_gate_out(register struct gate_t *, int32 *);
+extern word32 __ld_gate_in(struct gate_t *, int32, int32 *);
+extern int32 __update_tran_harddrvs(struct net_t *);
+extern void __tran_wire_vpi_force(struct net_t *, word32 *, word32 *, int32); 
+extern void __tran_wire_vpi_release(struct net_t *, int32); 
+extern void __tran_exec_putv_wire_softforce(struct net_t *, word32 *, word32 *,
+ int32);
 
 extern void __eval_tran_bits(register struct net_t *);
-extern void __eval_tran_1bit(register struct net_t *, register int);
+extern void __eval_tran_1bit(register struct net_t *, register int32);
 extern void __sched_1mdrwire(register struct net_t *);
 extern void __assign_1mdrwire(register struct net_t *);
-extern char *__st_regab_tostr(char *, byte *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
+extern char *__st_regab_tostr(char *, byte *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern void __evtr_resume_msg(void);
 extern void __chg_param_tois(struct net_t *, struct mod_t *);
 extern void __re_prep_dels(struct net_t *, struct itree_t *, struct mod_t *,
- int);
+ int32);
 extern void __alloc_qcval(struct net_t *);
-extern void __find_call_force_cbs(struct net_t *, int);
-extern void __cb_all_rfs(struct net_t *, int, int);
-extern void __do_qc_store(struct net_t *, struct qcval_t *, int);
-extern void __find_call_rel_cbs(struct net_t *, int);
+extern void __find_call_force_cbs(struct net_t *, int32);
+extern void __cb_all_rfs(struct net_t *, int32, int32);
+extern void __do_qc_store(struct net_t *, struct qcval_t *, int32);
+extern void __find_call_rel_cbs(struct net_t *, int32);
 extern void __st_standval(register byte *, register struct xstk_t *, byte);
 extern char *__pv_stralloc(char *);
-extern unsigned __mc1_fopen(char *, int, int);
-extern unsigned __close_mcd(unsigned, int);
+extern word32 __mc1_fopen(char *, int32, int32);
+extern word32 __close_mcd(word32, int32);
 extern void __free_xtree(struct expr_t *);
 extern void __vpi_plierror_trycall(void);
-extern char *__to_vpipnam(char *, int);
+extern char *__to_vpipnam(char *, int32);
 extern void __bld_vpi_argv(void);
-extern int __em_suppr(int);
-extern int __do_vpi_stop(int);
-extern void __do_vpi_reset(int, int, int);
+extern int32 __em_suppr(int32);
+extern int32 __do_vpi_stop(int32);
+extern void __do_vpi_reset(int32, int32, int32);
 extern void __call_misctfs_scope(void);
 extern void __vpi_iactscopechg_trycall(void);
 extern char *__match_cdir(char *, char *);
-extern int __exec_rdinserted_src(char *);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
-extern int __expr_is_vpiconst(struct expr_t *);
-extern unsigned __map_tovpi_stren(unsigned);
-extern int __map_frvpi_stren(int);
+extern int32 __exec_rdinserted_src(char *);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
+extern int32 __expr_is_vpiconst(struct expr_t *);
+extern word32 __map_tovpi_stren(word32);
+extern int32 __map_frvpi_stren(int32);
 extern struct expr_t *__sim_copy_expr(struct expr_t *);
 extern void __exec_dumpvars(struct expr_t *);
 extern void __my_dv_flush(void);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern int __chk_showobj(struct h_t *, int *, int *);
-extern unsigned __to_vpi_tasktyp(unsigned);
-extern int __my_vpi_chk_error(void);
+extern int32 __chk_showobj(struct h_t *, int32 *, int32 *);
+extern word32 __to_vpi_tasktyp(word32);
+extern int32 __my_vpi_chk_error(void);
 extern struct attr_t *__find_attrspec(struct h_t *);
-extern int __move_to_npprefloc(struct net_pin_t *);
+extern int32 __move_to_npprefloc(struct net_pin_t *);
 extern void __add_nchglst_el(register struct net_t *);
-extern void __add_select_nchglst_el(register struct net_t *, register int,
- register int);
-extern void __wakeup_delay_ctrls(register struct net_t *, register int,
- register int);
+extern void __add_select_nchglst_el(register struct net_t *, register int32,
+ register int32);
+extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
+ register int32);
 extern void __add_dmpv_chglst_el(struct net_t *);
-extern char *__cb_reason_to_nam(char *, int);
-extern void __bit1_vpi_or_tran_wireforce(struct net_t *, word *, word *, int,
- int, int, char *);
+extern char *__cb_reason_to_nam(char *, int32);
+extern void __bit1_vpi_or_tran_wireforce(struct net_t *, word32 *, word32 *, int32,
+ int32, int32, char *);
 extern struct tenp_t *__bld_portbit_netbit_map(struct mod_pin_t *);
-extern int __trim1_0val(word *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
+extern int32 __trim1_0val(word32 *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
 
-extern int __fd_do_fclose(int);
+extern int32 __fd_do_fclose(int32);
 
 extern void __my_fprintf(FILE *, char *, ...);
 extern void __tr_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __arg_terr(char *, int);
-extern void __pv_terr(int, char *, ...);
-extern void __misc_terr(char *, int);
+extern void __arg_terr(char *, int32);
+extern void __pv_terr(int32, char *, ...);
+extern void __misc_terr(char *, int32);
 
-extern void __vpi_terr(char *, int);
-extern void __vpi_err(int, int, char *, ...);
+extern void __vpi_terr(char *, int32);
+extern void __vpi_err(int32, int32, char *, ...);
 
-extern word __masktab[];
+extern word32 __masktab[];
 extern double __dbl_toticks_tab[];
 
 /* vpi only storage that is defined here */
@@ -329,9 +327,9 @@ struct t_vpi_error_info *__last_eip;/* if err, ptr to wrk eifo or nil */
  */
 extern void vpi_get_delays(vpiHandle object, p_vpi_delay delay_p)
 { 
- register int di, di2;
- int ndels, nrep, ndx;
- unsigned getdrep;
+ register int32 di, di2;
+ int32 ndels, nrep, ndx;
+ word32 getdrep;
  word64 tim[12], timval;
  struct mod_t *mdp;
  struct h_t *hp; 
@@ -491,10 +489,10 @@ done:
  * also checks for object (handle) that can have delay and fill ogp with del 
  * if return T
  */
-static int chk_delay_num(char *rnam, struct h_t *hp, int numdels,
+static int32 chk_delay_num(char *rnam, struct h_t *hp, int32 numdels,
  struct gate_t *ogp)
 {
- int ndx;
+ int32 ndx;
  struct gate_t *gp;
  struct conta_t *cap;
  struct mod_t *mdp;
@@ -653,10 +651,10 @@ chk_prim_num:
  * so can just use
  * delay_p can need 1,2,3,6,12
  */
-static void fill_vpi_delay(p_vpi_delay delay_p, word64 *tim, int nvals,
- unsigned otyp, struct mod_t *mdp)
+static void fill_vpi_delay(p_vpi_delay delay_p, word64 *tim, int32 nvals,
+ word32 otyp, struct mod_t *mdp)
 {
- register int di;
+ register int32 di;
  word64 ntim[16];
 
  /* if nvals 1, just duplicate in all */
@@ -760,9 +758,9 @@ do_copy:
  * fill a vpi time struct from a word64
  */
 extern void __set_vpi_time(struct t_vpi_time *vpitimp, word64 *timp,
- int timtyp, struct mod_t *mdp)
+ int32 timtyp, struct mod_t *mdp)
 {
- int unit;
+ int32 unit;
  double d1;
 
  /* for getting delays, supress times means use 0 (not real) */
@@ -772,8 +770,8 @@ extern void __set_vpi_time(struct t_vpi_time *vpitimp, word64 *timp,
  /* vpi sim time is internal ticks (lowest precision in design) */
  if (timtyp == vpiSimTime)
   {
-   vpitimp->high = (int) ((*timp >> 32) & WORDMASK_ULL);
-   vpitimp->low = (int) (*timp & WORDMASK_ULL);
+   vpitimp->high = (int32) ((*timp >> 32) & WORDMASK_ULL);
+   vpitimp->low = (int32) (*timp & WORDMASK_ULL);
    return;
   }
  /* vpiScaledRealTime case */
@@ -797,7 +795,7 @@ extern void __set_vpi_time(struct t_vpi_time *vpitimp, word64 *timp,
  */
 extern void vpi_put_delays(vpiHandle object, p_vpi_delay delay_p)
 {
- int is_trireg, ndx, sav_num_dels, bi;
+ int32 is_trireg, ndx, sav_num_dels, bi;
  struct mod_t *mdp;
  struct h_t *hp; 
  struct tenp_t *prtnetmap;
@@ -1143,11 +1141,11 @@ set_dctrl_delay:
  * know delay number correct
  * if no source delay, caller changes to #0 before calling
  */
-static int bld_vpinewdu(struct gate_t *ngp, struct gate_t *ogp,
- p_vpi_delay delay_p, struct itree_t *itp, int is_path, int is_trireg)
+static int32 bld_vpinewdu(struct gate_t *ngp, struct gate_t *ogp,
+ p_vpi_delay delay_p, struct itree_t *itp, int32 is_path, int32 is_trireg)
 {
- register int di;
- int ndels, ondels, negdel[16];
+ register int32 di;
+ int32 ndels, ondels, negdel[16];
  word64 tim[16], otim[16], ntim[16], *dtab;
 
  if (!fillchk_tim(tim, negdel, delay_p, itp)) return(FALSE); 
@@ -1263,11 +1261,11 @@ no_reduce1:
  * scaling depends upon module of handle
  * LOOKATME - is it true only vpiScaledRealTime can be negative
  */
-static int fillchk_tim(word64 *tim, int *negdel, p_vpi_delay delay_p,  
+static int32 fillchk_tim(word64 *tim, int32 *negdel, p_vpi_delay delay_p,  
  struct itree_t *itp)
 {
- register int di;
- int stride, ofset, ndels;
+ register int32 di;
+ int32 stride, ofset, ndels;
  double d1;
  word64 t1;
  struct t_vpi_time *vpitimp;
@@ -1341,9 +1339,9 @@ static int fillchk_tim(word64 *tim, int *negdel, p_vpi_delay delay_p,
      return(FALSE);
     }
    /* vpiSimTime is internal ticks */
-   /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word 1st */
-   t1 = (word64) ((word) vpitimp->low)
-    | (((word64) ((word) vpitimp->high)) << 32);
+   /* SJM 02/03/00 - cast of negative (>2**31) sign extends need word32 1st */
+   t1 = (word64) ((word32) vpitimp->low)
+    | (((word64) ((word32) vpitimp->high)) << 32);
    tim[di] = t1;
   }
  return(TRUE);
@@ -1509,19 +1507,19 @@ static void get_varorparam_val(struct h_t *hp, p_vpi_value value_p)
 /*
  * fill a scalar strength valuep field from a strength vector
  */
-static void stscal_fill_valuep(p_vpi_value value_p, register byte *sbp, int bi)
+static void stscal_fill_valuep(p_vpi_value value_p, register byte *sbp, int32 bi)
 { 
  register s_vpi_strengthval *svalp;
- int slen;
+ int32 slen;
 
  slen = sizeof(struct t_vpi_strengthval);
  if (slen >= __wrkval_buflen) wrkval_grow(slen + RECLEN);
  value_p->value.strength = (struct t_vpi_strengthval *) __wrkvalbufp;
 
  svalp = &(value_p->value.strength[0]);
- svalp[0].logic = (int) (sbp[bi] & 3L);
- svalp[0].s0 = __map_tovpi_stren((int) ((sbp[bi] >> 5) & 7));
- svalp[0].s1 = __map_tovpi_stren((int) ((sbp[bi] >> 2) & 7));
+ svalp[0].logic = (int32) (sbp[bi] & 3L);
+ svalp[0].s0 = __map_tovpi_stren((int32) ((sbp[bi] >> 5) & 7));
+ svalp[0].s1 = __map_tovpi_stren((int32) ((sbp[bi] >> 2) & 7));
 }
 
 /*
@@ -1532,11 +1530,11 @@ static void stscal_fill_valuep(p_vpi_value value_p, register byte *sbp, int bi)
  * caller must convert value to strength if non strength
  */
 static void stvec_fill_valuep(p_vpi_value value_p, register byte *sbp,
- int swid)
+ int32 swid)
 { 
- register int bi;
+ register int32 bi;
  register s_vpi_strengthval *svalp;
- int slen;
+ int32 slen;
 
  slen = swid*sizeof(struct t_vpi_strengthval);
  if (slen >= __wrkval_buflen) wrkval_grow(slen + RECLEN);
@@ -1545,9 +1543,9 @@ static void stvec_fill_valuep(p_vpi_value value_p, register byte *sbp,
  svalp = &(value_p->value.strength[0]);
  for (bi = 0; bi < swid; bi++) 
   {
-   svalp[bi].logic = (int) (sbp[bi] & 3L);
-   svalp[bi].s0 = __map_tovpi_stren((int) ((sbp[bi] >> 5) & 7));
-   svalp[bi].s1 = __map_tovpi_stren((int) ((sbp[bi] >> 2) & 7));
+   svalp[bi].logic = (int32) (sbp[bi] & 3L);
+   svalp[bi].s0 = __map_tovpi_stren((int32) ((sbp[bi] >> 5) & 7));
+   svalp[bi].s1 = __map_tovpi_stren((int32) ((sbp[bi] >> 2) & 7));
   }
 }
 
@@ -1555,11 +1553,11 @@ static void stvec_fill_valuep(p_vpi_value value_p, register byte *sbp,
  * map from vpi strength values to internal Cver values
  * returns -1 on bad value  
  */
-extern int __map_frvpi_stren(int vpistval)
+extern int32 __map_frvpi_stren(int32 vpistval)
 {
- int stval;
+ int32 stval;
 
- /* must be left as int in case bad value_p record */
+ /* must be left as int32 in case bad value_p record */
  switch (vpistval) {
   case vpiSupplyDrive: stval = ST_SUPPLY; break;
   case vpiStrongDrive: stval = ST_STRONG; break;
@@ -1577,9 +1575,9 @@ extern int __map_frvpi_stren(int vpistval)
 /*
  * map from internal strength values to vpi strength constant
  */
-extern unsigned __map_tovpi_stren(unsigned stval)
+extern word32 __map_tovpi_stren(word32 stval)
 {
- unsigned vpistval;
+ word32 vpistval;
 
  switch ((byte) stval) {
   case ST_SUPPLY: vpistval = vpiSupplyDrive; break;
@@ -1602,7 +1600,7 @@ extern unsigned __map_tovpi_stren(unsigned stval)
  */
 static void get_var_bit(struct h_t *hp, p_vpi_value value_p)
 {
- register int biti;
+ register int32 biti;
  struct net_t *np;
  byte *sbp;
  struct xstk_t *xsp, *xsp2;
@@ -1653,14 +1651,14 @@ static void get_var_bit(struct h_t *hp, p_vpi_value value_p)
 }
 
 /*
- * get value of one array word given a array word (indexed) handle 
+ * get value of one array word32 given a array word32 (indexed) handle 
  *
- * know passed handle is array word and correct index in range for well
+ * know passed handle is array word32 and correct index in range for well
  * formed handle
  */
 static void get_arrwrd_val(struct h_t *hp, p_vpi_value value_p)  
 {
- int arri, arrwid;
+ int32 arri, arrwid;
  byte *sbp;
  struct net_t *np;
  struct xstk_t *xsp, *xsp2;
@@ -1672,7 +1670,7 @@ static void get_arrwrd_val(struct h_t *hp, p_vpi_value value_p)
  /* --- */
  __push_itstk(hp->hin_itp); 
 
- /* notice union field is index and since array word is in has itree */
+ /* notice union field is index and since array word32 is in has itree */
  /* inst., can use for ptr to the containing handle */
  /* this uses comp_ndx that works for arrays too */
  arri = get_vpibit_index(&np, hp);
@@ -1706,9 +1704,9 @@ static void get_arrwrd_val(struct h_t *hp, p_vpi_value value_p)
 }
 
 /*
- * get value of one param array word given a array word (indexed) handle 
+ * get value of one param array word32 given a array word32 (indexed) handle 
  *
- * know passed handle is parameter array word and correct index in range
+ * know passed handle is parameter array word32 and correct index in range
  * paramater array values are not packed and must access nva.wp here
  * because for parameter arrays same as expr. which is top level concat
  *
@@ -1717,8 +1715,8 @@ static void get_arrwrd_val(struct h_t *hp, p_vpi_value value_p)
  */
 static void get_paramarrwrd_val(struct h_t *hp, p_vpi_value value_p)  
 {
- int arri, wlen;
- word *wp;
+ int32 arri, wlen;
+ word32 *wp;
  byte *sbp;
  struct net_t *np;
  struct xstk_t *xsp, *xsp2;
@@ -1730,7 +1728,7 @@ static void get_paramarrwrd_val(struct h_t *hp, p_vpi_value value_p)
  /* --- */
  __push_itstk(hp->hin_itp); 
 
- /* always constant for param array word get values */
+ /* always constant for param array word32 get values */
  /* this needs itree context */
  arri = get_vpibit_index(&np, hp);
 
@@ -1769,7 +1767,7 @@ static void get_paramarrwrd_val(struct h_t *hp, p_vpi_value value_p)
  */
 static void get_expr_val(struct h_t *hp, p_vpi_value value_p)  
 {
- int wtyp;
+ int32 wtyp;
  struct expr_t *xp;
  struct xstk_t *xsp;
  struct hrec_t *hrp;
@@ -1794,7 +1792,7 @@ static void get_expr_val(struct h_t *hp, p_vpi_value value_p)
  * check for illegal strength - return T if stren (error) F if non stren 
  * if error if stren
  */
-static int valp_stren_err(struct hrec_t *hrp, p_vpi_value value_p)  
+static int32 valp_stren_err(struct hrec_t *hrp, p_vpi_value value_p)  
 { 
  /* for expressons - strength not allowed */
  if (value_p->format == vpiStrengthVal)
@@ -1822,8 +1820,8 @@ static int valp_stren_err(struct hrec_t *hrp, p_vpi_value value_p)
 static void get_primterm_val(struct h_t *hp, p_vpi_value value_p)  
 {
  register struct gate_t *gp;
- register word gtermwrd;
- int has_stren;
+ register word32 gtermwrd;
+ int32 has_stren;
  byte sbv, *sbp;
  struct hrec_t *hrp;
  struct expr_t *xp;
@@ -1908,8 +1906,8 @@ static void get_primterm_val(struct h_t *hp, p_vpi_value value_p)
  */
 static void get_vpisfcall_retval(struct h_t *hp, p_vpi_value value_p)
 {
- int sf_ind;
- unsigned isavec;
+ int32 sf_ind;
+ word32 isavec;
  p_vpi_systf_data tfdatp;
  struct systftab_t *sfp;
  struct sysfunc_t *sfbp;
@@ -1987,7 +1985,7 @@ static void get_vpiudpdefn_val(struct h_t *hp, p_vpi_value value_p)
  push_xstk_(xsp, 1); 
  xsp->bp[0] = 0L;
  if (udpp->ival == 3) { xsp->ap[0] = 1L; xsp->bp[0] = 1L; }
- else xsp->ap[0] = (word) udpp->ival;
+ else xsp->ap[0] = (word32) udpp->ival;
  fill_valuep(value_p, xsp, N_REG, xsp->xslen);
  __pop_xstk();
 }
@@ -1998,7 +1996,7 @@ static void get_vpiudpdefn_val(struct h_t *hp, p_vpi_value value_p)
  */
 static void get_vpitabentry_val(struct h_t *hp, p_vpi_value value_p)
 {
- int slen;
+ int32 slen;
  struct hrec_t *hrp;
  struct udp_t *udpp;
  struct utline_t *utlp;
@@ -2211,8 +2209,8 @@ static struct xstk_t *push_vpi_bitdrv_val(struct h_t *hp, struct net_t **pnp)
 static void get_gate_drv_valuep(struct h_t *hp, p_vpi_value value_p,
  struct gate_t *gp)
 {
- int has_stren;
- word uwrd;
+ int32 has_stren;
+ word32 uwrd;
  byte *sbp;
  struct xstk_t *xsp;
 
@@ -2266,8 +2264,8 @@ static void get_gate_drv_valuep(struct h_t *hp, p_vpi_value value_p,
 static void get_vpiconta_drv_valuep(struct h_t *hp, p_vpi_value value_p,
  struct conta_t *cap)
 {
- register int bi;
- int blen;
+ register int32 bi;
+ int32 blen;
  byte *sbp;
  struct xstk_t *xsp, *xsp2;
  struct conta_t *pbcap;
@@ -2362,7 +2360,7 @@ static void get_vpiconta_drv_valuep(struct h_t *hp, p_vpi_value value_p,
 static void get_vpiport_drv_valuep(struct h_t *hp, p_vpi_value value_p,
  struct mod_pin_t *mpp)
 {
- int is_stren, isavec;
+ int32 is_stren, isavec;
  byte *sbp;
  struct xstk_t *xsp, *xsp2;
 
@@ -2428,10 +2426,10 @@ static void get_vpiport_drv_valuep(struct h_t *hp, p_vpi_value value_p,
  * routine for vpi Port Bit
  */
 static void get_vpiportbit_drv_valuep(struct h_t *hp, p_vpi_value value_p,
- struct mod_pin_t *mpp, int bi)
+ struct mod_pin_t *mpp, int32 bi)
 {
- int is_stren, ind;
- word av, bv;
+ int32 is_stren, ind;
+ word32 av, bv;
  byte *sbp;
  struct xstk_t *xsp, *xsp2, *xsp3;
 
@@ -2513,7 +2511,7 @@ static void get_vpiportbit_drv_valuep(struct h_t *hp, p_vpi_value value_p,
  */
 static void get_vpi_attrval(struct h_t *hp, p_vpi_value value_p)
 {
- int wtyp;
+ int32 wtyp;
  struct expr_t *xp;
  struct xstk_t *xsp;
  struct hrec_t *hrp;
@@ -2555,8 +2553,8 @@ static void get_vpi_attrval(struct h_t *hp, p_vpi_value value_p)
  *
  * notice semantics is to really change and fill in the format field
  */
-static void correct_objtypval(p_vpi_value value_p, unsigned ntyp,
- unsigned isavec, unsigned is_stren, int is_bsel)
+static void correct_objtypval(p_vpi_value value_p, word32 ntyp,
+ word32 isavec, word32 is_stren, int32 is_bsel)
 {
  if (ntyp == N_INT) { value_p->format = vpiIntVal; return; }
  if (ntyp == N_REAL) { value_p->format = vpiRealVal; return; }
@@ -2599,12 +2597,12 @@ static void expr_correct_objtypval(struct expr_t *xp, p_vpi_value value_p)
  * caller must place right itree location on top of itree loc. stack
  */
 static void fill_valuep(p_vpi_value value_p, struct xstk_t *xsp,
- unsigned vwtyp, int vwid)
+ word32 vwtyp, int32 vwid)
 {
- register int wi;
- int slen, has_sign, blen;
+ register int32 wi;
+ int32 slen, has_sign, blen;
  char *chp;
- int sav_sofs, dispfmt;
+ int32 sav_sofs, dispfmt;
  double d1;
  word64 tim;
 
@@ -2652,7 +2650,7 @@ dispstr_fmt:
      }
     if (vwtyp == N_REAL) __cnv_stk_fromreal_toreg32(xsp);
     /* notice integer x/z bits are always 0 - LOOKATME - is this right? */
-    value_p->value.integer = (int) (xsp->ap[0] & ~(xsp->bp[0])); 
+    value_p->value.integer = (int32) (xsp->ap[0] & ~(xsp->bp[0])); 
     break;
    case vpiRealVal:
     if (vwtyp != N_REAL)
@@ -2682,20 +2680,20 @@ dispstr_fmt:
     value_p->value.vector = (struct t_vpi_vecval *) __wrkvalbufp; 
     for (wi = 0; wi < wlen_(xsp->xslen); wi++)
      {
-      value_p->value.vector[wi].aval = (int) xsp->ap[wi]; 
-      value_p->value.vector[wi].bval = (int) xsp->bp[wi]; 
+      value_p->value.vector[wi].aval = (int32) xsp->ap[wi]; 
+      value_p->value.vector[wi].bval = (int32) xsp->bp[wi]; 
      }
     break;
    case vpiTimeVal:
     /* value is vpiSimTime internal ticks */
-    /* SJM 02/03/00 - works because stack unsigned - no sign extend */
+    /* SJM 02/03/00 - works because stack word32 - no sign extend */
     tim = (word64) xsp->ap[0] | (((word64) xsp->ap[1]) << 32); 
     slen = sizeof(struct t_vpi_time);
     if (slen >= __wrkval_buflen) wrkval_grow(slen + RECLEN);
     value_p->value.time = (struct t_vpi_time *) __wrkvalbufp;
     value_p->value.time->type = vpiSimTime;
-    value_p->value.time->high = (int) ((tim >> 32) & WORDMASK_ULL);
-    value_p->value.time->low = (int) (tim & WORDMASK_ULL);
+    value_p->value.time->high = (int32) ((tim >> 32) & WORDMASK_ULL);
+    value_p->value.time->low = (int32) (tim & WORDMASK_ULL);
     break;
    /* strength value never pushed because not expression */
    default: 
@@ -2710,9 +2708,9 @@ dispstr_fmt:
 /*
  * grow the one work string used by get value routine
  */
-static void wrkval_grow(int nsize)
+static void wrkval_grow(int32 nsize)
 {
- int osize;
+ int32 osize;
 
  osize = __wrkval_buflen;
  if (osize == 0)
@@ -2732,8 +2730,8 @@ static void wrkval_grow(int nsize)
  */
 static void udp_line_to_str(char *s, struct udp_t *udpp, struct utline_t *utlp)
 {
- register int i;
- int numins;
+ register int32 i;
+ int32 numins;
  char *chp, s1[RECLEN];
 
  numins = udpp->numins;
@@ -2777,8 +2775,8 @@ static void udp_line_to_str(char *s, struct udp_t *udpp, struct utline_t *utlp)
 extern vpiHandle vpi_put_value(vpiHandle object, p_vpi_value value_p, 
  p_vpi_time time_p, PLI_INT32 flags)
 {
- int ndx, bi, wid, ret_event; 
- unsigned dtyp;
+ int32 ndx, bi, wid, ret_event; 
+ word32 dtyp;
  struct h_t *hp, *hp2;
  word64 ticksdel;
  struct net_t *np;
@@ -2804,8 +2802,8 @@ extern vpiHandle vpi_put_value(vpiHandle object, p_vpi_value value_p,
  /* set extra flag and remove return event bit */
  ret_event = FALSE;
  if ((flags & vpiReturnEvent) != 0)
-  { dtyp = (unsigned) (flags & ~vpiReturnEvent); ret_event = TRUE; }
- else dtyp = (unsigned) flags; 
+  { dtyp = (word32) (flags & ~vpiReturnEvent); ret_event = TRUE; }
+ else dtyp = (word32) flags; 
 
  if (__rosync_slot)
   {
@@ -2877,6 +2875,11 @@ extern vpiHandle vpi_put_value(vpiHandle object, p_vpi_value value_p,
        /* SJM 03/15/01 - did't force all of tran channel - just release */ 
        /* this tran wire and re-eval tran channel */
        __tran_wire_vpi_release(np, ndx);
+       /* SJM 02/23/05 - bit objects can be released - not just entire vecs */
+       /* thanks to Greenlight for this fix */
+       if (ndx == -1) __eval_tran_bits(np);
+       else __eval_tran_1bit(np, ndx);
+
        __eval_tran_1bit(np, ndx);
       }
      else wire_vpi_release(np, ndx);
@@ -2987,7 +2990,7 @@ extern vpiHandle vpi_put_value(vpiHandle object, p_vpi_value value_p,
 /*
  * return T if put value is for future time so is allowed in ro sync slot
  */
-static int putv_in_future(unsigned dtyp, p_vpi_time time_p)
+static int32 putv_in_future(word32 dtyp, p_vpi_time time_p)
 {
  word64 ticksdel;
 
@@ -3020,7 +3023,7 @@ static int putv_in_future(unsigned dtyp, p_vpi_time time_p)
  *
  * this requires pushed itree context
  */
-static int chk_putv_args(unsigned dtyp, struct h_t *hp, p_vpi_value value_p) 
+static int32 chk_putv_args(word32 dtyp, struct h_t *hp, p_vpi_value value_p) 
 {
  register struct hrec_t *hrp;
  register struct net_t *np;
@@ -3107,7 +3110,7 @@ static int chk_putv_args(unsigned dtyp, struct h_t *hp, p_vpi_value value_p)
      np = hrp->hu.hnp;
      break;
     case vpiRegBit: case vpiVarSelect: case vpiMemoryWord:
-     /* can assign to (but not force release) reg that is word of array */
+     /* can assign to (but not force release) reg that is word32 of array */
      if (hrp->bith_ndx) np = hrp->hu.hnp;
      else np = hrp->hu.hxp->lu.x->lu.sy->el.enp;
      break;
@@ -3181,7 +3184,7 @@ net_gone:
 /*
  * convert a flag constant (with vpiReturnEvent bit removed) to its name
  */
-static char *putv_flag_to_str(char *s, unsigned dtyp)
+static char *putv_flag_to_str(char *s, word32 dtyp)
 {
  switch (dtyp) {
   case vpiAddDriver: strcpy(s, "vpiAddDriver"); break;
@@ -3192,7 +3195,7 @@ static char *putv_flag_to_str(char *s, unsigned dtyp)
   case vpiInertialDelay: strcpy(s, "vpiInertial"); break;
   case vpiTransportDelay: strcpy(s, "vpiTransportDelay"); break;
   case vpiPureTransportDelay: strcpy(s, "vpiPureTransportDelay"); break;
-  default: sprintf(s, "unknown (%u)", dtyp);
+  default: sprintf(s, "unknown (%lu)", dtyp);
  } 
  return(s); 
 }
@@ -3200,7 +3203,7 @@ static char *putv_flag_to_str(char *s, unsigned dtyp)
 /*
  * return T if net is on getpattern lhs - can not putv assign to it 
  */
-static int net_ongetpat_lhs(struct net_t *np)
+static int32 net_ongetpat_lhs(struct net_t *np)
 {
  register struct net_pin_t *npp;
  struct conta_t *cap; 
@@ -3220,9 +3223,9 @@ static int net_ongetpat_lhs(struct net_t *np)
  * return T if value_p has good value that can be assigned from
  * also emits error
  */
-static int good_value_p(p_vpi_value value_p)
+static int32 good_value_p(p_vpi_value value_p)
 {
- int sval, s0, s1; 
+ int32 sval, s0, s1; 
 
  if (value_p->format == vpiSuppressVal || value_p->format == vpiObjTypeVal)
   {
@@ -3290,7 +3293,7 @@ bad_stren:
  */
 static void free_putv_sched(struct h_t *hp)
 {
- register int bi;
+ register int32 bi;
  register i_tev_ndx tevpi; 
  register struct hrec_t *hrp;
  i_tev_ndx *evtabi;
@@ -3387,11 +3390,11 @@ found_event:
  * free a putv scheduled net driver bit event
  * scalar possible where index is 0 not -1
  */
-static void free_netbitdrv_putv_sched(struct net_t *np, int bi,
+static void free_netbitdrv_putv_sched(struct net_t *np, int32 bi,
  struct itree_t *itp, i_tev_ndx tevpi) 
 {
  register struct dltevlst_t *dlp;
- int evi;
+ int32 evi;
  struct teputv_t *tepvp;
  struct vpi_drv_t *vpidrvp;
 
@@ -3453,9 +3456,9 @@ found_event:
  */
 static struct h_t *add_net_driver(struct h_t *hp) 
 {
- register int di;
+ register int32 di;
  register struct vpi_drv_t *vpidrvp;     
- int drvi, osize, nsize;
+ int32 drvi, osize, nsize;
  struct mod_t *mdp;
  struct net_t *np;
  struct net_pin_t *npp;
@@ -3552,14 +3555,14 @@ set_vec_used:
 /*
  * allocate and initialize a vpi entire wire driver 
  */
-static struct vpi_drv_t *alloc_vpidrv(struct net_t *np, int insts)
+static struct vpi_drv_t *alloc_vpidrv(struct net_t *np, int32 insts)
 {
- int nbytes;
+ int32 nbytes;
  struct vpi_drv_t *vpidrvp;
 
  vpidrvp = (struct vpi_drv_t *) __my_malloc(sizeof(struct vpi_drv_t));
  nbytes = __get_pcku_chars(np->nwid, insts);
- vpidrvp->vpi_hasdrv.wp = (word *) __my_malloc(nbytes);
+ vpidrvp->vpi_hasdrv.wp = (word32 *) __my_malloc(nbytes);
  /* to start no insts or bits have drivers */
  memset(vpidrvp->vpi_hasdrv.bp, 0, nbytes); 
 
@@ -3590,9 +3593,9 @@ static struct vpi_drv_t *alloc_vpidrv(struct net_t *np, int insts)
  */
 static struct h_t *add_netbit_driver(struct h_t *hp) 
 {
- register int di;
- word val;
- int bi, drvi, osize, nsize;
+ register int32 di;
+ word32 val;
+ int32 bi, drvi, osize, nsize;
  struct mod_t *mdp;
  struct net_t *np;
  struct net_pin_t *npp;
@@ -3694,10 +3697,10 @@ set_bit_used:
  * npp (NP VPIPUTV only) either entire wire or one bit
  * this needs instance to check to be on top of itree stack
  */
-extern int __has_vpi_driver(struct net_t *np, struct net_pin_t *npp)
+extern int32 __has_vpi_driver(struct net_t *np, struct net_pin_t *npp)
 {
- int rv;
- word val;
+ int32 rv;
+ word32 val;
  struct vpi_drv_t *vpidrvp;     
  struct xstk_t *xsp;
 
@@ -3731,7 +3734,7 @@ done:
  */
 extern void __reinit_netdrvr_putvrec(struct net_t *np, struct mod_t *mdp)
 {
- register int bi, di, ii;
+ register int32 bi, di, ii;
  register struct dltevlst_t *dlp, *dlp2, *last_dlp;
  struct vpi_drv_t *vpidrvp;
 
@@ -3770,10 +3773,10 @@ extern void __reinit_netdrvr_putvrec(struct net_t *np, struct mod_t *mdp)
  * notice drivers are always one bit but need one per inst
  */
 static void putv_drvwp_allocinit(struct mod_t *mdp, struct net_t *np,
- struct vpi_drv_t *vpidrvp, int nd_alloc)
+ struct vpi_drv_t *vpidrvp, int32 nd_alloc)
 {
- register int ii;
- int nbytes;
+ register int32 ii;
+ int32 nbytes;
  byte *sbp;
  struct xstk_t *xsp;
 
@@ -3791,7 +3794,7 @@ static void putv_drvwp_allocinit(struct mod_t *mdp, struct net_t *np,
    if (nd_alloc)
     {
      nbytes = __get_pcku_chars(np->nwid, mdp->flatinum);
-     vpidrvp->vpi_drvwp.wp = (word *) __my_malloc(nbytes);
+     vpidrvp->vpi_drvwp.wp = (word32 *) __my_malloc(nbytes);
     } 
    push_xstk_(xsp, np->nwid);
    zero_allbits_(xsp->ap, np->nwid);
@@ -3819,8 +3822,8 @@ static void putv_drvwp_allocinit(struct mod_t *mdp, struct net_t *np,
 static void chg_net_to_multfi(struct net_t *np, struct mod_t *mdp)
 {
  register struct net_pin_t *npp;
- register int ii, bi;
- int lhslen;
+ register int32 ii, bi;
+ int32 lhslen;
  byte *sbp, *sbp2;
  struct gate_t *gp;
  struct conta_t *cap, *pbcap;
@@ -4015,10 +4018,10 @@ static void chg_net_to_multfi(struct net_t *np, struct mod_t *mdp)
 /*
  * get index for either net or bit of net   
  */
-extern int __get_vpinet_index(struct net_t **pnp, struct h_t *hp)
+extern int32 __get_vpinet_index(struct net_t **pnp, struct h_t *hp)
 {
  register struct hrec_t *hrp;
- register int ndx;
+ register int32 ndx;
 
  hrp = hp->hrec;
  /* can vpiVarSelect occur here? */
@@ -4047,10 +4050,10 @@ extern int __get_vpinet_index(struct net_t **pnp, struct h_t *hp)
  *
  * LOOKATME - maybe expr. form should be illegal here 
  */
-static int get_vpibit_index(struct net_t **pnp, struct h_t *hp)
+static int32 get_vpibit_index(struct net_t **pnp, struct h_t *hp)
 {
  register struct hrec_t *hrp;
- register int ndx;
+ register int32 ndx;
 
  hrp = hp->hrec;
  if (hrp->bith_ndx)
@@ -4075,13 +4078,13 @@ static int get_vpibit_index(struct net_t **pnp, struct h_t *hp)
  *
  * wnen strength need cast to byte ptr then assigns to low bit of it
  */
-static struct xstk_t *push_vpi_valuep(p_vpi_value value_p, int vwid,
- unsigned vntyp, int vstren)
+static struct xstk_t *push_vpi_valuep(p_vpi_value value_p, int32 vwid,
+ word32 vntyp, int32 vstren)
 {
- register int wi;
+ register int32 wi;
  byte *sbp;
- word wval, wlen, ubits;
- int scanfmt, is_signed, s0val, s1val, i1;
+ word32 wval, wlen, ubits;
+ int32 scanfmt, is_signed, s0val, s1val, i1;
  double d1;
  word64 timval;
  struct xstk_t *xsp;
@@ -4136,7 +4139,7 @@ do_xtract:
     push_xstk_(xsp, vwid);
     zero_allbits_(xsp->ap, vwid);
     zero_allbits_(xsp->bp, vwid);
-    wval = (word) value_p->value.scalar;
+    wval = (word32) value_p->value.scalar;
     if (!chk_vpi_logicval(wval))
      {  
       __vpi_err(1921, vpiError,
@@ -4162,7 +4165,7 @@ do_xtract:
     zero_allbits_(xsp->ap, vwid);
     zero_allbits_(xsp->bp, vwid);
     /* know this must be good */
-    xsp->ap[0] = (word) value_p->value.integer;
+    xsp->ap[0] = (word32) value_p->value.integer;
     if (vntyp == N_REAL) 
      {
       d1 = __cnvt_stk_to_real(xsp, is_signed);
@@ -4179,9 +4182,9 @@ do_xtract:
      {  
       if (vntyp == N_INT) 
        {
-        i1 = (int) d1;
+        i1 = (int32) d1;
         push_xstk_(xsp, vwid);
-        xsp->ap[0] = (word) i1;
+        xsp->ap[0] = (word32) i1;
         xsp->bp[0] = 0L;
         break;
        }
@@ -4191,8 +4194,8 @@ do_xtract:
          "precision lost in converting real %g to 64 bit unsigned", d1);
        }
       push_xstk_(xsp, 64);
-      xsp->ap[0] = (word) (timval & WORDMASK_ULL);
-      xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL);  
+      xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
+      xsp->ap[1] = (word32) ((timval >> 32) & WORDMASK_ULL);  
       xsp->bp[0] = xsp->bp[1] = 0L;
       /* SJM 05/10/04 - time can't be signed */
       if (vwid != 64) __sizchgxs(xsp, vwid);
@@ -4204,7 +4207,7 @@ do_xtract:
     return(xsp);
    case vpiStrengthVal:
     /* know value_p is 1 bit strength and checked in chk putv already */
-    wval = (word) value_p->value.strength->logic;
+    wval = (word32) value_p->value.strength->logic;
     s0val = __map_frvpi_stren(value_p->value.strength->s0);
     s1val = __map_frvpi_stren(value_p->value.strength->s1);
     /* if value is strength, but putting to non strength use logic only */
@@ -4230,24 +4233,24 @@ do_xtract:
 
     push_xstk_(xsp, vwid);
     xsp->bp[0] = xsp->bp[1] = 0L;
-    xsp->ap[0] = (word) (timval & WORDMASK_ULL);
-    xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL);
+    xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
+    xsp->ap[1] = (word32) ((timval >> 32) & WORDMASK_ULL);
     break;
    case vpiVectorVal:
     push_xstk_(xsp, vwid);
     wlen = wlen_(vwid);
     ubits = ubits_(vwid);
-    for (wi = 0; wi < (int) (wlen - 1); wi++)
+    for (wi = 0; wi < (int32) (wlen - 1); wi++)
      {
-      xsp->ap[wi] = (word) value_p->value.vector[wi].aval; 
-      xsp->bp[wi] = (word) value_p->value.vector[wi].bval; 
+      xsp->ap[wi] = (word32) value_p->value.vector[wi].aval; 
+      xsp->bp[wi] = (word32) value_p->value.vector[wi].bval; 
      }
     /* LOOKATME - P1364 problem since do not know width of vector here, */
-    /* must 0 unused bits of high word from last used vector */
+    /* must 0 unused bits of high word32 from last used vector */
     /* if narrrowing works by accident but widening width change will */
     /* probably result in core dump - vector value_p should contain width */
-    xsp->ap[wi] = ((word) value_p->value.vector[wi].aval) & __masktab[ubits];
-    xsp->bp[wi] = ((word) value_p->value.vector[wi].bval) & __masktab[ubits];
+    xsp->ap[wi] = ((word32) value_p->value.vector[wi].aval) & __masktab[ubits];
+    xsp->bp[wi] = ((word32) value_p->value.vector[wi].bval) & __masktab[ubits];
     
     if (vntyp == N_REAL)
      {
@@ -4289,7 +4292,7 @@ do_xtract:
 /*
  * check a 0,1,x,z vpi logic value using vpi .h constants
  */
-static int chk_vpi_logicval(word wval)
+static int32 chk_vpi_logicval(word32 wval)
 {
  if (wval == vpi0 || wval == vpi1 || wval == vpiZ || wval == vpiX)
   return(TRUE);
@@ -4309,7 +4312,7 @@ static int chk_vpi_logicval(word wval)
  * have dces only unusual part is that qcval may need to be added at run
  * time - no run time dce changes needed
  */
-static void reg_vpi_force(register struct net_t *np, word *ap, word *bp)
+static void reg_vpi_force(register struct net_t *np, word32 *ap, word32 *bp)
 {
  register struct qcval_t *assgn_qcp, *frc_qcp;
  char s3[RECLEN], s4[RECLEN];
@@ -4416,10 +4419,10 @@ done:
  * force which is for debugging overrides any wire delay assign
  * when wire change happens (wire event process) if force active, no assign
  */
-static void wire_vpi_force(register struct net_t *np, word *ap, word *bp, 
- register int ndx)
+static void wire_vpi_force(register struct net_t *np, word32 *ap, word32 *bp, 
+ register int32 ndx)
 {
- register int bi, ibase;
+ register int32 bi, ibase;
  char s3[RECLEN]; 
  
  /* make sure assign/force table exists */ 
@@ -4479,12 +4482,12 @@ chk_cbs:
  * same since no dces (vpi no dces because rhs value) and tran because
  * assigning to tran channel is what force is
  */
-extern void __bit1_vpi_or_tran_wireforce(struct net_t *np, word *ap, word *bp,
- int ibase, int lhsbi, int rhsbi, char *msg)
+extern void __bit1_vpi_or_tran_wireforce(struct net_t *np, word32 *ap, word32 *bp,
+ int32 ibase, int32 lhsbi, int32 rhsbi, char *msg)
 {
  register struct qcval_t *frc_qcp;
  register struct xstk_t *xsp, *xsp2;
- int bi;
+ int32 bi;
  byte *sbp;
 
  /* even if currently forced indicate force active */
@@ -4516,8 +4519,8 @@ extern void __bit1_vpi_or_tran_wireforce(struct net_t *np, word *ap, word *bp,
    push_xstk_(xsp2, 4);
    sbp = (byte *) xsp2->ap;
    __st_standval(sbp, xsp, ST_STRVAL);
-   if (np->n_isavec) __chg_st_bit(np, lhsbi, (word) sbp[0], 0L); 
-   else __chg_st_val(np, (word *) sbp, (word *) sbp);
+   if (np->n_isavec) __chg_st_bit(np, lhsbi, (word32) sbp[0], 0L); 
+   else __chg_st_val(np, (word32 *) sbp, (word32 *) sbp);
    __pop_xstk();
   }
  else 
@@ -4537,10 +4540,10 @@ extern void __bit1_vpi_or_tran_wireforce(struct net_t *np, word *ap, word *bp,
  * even for 1 or no driver case 
  * LOOKATME - calling release vpi_ callbacks even if not forced 
  */
-static void wire_vpi_release(struct net_t *np, int ndx)
+static void wire_vpi_release(struct net_t *np, int32 ndx)
 {
- register int bi, ibase;
- int biti, bitj, all_forced, none_forced;
+ register int32 bi, ibase;
+ int32 biti, bitj, all_forced, none_forced;
  struct qcval_t *frc_qcp;
  char s3[RECLEN];
  
@@ -4606,7 +4609,7 @@ done:
  */
 static void set_vpisfcall_retval(struct h_t *hp, p_vpi_value value_p)
 {
- int sf_ind;
+ int32 sf_ind;
  p_vpi_systf_data tfdatp;
  struct sysfunc_t *sfbp;
  struct systftab_t *sfp;
@@ -4664,9 +4667,9 @@ static void set_vpisfcall_retval(struct h_t *hp, p_vpi_value value_p)
  */
 static void set_vpiparam_val(struct h_t *hp, p_vpi_value value_p)
 {
- register int wlen;
+ register int32 wlen;
  register struct net_t *np;
- register word *wp;
+ register word32 *wp;
  struct xstk_t *xsp;
  struct mod_t *mdp;
 
@@ -4710,7 +4713,7 @@ done:
  */
 static void set_vpiudpdef_ival(struct h_t *hp, p_vpi_value value_p)
 {
- word nival;
+ word32 nival;
  struct udp_t *udpp;
  struct xstk_t *xsp;
 
@@ -4737,7 +4740,7 @@ static void set_vpiudpdef_ival(struct h_t *hp, p_vpi_value value_p)
  * this is entire net for immediate no delay case only but can be 1 bit scalar
  * know if net is strength ap will be sbp (push converts to stren if needed)
  */
-static void immed_vpi_drv_assign(struct net_t *np, int di, word *ap, word *bp)
+static void immed_vpi_drv_assign(struct net_t *np, int32 di, word32 *ap, word32 *bp)
 {
  byte *sbp, *sbp2;
  struct vpi_drv_t *vpidrvp;     
@@ -4776,8 +4779,8 @@ static void immed_vpi_drv_assign(struct net_t *np, int di, word *ap, word *bp)
  *
  * this is for vpi Net Bit Driver so can never be -1 (no bit for scalar)
  */
-static void immed_vpibit_drv_assign(struct net_t *np, int di, int bi,
- word *ap, word *bp)
+static void immed_vpibit_drv_assign(struct net_t *np, int32 di, int32 bi,
+ word32 *ap, word32 *bp)
 {
  byte *sbp, *sbp2;
  struct vpi_drv_t *vpidrvp;     
@@ -4842,9 +4845,9 @@ extern void __process_vpi_varputv_ev(i_tev_ndx tevpi)
 {
  register struct net_t *np;
  register struct dltevlst_t *dlp;
- register word *ap, *bp;
+ register word32 *ap, *bp;
  register struct h_t *hp;
- int wlen;
+ int32 wlen;
  struct teputv_t *tepvp;
 
  tepvp = __tevtab[tevpi].tu.teputvp;
@@ -4904,16 +4907,16 @@ extern void __process_vpi_varputv_ev(i_tev_ndx tevpi)
  * handled both reg proc. assign and driver assign of added vpi wire drvr
  */
 static void emit_vpiputv_evtrmsg(struct net_t *np, struct teputv_t *tepvp,
- int nbi)
+ int32 nbi)
 { 
- int wid;
- word *ap, *bp;
+ int32 wid;
+ word32 *ap, *bp;
  byte *sbp;
  char ts1[RECLEN], ts2[IDLEN], ts3[RECLEN], ts4[RECLEN];
 
  if (np->n_isarr)
   {
-   sprintf(ts3, "array word %s[%d]", np->nsym->synam,
+   sprintf(ts3, "array word32 %s[%d]", np->nsym->synam,
     __unnormalize_ndx(np, nbi));
    wid = np->nwid;
   }
@@ -4961,10 +4964,10 @@ static void emit_vpiputv_evtrmsg(struct net_t *np, struct teputv_t *tepvp,
 /*
  * exec a vpi put value assign to reg - no delay or event processing
  */
-static void exec_putv_reg_assign(register struct net_t *np, register word *ap,
- register word *bp, register int ndx)
+static void exec_putv_reg_assign(register struct net_t *np, register word32 *ap,
+ register word32 *bp, register int32 ndx)
 {
- int arrwid, bi;
+ int32 arrwid, bi;
  
  /* case 1: array */
  if (np->n_isarr)
@@ -5004,7 +5007,7 @@ static void exec_putv_reg_assign(register struct net_t *np, register word *ap,
  * no delay or event processing (may be called from delay assign ev handler)
  */
 static void exec_putv_wire_softforce(register struct net_t *np,
- register word *ap, register word *bp, register int ndx)
+ register word32 *ap, register word32 *bp, register int32 ndx)
 {
  /* case 1: entire wire */
  if (ndx == -1)
@@ -5044,8 +5047,8 @@ extern void __process_vpidrv_ev(i_tev_ndx tevpi)
 {
  register struct net_t *np;
  register struct dltevlst_t *dlp;
- register word *ap, *bp;
- int ndx, evi;
+ register word32 *ap, *bp;
+ int32 ndx, evi;
  struct teputv_t *tepvp;
  i_tev_ndx *evtabi; 
  struct h_t *hp;
@@ -5110,7 +5113,7 @@ extern void __process_vpidrv_ev(i_tev_ndx tevpi)
 /*
  * convert a passed delay time to internal ticks
  */
-extern int __vpitime_to_ticks(word64 *timp, p_vpi_time time_p,
+extern int32 __vpitime_to_ticks(word64 *timp, p_vpi_time time_p,
  struct mod_t *mdp) 
 {
  word64 tim;
@@ -5135,10 +5138,10 @@ extern int __vpitime_to_ticks(word64 *timp, p_vpi_time time_p,
       "vpiTimeVal of type vpiSuppressTime meaningless here - using vpiSimTime");
     }
    /* sim time is internal ticks (lowest time precision in design) */
-   /* SJM 02/03/00 since PLI time values int not unsigned cast make 64 */
-   /* bits of 1 for -1 not unsigned 32 bits value as needed */
-   *timp = ((word64) ((word) (time_p->low)))
-     | (((word64) ((word) time_p->high)) << 32);
+   /* SJM 02/03/00 since PLI time values int32 not word32 cast make 64 */
+   /* bits of 1 for -1 not word32 32 bits value as needed */
+   *timp = ((word64) ((word32) (time_p->low)))
+     | (((word64) ((word32) time_p->high)) << 32);
   }
  return(TRUE);
 }
@@ -5163,10 +5166,10 @@ extern int __vpitime_to_ticks(word64 *timp, p_vpi_time time_p,
  * LOOKATME - does this work with strengths - think so
  */
 static struct h_t *setschd_var_fromvaluep(p_vpi_value value_p,
- struct net_t *np, int ndx, word64 ticksdel, byte dtyp, int ret_event)
+ struct net_t *np, int32 ndx, word64 ticksdel, byte dtyp, int32 ret_event)
 { 
  register struct dltevlst_t *dlp, *dlp2, *ins_after_dlp;
- int wlen, ewid;
+ int32 wlen, ewid;
  i_tev_ndx tevpi;
  word64 schtim;
  struct xstk_t *xsp;
@@ -5275,7 +5278,7 @@ bld_tev:
  /* assume non handle returning mode */
  tepvp->evnt_hp = NULL;
  wlen = wlen_(ewid);
- tepvp->putv_wp = (word *) __my_malloc(2*WRDBYTES*wlen);
+ tepvp->putv_wp = (word32 *) __my_malloc(2*WRDBYTES*wlen);
  memcpy(tepvp->putv_wp, xsp->ap, 2*WRDBYTES*wlen);
  __tevtab[tevpi].tu.teputvp = tepvp;
  __tevtab[tevpi].vpi_regwir_putv = TRUE;
@@ -5333,7 +5336,7 @@ bld_tev:
  * LOOKATME - no tracing currently for immediate assigns 
  */
 static void emit_vpiputv_schd_trmsg(struct net_t *np, struct xstk_t *xsp,
- struct dltevlst_t *dlp, word64 *schdtimp, int dtyp, char *putvnam)
+ struct dltevlst_t *dlp, word64 *schdtimp, int32 dtyp, char *putvnam)
 {
  char ts1[RECLEN], ts2[RECLEN], ts3[RECLEN];
 
@@ -5359,7 +5362,7 @@ static void emit_vpiputv_schd_trmsg(struct net_t *np, struct xstk_t *xsp,
  */
 static void bld_regwir_putvrec(struct net_t *np)
 {
- int nbytes;
+ int32 nbytes;
 
  nbytes = __inst_mod->flatinum*sizeof(struct dltevlst_t *);
  np->regwir_putv_tedlst = (struct dltevlst_t **) __my_malloc(nbytes);
@@ -5374,9 +5377,9 @@ static void bld_regwir_putvrec(struct net_t *np)
  *
  * SJM 07/25/00 - also putv recs for soft force of regs and wires
  */
-extern void __reinit_regwir_putvrec(struct net_t *np, int insts)
+extern void __reinit_regwir_putvrec(struct net_t *np, int32 insts)
 {
- register int ii;
+ register int32 ii;
  register struct dltevlst_t *dlp, *dlp2, *last_dlp;
 
  for (ii = 0; ii < insts; ii++)
@@ -5399,7 +5402,7 @@ extern void __reinit_regwir_putvrec(struct net_t *np, int insts)
  * differs from tf_ dputp only in removing either entire wire or bit 
  */
 static void cancel_vpievents_toend(struct net_t *np, struct dltevlst_t *frdlp,
- int ewid)
+ int32 ewid)
 {
  register struct dltevlst_t *dlp, *last_dlp;
  register i_tev_ndx tevpi;
@@ -5454,11 +5457,11 @@ static void cancel_vpievents_toend(struct net_t *np, struct dltevlst_t *frdlp,
  * handle type either vpi net or net bit driver
  */
 static struct h_t *setschd_drvr_fromvaluep(p_vpi_value value_p,
- struct h_t *hp, word64 ticksdel, byte dtyp, int ret_event)
+ struct h_t *hp, word64 ticksdel, byte dtyp, int32 ret_event)
 { 
- register int bi;
+ register int32 bi;
  register struct net_t *np;
- int some_sched;
+ int32 some_sched;
  i_tev_ndx tevpi, *evtabi;
  struct h_t *hp2;
  struct net_pin_t *npp;
@@ -5524,7 +5527,7 @@ static struct h_t *setschd_drvr_fromvaluep(p_vpi_value value_p,
  if (np->n_stren)
   {
    /* BEWARE big endian problem, works providing always pass and cast ptrs */
-   /* i.e. can not pass word here on suns will get high not low */
+   /* i.e. can not pass word32 here on suns will get high not low */
    tevpi = setschd_1bit_drvr(npp, 0, xsp, ticksdel, dtyp);
    if (tevpi != -1) some_sched = TRUE;
    evtabi[0] = tevpi;
@@ -5592,11 +5595,11 @@ static struct h_t *setschd_drvr_fromvaluep(p_vpi_value value_p,
  * only for delays - no delay handled as special case above here
  * must run in itree loc. of handle 
  */
-static i_tev_ndx setschd_1bit_drvr(struct net_pin_t *npp, int bi,
+static i_tev_ndx setschd_1bit_drvr(struct net_pin_t *npp, int32 bi,
  struct xstk_t *xsp, word64 ticksdel, byte dtyp)
 { 
  register struct dltevlst_t *dlp, *dlp2, *ins_after_dlp;
- int evi;
+ int32 evi;
  i_tev_ndx tevpi; 
  word64 schtim;
  struct net_t *np;
@@ -5619,7 +5622,7 @@ static i_tev_ndx setschd_1bit_drvr(struct net_pin_t *npp, int bi,
    if (np->n_isavec) sprintf(ts1, "bit %d driver", bi);
    else strcpy(ts1, "scalar driver");
    dlp = vpidrvp->putv_drv_tedlst[evi];
-   emit_vpiputv_schd_trmsg(np, xsp, dlp, &schtim, (int) dtyp, ts1);
+   emit_vpiputv_schd_trmsg(np, xsp, dlp, &schtim, (int32) dtyp, ts1);
   }
 
  /* eliminate new and/or cancel any olds */
@@ -5708,7 +5711,7 @@ bld_tev:
  tepvp->evnt_hp = NULL;
  /* drivers always 1 bit - i.e. for vector will only set low bit */
  /* always allocate 8 byte unpacked */
- tepvp->putv_wp = (word *) __my_malloc(2*WRDBYTES); 
+ tepvp->putv_wp = (word32 *) __my_malloc(2*WRDBYTES); 
  if (np->n_stren)
   {
   /* copy the 1 low bit */
@@ -5802,7 +5805,7 @@ extern PLI_UINT32 vpi_mcd_open(PLI_BYTE8 *filename)
  */
 extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 {
- if ((mcd & FIO_FD) != 0)
+ if ((mcd & FIO_MSB) != 0)
   {
    return(__fd_do_fclose(mcd & ~FIO_FD));
   }
@@ -5814,10 +5817,10 @@ extern PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
  */
 extern PLI_BYTE8 *vpi_mcd_name(PLI_UINT32 mcd)
 {
- register int i;
- int fd;
+ register int32 i;
+ int32 fd;
 
- if ((mcd & FIO_FD) != 0)
+ if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
    return(__fio_fdtab[fd]->fd_name);
@@ -5841,18 +5844,18 @@ extern PLI_BYTE8 *vpi_mcd_name(PLI_UINT32 mcd)
 /*
  * printf to multi-channel descriptor - modern VPI form
  *
- * notice here mcd is unsigned in in tf_ routines it is int by standard
+ * notice here mcd is word32 in in tf_ routines it is int32 by standard
  * but functions almost same - returns value for last if many
  */
 /*VARARGS*/
 extern PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, PLI_BYTE8 *format, ...)
 {
  va_list va, va2;
- register int i;
- int fd;
+ register int32 i;
+ int32 fd;
  PLI_INT32 numch_prtfed = 0;
 
- if ((mcd & FIO_FD) != 0)
+ if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
    va_start(va, format);
@@ -5933,9 +5936,9 @@ extern PLI_INT32 vpi_printf(PLI_BYTE8 *format, ...)
  * this must format to string so use giant (16k for now) buffer because
  * can't effect varargs since caller started
  */
-extern int vpi_vprintf(char *format, va_list ap)
+extern int32 vpi_vprintf(char *format, va_list ap)
 {
- int num_prtfed;
+ int32 num_prtfed;
  char buf[RDBUFSIZ];
 
  num_prtfed = vsnprintf(buf, RDBUFSIZ, format, ap);
@@ -5957,11 +5960,11 @@ extern PLI_INT32 vpi_mcd_vprintf(PLI_UINT32 mcd, PLI_BYTE8 *format,
  va_list ap)
 {
  char buf[RDBUFSIZ];
- register int i;
- int fd;
+ register int32 i;
+ int32 fd;
  PLI_INT32 numch_prtfed = 0;
 
- if ((mcd & FIO_FD) != 0)
+ if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
    numch_prtfed = vfprintf(__fio_fdtab[fd]->fd_s, format, ap);
@@ -6017,10 +6020,10 @@ extern PLI_INT32 vpi_flush(void)
 
 extern PLI_INT32 vpi_mcd_flush(PLI_UINT32 mcd)
 {
- register int i;
- int fd;
+ register int32 i;
+ int32 fd;
 
- if ((mcd & FIO_FD) == 0)
+ if ((mcd & FIO_MSB) != 0)
   {
    fd = mcd & ~(FIO_FD);
    /* know fd in range but if not open error */ 
@@ -6091,7 +6094,7 @@ extern void *vpi_get_userdata(vpiHandle obj)
  struct tskcall_t *tkcp;
 
  /* notice can't get or put user data in compile tf cb - need elab. n.l. */
- if (__run_state == SS_RESET || __run_state == SS_SIM)
+ if (__run_state != SS_RESET && __run_state != SS_SIM)
   {
    __sim_notbegun_err("vpi_get_userdata");
    return(NULL);
@@ -6121,7 +6124,7 @@ extern PLI_INT32 vpi_put_userdata (vpiHandle obj, void *userdata)
  struct tskcall_t *tkcp;
 
  /* notice can't get or put user data in compile tf cb - need elab. n.l. */
- if (__run_state == SS_RESET || __run_state == SS_SIM)
+ if (__run_state != SS_RESET && __run_state != SS_SIM)
   {
    __sim_notbegun_err("vpi_put_userdata");
    return(0);
@@ -6159,7 +6162,7 @@ extern PLI_INT32 vpi_compare_objects(vpiHandle object1, vpiHandle object2)
 {
  register struct h_t *hp1, *hp2;
  register struct hrec_t *hrp1, *hrp2;
- int biti;
+ int32 biti;
 
  hp1 = (struct h_t *) object1;
  if (!__validate_handle("vpi_compare_objects (first)", hp1)) return(0);
@@ -6229,7 +6232,7 @@ extern PLI_INT32 vpi_compare_objects(vpiHandle object1, vpiHandle object2)
  * always needs to be checked even if routine worked for warnings
  * returns T on error
  */
-extern int vpi_chk_error(p_vpi_error_info error_info_p)
+extern int32 vpi_chk_error(p_vpi_error_info error_info_p)
 {
  if (__last_eip == NULL) return(FALSE);
  if (error_info_p == NULL) return(TRUE);
@@ -6300,7 +6303,7 @@ extern PLI_INT32 vpi_free_object(vpiHandle object)
  */
 extern void __free_iterator(vpiHandle ihref)
 {
- register int hi;
+ register int32 hi;
  register struct h_t *hp, *hp2;
  register struct hrec_t *hrp;
  struct pviter_t *iterp;
@@ -6399,10 +6402,10 @@ extern vpiHandle vpi_copy_object(vpiHandle object)
 /*VARARGS*/
 extern PLI_INT32 vpi_control(PLI_INT32 operation, ...)
 {
- int sav_err_cnt;
+ int32 sav_err_cnt;
  va_list va;
  PLI_INT32 retv;
- int diag_level, stop_val, reset_val;
+ int32 diag_level, stop_val, reset_val;
  vpiHandle scopobj, cbobj;
  char *buf;
 
@@ -6411,17 +6414,17 @@ extern PLI_INT32 vpi_control(PLI_INT32 operation, ...)
  va_start(va, operation);
  switch (operation) {
   case vpiStop:
-   diag_level = va_arg(va, int);
+   diag_level = va_arg(va, int32);
    retv = __do_vpi_stop(diag_level);
    break;
   case vpiFinish:
-   diag_level = va_arg(va, int);
+   diag_level = va_arg(va, int32);
    __pli_dofinish(diag_level, "vpi_control");
    break;
   case vpiReset:
-   stop_val = va_arg(va, int); 
-   reset_val = va_arg(va, int);
-   diag_level = va_arg(va, int);
+   stop_val = va_arg(va, int32); 
+   reset_val = va_arg(va, int32);
+   diag_level = va_arg(va, int32);
    /* this never returns */
    __do_vpi_reset(stop_val, reset_val, diag_level);
    break;
@@ -6483,7 +6486,7 @@ extern PLI_INT32 vpi_control(PLI_INT32 operation, ...)
  * notice need to call call back on scope change although may never
  * actually enter interactive code
  */
-static int do_vpi_iact_scopchg(vpiHandle newscopobj)
+static int32 do_vpi_iact_scopchg(vpiHandle newscopobj)
 {
  register struct h_t *hp;
 
@@ -6534,7 +6537,7 @@ extern void __emit_vpi_iniact_warn(void)
  * works for any call back except time related
  * LOOKATME - maybe should always re-enable on reset
  */
-static int do_vpi_cb_onoff(vpiHandle cbobj, int turn_cb_on)
+static int32 do_vpi_cb_onoff(vpiHandle cbobj, int32 turn_cb_on)
 {
  register struct dceauxlst_t *dceauxlp;
  struct h_t *hp;
@@ -6626,7 +6629,7 @@ static int do_vpi_cb_onoff(vpiHandle cbobj, int turn_cb_on)
 extern void __reinit_vpi(void) 
 {
  register struct cbrec_t *cbp, *cbp2;
- int save_simstate;
+ int32 save_simstate;
 
  /* free time related in lists that are not in event queues */ 
  __rosync_slot = FALSE;
@@ -6687,9 +6690,9 @@ extern PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
  * LOOKATME - maybe should dump more information for some object types 
  * LOOKATME - not portable because of addr cast
  */
-extern int __vpi_show_object(vpiHandle obj)
+extern int32 __vpi_show_object(vpiHandle obj)
 {
- int bad_inst, bad_tsk, first_time, ttyp, tryget_name;
+ int32 bad_inst, bad_tsk, first_time, ttyp, tryget_name;
  struct h_t *hp;
  struct hrec_t *hrp;
  char *chp, s1[RECLEN], s2[RECLEN]; 
@@ -6710,7 +6713,7 @@ extern int __vpi_show_object(vpiHandle obj)
  else
   {
    __my_fprintf(stdout, "Object type: %s (addr %lx)",
-    __to_vpionam(s1, hrp->htyp), (unsigned) hp);
+    __to_vpionam(s1, hrp->htyp), (word32) hp);
   }
  if (hrp->htyp2 != 0) 
   {
@@ -6821,21 +6824,21 @@ extern int __vpi_show_object(vpiHandle obj)
 /*
  * show object check handle
  */
-extern int __chk_showobj(struct h_t *hp, int *bad_inst, int *bad_task)
+extern int32 __chk_showobj(struct h_t *hp, int32 *bad_inst, int32 *bad_task)
 {
  struct hrec_t *hrp; 
 
  /* if low value bad since ptr */
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hp == NULL || ((unsigned int) hp) < 256)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hp == NULL || ((word32) hp) < 256)
   {
    __my_fprintf(stdout, 
     "**object bad: address (%p) null or illegal low address\n", hp);
    return(FALSE);
   }
  hrp = hp->hrec;
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hrp == NULL || ((unsigned int) hrp) < 256)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hrp == NULL || ((word32) hrp) < 256)
   {
    __my_fprintf(stdout,
     "**object bad: net list pointer (%p) null or illegal low address\n", hrp);
@@ -6848,16 +6851,16 @@ extern int __chk_showobj(struct h_t *hp, int *bad_inst, int *bad_task)
     hrp->h_magic);
   }
  *bad_inst = FALSE;
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hp->hin_itp != NULL && ((unsigned int) hp->hin_itp) < 256)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hp->hin_itp != NULL && ((word32) hp->hin_itp) < 256)
   {
    __my_fprintf(stdout, 
     "**object bad: instance address (%p) probably illegal\n", hp->hin_itp);
    *bad_inst = TRUE;
   }
  *bad_task = FALSE;
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hrp->hin_tskp != NULL && ((unsigned int) (hrp->hin_tskp)) < 256)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hrp->hin_tskp != NULL && ((word32) (hrp->hin_tskp)) < 256)
   {
    __my_fprintf(stdout, 
     "**object bad: task/func address (%p) probably illegal\n",
@@ -7039,7 +7042,7 @@ static struct onamvpi_t cv_onames_vpi[] = {
  * if out of range returns nil
  * table dense and starting at 0
  */
-extern char *__to_vpionam(char *s, unsigned vpioval)
+extern char *__to_vpionam(char *s, word32 vpioval)
 {
  if (vpioval < 1) goto outofrng;
  if (vpioval < NVOTYPS)
@@ -7054,7 +7057,7 @@ extern char *__to_vpionam(char *s, unsigned vpioval)
   }
 
 outofrng:
- sprintf(s, "**out of range (%d)", vpioval);
+ sprintf(s, "**out of range (%lu)", vpioval);
  return(s);
 }
 
@@ -7063,7 +7066,7 @@ outofrng:
  * if out of range returns nil
  * table dense and starting at 0
  */
-extern int __validate_otyp(unsigned vpioval)
+extern int32 __validate_otyp(word32 vpioval)
 {
  if (vpioval < 1) return(FALSE);
  if (vpioval < NVOTYPS) return(TRUE);
@@ -7165,7 +7168,7 @@ static struct pnamvpi_t pnames_vpi[] = {
  * routine to acess vpi property name given constant value
  * could index but would not catch inconsistencies after standard changes
  */
-extern char *__to_vpipnam(char *s, int pval)
+extern char *__to_vpipnam(char *s, int32 pval)
 {
  if (pval == vpiUndefined) { strcpy(s, "vpiUndefined"); return(s); }
 
@@ -7228,7 +7231,7 @@ static struct opnamvpi_t opnames_vpi[] = {
  * routine to acess vpi expression operator name given constant value
  * could index but would not catch inconsistencies after standard changes
  */
-extern char *__to_vpiopnam(char *s, int opval)
+extern char *__to_vpiopnam(char *s, int32 opval)
 {
  if (opval == vpiUndefined) { strcpy(s, "vpiUndefined"); return(s); }
  if (opval < 1 || opval >= NVOPTYPS)
@@ -7241,7 +7244,7 @@ extern char *__to_vpiopnam(char *s, int opval)
  * routine to acess vpi expression operator name given constant value
  * could index but would not catch inconsistencies after standard changes
  */
-extern char *__to_vpiopchar(char *s, int opval)
+extern char *__to_vpiopchar(char *s, int32 opval)
 {
  if (opval == vpiUndefined) { strcpy(s, "<UNDEF>"); return(s); }
  if (opval < 1 || opval >= NVOPTYPS)
@@ -7281,7 +7284,7 @@ extern void __bad_rosync_err(char *rnam)
 /*
  * validate a non iterator handle
  */
-extern int __validate_nonit_handle(char *rnam, struct h_t *hp) 
+extern int32 __validate_nonit_handle(char *rnam, struct h_t *hp) 
 {
  if (!__validate_handle(rnam, hp)) return(FALSE); 
  if (hp->hrec->htyp != vpiIterator) return(TRUE);
@@ -7296,20 +7299,20 @@ extern int __validate_nonit_handle(char *rnam, struct h_t *hp)
  * LOOKATME - acc_ handle passed to here may work and not checked for
  * FIXME - need compile -D switch than turns off most checking
  */
-extern int __validate_handle(char *rnam, register struct h_t *hp) 
+extern int32 __validate_handle(char *rnam, register struct h_t *hp) 
 {
  register struct hrec_t *hrp;
 
  /* if low value bad since ptr */
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hp == NULL || ((unsigned int) hp) < 256)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hp == NULL || ((word32) hp) < 256)
   {
    strcpy(__wrks1, "** NULL OR LOW NUMBER **");
    goto bad_handle;
   }
  hrp = hp->hrec;
- /* SJM 07/08/01 - need to compare to uint not int since >2G high bit on */
- if (hrp == NULL || ((unsigned int) hrp) < 256 || hrp->h_magic != PVH_MAGIC)
+ /* SJM 07/08/01 - need to compare to uint32 not int32 since >2G high bit on */
+ if (hrp == NULL || ((word32) hrp) < 256 || hrp->h_magic != PVH_MAGIC)
   {
    strcpy(__wrks1, "** PTR INTO DATA BASE ILLEGAL **");
    goto bad_handle;
@@ -7331,7 +7334,7 @@ bad_handle:
  * validate access method handle
  * returns F on error
  */
-extern int __validate_accessm(char *rnam, int otype, char *accessm)
+extern int32 __validate_accessm(char *rnam, int32 otype, char *accessm)
 {
  if (!__validate_otyp(otype))
   {
@@ -7346,7 +7349,7 @@ extern int __validate_accessm(char *rnam, int otype, char *accessm)
 /*
  * validate a vpi time type field
  */
-extern int __validate_time_type(char *rnam, int timtyp)
+extern int32 __validate_time_type(char *rnam, int32 timtyp)
 {
  if (timtyp == vpiScaledRealTime || timtyp == vpiSimTime 
   || timtyp == vpiSuppressTime) return(TRUE);
@@ -7358,7 +7361,7 @@ extern int __validate_time_type(char *rnam, int timtyp)
 /*
  * validate a vpi value format field
  */
-extern int __validate_value_fmt(char *rnam, int fmt)
+extern int32 __validate_value_fmt(char *rnam, int32 fmt)
 {
  switch (fmt) {
   case vpiBinStrVal: case vpiOctStrVal: case vpiHexStrVal:
@@ -7377,7 +7380,7 @@ extern int __validate_value_fmt(char *rnam, int fmt)
 /*
  * vpi internal fatal error 
  */
-extern void __vpi_terr(char *fnam, int lno)
+extern void __vpi_terr(char *fnam, int32 lno)
 {
  __vpi_err(303, vpiInternal,
   "VPI INTERNAL ERROR** - source line **%s(%d) - maybe at **%s(%d) or **%s(%d)",
@@ -7386,7 +7389,7 @@ extern void __vpi_terr(char *fnam, int lno)
 }
 
 /*VARARGS*/
-extern void __vpi_err(int id_num, int level, char *s, ...)
+extern void __vpi_err(int32 id_num, int32 level, char *s, ...)
 {
  va_list va;
 
@@ -7417,8 +7420,8 @@ extern void __vpi_err(int id_num, int level, char *s, ...)
  *
  * in cbError callback user must call vpi chk error to get error info
  */
-extern void __cberror_fill_einfo(int esev, int ernum, char *emsg,
- char *efnam, int elcnt)
+extern void __cberror_fill_einfo(int32 esev, int32 ernum, char *emsg,
+ char *efnam, int32 elcnt)
 {
  struct t_vpi_error_info *einfop;
 
@@ -7445,7 +7448,7 @@ extern void __cberror_fill_einfo(int esev, int ernum, char *emsg,
 /*
  * convert error message severity to vpi_ error message level
  */
-static int to_vpierr_level(int esev)
+static int32 to_vpierr_level(int32 esev)
 {
  switch (esev) {
   case INFORM: return(vpiNotice);
@@ -7461,7 +7464,7 @@ static int to_vpierr_level(int esev)
  * initialize constant for Cver and set else values for vpi error info rec
  * when have more types, can pass args here
  */
-static void init_pli_einfo(struct t_vpi_error_info *einfop, int elev, int ernum)
+static void init_pli_einfo(struct t_vpi_error_info *einfop, int32 elev, int32 ernum)
 {
  einfop->state = vpiPLI;
  einfop->level = elev;

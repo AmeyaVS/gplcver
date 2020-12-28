@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -40,12 +40,12 @@
 
 /* local prototypes */
 static void bld_root_dfpglbs(void);
-static int dfploc_cmp(const void *, const void *);
-static void dmp_dfps(int);
-static void bld_root2_dfpglbs(struct itree_t *, int);
-static void bld_identdfparams(int);
-static int ipth_cmp(const void *, const void *);
-static int ipth2_cmp(register struct dfparam_t *, register struct dfparam_t *);
+static int32 dfploc_cmp(const void *, const void *);
+static void dmp_dfps(int32);
+static void bld_root2_dfpglbs(struct itree_t *, int32);
+static void bld_identdfparams(int32);
+static int32 ipth_cmp(const void *, const void *);
+static int32 ipth2_cmp(register struct dfparam_t *, register struct dfparam_t *);
 static void find_mustsplit_dfps(void);
 static struct itree_t *find_dfpbot_itp(struct dfparam_t *);
 static void do_defparam_splitting(void);
@@ -53,26 +53,26 @@ static void reset_dfp_targsyps(void);
 static void reset_1dfp_targsyp(struct dfparam_t *);
 static void reassign2_itnums(struct itree_t *);
 static void set2_poundparams(struct itree_t *);
-static void assgn_is_param(struct net_t *, struct xstk_t *, int, int, int);
-static void replace_param_rhs_expr(struct net_t *, word *, struct mod_t *);
+static void assgn_is_param(struct net_t *, struct xstk_t *, int32, int32, int32);
+static void replace_param_rhs_expr(struct net_t *, word32 *, struct mod_t *);
 static void set_1defparam(struct dfparam_t *);
 static void recalc_1mod_params(struct mod_t *);
 static void recalc_1mod_pndparams(struct mod_t *);
-static int xpr_has_is_param(struct expr_t *);
+static int32 xpr_has_is_param(struct expr_t *);
 static void set_parmval_from_isxpr(struct net_t *, struct expr_t *,
  struct mod_t *);
-static int all_parent_mods_recalced(struct mod_t *);
+static int32 all_parent_mods_recalced(struct mod_t *);
 
-static void set_lhs_expr_drvrtyp(struct expr_t *, int, int, int);
-static int comp_pre_elab_norm_con_ndx(struct net_t *, struct expr_t *, int,
- int);
-static int is_nonis_const_expr(struct expr_t *);
-static void set_scalar_drvr_type(struct net_t *, int);
-static void set_vec_drvr_type(struct net_t *, int, int, int);
-static int port_expr_has_wrong_dir_drvr(struct expr_t *, int, int, int, int,
- int);
-static int find_max_rng_drvr_state(struct net_t *, int, int);
-static int expr_decl_lvalue(struct expr_t *);
+static void set_lhs_expr_drvrtyp(struct expr_t *, int32, int32, int32);
+static int32 comp_pre_elab_norm_con_ndx(struct net_t *, struct expr_t *, int32,
+ int32);
+static int32 is_nonis_const_expr(struct expr_t *);
+static void set_scalar_drvr_type(struct net_t *, int32);
+static void set_vec_drvr_type(struct net_t *, int32, int32, int32);
+static int32 port_expr_has_wrong_dir_drvr(struct expr_t *, int32, int32, int32, int32,
+ int32);
+static int32 find_max_rng_drvr_state(struct net_t *, int32, int32);
+static int32 expr_decl_lvalue(struct expr_t *);
 static void chg_mpx_to_bid(struct expr_t *);
 static void free_design_ndrvrs(void);
 
@@ -83,7 +83,7 @@ static void stmt_do_inpsel_set(struct st_t *);
 static void lstofsts_do_inpsel_set(register struct st_t *);
 static void csitemlst_do_inpsel_set(register struct csitem_t *);
 static void inpsel_xpr_markparam(struct expr_t *);
-static void chk_undef_syms(struct symtab_t *, unsigned);
+static void chk_undef_syms(struct symtab_t *, word32);
 static void chkset_1mwire_rnges(void);
 static void chk_modsym(struct sy_t *);
 static void chk_1wire(struct net_t *);
@@ -91,37 +91,37 @@ static void chk_1reg(struct net_t *);
 static void mark_sttypewires(void);
 static void mark_stdr_wires(void);
 static void mark_stdr_inout_wired_logic(void);
-static int has_non_stren_wired_net(struct expr_t *);
-static int net_type_tri(word);
-static int chk_hasst_wires(struct mod_t *, struct expr_t *);
+static int32 has_non_stren_wired_net(struct expr_t *);
+static int32 net_type_tri(word32);
+static int32 chk_hasst_wires(struct mod_t *, struct expr_t *);
 static void mark_stwires(struct mod_t *, struct expr_t *);
 static void prop_stsdown(void);
 static void prop_stsup(void);
-static int chkdel_expr(struct expr_t *, char *, int);
-static int nd_delnum(struct expr_t *, char *);
-static int nd_delisnum(struct expr_t *, char *);
-static void freeset_is0del(struct expr_t *, int);
-static void wr_ndisdel_err(struct expr_t *, int, char *);
+static int32 chkdel_expr(struct expr_t *, char *, int32);
+static int32 nd_delnum(struct expr_t *, char *);
+static int32 nd_delisnum(struct expr_t *, char *);
+static void freeset_is0del(struct expr_t *, int32);
+static void wr_ndisdel_err(struct expr_t *, int32, char *);
 static void chk_wire_rng(struct net_t *);
 static void chg_rng_isnum_to_num(struct net_t *, struct expr_t *, char *);
-static void chk_taskvars(struct task_t *, int);
-static int chk_prtwidth(struct expr_t *, struct mod_pin_t *);
-static void emit_shorted_informs(int);
-static void emit_1net_shorted_informs(struct mod_pin_t *, int,
- struct net_t *, int);
-static int net_in_expr(struct net_t *, struct expr_t *);
-static int xhas_multconn_wire(struct expr_t *);
+static void chk_taskvars(struct task_t *, int32);
+static int32 chk_prtwidth(struct expr_t *, struct mod_pin_t *);
+static void emit_shorted_informs(int32);
+static void emit_1net_shorted_informs(struct mod_pin_t *, int32,
+ struct net_t *, int32);
+static int32 net_in_expr(struct net_t *, struct expr_t *);
+static int32 xhas_multconn_wire(struct expr_t *);
 static void emit_nonbid_shortwarn(struct mod_pin_t *, struct expr_t *);
 static void reconn_1mod_gateterms(struct mod_t *);
-static struct expr_t *bld_bsel_expr(struct net_t *, int);
+static struct expr_t *bld_bsel_expr(struct net_t *, int32);
 static void conn_1gateterm_concat(struct mod_t *, struct giarr_t *,
- struct expr_t *, int);
-static int legal_giarr_conn_concat(struct expr_t *);
+ struct expr_t *, int32);
+static int32 legal_giarr_conn_concat(struct expr_t *);
 static void reconn_1mod_instports(struct mod_t *);
-static struct expr_t *bld_psel_expr(struct net_t *, int, int);
+static struct expr_t *bld_psel_expr(struct net_t *, int32, int32);
 static void conn_1instport_concat(struct mod_t *, struct giarr_t *,
- struct expr_t *, int, int);
-static struct exprlst_t *splt_icat_align_xlist(struct expr_t *, int);
+ struct expr_t *, int32, int32);
+static struct exprlst_t *splt_icat_align_xlist(struct expr_t *, int32);
 static struct expr_t *bld_num_expr(struct xstk_t *);
 static void set_1mpx_stren(struct expr_t *);
 static void chk_1tsk(struct task_t *);
@@ -130,21 +130,21 @@ static void chk_iconn_downxmr(struct inst_t *, struct expr_t *);
 static void chk_iconn_mixeddirrng(struct inst_t *, struct mod_pin_t *,
  struct expr_t *);
 static void chk_gates(void);
-static int chk_1bltingate(struct gate_t *);
-static void gate_errifn(struct gate_t *, int);
+static int32 chk_1bltingate(struct gate_t *);
+static void gate_errifn(struct gate_t *, int32);
 static void chk_gate_nostren(struct gate_t *);
 static void chk_tran_gate(struct gate_t *);
-static int chk_tran_terms_same(struct gate_t *);
-static void set_unc_gateterm(struct gate_t *, int);
+static int32 chk_tran_terms_same(struct gate_t *);
+static void set_unc_gateterm(struct gate_t *, int32);
 static void chk_1bit_tran(struct gate_t *, struct expr_t *, struct net_t *,
- int);
+ int32);
 static void chk_tranif_gate(struct gate_t *);
 static void chk_pull_gate(struct gate_t *);
-static int chk_1udp(struct gate_t *);
-static int chk_gate_source(struct gate_t *, struct expr_t *, int, int,
+static int32 chk_1udp(struct gate_t *);
+static int32 chk_gate_source(struct gate_t *, struct expr_t *, int32, int32,
  struct net_t **);
 static void chk_contas(void);
-static void cnv_1bcas_into_garr(int, struct conta_t *); 
+static void cnv_1bcas_into_garr(int32, struct conta_t *); 
 static struct gate_t *convert_1bca_togate(struct gate_t *,
  struct conta_t *);
 static void nd_1bit_concat(struct expr_t *);
@@ -153,7 +153,8 @@ static void chk_funcdef(struct task_t *);
 static void chk_fdef_args(struct task_t *);
 static void chk_nodel_stmt(struct st_t *);
 static void chk_nodel_dsable(struct st_t *);
-static int lhsexpr_hassym(struct expr_t *, struct sy_t *);
+static int32 lhsexpr_hassym(struct expr_t *, struct sy_t *);
+static void chk_varinits(void);
 static void chk_stmts(void);
 static void chk_1stmt(struct st_t *);
 static void chk_case(struct st_t *);
@@ -164,126 +165,130 @@ static void bld_case_evxlst(struct st_t *);
 static void bld_tskenable_evxlst(struct st_t *);
 static void bld_rhs_impl_evxlst(struct expr_t *);
 static void bld_lhs_impl_evxlst(struct expr_t *);
-static int xp_in_evxlst(struct expr_t *); 
+static int32 xp_in_evxlst(struct expr_t *); 
 static struct expr_t *bld_evlst_comma_expr(void);
-static void chk_qclvalue(struct expr_t *, unsigned, int *);
+static void chk_qclvalue(struct expr_t *, word32, int32 *);
 static void set_qc_frcassgn_net(struct expr_t *);
-static int nd_qcreg(struct expr_t *);
+static int32 nd_qcreg(struct expr_t *);
 static void chk_circular_qc_stmt(struct st_t *);
-static int rhs_expr_has_net(struct expr_t *, struct net_t *);
+static int32 rhs_expr_has_net(struct expr_t *, struct net_t *);
 static void chk_disable(struct st_t *);
 static void reassign_itnums(void);
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int , int);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32 , int32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_ptnam(char *, unsigned);
-extern char *__to_sytyp(char *, unsigned);
-extern char *__to_sttyp(char *, unsigned);
-extern char *__to_qctyp(char *, unsigned);
+extern char *__to_ptnam(char *, word32);
+extern char *__to_sytyp(char *, word32);
+extern char *__to_sttyp(char *, word32);
+extern char *__to_qctyp(char *, word32);
 extern char *__to_idnam(struct expr_t *);
 extern char *__to_mpnam(char *, char *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern char *__msgnumexpr_tostr(char *, struct expr_t *, int);
+extern char *__msgnumexpr_tostr(char *, struct expr_t *, int32);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern char *__pregab_tostr(char *, word *, word *, struct net_t *);
+extern char *__pregab_tostr(char *, word32 *, word32 *, struct net_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct expr_t *__alloc_newxnd(void);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
 extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
 extern void __set_poundparams(void);
-extern void __set_1inst_pound_params(struct itree_t *, int);
+extern void __set_1inst_pound_params(struct itree_t *, int32);
 extern void __free_1dfparam(struct dfparam_t *);
-extern int __ip_indsrch(char *);
-extern void __my_free(char *, int);
+extern int32 __ip_indsrch(char *);
+extern void __my_free(char *, int32);
 extern void __mark_widdet_params(struct mod_t *);
 extern void __do_mdsplit(struct mod_t *);
 extern void __dmp_itree(struct itree_t *); 
-extern void __sizchgxs(struct xstk_t *, int);  
-extern void __narrow_sizchg(register struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
+extern void __sizchgxs(struct xstk_t *, int32);  
+extern void __narrow_sizchg(register struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern int __wide_vval_is0(register word *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
 extern void __in_xpr_markparam(struct expr_t *);
-extern int __chk_delparams(struct paramlst_t *, char *, int);
+extern int32 __chk_delparams(struct paramlst_t *, char *, int32);
 extern void __free_dellst(struct paramlst_t *);
 extern void __bld_mlevel_lists(void);
-extern int __get_netwide(struct net_t *);
-extern int __chk_rhsexpr(struct expr_t *, int);
-extern int __chk_numdelay(struct expr_t *, char *);
+extern int32 __get_netwide(struct net_t *);
+extern int32 __chk_rhsexpr(struct expr_t *, int32);
+extern int32 __chk_numdelay(struct expr_t *, char *);
 extern void __free_xtree(struct expr_t *);
 extern void __free2_xtree(struct expr_t *);
 extern void __init_xnd(struct expr_t *);
-extern int __get_arrwide(struct net_t *);
-extern int __nd_ndxnum(struct expr_t *, char *, int);
-extern int __chk_lhsexpr(struct expr_t *, int);
+extern int32 __get_arrwide(struct net_t *);
+extern int32 __nd_ndxnum(struct expr_t *, char *, int32);
+extern int32 __chk_lhsexpr(struct expr_t *, int32);
 extern void __set_expr_onrhs(struct expr_t *);  
 extern void __chk_lstofsts(struct st_t *);
+extern struct expr_t *__widen_unsiz_rhs_assign(struct expr_t *, int);
 extern struct expr_t *__get_lvalue_idndp(struct expr_t *);
 extern void __chk_nodel_lstofsts(struct st_t *);
-extern int __isleaf(struct expr_t *);
-extern void __getwir_range(struct net_t *, int *, int *);
-extern int __unnormalize_ndx(struct net_t *, int);
-extern int __chk_lhsdecl_scalared(struct expr_t *);
+extern int32 __isleaf(struct expr_t *);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
+extern int32 __chk_lhsdecl_scalared(struct expr_t *);
 extern void __push_nbstk(struct st_t *);
 extern void __pop_nbstk(void);
-extern int __is_upward_dsable_syp(struct sy_t *, struct symtab_t *, int *);
+extern int32 __is_upward_dsable_syp(struct sy_t *, struct symtab_t *, int32 *);
 extern void __chk_tskenable(struct st_t *);
 extern void __set_lhswidth(struct expr_t *);
-extern int __get_rhswidth(struct expr_t *);
+extern int32 __get_rhswidth(struct expr_t *);
 extern void __chk_evxpr(struct expr_t *);
-extern int __xhas_reg(struct expr_t *);
-extern int __get_giarr_wide(struct giarr_t *giap);
-extern void __rhspsel(register word *, register word *, register int,
- register int);
-extern int __chkndx_expr(struct expr_t *, char *);
-extern int __expr_has_glb(struct expr_t *);
+extern int32 __xhas_reg(struct expr_t *);
+extern int32 __get_giarr_wide(struct giarr_t *giap);
+extern void __rhspsel(register word32 *, register word32 *, register int32,
+ register int32);
+extern int32 __chkndx_expr(struct expr_t *, char *);
+extern int32 __expr_has_glb(struct expr_t *);
 extern void __bld_unc_expr(void);
 extern struct exprlst_t *__alloc_xprlst(void);
 extern void __chk_1mdecls(void);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
 extern void __cnvt_param_stkval(struct xstk_t *, struct expr_t *,
  struct net_t *, char *);
 extern void __set_drvr_bits(void);
-extern void __chk_chg_port_dir(int);
+extern void __chk_chg_port_dir(int32);
 extern void __assgn_nonis_param(struct net_t *, struct expr_t *,
  struct xstk_t *);
 extern void __chg_param_tois(struct net_t *, struct mod_t *);
-extern int __alloc_cval(int);
-extern int __alloc_shareable_cval(word, word, int);
-extern int __alloc_shareable_rlcval(double);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern int32 __alloc_is_cval(int32);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
+extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __alloc_shareable_rlcval(double);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern int __is_const_expr(struct expr_t *);
-extern int __xpr_has_param(struct expr_t *);
+extern int32 __is_const_expr(struct expr_t *);
+extern int32 __xpr_has_param(struct expr_t *);
 extern void __bld_flat_itree(void);
 extern void __free_flat_itree(void);
-extern int __cmp_xpr(struct expr_t *, struct expr_t *);
+extern int32 __cmp_xpr(struct expr_t *, struct expr_t *);
+extern int32 __chk_paramexpr(struct expr_t *, int32);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
 
 extern void __cv_msg(char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __sgferr(int, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __sgfterr(int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_sgfterr(char *, int);
-extern void __misc_gfterr(char *, int, unsigned, int);
+extern void __sgfinform(int32, char *, ...);
+extern void __sgfterr(int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_sgfterr(char *, int32);
+extern void __misc_gfterr(char *, int32, word32, int32);
 
-extern word __masktab[];
+extern word32 __masktab[];
 
 /*
  * ROUTINES TO SAVE INITIAL SOURCE FOR PLI USE
@@ -347,9 +352,9 @@ extern void __process_defparams(void)
  */
 static void bld_root_dfpglbs(void)
 {
- register int ii;
+ register int32 ii;
  register struct dfparam_t *dfpp, *dfpp2;
- int num_defparams, num_locdefparams;
+ int32 num_defparams, num_locdefparams;
  struct dfparam_t *last_dfpp, *dfpp3, **dfpptab;
  struct mod_t *dfpmdp;
 
@@ -421,9 +426,9 @@ static void bld_root_dfpglbs(void)
  if (__debug_flg) dmp_dfps(TRUE);
 }
 
-static int dfploc_cmp(const void *dfpp1, const void *dfpp2)
+static int32 dfploc_cmp(const void *dfpp1, const void *dfpp2)
 {
- int cv;
+ int32 cv;
 
  cv = (*((struct dfparam_t **) dfpp1))->dfpfnam_ind
   - (*((struct dfparam_t **) dfpp2))->dfpfnam_ind;
@@ -436,10 +441,10 @@ static int dfploc_cmp(const void *dfpp1, const void *dfpp2)
  * dump defparam list
  * only called if debugging on
  */
-static void dmp_dfps(int emit_pth)
+static void dmp_dfps(int32 emit_pth)
 {
  struct dfparam_t *dfpp;
- register int dfi, ii; 
+ register int32 dfi, ii; 
  char identtyp;
  struct inst_t *ip;
  struct sy_t *syp;
@@ -483,11 +488,11 @@ static void dmp_dfps(int emit_pth)
  */
 extern void __dmp_all_param_exprs(void)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_t *mdp;
  register struct net_t *np;
- int wlen;
- word *wp;
+ int32 wlen;
+ word32 *wp;
 
  __dbg_msg("*** dumping all params ***\n");
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
@@ -540,11 +545,11 @@ extern void __dmp_all_param_exprs(void)
  * downward relative symbols in top module are not rooted but can never
  * be in list
  */
-static void bld_root2_dfpglbs(struct itree_t *itp, int level)
+static void bld_root2_dfpglbs(struct itree_t *itp, int32 level)
 {
  register struct dfparam_t *dfpp;
  struct dfparam_t *new_dfpp;
- int i, ii, rtlen, *newiis;
+ int32 i, ii, rtlen, *newiis;
  byte *bp1, *bp2;
  struct mod_t *imdp;
  struct itree_t *tmpitp, *upitp;
@@ -589,7 +594,7 @@ too_deep:
     }
    rtlen = level + dfpp->last_dfpi + 1;  
    if (rtlen >= MAXGLBCOMPS) goto too_deep;
-   newiis = (int *) __my_malloc(rtlen*sizeof(int));
+   newiis = (int32 *) __my_malloc(rtlen*sizeof(int32));
    /* fill the new prefix - need instance symbol except module at top */ 
    /* this is downward relative in top level */
    tmpitp = itp;
@@ -621,7 +626,7 @@ too_deep:
    /* notice tail param targsyp same for each */
    if (imdp->flatinum == 1)
     {
-     __my_free((char *) dfpp->dfpiis, (dfpp->last_dfpi + 1)*sizeof(int));
+     __my_free((char *) dfpp->dfpiis, (dfpp->last_dfpi + 1)*sizeof(int32));
      dfpp->dfpiis = newiis;
      dfpp->last_dfpi = __last_gsc - 1;
      dfpp->dfp_rooted = TRUE;
@@ -656,9 +661,9 @@ too_deep:
  * this order identical path maybe same or maybe different defparams
  * in source order so same will always use last source order
  */
-static void bld_identdfparams(int nrtdfps)
+static void bld_identdfparams(int32 nrtdfps)
 {
- register int dfi, dfi2;
+ register int32 dfi, dfi2;
  register struct dfparam_t *dfpp1, *dfpp2;
  struct dfparam_t *mastdfp, *dfpend, **dfppndx;
 
@@ -725,9 +730,9 @@ static void bld_identdfparams(int nrtdfps)
 /*
  * wrapper for sorting defparams - if same order by source loc.
  */
-static int ipth_cmp(const void *dfpp1p, const void *dfpp2p)
+static int32 ipth_cmp(const void *dfpp1p, const void *dfpp2p)
 {
- register int cv;
+ register int32 cv;
  register struct dfparam_t *dfpp1, *dfpp2;
 
  dfpp1 = *((struct dfparam_t **) dfpp1p);
@@ -746,12 +751,12 @@ static int ipth_cmp(const void *dfpp1p, const void *dfpp2p)
 /*
  * compare 2 defparam records (use address for order)
  */
-static int ipth2_cmp(register struct dfparam_t *dfpp1,
+static int32 ipth2_cmp(register struct dfparam_t *dfpp1,
  register struct dfparam_t *dfpp2)
 {
- register int ii;
+ register int32 ii;
  register struct sy_t *sy1, *sy2;
- int atend1, atend2;
+ int32 atend1, atend2;
  struct itree_t *itp1, *itp2;
 
  itp1 = __it_roots[dfpp1->dfpiis[0]];
@@ -764,7 +769,7 @@ static int ipth2_cmp(register struct dfparam_t *dfpp1,
    --- */
    sy1 = itp1->itip->isym;
    sy2 = itp2->itip->isym;
-   /* SJM 06/03/02 - cast to int and minus not 64 bit portable */
+   /* SJM 06/03/02 - cast to int32 and minus not 64 bit portable */
    if (sy1 != sy2)
     {
      if (sy1 > sy2) return(1);
@@ -869,7 +874,7 @@ static void find_mustsplit_dfps(void)
  */
 static struct itree_t *find_dfpbot_itp(struct dfparam_t *dfpp)
 {
- register int dfi, ii;
+ register int32 dfi, ii;
  register struct itree_t *bot_itp, *itp;
  
  ii = dfpp->dfpiis[0];
@@ -891,8 +896,8 @@ static struct itree_t *find_dfpbot_itp(struct dfparam_t *dfpp)
  */
 static void do_defparam_splitting(void)
 {
- register int ii2, dfi;
- int ii, last_split;
+ register int32 ii2, dfi;
+ int32 ii, last_split;
  struct dfparam_t *dfpp;
  struct inst_t *ip;
  struct itree_t *itp, *up_itp;
@@ -1193,7 +1198,7 @@ have_task:
  */
 static void reassign_itnums(void)
 {
- register int ii;
+ register int32 ii;
  register struct mod_t *flmdp;
  struct itree_t *itp; 
 
@@ -1225,7 +1230,7 @@ static void reassign_itnums(void)
  */
 static void reassign2_itnums(struct itree_t *new_itp)
 {
- register int ii;
+ register int32 ii;
  struct itree_t *itp;
  struct mod_t *imdp, *mdp;
 
@@ -1253,7 +1258,7 @@ static void reassign2_itnums(struct itree_t *new_itp)
  */
 extern void __set_poundparams(void)
 {
- register int ii;
+ register int32 ii;
  struct itree_t *itp; 
 
  for (ii = 0; ii < __numtopm; ii++)
@@ -1270,8 +1275,8 @@ extern void __set_poundparams(void)
  */
 static void set2_poundparams(struct itree_t *up_itp)
 {
- register int ii, ii2;
- int giawid, is_giarr;
+ register int32 ii, ii2;
+ int32 giawid, is_giarr;
  struct itree_t *itp;
  struct inst_t *ip;
  struct mod_t *up_mdp;
@@ -1339,9 +1344,9 @@ static void set2_poundparams(struct itree_t *up_itp)
  * place in sort order but must leave as expr. because some other
  * instances of IS form parameter may need to use default
  */
-extern void __set_1inst_pound_params(struct itree_t *itp, int is_giarr) 
+extern void __set_1inst_pound_params(struct itree_t *itp, int32 is_giarr) 
 {
- register int pi;
+ register int32 pi;
  struct expr_t *pxp;
  struct mod_t *imdp;
  struct inst_t *ip;
@@ -1365,6 +1370,11 @@ extern void __set_1inst_pound_params(struct itree_t *itp, int is_giarr)
    if (pxp == NULL) continue;
 
    modnp = &(imdp->mprms[pi]);
+
+   /* SJM 01/26/05 - mistake because if param set by def param was marking */
+   /* add preventing recalc param rhs from using expr but must also set */
+   /* bit for pound param overrides */
+   modnp->nu.ct->p_setby_defpnd = TRUE;
    
    /* use whatever parm values in rhs are current to freeze rhs to num */
    /* here is the source order point for pound param */
@@ -1430,7 +1440,7 @@ chk_dbg:
 extern void __assgn_nonis_param(struct net_t *np, struct expr_t *xrhs,
  struct xstk_t *xsp)
 {
- int owlen, nwlen;
+ int32 owlen, nwlen;
 
  owlen = wlen_(np->nwid);
  nwlen = wlen_(xsp->xslen);
@@ -1442,7 +1452,7 @@ extern void __assgn_nonis_param(struct net_t *np, struct expr_t *xrhs,
    return;
   }
  __my_free((char *) np->nva.wp, 2*WRDBYTES*owlen);
- np->nva.wp = (word *) __my_malloc(2*WRDBYTES*nwlen);
+ np->nva.wp = (word32 *) __my_malloc(2*WRDBYTES*nwlen);
  memcpy(np->nva.wp, xsp->ap, 2*nwlen*WRDBYTES); 
 
  /* change param width if needed */
@@ -1458,7 +1468,7 @@ extern void __assgn_nonis_param(struct net_t *np, struct expr_t *xrhs,
     }
    else
     {
-     np->nu.ct->nx1 = __bld_rng_numxpr((word) (np->nwid - 1), 0L, WBITS);
+     np->nu.ct->nx1 = __bld_rng_numxpr((word32) (np->nwid - 1), 0L, WBITS);
      np->nu.ct->nx2 = __bld_rng_numxpr(0L, 0L, WBITS);
      np->n_isavec = TRUE;
     }
@@ -1473,11 +1483,11 @@ extern void __assgn_nonis_param(struct net_t *np, struct expr_t *xrhs,
  * assign new value to IS parameter
  */
 static void assgn_is_param(struct net_t *np, struct xstk_t *xsp,
- int rhs_sign, int ninsts, int iti)
+ int32 rhs_sign, int32 ninsts, int32 iti)
 {
- register int ii;
- int owlen, nwlen;
- word *wp, *wp2, *wp3, *wp4; 
+ register int32 ii;
+ int32 owlen, nwlen;
+ word32 *wp, *wp2, *wp3, *wp4; 
 
  owlen = wlen_(np->nwid);
  nwlen = wlen_(xsp->xslen);
@@ -1497,7 +1507,7 @@ static void assgn_is_param(struct net_t *np, struct xstk_t *xsp,
    /* save old area */ 
    wp2 = np->nva.wp;
    /* allocate new area of new wider size */
-   np->nva.wp = (word *) __my_malloc(2*ninsts*WRDBYTES*nwlen);
+   np->nva.wp = (word32 *) __my_malloc(2*ninsts*WRDBYTES*nwlen);
    /* point to new area */
    wp = np->nva.wp;
    for (ii = 0; ii < ninsts; ii++)
@@ -1522,11 +1532,11 @@ static void assgn_is_param(struct net_t *np, struct xstk_t *xsp,
    /* need to change range */
    if (np->nu.ct->nx1 != NULL) __free_xtree(np->nu.ct->nx1);
    if (np->nu.ct->nx2 != NULL) __free_xtree(np->nu.ct->nx2);
-   np->nu.ct->nx1 = __bld_rng_numxpr((word) (np->nwid - 1), 0L, WBITS);
+   np->nu.ct->nx1 = __bld_rng_numxpr((word32) (np->nwid - 1), 0L, WBITS);
    np->nu.ct->nx2 = __bld_rng_numxpr(0L, 0L, WBITS);
    np->n_isavec = TRUE;
 
-   /* adjust old word len since now widened */
+   /* adjust old word32 len since now widened */
    owlen = wlen_(np->nwid);
   }
  else
@@ -1555,10 +1565,10 @@ static void assgn_is_param(struct net_t *np, struct xstk_t *xsp,
  * needed so vpi_ access of rhs expr gets right one from pound/defparam
  * not originale source
  */
-static void replace_param_rhs_expr(struct net_t *np, word *wp,
+static void replace_param_rhs_expr(struct net_t *np, word32 *wp,
  struct mod_t *imdp)
 {
- int wlen;
+ int32 wlen;
  double d1;
  struct expr_t *xp;
 
@@ -1592,8 +1602,7 @@ static void replace_param_rhs_expr(struct net_t *np, word *wp,
   }
  else
   {
-   xp->ru.xvi = __alloc_cval(2*wlen);
-   memcpy(&(__contab[xp->ru.xvi]), wp, 2*wlen*WRDBYTES);
+   xp->ru.xvi = __allocfill_cval_new(wp, &(wp[2*wlen]), wlen);
   }
 
  xp->optyp = NUMBER;
@@ -1616,7 +1625,7 @@ static void replace_param_rhs_expr(struct net_t *np, word *wp,
  */
 static void set_1defparam(struct dfparam_t *dfpp)
 {
- int wlen;
+ int32 wlen;
  struct dfparam_t *mast_dfpp; 
  struct expr_t *lhsndp;
  struct net_t *np;
@@ -1657,7 +1666,7 @@ static void set_1defparam(struct dfparam_t *dfpp)
  if (lhsndp->optyp == ID) np = lhsndp->lu.sy->el.enp;
  else np = dfpp->targsyp->el.enp;
  /* SJM 02/28/04 - added flag since must know set by defparam for recalc */
- np->nu.ct->p_setby_defparam = TRUE;
+ np->nu.ct->p_setby_defpnd = TRUE;
  wlen = wlen_(np->nwid);
 
  /* DBG remove -- */
@@ -1679,7 +1688,7 @@ static void set_1defparam(struct dfparam_t *dfpp)
     {
      __my_free((char *) np->nva.wp, imdp->flatinum*2*WRDBYTES*wlen);
      np->srep = SR_PNUM;
-     np->nva.wp = (word *) __my_malloc(2*WRDBYTES*wlen);
+     np->nva.wp = (word32 *) __my_malloc(2*WRDBYTES*wlen);
     }
    memcpy(np->nva.wp, xsp->ap, 2*WRDBYTES*wlen);
 
@@ -1800,7 +1809,7 @@ extern void __cnvt_param_stkval(struct xstk_t *xsp, struct expr_t *xrhs,
 extern void __recalc_param_vals(void)
 {
  register struct mod_t *mdp;
- int mlevel, chged, all_done;
+ int32 mlevel, chged, all_done;
 
  for (;;)
   {
@@ -1851,9 +1860,9 @@ extern void __recalc_param_vals(void)
  */
 static void recalc_1mod_params(struct mod_t *mdp)
 {
- register int pi, ii;
- int wlen;
- word *wp;
+ register int32 pi, ii;
+ int32 wlen;
+ word32 *wp;
  struct net_t *np;
  struct xstk_t *xsp;
  struct expr_t *xp, **xtab;
@@ -1865,7 +1874,7 @@ static void recalc_1mod_params(struct mod_t *mdp)
    /* if rhs does not contain any parameter, or parameter set by defparam */
    /* that removes the rhs expr, no need to recalculate */      
    /* SJM 03/01/04 - if rhs set by defparam also can't recalc */  
-   if (!np->nu.ct->p_rhs_has_param || np->nu.ct->p_setby_defparam) continue;
+   if (!np->nu.ct->p_rhs_has_param || np->nu.ct->p_setby_defpnd) continue;
 
    wlen = wlen_(np->nwid);
    /* case 1: param representation IS expr form */
@@ -1876,7 +1885,7 @@ static void recalc_1mod_params(struct mod_t *mdp)
        /* change to is num - not sure if can happen */
        __my_free((char *) np->nva.wp, 2*WRDBYTES*wlen);
        np->srep = SR_PISNUM;
-       np->nva.wp = (word *) __my_malloc(2*WRDBYTES*wlen*mdp->flatinum);
+       np->nva.wp = (word32 *) __my_malloc(2*WRDBYTES*wlen*mdp->flatinum);
       }
      else if (np->srep != SR_PISNUM) __case_terr(__FILE__, __LINE__);
      /* eval expr for every inst */
@@ -1917,7 +1926,7 @@ static void recalc_1mod_params(struct mod_t *mdp)
         {
          __my_free((char *) np->nva.wp, 2*WRDBYTES*wlen);
          np->srep = SR_PISNUM;
-         np->nva.wp = (word *)
+         np->nva.wp = (word32 *)
          __my_malloc(2*WRDBYTES*wlen*mdp->flatinum);
          set_parmval_from_isxpr(np, xp, mdp);
          continue;
@@ -1988,9 +1997,9 @@ static void recalc_1mod_params(struct mod_t *mdp)
  */
 static void recalc_1mod_pndparams(struct mod_t *mdp)
 {
- register int ii, pi;
- int wlen;
- word *wp;
+ register int32 ii, pi;
+ int32 wlen;
+ word32 *wp;
  struct itree_t *itp, *up_itp;
  struct inst_t *ip;
  struct net_t *np; 
@@ -2018,7 +2027,7 @@ static void recalc_1mod_pndparams(struct mod_t *mdp)
      if (pxp == NULL) continue;
      /* if pound param high conn expr does not contain param, nothing to do */ 
      /* SJM 03/01/04 - if rhs set by defparam can't recalc */  
-     if (!__xpr_has_param(pxp) || np->nu.ct->p_setby_defparam)
+     if (!__xpr_has_param(pxp) || np->nu.ct->p_setby_defpnd)
       continue;
 
      /* eval in up and know then any parameters used in expr */
@@ -2060,7 +2069,7 @@ static void recalc_1mod_pndparams(struct mod_t *mdp)
 /*
  * return T if parameter rhs expr contains IS rep param
  */
-static int xpr_has_is_param(struct expr_t *ndp)
+static int32 xpr_has_is_param(struct expr_t *ndp)
 {
  struct sy_t *syp;
  struct net_t *np;
@@ -2094,9 +2103,9 @@ static int xpr_has_is_param(struct expr_t *ndp)
  * params in this module 
  *
  */
-static int all_parent_mods_recalced(struct mod_t *mdp)
+static int32 all_parent_mods_recalced(struct mod_t *mdp)
 {
- register int ii;
+ register int32 ii;
  struct itree_t *itp;
 
  /* if mod has no params trivially true */
@@ -2121,9 +2130,9 @@ static int all_parent_mods_recalced(struct mod_t *mdp)
 static void set_parmval_from_isxpr(struct net_t *np, struct expr_t *xp,
  struct mod_t *mdp)
 {
- register int ii;
- int wlen;
- word *wp;
+ register int32 ii;
+ int32 wlen;
+ word32 *wp;
  struct xstk_t *xsp;
 
  wlen = wlen_(np->nwid);
@@ -2162,9 +2171,9 @@ static void set_parmval_from_isxpr(struct net_t *np, struct expr_t *xp,
  */
 extern void __set_drvr_bits(void)
 {
- register int pi, ii, gi;
+ register int32 pi, ii, gi;
  register struct mod_pin_t *mpp;
- int ptyp, pnum;
+ int32 ptyp, pnum;
  struct inst_t *ip;
  struct mod_t *mdp, *imdp;
  struct gate_t *gp;
@@ -2205,7 +2214,7 @@ extern void __set_drvr_bits(void)
      switch ((byte) gp->g_class) {
       case GC_PULL:
        /* one gate all drivers can have multiple pins */
-       for (pi = 0; pi < (int) gp->gpnum; pi++)
+       for (pi = 0; pi < (int32) gp->gpnum; pi++)
         {
          xp = gp->gpins[pi];
          /* pull will force change to inoutk so tran type */
@@ -2235,7 +2244,7 @@ extern void __set_drvr_bits(void)
         gp->gsym->sylin_cnt);
      }
     }
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cap = mdp->mcas; cap != NULL; cap = cap->pbcau.canxt)
     {
      set_lhs_expr_drvrtyp(cap->lhsx, DRVR_NON_PORT, cap->casym->syfnam_ind,
       cap->casym->sylin_cnt);
@@ -2264,10 +2273,10 @@ extern void __set_drvr_bits(void)
 /*
  * set lhs lvalue expr driver bits (i.e. know will be lvalue expr)
  */
-static void set_lhs_expr_drvrtyp(struct expr_t *xp, int drvr_typ, int fnind,
- int flcnt)
+static void set_lhs_expr_drvrtyp(struct expr_t *xp, int32 drvr_typ, int32 fnind,
+ int32 flcnt)
 {
- int ri1, ri2;
+ int32 ri1, ri2;
  struct net_t *np;
  struct expr_t *idndp, *catxp;
 
@@ -2339,10 +2348,10 @@ static void set_lhs_expr_drvrtyp(struct expr_t *xp, int drvr_typ, int fnind,
  * compute a known constant expr numeric index before elaboration and folding
  * notice since constants not yet folded, must normalize constants too
  */
-static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
- int fnind, int flcnt)
+static int32 comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
+ int32 fnind, int32 flcnt)
 {
- int nni1, nni2, biti, biti2, prtxpr_rng_bad;
+ int32 nni1, nni2, biti, biti2, prtxpr_rng_bad;
  struct xstk_t *xsp;
 
  if (!is_nonis_const_expr(xp)) return(-1);
@@ -2351,7 +2360,7 @@ static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
  /* if wide or x/z, be pessimistic and assume all of range (i.e. out of rng) */
  if (xsp->xslen > WBITS || xsp->bp[0] != 0)
   { __pop_xstk(); return(-1); }
- biti2 = (int) xsp->ap[0];
+ biti2 = (int32) xsp->ap[0];
  __pop_xstk();
 
  /* SJM 04/07/23 - nx1 may not be set for nets decl from implicit connect */
@@ -2361,8 +2370,8 @@ static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
   }
  else
   {
-   nni1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
-   nni2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+   nni1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+   nni2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
    /* SJM 07/31/03 - because port drivers are needed before ranges set */
    /* must make sure that mod port expr constant selects are in range */
    /* notice - not yet normalized to h:0 */
@@ -2392,7 +2401,7 @@ static int comp_pre_elab_norm_con_ndx(struct net_t *np, struct expr_t *xp,
  * check to see if an expressions is pre elaboration non IS constant
  * no folding before here and selects legal providing no variables appear
  */
-static int is_nonis_const_expr(struct expr_t *ndp)
+static int32 is_nonis_const_expr(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -2430,7 +2439,7 @@ static int is_nonis_const_expr(struct expr_t *ndp)
 /*
  * set scalar driver type - know never passed drvr none
  */
-static void set_scalar_drvr_type(struct net_t *np, int drvr_typ)
+static void set_scalar_drvr_type(struct net_t *np, int32 drvr_typ)
 {
  /* if current state drvr none, set to passed new state */
  if (np->n_drvtyp == DRVR_NONE) { np->n_drvtyp = drvr_typ; return; }
@@ -2444,14 +2453,14 @@ static void set_scalar_drvr_type(struct net_t *np, int drvr_typ)
  * set driver type - know never passed drvr none
  * if ri1 -1, then entire range - know ranges normalized before here
  */
-static void set_vec_drvr_type(struct net_t *np, int ri1, int ri2, int drvr_typ)
+static void set_vec_drvr_type(struct net_t *np, int32 ri1, int32 ri2, int32 drvr_typ)
 {
- register int ri, bi;
- int nni1, nni2, wid;
+ register int32 ri, bi;
+ int32 nni1, nni2, wid;
 
  /* range convert to constants but not normalized by here */
- nni1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
- nni2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+ nni1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+ nni2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
  wid = ((nni1 >= nni2) ? (nni1 - nni2 + 1) : (nni2 - nni1 + 1));
  /* allocate per bit drv state if needed */
  if (np->nu.ct->n_pb_drvtyp == NULL)
@@ -2481,11 +2490,11 @@ static void set_vec_drvr_type(struct net_t *np, int ri1, int ri2, int drvr_typ)
  *
  * if option not used, emit warning else emit inform if option used
  */
-extern void __chk_chg_port_dir(int nd_chg)
+extern void __chk_chg_port_dir(int32 nd_chg)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_pin_t *mpp;
- int pnum, num_chged, sav_num_chged;
+ int32 pnum, num_chged, sav_num_chged;
  struct inst_t *ip;
  struct mod_t *mdp, *imdp;
  struct expr_t *xp;
@@ -2630,11 +2639,11 @@ extern void __chk_chg_port_dir(int nd_chg)
  * this is run before tran channels built
  * never called for ports already inouts or that can't be changed to inout 
  */
-static int port_expr_has_wrong_dir_drvr(struct expr_t *xp, int pdir, int ri1,
- int ri2, int fnind, int flcnt)
+static int32 port_expr_has_wrong_dir_drvr(struct expr_t *xp, int32 pdir, int32 ri1,
+ int32 ri2, int32 fnind, int32 flcnt)
 {
  register struct expr_t *catndp;
- int elem_lval, has_drvrs, max_drv_state;
+ int32 elem_lval, has_drvrs, max_drv_state;
  struct net_t *np;
 
  /* SJM 07/07/03 - if neg range error - can't check dir - error later */
@@ -2734,13 +2743,13 @@ static int port_expr_has_wrong_dir_drvr(struct expr_t *xp, int pdir, int ri1,
  * if entire range -1, else normalized range
  * only called for vectors
  */
-static int find_max_rng_drvr_state(struct net_t *np, int ri1, int ri2)
+static int32 find_max_rng_drvr_state(struct net_t *np, int32 ri1, int32 ri2)
 {
- register int bi;
- int max_drvr_state, nni1, nni2, wid;
+ register int32 bi;
+ int32 max_drvr_state, nni1, nni2, wid;
 
- nni1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
- nni2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+ nni1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+ nni2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
  wid = ((nni1 >= nni2) ? (nni1 - nni2 + 1) : (nni2 - nni1 + 1));
  max_drvr_state = DRVR_NONE;
  if (ri1 == -1) { ri1 = wid - 1; ri2 = 0; }
@@ -2768,7 +2777,7 @@ static int find_max_rng_drvr_state(struct net_t *np, int ri1, int ri2)
  *
  * no folding and selects legal providing no variables appear
  */
-extern int __is_const_expr(struct expr_t *ndp)
+extern int32 __is_const_expr(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -2792,7 +2801,7 @@ extern int __is_const_expr(struct expr_t *ndp)
  * return T if expr is decl lvalue
  * only if decl lvalue high conn and low conn can be changed to inout port
  */
-static int expr_decl_lvalue(struct expr_t *xp)
+static int32 expr_decl_lvalue(struct expr_t *xp)
 {
  struct expr_t *catndp;
  struct net_t *np;
@@ -2860,9 +2869,9 @@ static void chg_mpx_to_bid(struct expr_t *mpx)
 static void free_design_ndrvrs(void)
 {
  register struct mod_t *mdp;
- register int ni;
+ register int32 ni;
  register struct net_t *np;
- int nni1, nni2, wid;
+ int32 nni1, nni2, wid;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -2873,8 +2882,8 @@ static void free_design_ndrvrs(void)
 
      if (np->nu.ct->n_pb_drvtyp != NULL)
       {
-       nni1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
-       nni2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+       nni1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+       nni2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
        wid = ((nni1 >= nni2) ? (nni1 - nni2 + 1) : (nni2 - nni1 + 1));
        __my_free((char *) np->nu.ct->n_pb_drvtyp, wid);
        np->nu.ct->n_pb_drvtyp = NULL;
@@ -3049,12 +3058,12 @@ extern void __mark_widdet_params(struct mod_t *pmdp)
  */
 static void inrnges_mark_params(struct symtab_t *sytp)
 {
- register int syi;
+ register int32 syi;
  struct sy_t **syms;
  struct sy_t *syp;
  struct net_t *np;
 
- for (syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+ for (syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
   {
    syp = syms[syi];
    if (syp->sytyp != SYM_N) continue;
@@ -3115,10 +3124,10 @@ extern void __in_xpr_markparam(struct expr_t *xp)
  */
 static void psel_set_allexprs(struct mod_t *pmdp)
 {
- register int pi, j;
+ register int32 pi, j;
  register struct inst_t *ip;
  register struct gate_t *gp;
- int pnum, skip_giarr;
+ int32 pnum, skip_giarr;
  struct task_t *tskp;
  struct conta_t *cap;
  struct ialst_t *ialp;
@@ -3145,7 +3154,7 @@ static void psel_set_allexprs(struct mod_t *pmdp)
    else skip_giarr = FALSE;
 
    down_mdp = ip->imsym->el.emdp;
-   for (pi = 0; pi < (int) down_mdp->mpnum; pi++)
+   for (pi = 0; pi < (int32) down_mdp->mpnum; pi++)
     {
      xp = ip->ipins[pi];
      /* DBG remove --- */
@@ -3189,7 +3198,7 @@ static void psel_set_allexprs(struct mod_t *pmdp)
      j += __get_giarr_wide(giap) - 1;
     }
   }
- for (cap = pmdp->mcas; cap != NULL; cap = cap->canxt)
+ for (cap = pmdp->mcas; cap != NULL; cap = cap->pbcau.canxt)
   {
    inpsel_xpr_markparam(cap->lhsx);
    if (cap->lhsx->optyp == LSB)
@@ -3216,7 +3225,7 @@ static void psel_set_allexprs(struct mod_t *pmdp)
    if (pmdp->mgarr != NULL && (giap = pmdp->mgarr[j]) != NULL)
     {
      skip_giarr = TRUE;
-     for (pi = 0; pi < (int) gp->gpnum; pi++)
+     for (pi = 0; pi < (int32) gp->gpnum; pi++)
       {
        xp = gp->gpins[pi];
        inpsel_xpr_markparam(xp);
@@ -3327,7 +3336,7 @@ static void stmt_do_inpsel_set(struct st_t *stp)
    break;
   case S_UNFJ:
    { 
-    register int fji;
+    register int32 fji;
     struct st_t *fjstp;
 
     for (fji = 0;; fji++)
@@ -3418,7 +3427,7 @@ static void inpsel_xpr_markparam(struct expr_t *xp)
 extern void __chk_1mdecls(void)
 {
  register struct task_t *tskp;
- int tregbasi;
+ int32 tregbasi;
 
  chk_undef_syms(__inst_mod->msymtab, MODULE);
 
@@ -3440,16 +3449,16 @@ extern void __chk_1mdecls(void)
  * check all symbols in given table (module/task/func/lab. block)
  * notice this cannot be used to check decl. of specify specparams 
  */
-static void chk_undef_syms(struct symtab_t *sytp, unsigned objttyp)
+static void chk_undef_syms(struct symtab_t *sytp, word32 objttyp)
 {
- register int syi;
- int save_obj;
+ register int32 syi;
+ int32 save_obj;
  struct sy_t *syp;
 
  __wrkstab = sytp->stsyms;
  save_obj = __cur_declobj;
  __cur_declobj = objttyp;
- for (syi = 0; syi < (int) sytp->numsyms; syi++)
+ for (syi = 0; syi < (int32) sytp->numsyms; syi++)
   {
    syp = __wrkstab[syi];
    chk_modsym(syp);
@@ -3551,10 +3560,10 @@ static void chk_1reg(struct net_t *np)
  */
 static void chkset_1mwire_rnges(void)
 {
- register int syi, ni;
+ register int32 syi, ni;
  register struct sy_t *syp;
  register struct net_t *np;
- int dnum, nnum, mvarnum;
+ int32 dnum, nnum, mvarnum;
  struct sy_t **syms;
  struct symtab_t *sytp;
  struct net_t *ntab, *np2;
@@ -3564,7 +3573,7 @@ static void chkset_1mwire_rnges(void)
  sytp = __inst_mod->msymtab;
  /* count number of nets and store in mod field */
  nnum = 0;
- for (syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+ for (syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
   {
    syp = syms[syi];
 
@@ -3580,7 +3589,7 @@ static void chkset_1mwire_rnges(void)
   {
    sytp = tskp->tsksymtab;
    nnum = 0;
-   for (syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+   for (syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
     {
      syp = syms[syi];
      if (syp->sytyp != SYM_N) continue;
@@ -3609,7 +3618,7 @@ static void chkset_1mwire_rnges(void)
  /* point sytp back to mod not task symbol table */
  sytp = __inst_mod->msymtab;
  /* not sure if saved needed here */
- for (ni = 0, syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+ for (ni = 0, syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
   {
    syp = syms[syi];
    if (syp->sytyp != SYM_N) continue;
@@ -3618,12 +3627,14 @@ static void chkset_1mwire_rnges(void)
    /* parameters checked elsewhere */
    if (np->n_isaparam) continue;
 
+
    np2 = &(ntab[ni]);
    *np2 = *np;
    __my_free((char *) np, sizeof(struct net_t));
    syp->el.enp = np2;
    ni++;
    np = np2;
+
    /* do not need to save these, never called with previous location */
    __sfnam_ind = np->nsym->syfnam_ind;
    __slin_cnt = np->nsym->sylin_cnt;
@@ -3660,7 +3671,7 @@ extern void __dbg_dmpall_nets(void)
 {
  register struct mod_t *mdp;
  register struct net_t *np;
- register int ni;
+ register int32 ni;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -3718,7 +3729,7 @@ extern void __mark_st_wires(void)
  */
 static void mark_sttypewires(void)
 {
- register int syi;
+ register int32 syi;
  register struct mod_t *mdp;
  register struct net_t *np;
  register struct sy_t *syp;
@@ -3729,7 +3740,7 @@ static void mark_sttypewires(void)
   {
    sytp = mdp->msymtab;
    /* table (array) of nets still not built at this point */
-   for (syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+   for (syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
     {
      syp = syms[syi];
      if (syp->sytyp != SYM_N) continue;
@@ -3764,10 +3775,10 @@ static void mark_sttypewires(void)
  */
 static void mark_stdr_wires(void)
 {
- register int gi;
+ register int32 gi;
  register struct mod_t *mdp;
  register struct conta_t *cap;
- int i, skip_giarr;
+ int32 i, skip_giarr;
  struct gate_t *gp;
  struct giarr_t *giap;
 
@@ -3784,7 +3795,7 @@ static void mark_stdr_wires(void)
      switch ((byte) gp->g_class) {
       case GC_PULL:
        /* pull all connections */
-       for (i = 0; i < (int) gp->gpnum; i++)
+       for (i = 0; i < (int32) gp->gpnum; i++)
         { mark_stwires(mdp, gp->gpins[i]); }
        break;
       case GC_MOS: case GC_TRAN: case GC_TRANIF: case GC_CMOS:
@@ -3804,7 +3815,7 @@ static void mark_stdr_wires(void)
       }
      if (skip_giarr) gi += (__get_giarr_wide(giap) - 1);
     }
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cap = mdp->mcas; cap != NULL; cap = cap->pbcau.canxt)
     {
      if (!cap->ca_hasst || cap->ca_stval == ST_STRVAL) continue;
      /* 1 bit continuous assign not converted to gate at this point */
@@ -3821,9 +3832,9 @@ static void mark_stdr_wires(void)
  */
 static void mark_stdr_inout_wired_logic(void)
 {
- register int ii, pi;
+ register int32 ii, pi;
  register struct mod_t *mdp;
- int pnum;
+ int32 pnum;
  struct mod_pin_t *mpp;
  struct inst_t *ip;
  struct mod_t *imdp;
@@ -3863,7 +3874,7 @@ static void mark_stdr_inout_wired_logic(void)
 /*
  * return T if inout (lhs) expr, has wand or wor port
  */
-static int has_non_stren_wired_net(struct expr_t *lhsx)
+static int32 has_non_stren_wired_net(struct expr_t *lhsx)
 {
  register struct expr_t *catndp;
  register struct net_t *np;
@@ -3894,7 +3905,7 @@ static int has_non_stren_wired_net(struct expr_t *lhsx)
 /*
  * return T if net type is wand or wor (wired logic) 
  */
-static int net_type_tri(word ntyp)
+static int32 net_type_tri(word32 ntyp)
 {
  switch ((byte) ntyp) {
   case N_TRIOR: case N_WO: case N_TRIAND: case N_WA: return(TRUE);
@@ -3910,7 +3921,7 @@ static int net_type_tri(word ntyp)
  * T if any concat el has stren but must always set all elements
  * logic for combined routine was wrong
  */
-static int chk_hasst_wires(struct mod_t *mdp, struct expr_t *lhsx)
+static int32 chk_hasst_wires(struct mod_t *mdp, struct expr_t *lhsx)
 {
  struct net_t *np;
 
@@ -4001,7 +4012,7 @@ static void mark_stwires(struct mod_t *mdp, struct expr_t *lhsx)
 extern void __bld_mlevel_lists(void)
 {
  register struct mod_t *mdp, *last_mdp;
- register int mlevel;
+ register int32 mlevel;
 
  /* then build the by level header table and link same level modules on it */
  if (__mdlevhdr == NULL)
@@ -4034,11 +4045,11 @@ extern void __bld_mlevel_lists(void)
  */
 static void prop_stsdown(void)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_t *smdp;
  /* do all max. dag dist. modules first - level 1 has no insts. */
  register struct inst_t *ip;
- int mlevel, pnum, skip_giarr;
+ int32 mlevel, pnum, skip_giarr;
  struct mod_pin_t *mpp;
  struct mod_t *imdp;
  struct giarr_t *giap;
@@ -4085,7 +4096,8 @@ static void prop_stsdown(void)
 	  { mark_stwires(imdp, mpp->mpref); continue; }
 	}
 nxt_inst:
-       if (skip_giarr) ii = (__get_giarr_wide(giap) - 1);
+       /* AIV 08/23/04 - was hanging should be += */ 
+       if (skip_giarr) ii += (__get_giarr_wide(giap) - 1);
       }
     }
   }
@@ -4096,10 +4108,10 @@ nxt_inst:
  */
 static void prop_stsup(void)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_t *smdp;
  register struct inst_t *ip;
- int mlevel, pnum, skip_giarr;
+ int32 mlevel, pnum, skip_giarr;
  struct mod_pin_t *mpp;
  struct mod_t *imdp;
  struct giarr_t *giap;
@@ -4140,7 +4152,7 @@ static void prop_stsup(void)
           mark_stwires(smdp, xp);
 	}
 nxt_inst:
-       if (skip_giarr) ii += (__get_giarr_wide(giap) - 1);
+         if (skip_giarr) ii += (__get_giarr_wide(giap) - 1);
       }
     }
   }
@@ -4154,11 +4166,11 @@ nxt_inst:
  * check a list of constant delays and convert to scaled non real ticks
  * return number of delays - -1 on error
  */
-extern int __chk_delparams(struct paramlst_t *pmp2, char *emsg,
- int mustbeconst)
+extern int32 __chk_delparams(struct paramlst_t *pmp2, char *emsg,
+ int32 mustbeconst)
 {
  register struct paramlst_t *pmp;
- int pmnum, err;
+ int32 pmnum, err;
 
  err = FALSE;
  for (pmnum = 0, pmp = pmp2; pmp != NULL; pmp = pmp->pmlnxt, pmnum++)
@@ -4177,10 +4189,10 @@ extern int __chk_delparams(struct paramlst_t *pmp2, char *emsg,
  * uses flag mustbeconst to cause error if expr. 
  * returns F on error
  */
-static int chkdel_expr(struct expr_t *dxp, char *emsg,
- int mustbeconst)
+static int32 chkdel_expr(struct expr_t *dxp, char *emsg,
+ int32 mustbeconst)
 {
- int sav_ecnt;
+ int32 sav_ecnt;
 
  sav_ecnt = __pv_err_cnt;
  __chk_rhsexpr(dxp, 0);
@@ -4196,7 +4208,7 @@ static int chkdel_expr(struct expr_t *dxp, char *emsg,
  * check to make sure a delay is a number
  * returns F on error 
  */
-extern int __chk_numdelay(struct expr_t *ndp, char *emsg)
+extern int32 __chk_numdelay(struct expr_t *ndp, char *emsg)
 {
  switch ((byte) ndp->optyp) {
   case NUMBER: 
@@ -4224,11 +4236,11 @@ extern int __chk_numdelay(struct expr_t *ndp, char *emsg)
  * check NUMBER delay to make sure convert in prep. section will succeed
  * catches too wide (non 0) and x/z forms - if expr. converts to 0 const.
  */
-static int nd_delnum(struct expr_t *ndp, char *emsg)
+static int32 nd_delnum(struct expr_t *ndp, char *emsg)
 {
- register word *wp;
- int err, wlen;
- word *ap, *bp;
+ int32 err, wlen;
+ word32 *ap, *bp;
+ struct xstk_t *xsp;
 
  err = FALSE;
  ap = &(__contab[ndp->ru.xvi]);
@@ -4259,10 +4271,7 @@ static int nd_delnum(struct expr_t *ndp, char *emsg)
 
    /* LOOKATME - time width dependent */
    ndp->szu.xclen = TIMEBITS;
-   ndp->ru.xvi = __alloc_cval(4);
-   wp = &(__contab[ndp->ru.xvi]);
-   wp[0] = ap[0]; wp[1] = ap[1];
-   wp[2] = bp[0]; wp[3] = bp[1];
+   ndp->ru.xvi = __allocfill_cval_new(ap, bp, 2);
    return(TRUE);
   }
  if (ndp->szu.xclen > WBITS)
@@ -4271,9 +4280,11 @@ static int nd_delnum(struct expr_t *ndp, char *emsg)
     {
      /* notice on error here just leave as 8 bytes - since non IS form */
      ndp->szu.xclen = TIMEBITS;
-     ndp->ru.xvi = __alloc_cval(4);
-     wp = &(__contab[ndp->ru.xvi]);
-     wp[0] = wp[1] = wp[2] = wp[3] = 0L;
+
+     push_xstk_(xsp, 2*WBITS);
+     memset(xsp->ap, 0, 4*WRDBYTES);
+     ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, 2);
+     __pop_xstk();
      goto fill_xs;
     }
    return(TRUE);
@@ -4298,15 +4309,15 @@ wr_msg:
  * need an delay up to 64 bit number - same as nd_ndxisnum except 64 bits  
  * changed in prep - this just checks but if error converts to 0
  * LOOKATME - should change from TIMEBITS 8 bytes to 4 bytes if all high 0
- * SIZEDEPENDENT notice this routine has built in 32 bit word and 64 bit time
+ * SIZEDEPENDENT notice this routine has built in 32 bit word32 and 64 bit time
  *
  * FIXME - this routine looks wrong or can be improved
  */
-static int nd_delisnum(struct expr_t *ndp, char *emsg)
+static int32 nd_delisnum(struct expr_t *ndp, char *emsg)
 {
- register int iti;
- int err, wlen, wsiz;
- word *wp, *wp2, *ap, *bp;
+ register int32 iti;
+ int32 err, wlen, wsiz;
+ word32 *wp, *wp2, *ap, *bp;
  
  err = FALSE;
  wlen = wlen_(ndp->szu.xclen);
@@ -4331,8 +4342,8 @@ static int nd_delisnum(struct expr_t *ndp, char *emsg)
    __init_xnd(ndp);
    ndp->optyp = ISNUMBER;
    ndp->szu.xclen = TIMEBITS;
-   wsiz = 4*__inst_mod->flatinum; 
-   ndp->ru.xvi = __alloc_cval(wsiz);
+   wsiz = 2*__inst_mod->flatinum; 
+   ndp->ru.xvi = __alloc_is_cval(wsiz);
    wp2 = &(__contab[ndp->ru.xvi]);
    for (iti = 0; iti < __inst_mod->flatinum; iti++)
     {
@@ -4380,25 +4391,24 @@ static int nd_delisnum(struct expr_t *ndp, char *emsg)
  *
  * LOOKATME - this does not free previous constant entry
  */
-static void freeset_is0del(struct expr_t *ndp, int insts)
+static void freeset_is0del(struct expr_t *ndp, int32 insts)
 {
- register int iti;
- word *wp;
+ register int32 iti;
+ word32 *wp;
 
  __free2_xtree(ndp);
  __init_xnd(ndp);
  ndp->optyp = ISNUMBER;
  ndp->szu.xclen = WBITS;
- ndp->ru.xvi = __alloc_cval(2*insts);
+ ndp->ru.xvi = __alloc_is_cval(1*insts);
  wp = &(__contab[ndp->ru.xvi]);
-
  for (iti = 0; iti < insts; iti++) wp[2*iti] = wp[2*iti + 1] = 0L;
 }
 
 /*
  * write an is need delay form error message
  */
-static void wr_ndisdel_err(struct expr_t *ndp, int iti, char *emsg)
+static void wr_ndisdel_err(struct expr_t *ndp, int32 iti, char *emsg)
 {
  char s1[RECLEN];
 
@@ -4414,8 +4424,8 @@ static void wr_ndisdel_err(struct expr_t *ndp, int iti, char *emsg)
  */
 static void chk_wire_rng(struct net_t *np)
 {
- int vwid, mwid, ival;
- word *wp;
+ int32 vwid, mwid, ival;
+ word32 *wp;
  struct expr_t *ndp, *ndp2;
  char s1[RECLEN]; 
 
@@ -4433,7 +4443,7 @@ bad_wire:
      goto chk_arr;
     }
    wp = &(__contab[np->nu.ct->nx1->ru.xvi]);
-   ival = (int) wp[0];
+   ival = (int32) wp[0];
    if (ival < 0)
     {
      __sgferr(902, "%s value %d illegal negative number", s1, ival);
@@ -4445,7 +4455,7 @@ bad_wire:
     goto bad_wire;
 
    wp = &(__contab[np->nu.ct->nx2->ru.xvi]);
-   ival = (int) wp[0];
+   ival = (int32) wp[0];
    if (ival < 0)
     {
      __sgferr(902, "%s value %d illegal negative number", s1, ival);
@@ -4511,7 +4521,7 @@ bad_arr:
      return;
     }
    wp = &(__contab[np->nu.ct->ax1->ru.xvi]);
-   ival = (int) wp[0];
+   ival = (int32) wp[0];
    if (ival < 0)
     {
      __sgferr(902, "%s value %d illegal negative number", s1, ival);
@@ -4522,7 +4532,7 @@ bad_arr:
     goto bad_arr;
 
    wp = &(__contab[np->nu.ct->ax2->ru.xvi]);
-   ival = (int) wp[0];
+   ival = (int32) wp[0];
    if (ival < 0)
     {
      __sgferr(902, "%s value %d illegal negative number", s1, ival);
@@ -4576,9 +4586,9 @@ bad_arr:
 static void chg_rng_isnum_to_num(struct net_t *np, struct expr_t *ndp,
  char *rngstr)
 {
- register int iti; 
- int wlen;
- word *wp, *wp0, *wp1;
+ register int32 iti; 
+ int32 wlen;
+ word32 *wp, *wp0, *wp1;
 
  wlen = wlen_(ndp->szu.xclen);
  wp = &(__contab[ndp->ru.xvi]);
@@ -4613,7 +4623,7 @@ static void chg_rng_isnum_to_num(struct net_t *np, struct expr_t *ndp,
  * for declaration ranges - other routines for now for other things
  * caller must pass string for error message describing range type
  */
-extern int __chkndx_expr(struct expr_t *ndp, char *emsg)
+extern int32 __chkndx_expr(struct expr_t *ndp, char *emsg)
 {
  /* must be 0 context - even though result is always 32 bits */
  __chk_rhsexpr(ndp, 0);
@@ -4626,9 +4636,9 @@ extern int __chkndx_expr(struct expr_t *ndp, char *emsg)
  * check task regs
  * must be done before any statement checking
  */
-static void chk_taskvars(struct task_t *tskp, int tregbasi)
+static void chk_taskvars(struct task_t *tskp, int32 tregbasi)
 {
- register int syi, ri;
+ register int32 syi, ri;
  register struct sy_t *syp;
  register struct net_t *rp;
  struct sy_t **syms;
@@ -4655,7 +4665,7 @@ static void chk_taskvars(struct task_t *tskp, int tregbasi)
 
  /* must now convert all task regs with ranges to constants */
  /* possible return range of function will be here */
- for (ri = 0, syi = 0, syms = sytp->stsyms; syi < (int) sytp->numsyms; syi++)
+ for (ri = 0, syi = 0, syms = sytp->stsyms; syi < (int32) sytp->numsyms; syi++)
   {
    syp = syms[syi];
    if (syp->sytyp != SYM_N) continue;
@@ -4701,10 +4711,10 @@ static void chk_taskvars(struct task_t *tskp, int tregbasi)
  */
 extern void __setchk_mpwidths(void)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
  struct expr_t *mpx;
- int pnum;
+ int32 pnum;
 
  if ((pnum = __inst_mod->mpnum) == 0) return;
  __expr_rhs_decl = TRUE;
@@ -4739,7 +4749,7 @@ extern void __setchk_mpwidths(void)
  * pr_wid must be set to 0 before this is called
  * on error uses a subcomponent port width of 1
  */
-static int chk_prtwidth(struct expr_t *ndp, struct mod_pin_t *mpp)
+static int32 chk_prtwidth(struct expr_t *ndp, struct mod_pin_t *mpp)
 {
  struct sy_t *syp;
  struct net_t *np;
@@ -4803,8 +4813,8 @@ static int chk_prtwidth(struct expr_t *ndp, struct mod_pin_t *mpp)
  */
 extern void __chk_shorted_bids(void)
 {
- register int pi;
- int pnum, has_shorted;
+ register int32 pi;
+ int32 pnum, has_shorted;
  struct mod_pin_t *mpp;
 
  if ((pnum = __inst_mod->mpnum) == 0) return;
@@ -4826,9 +4836,9 @@ extern void __chk_shorted_bids(void)
 /*
  * emit informs for all shorted ports - ok but good to know about
  */
-static void emit_shorted_informs(int pnum)
+static void emit_shorted_informs(int32 pnum)
 {
- register int pi;
+ register int32 pi;
  register struct expr_t *xp2;
  struct mod_pin_t *mpp;
  struct expr_t *xp, *xp3; 
@@ -4865,9 +4875,9 @@ static void emit_shorted_informs(int pnum)
  * emit the shorted port informs for 1 net 
  */
 static void emit_1net_shorted_informs(struct mod_pin_t *mpp,
- int pi, struct net_t *np, int pnum)
+ int32 pi, struct net_t *np, int32 pnum)
 {
- register int pi2;
+ register int32 pi2;
  struct mod_pin_t *mpp2;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
 
@@ -4891,7 +4901,7 @@ static void emit_1net_shorted_informs(struct mod_pin_t *mpp,
  * return T if net np is expr xp
  * return F for non lhs expr.
  */
-static int net_in_expr(struct net_t *np, struct expr_t *xp)
+static int32 net_in_expr(struct net_t *np, struct expr_t *xp)
 {
  register struct expr_t *xp2;
  struct net_t *np2;
@@ -4918,7 +4928,7 @@ static int net_in_expr(struct net_t *np, struct expr_t *xp)
  * notice only called for ports and not called from interactive
  * also even though not checked here if inotu shorted must be wire name
  */
-static int xhas_multconn_wire(struct expr_t *ndp)
+static int32 xhas_multconn_wire(struct expr_t *ndp)
 {
  struct expr_t *ndp2;
  struct net_t *np;
@@ -5003,9 +5013,9 @@ extern void __reconn_gia_pins(void)
  */
 static void reconn_1mod_gateterms(struct mod_t *mdp)
 {
- register int gi, pi, gi2;
- int giawid, bi, wid, r0;
- word av, bv, *wp;
+ register int32 gi, pi, gi2;
+ int32 giawid, bi, wid, r0;
+ word32 av, bv, *wp;
  struct giarr_t *giap;
  struct gate_t *gp, *gp2;
  struct expr_t *xp;
@@ -5080,7 +5090,7 @@ static void reconn_1mod_gateterms(struct mod_t *mdp)
          /* for part select know internal wire h:l - generating bit selects */
          /* normalized to it and h bit connects to first, etc */ 
          wp = &(__contab[xp->ru.x->lu.x->ru.xvi]);
-         r0 = (int) wp[0];
+         r0 = (int32) wp[0];
 
          gi2 = giap->gia_bi;
          for (bi = r0; gi2 < giap->gia_bi + giawid; gi2++, bi--)
@@ -5162,9 +5172,9 @@ make_unc:
  * source so will get normalized later during expr. check then output 
  * will reconvert to source - neede so caller can work only with internal h:0 
  */
-static struct expr_t *bld_bsel_expr(struct net_t *np, int ndx)
+static struct expr_t *bld_bsel_expr(struct net_t *np, int32 ndx)
 {
- int ndx2;
+ int32 ndx2;
  struct expr_t *xp, *xpid, *xpndx;
 
  xpid = __alloc_newxnd();
@@ -5173,7 +5183,7 @@ static struct expr_t *bld_bsel_expr(struct net_t *np, int ndx)
  xpid->szu.xclen = __get_netwide(np);
 
  ndx2 = __unnormalize_ndx(np, ndx); 
- xpndx = __bld_rng_numxpr((word) ndx2, 0L, WBITS);
+ xpndx = __bld_rng_numxpr((word32) ndx2, 0L, WBITS);
  xpndx->ibase = BDEC;
  if (ndx != ndx2) xpndx->ind_noth0 = TRUE;
 
@@ -5194,12 +5204,12 @@ static struct expr_t *bld_bsel_expr(struct net_t *np, int ndx)
  * and moved through instances
  */
 static void conn_1gateterm_concat(struct mod_t *mdp, struct giarr_t *giap,
- struct expr_t *catxp, int pi)
+ struct expr_t *catxp, int32 pi)
 {
- register int gi2, bi;
+ register int32 gi2, bi;
  register struct expr_t *xp2, *xp3;
- int r0, r1, nwid;
- word av, bv;
+ int32 r0, r1, nwid;
+ word32 av, bv;
  struct gate_t *gp;
  struct net_t *np;
  struct xstk_t *xsp;
@@ -5270,7 +5280,7 @@ static void conn_1gateterm_concat(struct mod_t *mdp, struct giarr_t *giap,
  *
  * nested concatenate illegal (maybe never can see by here)
  */
-static int legal_giarr_conn_concat(struct expr_t *xp)
+static int32 legal_giarr_conn_concat(struct expr_t *xp)
 {
  register struct expr_t *xp2;
  struct net_t *np;
@@ -5299,10 +5309,9 @@ static int legal_giarr_conn_concat(struct expr_t *xp)
  */
 static void reconn_1mod_instports(struct mod_t *mdp)
 {
- register int ii, pi, ii2;
+ register int32 ii, pi, ii2;
  register struct mod_pin_t *mpp;
- int giawid, bi, nwlen, wid, r0;
- word *wp;
+ int32 giawid, bi, nwlen, wid, r0;
  struct giarr_t *giap;
  struct mod_t *imdp;
  struct inst_t *ip, *ip2;
@@ -5462,10 +5471,8 @@ static void reconn_1mod_instports(struct mod_t *mdp)
             }
            else
             {
-             xp2->ru.xvi = __alloc_cval(2*nwlen);
-             wp = &(__contab[xp2->ru.xvi]);
              /* each a and b part of constants fits in integral no. words */
-             memcpy(xsp2->ap, wp, 2*nwlen*WRDBYTES);
+             xp2->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, nwlen);
             }
            xp2->szu.xclen = mpp->mpwide;
 
@@ -5518,9 +5525,9 @@ make_unc:
  * source so will get unnormalized later during expr. check then output 
  * will reconvert to source - neede so caller can work only with internal h:0 
  */
-static struct expr_t *bld_psel_expr(struct net_t *np, int i1, int i2)
+static struct expr_t *bld_psel_expr(struct net_t *np, int32 i1, int32 i2)
 {
- int ndx1, ndx2;
+ int32 ndx1, ndx2;
  struct expr_t *xp, *xpid, *xp1, *xp2, *xpcol;
 
  xpid = __alloc_newxnd();
@@ -5529,12 +5536,12 @@ static struct expr_t *bld_psel_expr(struct net_t *np, int i1, int i2)
  xpid->lu.sy = np->nsym;
 
  ndx1 = __unnormalize_ndx(np, i1); 
- xp1 = __bld_rng_numxpr((word) ndx1, 0L, WBITS);
+ xp1 = __bld_rng_numxpr((word32) ndx1, 0L, WBITS);
  xp1->ibase = BDEC;
  if (i1 != ndx1) xp1->ind_noth0 = TRUE;
 
  ndx2 = __unnormalize_ndx(np, i2); 
- xp2 = __bld_rng_numxpr((word) ndx2, 0L, WBITS);
+ xp2 = __bld_rng_numxpr((word32) ndx2, 0L, WBITS);
  xp2->ibase = BDEC;
  if (i2 != ndx2) xp1->ind_noth0 = TRUE;
 
@@ -5562,11 +5569,11 @@ static struct expr_t *bld_psel_expr(struct net_t *np, int i1, int i2)
  * concat components already checked 
  */
 static void conn_1instport_concat(struct mod_t *mdp, struct giarr_t *giap,
- struct expr_t *catxp, int pi, int mpwid)
+ struct expr_t *catxp, int32 pi, int32 mpwid)
 {
- register int ii2;
+ register int32 ii2;
  register struct exprlst_t *xplp;
- int giawid, gi1, cwidmore;
+ int32 giawid, gi1, cwidmore;
  struct exprlst_t *xplphd, *last_xplp;
  struct expr_t *xp2, *catxp2, *last_catxp;
  struct inst_t *ip;
@@ -5634,11 +5641,11 @@ static void conn_1instport_concat(struct mod_t *mdp, struct giarr_t *giap,
  * when done all expressions copied (so can just conn to insts) and
  * never overlaps (may need to build concats but never a need to split)
  */
-static struct exprlst_t *splt_icat_align_xlist(struct expr_t *catxp, int mpwid)
+static struct exprlst_t *splt_icat_align_xlist(struct expr_t *catxp, int32 mpwid)
 {
  register struct expr_t *xp2, *xp3;
- int prtbi, cxlen, r1, endlen, overlaplen;
- word *wp;
+ int32 prtbi, cxlen, r1, endlen, overlaplen;
+ word32 *wp;
  struct exprlst_t *xplphd, *xplp, *xplp_last;
  struct net_t *np;
  struct xstk_t *xsp, *xsp2;
@@ -5688,7 +5695,7 @@ static struct exprlst_t *splt_icat_align_xlist(struct expr_t *catxp, int mpwid)
     case PARTSEL:
      np = xp3->lu.x->lu.sy->el.enp;
      wp = &(__contab[xp3->ru.x->lu.x->ru.xvi]);
-     r1 = (int) wp[0];
+     r1 = (int32) wp[0];
 
 bld_select:
      /* split off first part that will then fill to end */
@@ -5731,7 +5738,7 @@ bld_select:
          np = xp3->lu.x->lu.sy->el.enp;
          /* here need right range end */
          wp = &(__contab[xp3->ru.x->ru.x->ru.xvi]);
-         r1 = (int) wp[0] + overlaplen - 1;
+         r1 = (int32) wp[0] + overlaplen - 1;
 bld2_selects:
          if (mpwid == 1) xplp->xp = bld_bsel_expr(np, r1);
          else xplp->xp = bld_psel_expr(np, r1, r1 - mpwid + 1);
@@ -5776,7 +5783,7 @@ bld2_selects:
      np = xp3->lu.x->lu.sy->el.enp;
      /* here need right range end */
      wp = &(__contab[xp3->ru.x->ru.x->ru.xvi]);
-     r1 = (int) wp[0] + overlaplen - 1;
+     r1 = (int32) wp[0] + overlaplen - 1;
 bld3_selects:
      /* split off first part that will then fill to end */
      if (overlaplen == 1) xplp->xp = bld_bsel_expr(np, r1);
@@ -5804,8 +5811,7 @@ nxt_catel:
  */
 static struct expr_t *bld_num_expr(struct xstk_t *xsp)
 {
- int nwlen;
- word *wp;
+ int32 nwlen;
  struct expr_t *xp;
 
  xp = __alloc_newxnd();
@@ -5818,10 +5824,7 @@ static struct expr_t *bld_num_expr(struct xstk_t *xsp)
   }
  else
   {
-   xp->ru.xvi = __alloc_cval(2*nwlen);
-   wp = &(__contab[xp->ru.xvi]);
-   /* each a and b part of constants fits in integral no. words */
-   memcpy(wp, xsp->ap, 2*nwlen*WRDBYTES);
+   xp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, nwlen);
   }
  return(xp);
 }
@@ -5841,10 +5844,10 @@ static struct expr_t *bld_num_expr(struct xstk_t *xsp)
  */
 extern void __reset_modport_strens(void)
 {
- register int pi;
+ register int32 pi;
  register struct mod_t *mdp;
  register struct mod_pin_t *mpp;
- int pnum;
+ int32 pnum;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -5867,7 +5870,7 @@ extern void __reset_modport_strens(void)
  */
 static void set_1mpx_stren(struct expr_t *mpx)
 {
- int cat_stren;
+ int32 cat_stren;
  struct net_t *np;
  struct sy_t *syp;
 
@@ -5940,6 +5943,11 @@ extern void __chk_mod(void)
  chk_gates();
  chk_contas();
 
+ /* SJM 09/30/04 - although variable assign initialize decls require */
+ /* constant rhs expr, not checking the expression until here */ 
+ /* because semantics is same as decl followed by initial [var] = [expr]; */
+ chk_varinits();
+ 
  /* check init/always statements */
  chk_stmts();
 
@@ -5970,7 +5978,7 @@ extern void __chk_mod(void)
 static void chk_1tsk(struct task_t *tskp)
 {
  register struct task_pin_t *tpp;
- int ai;
+ int32 ai;
  struct net_t *np;
  struct sy_t *syp;
 
@@ -6021,10 +6029,10 @@ static void chk_1tsk(struct task_t *tskp)
  */
 static void chk_inst_conns(void)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_pin_t *mpp;
- int iotyp, sav_enum;
- int pnum, pwid;
+ int32 iotyp, sav_enum;
+ int32 pnum, pwid;
  struct inst_t *ip;
  struct mod_t *imdp;
  struct expr_t *pxp;
@@ -6083,7 +6091,7 @@ static void chk_inst_conns(void)
          /* change to vectored wire with same direction range as port */ 
          if (pwid > 1)
           {
-           np->nu.ct->nx1 = __bld_rng_numxpr((word) (pwid - 1), 0L, WBITS);
+           np->nu.ct->nx1 = __bld_rng_numxpr((word32) (pwid - 1), 0L, WBITS);
            np->nu.ct->nx2 = __bld_rng_numxpr(0L, 0L, WBITS);
            np->n_isavec = TRUE;
            np->nwid = pwid;
@@ -6201,7 +6209,7 @@ extern void __set_expr_onrhs(struct expr_t *ndp)
  */
 static void chk_iconn_downxmr(struct inst_t *ip, struct expr_t *ndp)
 {
- register int pthi;
+ register int32 pthi;
  struct sy_t *syp;
 
  if (__isleaf(ndp))
@@ -6235,8 +6243,8 @@ static void chk_iconn_downxmr(struct inst_t *ip, struct expr_t *ndp)
 static void chk_iconn_mixeddirrng(struct inst_t *ip,
  struct mod_pin_t *mpp, struct expr_t *ipxp)
 {
- int one_is_bsel, porthl, iphl, tmp;
- int portr1, portr2, ipr1, ipr2;
+ int32 one_is_bsel, porthl, iphl, tmp;
+ int32 portr1, portr2, ipr1, ipr2;
  struct net_t *portnp, *ipnp;
  char porthls[20], iphls[20];
 
@@ -6322,8 +6330,8 @@ get_ipsel_np:
  */
 extern void __free_icptab(void)
 {
- register int ii;
- int pnum;
+ register int32 ii;
+ int32 pnum;
  struct srcloc_t *iplocs;
  struct inst_t *ip;
  struct mod_t *imdp;
@@ -6357,9 +6365,9 @@ extern void __free_icptab(void)
  */
 static void chk_gates(void)
 {
- register int gi, pi;
+ register int32 gi, pi;
  register struct gate_t *gp;
- int dnum, nins;
+ int32 dnum, nins;
  struct expr_t *xp;
  struct net_t *np;
  struct paramlst_t *dhdr;
@@ -6455,9 +6463,9 @@ static void chk_gates(void)
  * if returns F must call expression checking for each port itself
  *
  */
-static int chk_1bltingate(struct gate_t *gp)
+static int32 chk_1bltingate(struct gate_t *gp)
 {
- int pnum;
+ int32 pnum;
  struct primtab_t *ptp;
 
  pnum = gp->gpnum;
@@ -6511,7 +6519,7 @@ static int chk_1bltingate(struct gate_t *gp)
 /*
  * write a message for a if type gate that needs 3 terminals
  */
-static void gate_errifn(struct gate_t *gp, int n)
+static void gate_errifn(struct gate_t *gp, int32 n)
 {
  __sgferr(787, "%s gate does not have required %d terminals",
   gp->gmsym->synam, n);
@@ -6535,7 +6543,7 @@ static void chk_gate_nostren(struct gate_t *gp)
  */
 static void chk_tran_gate(struct gate_t *gp)
 { 
- int pnum;
+ int32 pnum;
  struct expr_t *px1, *px2;
  struct net_t *np1, *np2;
 
@@ -6586,11 +6594,11 @@ static void chk_tran_gate(struct gate_t *gp)
  * if so emit warning and mark deleted from net list 
  * return T if deleted
  */
-static int chk_tran_terms_same(struct gate_t *gp)
+static int32 chk_tran_terms_same(struct gate_t *gp)
 {
  struct expr_t *xp1, *xp2;
  struct net_t *np1, *np2;
- int i1, i2;
+ int32 i1, i2;
 
  xp1 = gp->gpins[0]; 
  xp2 = gp->gpins[1];
@@ -6633,7 +6641,7 @@ static int chk_tran_terms_same(struct gate_t *gp)
 /*
  * set unc (OPEMPTY) for gate terminal
  */
-static void set_unc_gateterm(struct gate_t *gp, int pi)
+static void set_unc_gateterm(struct gate_t *gp, int32 pi)
 {
  /* cannot use bld unc expr here since sets pull but that only for */
  /* for instances */
@@ -6649,7 +6657,7 @@ static void set_unc_gateterm(struct gate_t *gp, int pi)
  * nets or bit selects
  */
 static void chk_1bit_tran(struct gate_t *gp, struct expr_t *px,
- struct net_t *np, int termno)
+ struct net_t *np, int32 termno)
 {
  if (px->optyp == OPEMPTY)
   {
@@ -6681,7 +6689,7 @@ static void chk_1bit_tran(struct gate_t *gp, struct expr_t *px,
  */
 static void chk_tranif_gate(struct gate_t *gp)
 { 
- int dnum, pnum;
+ int32 dnum, pnum;
  struct paramlst_t *dhdr;
  struct net_t *np1, *np2;
  struct expr_t *px1, *px2, *px3;
@@ -6743,7 +6751,7 @@ static void chk_tranif_gate(struct gate_t *gp)
  */
 static void chk_pull_gate(struct gate_t *gp)
 {
- register int i;
+ register int32 i;
  struct expr_t *xp;
  struct net_t *np;
 
@@ -6773,7 +6781,7 @@ static void chk_pull_gate(struct gate_t *gp)
 
  /* all ports must be legal lhs expressions except no concat and xmr */
  /* notice constant bit and part selects ok */
- for (i = 0; i < (int) gp->gpnum; i++) 
+ for (i = 0; i < (int32) gp->gpnum; i++) 
   {
    xp = gp->gpins[i];
    __chk_lhsexpr(xp, LHS_DECL);
@@ -6828,7 +6836,7 @@ static void chk_pull_gate(struct gate_t *gp)
  * check a udp
  * notice nins here includes output state if non comb.
  */
-static int chk_1udp(struct gate_t *gp)
+static int32 chk_1udp(struct gate_t *gp)
 {
  struct udp_t *udpp;
 
@@ -6848,10 +6856,10 @@ static int chk_1udp(struct gate_t *gp)
 /*
  * check a gate output (source) driving terminal more than one
  */
-static int chk_gate_source(struct gate_t *gp, struct expr_t *xp,
- int nd_lhs_chk, int nd_1bit, struct net_t **ret_np)
+static int32 chk_gate_source(struct gate_t *gp, struct expr_t *xp,
+ int32 nd_lhs_chk, int32 nd_1bit, struct net_t **ret_np)
 {
- int rv;
+ int32 rv;
  struct net_t *np;
  char s1[RECLEN];
 
@@ -6929,8 +6937,8 @@ is_real:
 static void chk_contas(void)
 {
  register struct conta_t *cap;
- int lhs_gd, dnum, sav_ecnt, cwid, num_gd1bca;
- struct conta_t *last_cap, *cap2, *ca1bit_hd, *last_1bcap;
+ int32 lhs_gd, dnum, sav_ecnt, cwid, num_gd1bca, cai, num_cas;
+ struct conta_t *last_cap, *cap2, *ca1bit_hd, *last_1bcap, *catab;
  struct expr_t *lhsx, *rhsx;
  struct paramlst_t *dhdr;
 
@@ -6938,11 +6946,13 @@ static void chk_contas(void)
  ca1bit_hd = NULL;
  last_1bcap = NULL;
  __expr_rhs_decl = TRUE;
+ num_cas = 0;
  for (cap = __inst_mod->mcas, num_gd1bca = 0; cap != NULL;)
   {
    __sfnam_ind = cap->casym->syfnam_ind;
    __slin_cnt = cap->casym->sylin_cnt;
 
+   num_cas++;
    /* error if cont. assign lhs not a wire */
    lhsx = cap->lhsx;
    rhsx = cap->rhsx;
@@ -6989,16 +6999,16 @@ static void chk_contas(void)
    if (lhs_gd && lhsx->szu.xclen == 1)
     {
      /* link out 1 bit ca onto tmp list */ 
-     cap2 = cap->canxt;
+     cap2 = cap->pbcau.canxt;
 
      num_gd1bca++;
      if (last_1bcap == NULL) ca1bit_hd = cap;
-     else last_1bcap->canxt = cap;
-     cap->canxt = NULL;
+     else last_1bcap->pbcau.canxt = cap;
+     cap->pbcau.canxt = NULL;
      last_1bcap = cap;
 
      if (last_cap == NULL) __inst_mod->mcas = cap2;
-     else last_cap->canxt = cap2;
+     else last_cap->pbcau.canxt = cap2;
      /* notice last_cap stays same when splicing out */
      cap = cap2;
      continue;
@@ -7013,12 +7023,38 @@ nxt_ca:
        "wider than one bit vector continuous assign highz[01] strength unsupported");
     }
    last_cap = cap;
-   cap = cap->canxt;
+   cap = cap->pbcau.canxt;
   }
  __expr_rhs_decl = FALSE;
- /* final step is to reallocate 1bit cas on end of mgates array */ 
+ /* next re-allocate 1bit cas on end of mgates array */ 
  /* since conta already checked can convert and not apply gaet checks */
- if (num_gd1bca > 0) cnv_1bcas_into_garr(num_gd1bca, ca1bit_hd); 
+ if (num_gd1bca > 0)
+  {
+   cnv_1bcas_into_garr(num_gd1bca, ca1bit_hd); 
+   num_cas -= num_gd1bca;
+  }
+
+ /* final step is to convert conta to array same as m nets conversion */
+ /* from now on (same as with nets) - must index through array to traverse */
+ /* contas */
+ catab = NULL;
+ __inst_mod->mcanum = num_cas;
+ if (__inst_mod->mcanum != 0)
+  {   
+   catab = (struct conta_t *)
+    __my_malloc(__inst_mod->mcanum*sizeof(struct conta_t)); 
+  }
+ for (cai = 0, cap = __inst_mod->mcas; cai < __inst_mod->mcanum; cai++)
+  {
+   cap2 = cap->pbcau.canxt;
+
+   catab[cai] = *cap; 
+   __my_free((char *) cap, sizeof(struct conta_t));
+   catab[cai].pbcau.canxt = NULL;
+
+   cap = cap2;
+  }
+ __inst_mod->mcas = catab; 
 }
 
 /*
@@ -7027,11 +7063,11 @@ nxt_ca:
  * tricky step required to point all symbols for name back to gate which
  * may (probably will) be moved by re-alloc
  */
-static void cnv_1bcas_into_garr(int n1bcas, struct conta_t *ca1bit_hd) 
+static void cnv_1bcas_into_garr(int32 n1bcas, struct conta_t *ca1bit_hd) 
 {
- register int gi;
+ register int32 gi;
  struct conta_t *cap, *cap2;
- int osize, nsize;
+ int32 osize, nsize;
  struct gate_t *gp;
  struct net_t *dum_np;
 
@@ -7076,7 +7112,7 @@ static void cnv_1bcas_into_garr(int n1bcas, struct conta_t *ca1bit_hd)
      set_unc_gateterm(gp, 0);
     }
    /* free and link out conta */
-   cap2 = cap->canxt;
+   cap2 = cap->pbcau.canxt;
    /* ca scheduled event array not yet allocated */
    __my_free((char *) cap, sizeof(struct conta_t));
    cap = cap2;
@@ -7177,7 +7213,7 @@ static void chk_getpat_nonscal(struct expr_t *lhsx)
  */
 static void chk_funcdef(struct task_t *tskp)
 {
- int saverr_cnt;
+ int32 saverr_cnt;
  
  __cur_tsk = tskp;
  saverr_cnt = __pv_err_cnt;
@@ -7217,7 +7253,7 @@ static void chk_funcdef(struct task_t *tskp)
 static void chk_fdef_args(struct task_t *tskp)
 {
  register struct task_pin_t *tpp;
- int ai;
+ int32 ai;
  struct sy_t *syp;
  struct net_t *np;
  char s1[RECLEN];
@@ -7368,9 +7404,9 @@ static void chk_nodel_stmt(struct st_t *stp)
    goto bad_fdstmt;
   case S_UNFJ: 
    { 
-    int fji;
+    int32 fji;
     struct st_t *fjstp;
-    int sav_has_tskcall, has_timemove;
+    int32 sav_has_tskcall, has_timemove;
 
     has_timemove = FALSE;
     sav_has_tskcall = __task_has_tskcall;
@@ -7409,7 +7445,7 @@ bad_fdstmt:
    /* legal except for fork */
    {
     struct task_t *nbtskp;
-    int sav_has_delay, sav_has_tskcall;
+    int32 sav_has_delay, sav_has_tskcall;
 
     sav_has_delay = __task_has_delay;
     sav_has_tskcall = __task_has_tskcall;
@@ -7419,8 +7455,8 @@ bad_fdstmt:
     __push_nbstk(stp);
     if (nbtskp->tsktyp == FORK)
      {
-      int fji;
-      int has_timemove;
+      int32 fji;
+      int32 has_timemove;
       struct st_t *stp2;
       struct st_t *fjstp;
 
@@ -7474,7 +7510,7 @@ static void chk_nodel_dsable(struct st_t *stp)
 {
  struct expr_t *dsxp;
  struct sy_t *syp;
- int dummy;
+ int32 dummy;
 
  /* task disable illegal - named block ok if above in func. body */
  dsxp = stp->st.sdsable.dsablx;
@@ -7533,7 +7569,7 @@ set_has_del:
 /*
  * return T if lhs expression contains lhs symbol
  */
-static int lhsexpr_hassym(struct expr_t *ndp, struct sy_t *syp)
+static int32 lhsexpr_hassym(struct expr_t *ndp, struct sy_t *syp)
 {
  register struct expr_t *ndp2;
 
@@ -7569,18 +7605,18 @@ static int lhsexpr_hassym(struct expr_t *ndp, struct sy_t *syp)
  * notice always know range is no inst. specific - if defparam in
  * in range assigned to must really split.
  */
-extern int __get_netwide(struct net_t *np)
+extern int32 __get_netwide(struct net_t *np)
 {
- register int i1, i2;
- int wid;
+ register int32 i1, i2;
+ int32 wid;
 
  if (!np->n_isavec) return(1);  
 
  i1 = i2 = 0;
  if (np->nrngrep == NX_CT)
   {
-   i1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
-   i2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+   i1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+   i2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
 
    if (i1 == -1 || i2 == -2) __arg_terr(__FILE__, __LINE__);
    wid = (i1 >= i2) ? (i1 - i2 + 1) : (i2 - i1 + 1);
@@ -7592,15 +7628,15 @@ extern int __get_netwide(struct net_t *np)
 /*
  * get array width (i.e. width of range or number of elements in memory) 
  */
-extern int __get_arrwide(struct net_t *np)
+extern int32 __get_arrwide(struct net_t *np)
 {
- register int w1, w2;
+ register int32 w1, w2;
 
  w1 = w2 = 0;
  switch ((byte) np->nrngrep) {
   case NX_CT:
-   w1 = (int) __contab[np->nu.ct->ax1->ru.xvi];
-   w2 = (int) __contab[np->nu.ct->ax2->ru.xvi];
+   w1 = (int32) __contab[np->nu.ct->ax1->ru.xvi];
+   w2 = (int32) __contab[np->nu.ct->ax2->ru.xvi];
    break;
   case NX_ARR:
    w1 = np->nu.rngarr->ai1;
@@ -7620,15 +7656,15 @@ extern int __get_arrwide(struct net_t *np)
  * this will return vector width of array
  * must use bit to determine if vector or not 
  */
-extern void __getwir_range(struct net_t *np, int *xr1, int *xr2)
+extern void __getwir_range(struct net_t *np, int32 *xr1, int32 *xr2)
 {
- register int r1, r2;
+ register int32 r1, r2;
 
  r1 = r2 = 0;
  switch ((byte) np->nrngrep) {
   case NX_CT:
-   r1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
-   r2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+   r1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+   r2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
    break;
   case NX_ARR: r1 = np->nu.rngarr->ni1; r2 = np->nu.rngarr->ni2; break;
   case NX_DWIR: r1 = np->nu.rngdwir->ni1; r2 = np->nu.rngdwir->ni2; break;
@@ -7646,9 +7682,9 @@ extern void __getwir_range(struct net_t *np, int *xr1, int *xr2)
  * returns false if cannot determine range (unfolded still)
  * this will return array width of array
  */
-extern void __getarr_range(struct net_t *np, int *mr1, int *mr2, int *arrwid)
+extern void __getarr_range(struct net_t *np, int32 *mr1, int32 *mr2, int32 *arrwid)
 {
- register int r1, r2;
+ register int32 r1, r2;
 
  r1 = r2 = 0;
  /* notice fall thru on things with no array range */
@@ -7656,8 +7692,8 @@ extern void __getarr_range(struct net_t *np, int *mr1, int *mr2, int *arrwid)
   case NX_CT:
    if (np->n_isarr)
     {
-     r1 = (int) __contab[np->nu.ct->ax1->ru.xvi];
-     r2 = (int) __contab[np->nu.ct->ax2->ru.xvi];
+     r1 = (int32) __contab[np->nu.ct->ax1->ru.xvi];
+     r2 = (int32) __contab[np->nu.ct->ax2->ru.xvi];
     }
    break;
   case NX_ARR: r1 = np->nu.rngarr->ai1; r2 = np->nu.rngarr->ai2; break;
@@ -7672,9 +7708,9 @@ extern void __getarr_range(struct net_t *np, int *mr1, int *mr2, int *arrwid)
  * routine to map normalized h:0 form index back to input value
  * know indi in range and wire type determines if array or wire select
  */
-extern int __unnormalize_ndx(struct net_t *np, int indi)
+extern int32 __unnormalize_ndx(struct net_t *np, int32 indi)
 {
- int r1, r2, obwid;
+ int32 r1, r2, obwid;
 
  if (np->n_isarr) __getarr_range(np, &r1, &r2, &obwid);
  else if (np->n_isavec) __getwir_range(np, &r1, &r2);
@@ -7684,21 +7720,54 @@ extern int __unnormalize_ndx(struct net_t *np, int indi)
 
 /*
  * map normalized h:0 constant index to value in source world
- * already processed to unsigned and know in range 
+ * already processed to word32 and know in range 
  *
  * just like C implied truncating assign to 32 bit value
  * constants are already normalized during compilation
  */
-extern int __unmap_ndx(int biti, int ri1, int ri2)
+extern int32 __unmap_ndx(int32 biti, int32 ri1, int32 ri2)
 {
  if (ri1 >= ri2) { if (ri1 != 0) biti -= ri2; }
  else { if (ri2 != 0) biti = ri2 - biti; }
  return(biti);
 }
 
+/*
+ * VARIABLE INITIALIZE ASSIGNMENT CHECKING ROUTINES
+ */
+
+/*
+ * check a module's var init rhs exprs
+ */
+static void chk_varinits(void)
+{
+ register struct varinitlst_t *initp;
+
+ initp = __inst_mod->mvarinits;
+ for (; initp != NULL; initp = initp->varinitnxt)
+  {
+   __sfnam_ind = initp->init_syp->syfnam_ind;
+   __slin_cnt = initp->init_syp->sylin_cnt;
+
+   if (!__chk_paramexpr(initp->init_xp, initp->init_syp->el.enp->nwid))
+    {
+     __sgferr(3431,
+      "variable assign to %s initializing expression %s illegal - numbers and parameters only",
+      initp->init_syp->synam, __msgexpr_tostr(__xs, initp->init_xp));
+
+     /* need to still add value of x to prevent further errors */
+     __free2_xtree(initp->init_xp);
+     /* SJM 09/30/04 - LOOKATME - maybe needs to be right width x's */
+     initp->init_xp->szu.xclen = 1;
+     __set_numval(initp->init_xp, ALL1W, ALL1W, 1);
+    }
+  }
+}
+
 /* 
  * STATEMENT CHECKING ROUTINES
  */
+
 
 /*
  * routines to check fix up statements
@@ -7735,7 +7804,7 @@ extern void __chk_lstofsts(struct st_t *hdstp)
  */
 static void chk_1stmt(struct st_t *stp)
 {
- int save_lno, save_fni, cwid, is_regform;
+ int32 save_lno, save_fni, cwid, is_regform;
 
  /* save callers values */
  save_fni = __sfnam_ind;
@@ -7752,6 +7821,15 @@ static void chk_1stmt(struct st_t *stp)
     __sgfwarn(542, "procedural assign lvalue 1 bit concatenate unusual");
    cwid = stp->st.spra.lhsx->szu.xclen;
    __chk_rhsexpr(stp->st.spra.rhsx, cwid);
+
+   /* SJM 10/08/04 - for Ver 2001 because WBITS can be 64 - must widen */
+   /* unsized constant (unsiznum bit in expr rec on) to lhs width */
+   if (stp->st.spra.rhsx->optyp == NUMBER && stp->st.spra.rhsx->unsiznum
+    && stp->st.spra.rhsx->szu.xclen < stp->st.spra.lhsx->szu.xclen)
+    {
+     stp->st.spra.rhsx = __widen_unsiz_rhs_assign(stp->st.spra.rhsx,
+      stp->st.spra.lhsx->szu.xclen);
+    }
    break;
   case S_IF:
    __chk_rhsexpr(stp->st.sif.condx, 0);
@@ -7826,7 +7904,7 @@ static void chk_1stmt(struct st_t *stp)
    break;
   case S_UNFJ:
    {
-    register int fji;
+    register int32 fji;
     struct st_t *fjstp;
 
     /* 1 sub stmt only, for unnamed begin-end will be unnamed block */ 
@@ -7848,6 +7926,17 @@ static void chk_1stmt(struct st_t *stp)
    cwid = stp->st.sqca->qclhsx->szu.xclen;
    __chk_rhsexpr(stp->st.sqca->qcrhsx, cwid);
    stp->st.sqca->regform = is_regform;
+
+   /* SJM 10/08/04 - for Ver 2001 because WBITS can be 64 - must widen */
+   /* unsized constant (unsiznum bit in expr rec on) to lhs width */
+   if (stp->st.sqca->qcrhsx->optyp == NUMBER
+    && stp->st.sqca->qcrhsx->unsiznum
+    && stp->st.sqca->qcrhsx->szu.xclen < stp->st.sqca->qclhsx->szu.xclen)
+    {
+     stp->st.sqca->qcrhsx = __widen_unsiz_rhs_assign(stp->st.sqca->qcrhsx,
+      stp->st.sqca->qclhsx->szu.xclen);
+    }
+
    /* SJM 07/16/03 - illegal if rhs expr. contains lhs being forced lvalue */ 
    chk_circular_qc_stmt(stp);
    break;
@@ -7895,17 +7984,61 @@ static void chk_1stmt(struct st_t *stp)
 }
 
 /*
+ * routine to widen unsized number to lhs context
+ *
+ * know only called for literal numbers - maybe literal from folding
+ * and think folded bit will be on for all but fcalls but not using
+ *
+ * this is special widen with x/z extend in addition to sign extend
+ * but if word32, does not extend the high 1 
+ *
+ * needed from Ver 2001 change because WBITS can now be 64 so for
+ * any of the assigns (proc, cont, func/task input and force/assign)
+ * need to use lhs context to widen unsized number to that size
+ * with sign and x/z extend
+ */
+extern struct expr_t *__widen_unsiz_rhs_assign(struct expr_t *rhsx,
+ int32 lhswid)
+{
+ int32 owlen, bi;
+ word32 *owp;
+ struct xstk_t *xsp;
+
+ owlen = wlen_(rhsx->szu.xclen);
+ push_xstk_(xsp, rhsx->szu.xclen);
+ owp = &(__contab[rhsx->ru.xvi]);
+ memcpy(xsp->ap, owp, 2*owlen*WRDBYTES);
+
+ /* notice not lhs signed because signed does not corss = */
+ if (rhsx->has_sign) __sgn_xtnd_widen(xsp, lhswid);
+ else
+  {
+   /* if x/z - b part high bit on, then widen both a and b parts */
+   bi = get_bofs_(rhsx->szu.xclen - 1);
+   if ((xsp->bp[owlen - 1] & (1 << bi)) != 0) 
+    {
+     /* notice since x/z bit on - can treat as sign extend widen since */
+     /* reduces to x/z widen case */
+     __sgn_xtnd_widen(xsp, lhswid);
+    }
+  }
+ rhsx = bld_num_expr(xsp);
+ __pop_xstk();
+ return(rhsx);
+}
+
+/*
  * check a case statement
  *
  * SJM 05/10/04 - new algorithm turns off sign bit for widening if needed
- * for * every expression if select expr unsigned, if select expr signed
+ * for * every expression if select expr word32, if select expr signed
  * then compares are signed if match signed else unsigned
  */
 static void chk_case(struct st_t *stp)
 {
  register struct csitem_t *csip;
  register struct exprlst_t *xplp;
- int xwid, maxselwid, nd_realcnv, nd_unsgn_widen;
+ int32 xwid, maxselwid, nd_realcnv, nd_unsgn_widen;
  struct csitem_t *dflt_csip;
 
  dflt_csip = stp->st.scs.csitems;
@@ -7924,7 +8057,7 @@ static void chk_case(struct st_t *stp)
  xwid = __get_rhswidth(stp->st.scs.csx);
 
  if (xwid > maxselwid) maxselwid = xwid;
- stp->st.scs.maxselwid = (unsigned) maxselwid;
+ stp->st.scs.maxselwid = (word32) maxselwid;
 
  /* now check expression using max. width context */
  for (csip = dflt_csip->csinxt; csip != NULL; csip = csip->csinxt)
@@ -7990,7 +8123,7 @@ static void chk_case(struct st_t *stp)
  */
 static void chk_dctrl(struct delctrl_t *dctp)
 {
- int sav_ecnt;
+ int32 sav_ecnt;
  struct paramlst_t *dhdr;
 
  /* even if error keeep checking - also know list has exactly 1 element */
@@ -8057,13 +8190,8 @@ static void chk_dctrl(struct delctrl_t *dctp)
      dctp->dc_du.pdels->plxndp = bld_evlst_comma_expr();
      __impl_evlst_hd = __impl_evlst_tail = NULL; 
 
-     /* check new ev comma or expr - think needed for folding */
-     /* SJM 06/01/04 - FIXME ### ??? maybe only need for debugging */
-     /* DBG remove -- */
-     if (dctp->dc_du.pdels->plxndp == NULL) __misc_terr(__FILE__, __LINE__);
-     /* --- */
-
-      __chk_evxpr(dctp->dc_du.pdels->plxndp);
+     /* SJM 08/03/04 - can't call check here because building normalized */
+     /* to h:0 expressions but check uses actual src read decl ranges */ 
     }
   }
 }
@@ -8156,7 +8284,7 @@ static void bld_stmt_evxlst(struct st_t *stp)
    break;
   case S_UNFJ:
    {
-    register int fji;
+    register int32 fji;
     struct st_t *fjstp;
 
     /* 1 sub stmt only, for unnamed begin-end will be unnamed block */ 
@@ -8353,7 +8481,7 @@ static void bld_lhs_impl_evxlst(struct expr_t *lhsx)
 /*
  * return T if expr already in the ev xpr list  
  */
-static int xp_in_evxlst(struct expr_t *evxp) 
+static int32 xp_in_evxlst(struct expr_t *evxp) 
 {
  register struct exprlst_t *xplp;
 
@@ -8375,10 +8503,11 @@ static struct expr_t *bld_evlst_comma_expr(void)
  register struct exprlst_t *xplp;
  struct expr_t *rootndp, *ndp;
  struct exprlst_t *xplp2;
- int first_time;
+ int32 first_time;
 
  first_time = TRUE;
  ndp = NULL;
+ rootndp = NULL;
  for (xplp = __impl_evlst_hd; xplp != NULL; xplp = xplp->xpnxt)
   {
    if (first_time)
@@ -8414,14 +8543,14 @@ static struct expr_t *bld_evlst_comma_expr(void)
  * check a quasi continous assign/deassign reg. or force wire or reg
  * most checks special qc reg concatenate form
  *
- * assuming here there are 2 disjoint forms - force [normal decl. lhs] or
+ * assuming here there are 2 disjoint32 forms - force [normal decl. lhs] or
  * force [assign style register form] - concatentates cannot mix the 2
  */
-static void chk_qclvalue(struct expr_t *ndp, unsigned qctyp,
- int *is_rgform)
+static void chk_qclvalue(struct expr_t *ndp, word32 qctyp,
+ int32 *is_rgform)
 {
  register struct expr_t *ndp2;
- int cnt;
+ int32 cnt;
  char s1[RECLEN];
 
  *is_rgform = TRUE;
@@ -8533,7 +8662,7 @@ static void set_qc_frcassgn_net(struct expr_t *ndp)
  * nd reg for id's - this is where node type is unknown
  * this reg cannot be a real
  */
-static int nd_qcreg(struct expr_t *ndp)
+static int32 nd_qcreg(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -8557,7 +8686,7 @@ static int nd_qcreg(struct expr_t *ndp)
 static void chk_circular_qc_stmt(struct st_t *stp)
 {
  register struct expr_t *lhsx, *rhsx;
- int qctyp;
+ int32 qctyp;
  struct expr_t *catndp, *catelx, *lhsx2;
  struct net_t *np;
  char s1[RECLEN];
@@ -8618,7 +8747,7 @@ extern struct expr_t *__get_lvalue_idndp(struct expr_t *lhsx)
 /*
  * routine to return T if net contained in rhs expr
  */
-static int rhs_expr_has_net(struct expr_t *rhsx, struct net_t *np)
+static int32 rhs_expr_has_net(struct expr_t *rhsx, struct net_t *np)
 {
  if (__isleaf(rhsx))
   {

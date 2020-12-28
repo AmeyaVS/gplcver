@@ -1,4 +1,4 @@
-/* Copyright (c) 1993-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1993-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
 #if defined(__sparc) && !defined(__SVR4)  
-extern ungetc(int c, FILE *);
+extern ungetc(int32 c, FILE *);
 #endif
 
 /* this shares some vpi_ delay code */
@@ -143,10 +143,10 @@ struct tclst_t {
 
 struct tcterm_t {
  char *tnam;
- int ti1, ti2, eval;
+ int32 ti1, ti2, eval;
  char *cndnam;
- int cndi1, cndi2;
- int cnd_op, cnd_const;
+ int32 cndi1, cndi2;
+ int32 cnd_op, cnd_const;
 };
 
 /* sdf only declares */
@@ -163,22 +163,22 @@ static char *__sdf_progversion;
 static double __sdf_voltage;
 static double __sdf_temp;
 static char *__sdf_process;
-static int __sdf_timescale;    /* this is internal pos. time unit exp */    
+static int32 __sdf_timescale;    /* this is internal pos. time unit exp */    
 static char __sdf_star_val[4]; /* special " * " string for all inst. star */ 
-static int __sdf_tokval;
+static int32 __sdf_tokval;
 static struct itree_t *__sdf_cntxt_itp;
-static int __seen_ppulse;      /* per SDF file, 1 warn if path pulse used */
-static int __seen_pc_ppulse;   /* same for path pulse percent */
-static int __seen_rlim_delval; /* 1 warn if reject limit in delval */ 
-static int __seen_xlim_delval; /* 1 warn if x (error) limit in delval */ 
-static int __sdf_nd_tscale;    /* T => SDF file timescale different */
-static int __sdf_ts_units;     /* unit difference for SDF TIMESCALE */
+static int32 __seen_ppulse;      /* per SDF file, 1 warn if path pulse used */
+static int32 __seen_pc_ppulse;   /* same for path pulse percent */
+static int32 __seen_rlim_delval; /* 1 warn if reject limit in delval */ 
+static int32 __seen_xlim_delval; /* 1 warn if x (error) limit in delval */ 
+static int32 __sdf_nd_tscale;    /* T => SDF file timescale different */
+static int32 __sdf_ts_units;     /* unit difference for SDF TIMESCALE */
 static struct t_vpi_delay *__sdf_delp;
 static struct t_vpi_delay *__sdf_delp2;
-static int __id_qualpath;
-static int __id_select;
-static int __id_partsel;
-static int __rding_cond_expr;  /* reading cond form - scalars cons allowd */ 
+static int32 __id_qualpath;
+static int32 __id_select;
+static int32 __id_partsel;
+static int32 __rding_cond_expr;  /* reading cond form - scalars cons allowd */ 
 
 /* SJM 07/08/01 - change so user can specify log file - then replaces here */
 static char *__sdf_log_fnam;   /* name of SDF log file */
@@ -187,135 +187,135 @@ static FILE *__sdf_sav_log_s;  /* just need to save normal log file */
 
 /* local prototypes */
 static void alloc_sdf_mdp(void);
-static void sdf_annotate(char *, char *, int, int);
-static void do_systsk_sdf_annotate(char *, struct itree_t *, int, int);
-static void do_sdf_annotate(char *, int, int);
+static void sdf_annotate(char *, char *, int32, int32);
+static void do_systsk_sdf_annotate(char *, struct itree_t *, int32, int32);
+static void do_sdf_annotate(char *, int32, int32);
 static void free_sdf_hdrvals(void);
 static char *get_sdfcntxtnam(char *, struct itree_t *);
-static void init_vpi_del(struct t_vpi_delay *, int);
+static void init_vpi_del(struct t_vpi_delay *, int32);
 static void rd_sdf_file(FILE *);
-static char *mtm_sel_tonam(char *, int);
-static int rd_sdf_sepchar(FILE *, char *);
-static int rd_sdf_timescaleval(FILE *, int *);
-static int rdset_sdf_cells(FILE *);
+static char *mtm_sel_tonam(char *, int32);
+static int32 rd_sdf_sepchar(FILE *, char *);
+static int32 rd_sdf_timescaleval(FILE *, int32 *);
+static int32 rdset_sdf_cells(FILE *);
 static struct itree_t *get_sdfdownrel_itp(struct expr_t *, struct itree_t *,
  struct sy_t **, char *);
-static int rdset_prim_delay(FILE *, struct sy_t *, int, char *, struct sy_t *);
-static int prim_rdset_device_del(FILE *, struct itree_t *, struct sy_t *,
+static int32 rdset_prim_delay(FILE *, struct sy_t *, int32, char *, struct sy_t *);
+static int32 prim_rdset_device_del(FILE *, struct itree_t *, struct sy_t *,
  struct gate_t *);
 static void set_device_del(struct itree_t *, struct gate_t *, struct sy_t *);
 static void prep_sdfdev_verbmsg(struct gate_t *, struct gate_t *,
  struct itree_t *, struct mod_t *);
 static void emit_sdfdev_verbmsg(struct gate_t *, struct gate_t *, char *);
-static int rdset_timing_spec(FILE *, struct itree_t *, struct mod_t *);
+static int32 rdset_timing_spec(FILE *, struct itree_t *, struct mod_t *);
 static char *get_sdfinam(char *, struct itree_t *, struct mod_t *);
-static int rdset_deltyps(FILE *, struct itree_t *, struct mod_t *);
-static int port_qual_nam(char *, char *);
-static int rd_1_val(FILE *, char *);
-static int rd2_1_val(FILE *);
-static int rd_1or2_vals(FILE *, char *);
-static int rd_4_vals(FILE *, char *);
-static int rd_deldef(FILE *, struct itree_t *, struct mod_t *, char *);
+static int32 rdset_deltyps(FILE *, struct itree_t *, struct mod_t *);
+static int32 port_qual_nam(char *, char *);
+static int32 rd_1_val(FILE *, char *);
+static int32 rd2_1_val(FILE *);
+static int32 rd_1or2_vals(FILE *, char *);
+static int32 rd_4_vals(FILE *, char *);
+static int32 rd_deldef(FILE *, struct itree_t *, struct mod_t *, char *);
 static void dellst_err(char *, char *);
 static void formend_err(char *);
-static int rd_iopath(FILE *, struct itree_t *, struct mod_t *,
- struct expr_t *, int, char *);
+static int32 rd_iopath(FILE *, struct itree_t *, struct mod_t *,
+ struct expr_t *, int32, char *);
 static void set_1pthdel(struct pthlst_t *, struct itree_t *, struct mod_t *);
 static void prep_sdfiopath_verbmsg(struct spcpth_t *, struct gate_t *,
  struct itree_t *, struct mod_t *);
 static void emit_sdfiopath_verbmsg(struct spcpth_t *, struct gate_t *, char *);
-static int upd_sdf_perinst_del(struct gate_t *, p_vpi_delay, struct mod_t *,
- int, int, int, char *);
-static int itp_under_cntxt(register struct itree_t *);
-static int rd_port_spec(FILE *, char *, int *, int *, int *, int);
-static int rd_port(FILE *, char *, int *, int *);
-static struct pthlst_t *bld_match_spcpth(struct mod_t *, char *, int, int,
- int, char *, int, int, struct expr_t *, int);
+static int32 upd_sdf_perinst_del(struct gate_t *, p_vpi_delay, struct mod_t *,
+ int32, int32, int32, char *);
+static int32 itp_under_cntxt(register struct itree_t *);
+static int32 rd_port_spec(FILE *, char *, int32 *, int32 *, int32 *, int32);
+static int32 rd_port(FILE *, char *, int32 *, int32 *);
+static struct pthlst_t *bld_match_spcpth(struct mod_t *, char *, int32, int32,
+ int32, char *, int32, int32, struct expr_t *, int32);
 static void free_pthlst(struct pthlst_t *);
-static char *msg_sdfpath_tostr(char *, char *, int, int, int, char *, int,
- int, struct expr_t *, int);
-static int rd_del_def_cond(FILE *, struct itree_t *, struct mod_t *, char *);
-static int col_cond_port_expr(FILE *);
-static int sdf_bld_expnode(void);
-static int rdset_tchk_defs(FILE *, struct itree_t *, struct mod_t *);
-static void set_half_setuphold_tchk_defs(struct tclst_t *, int,
+static char *msg_sdfpath_tostr(char *, char *, int32, int32, int32, char *, int32,
+ int32, struct expr_t *, int32);
+static int32 rd_del_def_cond(FILE *, struct itree_t *, struct mod_t *, char *);
+static int32 col_cond_port_expr(FILE *);
+static int32 sdf_bld_expnode(void);
+static int32 rdset_tchk_defs(FILE *, struct itree_t *, struct mod_t *);
+static void set_half_setuphold_tchk_defs(struct tclst_t *, int32,
  struct itree_t *, struct mod_t *);
-static void set_half_recrem_tchk_defs(struct tclst_t *, int,
+static void set_half_recrem_tchk_defs(struct tclst_t *, int32,
  struct itree_t *, struct mod_t *);
-static int rdset_2term_1v_tchk(struct tclst_t **, int *, FILE *,
- struct mod_t *, char *, int, int, int *);
-static int rdset_1term_1v_tchk(struct tclst_t **, FILE *, struct mod_t *,
- char *, int, int, int *);
-static int rdset_2term_2v_tchk(struct tclst_t **, FILE *, struct mod_t *,
- char *, int, int, int *);
+static int32 rdset_2term_1v_tchk(struct tclst_t **, int32 *, FILE *,
+ struct mod_t *, char *, int32, int32, int32 *);
+static int32 rdset_1term_1v_tchk(struct tclst_t **, FILE *, struct mod_t *,
+ char *, int32, int32, int32 *);
+static int32 rdset_2term_2v_tchk(struct tclst_t **, FILE *, struct mod_t *,
+ char *, int32, int32, int32 *);
 static void prep_sdftchk_verbmsg(struct tchk_t *, char *, struct gate_t *,
  struct itree_t *, struct mod_t *, char *);
 static void emit_sdftchk_verbmsg(struct tchk_t *, char *, struct gate_t *,
  char *, char *);
-static int rd_port_tchk(FILE *, struct tcterm_t *);
-static int rd_tchk_cond(FILE *, struct tcterm_t *);
-static int rd_scalar_node(FILE *, char *, int *);
-static int from_sdf_tctyp(int);
+static int32 rd_port_tchk(FILE *, struct tcterm_t *);
+static int32 rd_tchk_cond(FILE *, struct tcterm_t *);
+static int32 rd_scalar_node(FILE *, char *, int32 *);
+static int32 from_sdf_tctyp(int32);
 static struct tclst_t *bld_match_tchk(struct mod_t *, struct tcterm_t *,
- struct tcterm_t *, int, char *);
-static int same_tchk_cond(struct tcterm_t *, struct expr_t *);
+ struct tcterm_t *, int32, char *);
+static int32 same_tchk_cond(struct tcterm_t *, struct expr_t *);
 static void free_tclst(struct tclst_t *);
 static void free_tct_insides(struct tcterm_t *);
-static int rdset_port_mipd(FILE *, struct itree_t *, struct mod_t *, char *);
-static void set_mipd_dels(struct itree_t *, char *, int, int);
+static int32 rdset_port_mipd(FILE *, struct itree_t *, struct mod_t *, char *);
+static void set_mipd_dels(struct itree_t *, char *, int32, int32);
 static char *msgpref_tostr(char *, struct mod_pin_t *);
 static struct itree_t *find_1under_itp(struct mod_t *);
-static int xtrct_portdev(struct itree_t **, char *, char *, struct itree_t *,
+static int32 xtrct_portdev(struct itree_t **, char *, char *, struct itree_t *,
  char *, char *);
 static struct mod_pin_t *get_inport_fr_nam(struct mod_t *, char *);
-static int getsrch_portnam(struct mod_t *, register char *);
+static int32 getsrch_portnam(struct mod_t *, register char *);
 static struct mod_pin_t *get_outport_fr_nam(struct mod_t *, char *);
 static struct mod_pin_t *get_bidport_fr_nam(struct mod_t *, char *);
-static int rdset_interconn_dels(FILE *, struct itree_t *, struct mod_t *,
+static int32 rdset_interconn_dels(FILE *, struct itree_t *, struct mod_t *,
  char *);
-static void chkset_interconn_dels(struct itree_t *, char *, int, int, char *,
- int, int);
-static char *bld_prefnam(char *, char *, int, int);
-static void add_srcdst_impth(struct mipd_t *, struct mod_pin_t *, int, int,
+static void chkset_interconn_dels(struct itree_t *, char *, int32, int32, char *,
+ int32, int32);
+static char *bld_prefnam(char *, char *, int32, int32);
+static void add_srcdst_impth(struct mipd_t *, struct mod_pin_t *, int32, int32,
  struct itree_t *, char *);
-static int rdset_devpath_dels(FILE *, struct itree_t *, struct mod_t *,
+static int32 rdset_devpath_dels(FILE *, struct itree_t *, struct mod_t *,
  char *);
 static void set_allpths_dels(struct itree_t *, struct mod_t *);
-static void set_alloutpths_dels(char *, int, int, struct itree_t *,
+static void set_alloutpths_dels(char *, int32, int32, struct itree_t *,
  struct mod_t *);
-static int not_a_port(char *, int, struct mod_t *, char *);
-static int rdskip_te_defs(FILE *);
-static int rd_exception(FILE *);
-static int rd_constraint_path(FILE *, char *, int);
-static int rd_edgepair_list(FILE *);
-static int rdset_labels(FILE *, struct itree_t *, struct mod_t *);
-static int xtrct_param(struct itree_t **, char *, struct itree_t *);
+static int32 not_a_port(char *, int32, struct mod_t *, char *);
+static int32 rdskip_te_defs(FILE *);
+static int32 rd_exception(FILE *);
+static int32 rd_constraint_path(FILE *, char *, int32);
+static int32 rd_edgepair_list(FILE *);
+static int32 rdset_labels(FILE *, struct itree_t *, struct mod_t *);
+static int32 xtrct_param(struct itree_t **, char *, struct itree_t *);
 static struct xstk_t *sdf_push_rvalue(struct net_t *, double);
 static void emit_sdflblverb_msg(struct net_t *, struct xstk_t *, char *);
-static int sdf_adjust_incr(struct net_t *, struct xstk_t *, int);
-static int bld_sdfnewdu(struct gate_t *, struct gate_t *, p_vpi_delay,
- struct itree_t *, int, int, char *);
-static int sdf_fillchk_tim(word64 *, int *, int *, int *, p_vpi_delay, char *);
-static int vpi_delay_all0s(p_vpi_delay);
-static int rd_sdf_dellst(FILE *, char *);
-static int rd_rtriple(FILE *, register struct t_vpi_time *);
-static int rd_sdf_formtyp(FILE *);
-static int rd2_sdf_formtyp(FILE *);
-static int rd_sdf_strval(FILE *);
+static int32 sdf_adjust_incr(struct net_t *, struct xstk_t *, int32);
+static int32 bld_sdfnewdu(struct gate_t *, struct gate_t *, p_vpi_delay,
+ struct itree_t *, int32, int32, char *);
+static int32 sdf_fillchk_tim(word64 *, int32 *, int32 *, int32 *, p_vpi_delay, char *);
+static int32 vpi_delay_all0s(p_vpi_delay);
+static int32 rd_sdf_dellst(FILE *, char *);
+static int32 rd_rtriple(FILE *, register struct t_vpi_time *);
+static int32 rd_sdf_formtyp(FILE *);
+static int32 rd2_sdf_formtyp(FILE *);
+static int32 rd_sdf_strval(FILE *);
 static void get_sdftok(FILE *);
-static int sdf_rd_comment(FILE *);
-static int sdf_collect_str(FILE *);
-static int sdf_collect_num(FILE *, int);
-static int chkcnv_sdfpath(char *, int *, int *, char *, int);
+static int32 sdf_rd_comment(FILE *);
+static int32 sdf_collect_str(FILE *);
+static int32 sdf_collect_num(FILE *, int32);
+static int32 chkcnv_sdfpath(char *, int32 *, int32 *, char *, int32);
 static char *fnd_pth_sep(register char *);
-static int chkcnv_sdfid(char *, int *, int *, char *, int);
-static int sdf_getsel_indices(int *, int *, char *);
-static int sdf_skip_form(FILE *);
-static int rd_edge_ident(FILE *);
-static int rd_scalar_const(FILE *);
+static int32 chkcnv_sdfid(char *, int32 *, int32 *, char *, int32);
+static int32 sdf_getsel_indices(int32 *, int32 *, char *);
+static int32 sdf_skip_form(FILE *);
+static int32 rd_edge_ident(FILE *);
+static int32 rd_scalar_const(FILE *);
 static char *prt_sdftok(void);
-static int get_sdfkeywrd(register char *);
-static char *get_skeynam(char *, int);
+static int32 get_sdfkeywrd(register char *);
+static char *get_skeynam(char *, int32);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __process_sdf_files(void);
@@ -324,72 +324,72 @@ extern void __chg_param_tois(struct net_t *, struct mod_t *);
 extern FILE *__my_fopen(char *, char *);
 extern FILE *__tilde_fopen(char *, char *);
 extern void __my_fclose(FILE *);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern char *__pv_stralloc(char *);
-extern char *__to_timunitnam(char *, unsigned);
-extern char *__get_tmult(char *, unsigned *);
+extern char *__to_timunitnam(char *, word32);
+extern char *__get_tmult(char *, word32 *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct expr_t *__glbnam_to_expr(char *);
 extern char *__to_glbcmp_nam(struct expr_t *);
-extern int __ip_indsrch(char *);
-extern int __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
+extern int32 __ip_indsrch(char *);
+extern int32 __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
 extern void __chg_1inst_del(struct gate_t *, struct itree_t *, struct gate_t *);
-extern void __free_del(union del_u, unsigned, int);
-extern char *__bld_delay_str(char *, union del_u, unsigned);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern char *__to_edgenam(char *, unsigned);
+extern void __free_del(union del_u, word32, int32);
+extern char *__bld_delay_str(char *, union del_u, word32);
+extern char *__bld_lineloc(char *, word32, int32);
+extern char *__to_edgenam(char *, word32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern void __xtract_wirng(struct expr_t *, struct net_t **, int *, int *);
+extern void __xtract_wirng(struct expr_t *, struct net_t **, int32 *, int32 *);
 extern void __add_alloc_mipd_npp(struct net_t *, struct mod_t *);
 extern void __re_prep_dels(struct net_t *, struct itree_t *, struct mod_t *,
- int);
+ int32);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern int __real_to_v64tim(word64 *, double);
-extern void __sizchgxs(register struct xstk_t *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
-extern int __wide_vval_is0(register word *, int);
-extern int __do_widecmp(int *, register word *, register word *, register word *, register word *, int);
-extern word __lsub(word *, word *, word *, int);
-extern void __ladd(word *, word *, word *, int);
-extern void __extract_delval(word64 *, int *, union del_u, unsigned);
-extern void __fill_16vconst(word64 *, word64 *, int);
-extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int, int);
-extern double __my_strtod(char *, char **, int *);
-extern unsigned long __my_strtoul(char *, char **, int *);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern int32 __real_to_v64tim(word64 *, double);
+extern void __sizchgxs(register struct xstk_t *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __do_widecmp(int32 *, register word32 *, register word32 *, register word32 *, register word32 *, int32);
+extern word32 __lsub(word32 *, word32 *, word32 *, int32);
+extern void __ladd(word32 *, word32 *, word32 *, int32);
+extern void __extract_delval(word64 *, int32 *, union del_u, word32);
+extern void __fill_16vconst(word64 *, word64 *, int32);
+extern void __fill_4vconst(word64 *, word64 *, word64 *, word64 *, int32, int32);
+extern double __my_strtod(char *, char **, int32 *);
+extern word32 __my_strtoul(char *, char **, int *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
 extern void __free_xtree(struct expr_t *);
 extern void __init_mod(struct mod_t *, struct sy_t *);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
-extern char * __get_eval_cstr(struct expr_t *, int *);
+extern char * __get_eval_cstr(struct expr_t *, int32 *);
 extern char *__to_timstr(char *, word64 *);
-extern int __cmp_xpr(struct expr_t *, struct expr_t *);
-extern void __bld_xtree(int);
+extern int32 __cmp_xpr(struct expr_t *, struct expr_t *);
+extern void __bld_xtree(int32);
 extern void __set_xtab_errval(void);
-extern int __alloc_shareable_cval(word, word, int);
-extern int __alloc_cval(int);
+extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
 extern struct expr_t *__alloc_exprnd(void);
 extern struct expridtab_t *__alloc_expridnd(char *);
 extern struct tenp_t *__bld_portbit_netbit_map(struct mod_pin_t *);
-extern void __setup_mipd(struct mipd_t *, struct net_t *, int);
+extern void __setup_mipd(struct mipd_t *, struct net_t *, int32);
 
 extern void __cv_msg(char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __finform(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __finform(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
 
 extern char __pv_ctab[];
-extern word __masktab[];
+extern word32 __masktab[];
 extern double __dbl_toticks_tab[];
 extern struct opinfo_t __opinfo[];
 
@@ -399,7 +399,7 @@ extern struct opinfo_t __opinfo[];
 extern void __process_sdf_files(void)
 {
  register struct sdfnamlst_t *sdfp;
- int sav_slin_cnt, sav_sfnam_ind;
+ int32 sav_slin_cnt, sav_sfnam_ind;
  char *sav_fnam;
 
  __sdf_from_cmdarg = TRUE;
@@ -478,10 +478,10 @@ static void alloc_sdf_mdp(void)
  * runs in isolation - all trace gone when routine returns
  * knows slin cnt environment set 
  */
-static void sdf_annotate(char *sdf_fnam, char *sdf_scopnam, int fnind,
- int slcnt)
+static void sdf_annotate(char *sdf_fnam, char *sdf_scopnam, int32 fnind,
+ int32 slcnt)
 {
- int sdfenum, sav_no_errs, sav_no_warns;
+ int32 sdfenum, sav_no_errs, sav_no_warns;
  struct expr_t *glbndp;
  char s1[RECLEN], s2[RECLEN];
 
@@ -589,8 +589,8 @@ annot_fail:
  */
 extern void __exec_sdf_annotate_systsk(struct expr_t *axp)
 {
- register int argi;
- int slen, slen2;
+ register int32 argi;
+ int32 slen, slen2;
  struct itree_t *cntxtitp;
  char *fnchp, *mtmchp, *sdflogfn_chp;
 
@@ -761,9 +761,9 @@ log_chg_done:
  * this runs in run time context $sdf_annotate task call
  */
 static void do_systsk_sdf_annotate(char *sdf_fnam, struct itree_t *itp,
- int fnind, int slcnt)
+ int32 fnind, int32 slcnt)
 {
- int sdfenum, sav_no_errs, sav_no_warns;
+ int32 sdfenum, sav_no_errs, sav_no_warns;
  char s1[RECLEN];
 
  /* open sdf annotation file */
@@ -824,9 +824,9 @@ static void do_systsk_sdf_annotate(char *sdf_fnam, struct itree_t *itp,
  *
  * use global __sdf_s stream to read sdf file
  */
-static void do_sdf_annotate(char *sdf_fnam, int fnind, int slcnt)
+static void do_sdf_annotate(char *sdf_fnam, int32 fnind, int32 slcnt)
 {
- int sav_lin_cnt, ndels;
+ int32 sav_lin_cnt, ndels;
  char *sav_fnam;
 
  /* assume none for these since form optional */
@@ -873,7 +873,7 @@ static void do_sdf_annotate(char *sdf_fnam, int fnind, int slcnt)
  else
   {
    __sdf_nd_tscale = TRUE;
-   __sdf_ts_units = (int) __des_timeprec - __sdf_timescale;
+   __sdf_ts_units = (int32) __des_timeprec - __sdf_timescale;
   }
 
  /* notice extra spaces insure no conflict with escaped ID */
@@ -894,7 +894,7 @@ static void do_sdf_annotate(char *sdf_fnam, int fnind, int slcnt)
  */
 static void free_sdf_hdrvals(void)
 {
- int slen;
+ int32 slen;
 
  if (__sdf_delp != NULL)
   {
@@ -967,9 +967,9 @@ static char *get_sdfcntxtnam(char *cntxtnam, struct itree_t *cntxt_itp)
 /*
  * initialize a vpi delay record
  */
-static void init_vpi_del(struct t_vpi_delay *vdp, int ndels)
+static void init_vpi_del(struct t_vpi_delay *vdp, int32 ndels)
 {
- register int i;
+ register int32 i;
  vdp->no_of_delays = 0;
  /* only type supported by SDF */
  vdp->time_type = vpiScaledRealTime;
@@ -1139,7 +1139,7 @@ get_process_nxtform:
     {
      __pv_fwarn(660,
       "SDF TIMESCALE unit %s less than minimum unit %s in design - round to 0 probable",
-     __to_timunitnam(__xs, (unsigned) __sdf_timescale),
+     __to_timunitnam(__xs, (word32) __sdf_timescale),
      __to_timunitnam(__xs2, __des_timeprec));
      return;
     }
@@ -1148,7 +1148,7 @@ get_process_nxtform:
    else
     {
      __sdf_nd_tscale = TRUE;
-     __sdf_ts_units = (int) __des_timeprec - __sdf_timescale;
+     __sdf_ts_units = (int32) __des_timeprec - __sdf_timescale;
     }
    if (!rd2_sdf_formtyp(f)) return;
   }
@@ -1169,7 +1169,7 @@ get_process_nxtform:
 /*
  * convert current runs mtm selector to a name
  */
-static char *mtm_sel_tonam(char *s, int mtmtyp)
+static char *mtm_sel_tonam(char *s, int32 mtmtyp)
 {
  if (mtmtyp == DEL_MIN) strcpy(s, "min");
  else if (mtmtyp == DEL_TYP) strcpy(s, "typ");
@@ -1183,9 +1183,9 @@ static char *mtm_sel_tonam(char *s, int mtmtyp)
  * here always returns some char - if error sets to default
  * form and value can be missing
  */
-static int rd_sdf_sepchar(FILE *f, char *sep)
+static int32 rd_sdf_sepchar(FILE *f, char *sep)
 {
- int c;
+ int32 c;
 
  /* this is tricky cannot use get sdf token - skips to any non white space */
  do { c = getc(f); } while(vis_white_(c)); 
@@ -1207,17 +1207,17 @@ static int rd_sdf_sepchar(FILE *f, char *sep)
  * read a timescale form ending value (TIMESCALE read
  * set tunits which is -1 to -15 normal timescale units value
  */
-static int rd_sdf_timescaleval(FILE *f, int *tunits)
+static int32 rd_sdf_timescaleval(FILE *f, int32 *tunits)
 {
- int mult, mval;
- unsigned t1;
+ int32 mult, mval;
+ word32 t1;
  char *chp;
 
  get_sdftok(f);
  if (__toktyp == RPAR) { *tunits = 9; return(TRUE); }
  /* 1ns form - will still return just number */ 
- if (__toktyp == REALNUM) mval = (int) __itok_realval;
- else if (__toktyp == NUMBER) mval = (int) __sdf_tokval;
+ if (__toktyp == REALNUM) mval = (int32) __itok_realval;
+ else if (__toktyp == NUMBER) mval = (int32) __sdf_tokval;
  else 
   {
    __pv_ferr(1318,
@@ -1252,7 +1252,7 @@ bad_timfmt:
   {
    if (t1 == 0 && mult != 0) goto bad_timfmt;
    /* 10 subtracts 1 and 100 subtracts 2 - i.e ns (9 - 2 (for 10) = 7 */
-   *tunits = (int) t1 - mult;
+   *tunits = (int32) t1 - mult;
   }
  get_sdftok(f);
  if (__toktyp != RPAR) { formend_err("TIMESCALE"); return(FALSE); }
@@ -1271,9 +1271,9 @@ bad_timfmt:
  * on exit has read ending ) but not eof
  * instances qualified names - for paths must select exact instance
  */
-static int rdset_sdf_cells(FILE *f)
+static int32 rdset_sdf_cells(FILE *f)
 {
- int all_insts, i1, i2;
+ int32 all_insts, i1, i2;
  struct itree_t *itp, *top_itp;
  struct expr_t *glbndp;
  struct mod_t *ctmdp;
@@ -1554,7 +1554,7 @@ nxt_cell:
 static struct itree_t *get_sdfdownrel_itp(struct expr_t *glbndp,
  struct itree_t *cntxt_itp, struct sy_t **tailsyp, char *errmsg) 
 {
- int ii;
+ int32 ii;
  byte *bp1, *bp2;
  struct expr_t *gcmp_ndp;
  struct itree_t *itp;
@@ -1626,7 +1626,7 @@ static struct itree_t *get_sdfdownrel_itp(struct expr_t *glbndp,
     }
    else
     {
-     int indx;
+     int32 indx;
      struct xstk_t *xsp;
 
      /* DBG remove -- */
@@ -1688,10 +1688,10 @@ static struct itree_t *get_sdfdownrel_itp(struct expr_t *glbndp,
  * (DEVICE that is abbreviation for all paths handled elsewhere
  * know DEVICE keyword or ) read
  */
-static int rdset_prim_delay(FILE *f, struct sy_t *tsyp, int i1, char *inam,
+static int32 rdset_prim_delay(FILE *f, struct sy_t *tsyp, int32 i1, char *inam,
  struct sy_t *gisyp)
 {
- int first_time, gi;
+ int32 first_time, gi;
  char *chp;
  byte *bp1, *bp2;
  struct giarr_t *giap;
@@ -1862,10 +1862,10 @@ done:
  * for (CELL (CELLTYPE "RSLATCH") (INSTANCE * bufa) (DEVICE 3 4))
  * itp=nil, 
  */
-static int prim_rdset_device_del(FILE *f, struct itree_t *itp,
+static int32 prim_rdset_device_del(FILE *f, struct itree_t *itp,
  struct sy_t *tsyp, struct gate_t *ctgp)
 {
- int first_time, first2_time, ndels, lcnt, sav_lcnt;
+ int32 first_time, first2_time, ndels, lcnt, sav_lcnt;
  char formnam[RECLEN];
 
  for (first_time = TRUE;;) 
@@ -1947,7 +1947,7 @@ static int prim_rdset_device_del(FILE *f, struct itree_t *itp,
 static void set_device_del(struct itree_t *itp, struct gate_t *ctgp,
  struct sy_t *tsyp)
 {
- int ndels, dfix;
+ int32 ndels, dfix;
  struct gate_t ogat, ngat;
  struct mod_t *mdp;
  char s1[IDLEN];
@@ -2052,7 +2052,7 @@ static void set_device_del(struct itree_t *itp, struct gate_t *ctgp,
 static void prep_sdfdev_verbmsg(struct gate_t *gp, struct gate_t *ogp,
  struct itree_t *itp, struct mod_t *mdp)
 {
- register int ii;
+ register int32 ii;
  register struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN];
 
@@ -2100,9 +2100,9 @@ static void emit_sdfdev_verbmsg(struct gate_t *gp, struct gate_t *ogp,
  *
  * know first token read ([timing spec name] or )) and reads cell ending ) 
  */
-static int rdset_timing_spec(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
+static int32 rdset_timing_spec(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
 {
- int first_time;
+ int32 first_time;
 
  /* DBG remove -- */
  if (ctmdp == NULL) __arg_terr(__FILE__, __LINE__);
@@ -2163,9 +2163,9 @@ static char *get_sdfinam(char *s, struct itree_t *itp, struct mod_t *ctmdp)
  * know (DELAY read - can be multiple deltyp records
  * reads ending )
  */
-static int rdset_deltyps(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
+static int32 rdset_deltyps(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
 {
- int first_time, i11, i12, i21, i22, pptyp;
+ int32 first_time, i11, i12, i21, i22, pptyp;
  char formnam[RECLEN], pnam1[IDLEN], pnam2[IDLEN];
 
  for (first_time = TRUE;;) 
@@ -2248,7 +2248,7 @@ static int rdset_deltyps(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
  * no error message if emsg nil, used for places where legal
  * to see if must find downward itree loc. 
  */
-static int port_qual_nam(char *nam, char *emsg)
+static int32 port_qual_nam(char *nam, char *emsg)
 {
  register char *chp, *chp2;
 
@@ -2279,7 +2279,7 @@ emit_msg:
  * ( read and reads one after ending )
  * fills pos. 1 of global sdf delp but does not set number of delays
  */
-static int rd_1_val(FILE *f, char *formnam)
+static int32 rd_1_val(FILE *f, char *formnam)
 {
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
 
@@ -2302,7 +2302,7 @@ static int rd_1_val(FILE *f, char *formnam)
  * fill work value tables position 0 - no need to pre-initialize
  * ( read and reads one after ending )
  */
-static int rd2_1_val(FILE *f)
+static int32 rd2_1_val(FILE *f)
 {
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
 
@@ -2320,9 +2320,9 @@ static int rd2_1_val(FILE *f)
  * fill work value tables position 0 and maybe 1 - no need to pre-initialize
  * ( read and reads one after ending )
  */
-static int rd_1or2_vals(FILE *f, char *formnam)
+static int32 rd_1or2_vals(FILE *f, char *formnam)
 {
- int nvals;
+ int32 nvals;
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
 
  if (__toktyp != LPAR)
@@ -2353,9 +2353,9 @@ static int rd_1or2_vals(FILE *f, char *formnam)
  * fill work value tables position 0, 1, 2, and 3 - no need to pre-initialize
  * ( read and reads one after ending )
  */
-static int rd_4_vals(FILE *f, char *formnam)
+static int32 rd_4_vals(FILE *f, char *formnam)
 {
- int i;
+ int32 i;
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
 
  for (i = 0; i < 4; i++)
@@ -2380,10 +2380,10 @@ static int rd_4_vals(FILE *f, char *formnam)
  * grammar type is del_def+
  * name of del_def form read - reads form ending )
  */
-static int rd_deldef(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
+static int32 rd_deldef(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
  char *formnam)
 {
- int first_time;
+ int32 first_time;
 
  /* at least one required */
  for (first_time = TRUE;;) 
@@ -2477,11 +2477,11 @@ static void formend_err(char *formnam)
  * know (IOPATH read and reads ending )
  * qualified name illegal here
  */
-static int rd_iopath(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
- struct expr_t *cndx, int is_condelse, char *formnam)
+static int32 rd_iopath(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
+ struct expr_t *cndx, int32 is_condelse, char *formnam)
 {
  register struct pthlst_t *plp;
- int si1, si2, di1, di2, ndels, eval, sav_lcnt, lcnt;
+ int32 si1, si2, di1, di2, ndels, eval, sav_lcnt, lcnt;
  struct pthlst_t *plhd;
  char portsrc[IDLEN], portdst[IDLEN];
 
@@ -2550,9 +2550,9 @@ done:
 /*
  * convert SDF path string components to path string for output
  */
-static char *msg_sdfpath_tostr(char *s, char *psrcnam, int si1, int si2,
- int eval, char *pdstnam, int di1, int di2, struct expr_t *cndx,
- int is_condelse)
+static char *msg_sdfpath_tostr(char *s, char *psrcnam, int32 si1, int32 si2,
+ int32 eval, char *pdstnam, int32 di1, int32 di2, struct expr_t *cndx,
+ int32 is_condelse)
 {
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
 
@@ -2621,7 +2621,7 @@ static void set_1pthdel(struct pthlst_t *plp, struct itree_t *itp,
 static void prep_sdfiopath_verbmsg(struct spcpth_t *pthp, struct gate_t *ogp, 
  struct itree_t *itp, struct mod_t *mdp)
 {
- register int ii;
+ register int32 ii;
  register struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN];
 
@@ -2674,11 +2674,11 @@ static void emit_sdfiopath_verbmsg(struct spcpth_t *pthp, struct gate_t *ogp,
  * dfix is expected transitions for delay usually 4 (includes x/z) but
  * sometimes 2 or 3
  */
-static int upd_sdf_perinst_del(struct gate_t *ogp, p_vpi_delay delay_p,  
- struct mod_t *ctmdp, int is_path, int is_trireg, int dfix, char *sdfmsg)
+static int32 upd_sdf_perinst_del(struct gate_t *ogp, p_vpi_delay delay_p,  
+ struct mod_t *ctmdp, int32 is_path, int32 is_trireg, int32 dfix, char *sdfmsg)
 {
- register int ii;
- int has_err, none_chged;
+ register int32 ii;
+ int32 has_err, none_chged;
  struct gate_t wgat;
  struct itree_t *itp;
 
@@ -2771,7 +2771,7 @@ static int upd_sdf_perinst_del(struct gate_t *ogp, p_vpi_delay delay_p,
 /*
  * return T if instance itp under context itp (work up)
  */
-static int itp_under_cntxt(register struct itree_t *itp)
+static int32 itp_under_cntxt(register struct itree_t *itp)
 {
  for (;;)
   {
@@ -2789,10 +2789,10 @@ static int itp_under_cntxt(register struct itree_t *itp)
  * even though in Verilog only posedge and negedge for path sources - for
  * SDF can any edge but will just not match 
  */
-static int rd_port_spec(FILE *f, char *pnam, int *i1, int *i2, int *eval,
- int is_tchk)
+static int32 rd_port_spec(FILE *f, char *pnam, int32 *i1, int32 *i2, int32 *eval,
+ int32 is_tchk)
 {
- int nd_rpar, ettyp;
+ int32 nd_rpar, ettyp;
 
  /* skip the edge form - form not currently readable because of [val][val] */
  *eval = NOEDGE;
@@ -2807,7 +2807,7 @@ static int rd_port_spec(FILE *f, char *pnam, int *i1, int *i2, int *eval,
     { 
      __pv_ferr(1340,
       "(IOPATH portspec port_edge %s impossible in Verilog - only posedge or negedge legal",
-      __to_edgenam(__xs, (unsigned) ettyp));
+      __to_edgenam(__xs, (word32) ettyp));
     } 
    nd_rpar = TRUE;
    get_sdftok(f);
@@ -2836,7 +2836,7 @@ static int rd_port_spec(FILE *f, char *pnam, int *i1, int *i2, int *eval,
  * vector ports can appear with or without range - SDF side determines
  * for matching
  */
-static int rd_port(FILE *f, char *portnam, int *i1, int *i2)
+static int32 rd_port(FILE *f, char *portnam, int32 *i1, int32 *i2)
 {
  *i1 = *i2 = -1;
  if (__toktyp != ID)
@@ -2873,11 +2873,11 @@ static int rd_port(FILE *f, char *portnam, int *i1, int *i2)
  * idea: only as much SDF constructs as needed must be code in SDF file 
  */
 static struct pthlst_t *bld_match_spcpth(struct mod_t *ctmdp, char *psrcnam,
- int si1, int si2, int eval, char *pdstnam, int di1, int di2, 
- struct expr_t *cndx, int is_condelse)
+ int32 si1, int32 si2, int32 eval, char *pdstnam, int32 di1, int32 di2, 
+ struct expr_t *cndx, int32 is_condelse)
 {
  register struct spcpth_t *pthp;
- int rv, rv2;
+ int32 rv, rv2;
  struct pathel_t *pep1, *pep2;
  struct pthlst_t *plp, *plhd, *plend;
 
@@ -2973,10 +2973,10 @@ static void free_pthlst(struct pthlst_t *pthlhd)
  * (COND read and reads ending )
  * LOOKATME - building token list as ascii string for matching
  */
-static int rd_del_def_cond(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
+static int32 rd_del_def_cond(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
  char *formnam)
 {
- int sav_declobj;
+ int32 sav_declobj;
  struct expr_t *cond_expr;
  char labnam[IDLEN];
 
@@ -3032,9 +3032,9 @@ static int rd_del_def_cond(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
  *
  * LOOKATME - uses pass 1 expr mechanism - see if works
  */
-static int col_cond_port_expr(FILE *f)
+static int32 col_cond_port_expr(FILE *f)
 {
- int last_sdftok;
+ int32 last_sdftok;
 
  /* this is illegal empty case */
  __last_xtk = -1;
@@ -3093,11 +3093,11 @@ col_expr:
  * puts ID name in expr_idtab that is changed to symbol in
  * parse term routine (either ID or xmr component)
  */
-static int sdf_bld_expnode(void)
+static int32 sdf_bld_expnode(void)
 {
- word *wp;
  struct opinfo_t *oip;
  struct expr_t *ndp;
+ struct xstk_t *xsp;
 
  ndp = __alloc_exprnd();
  switch ((byte) __toktyp) {
@@ -3125,9 +3125,15 @@ static int sdf_bld_expnode(void)
    ndp->is_real = TRUE;
    ndp->has_sign = TRUE;
    /* LOOKATME - SIZE assuming size of real is 8 bytes here */
-   ndp->ru.xvi = __alloc_cval(2);
+// ==========### SJM 02/17/05 - FIXME - WHY NOT PUT IN REAL CON TAB 
+   push_xstk_(xsp, WBITS);
+   memcpy(xsp->ap, &(__itok_realval), sizeof(double));
+   ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, 1);
+   __pop_xstk();
+/* ---
    wp = &(__contab[ndp->ru.xvi]);
    memcpy(wp, &__itok_realval, sizeof(double));
+--- */
    break;
   case TEOF: case LITSTR:
    /* since no error recovery in interactive - this is finish path */
@@ -3167,10 +3173,10 @@ static int sdf_bld_expnode(void)
  *
  * qualified (xmr) terminal name illegal here
  */
-static int rdset_tchk_defs(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
+static int32 rdset_tchk_defs(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
 {
  register struct tclst_t *tclp;
- int first_time, sdf_tctyp, tchktyp, ndels, lcnt, sav_lcnt, match_tctyp;
+ int32 first_time, sdf_tctyp, tchktyp, ndels, lcnt, sav_lcnt, match_tctyp;
  struct tchk_t *tcp; 
  struct tclst_t *tclhd;
  struct gate_t ogat, ngat;
@@ -3333,7 +3339,7 @@ nxt_tchk:
  * SDF that does not have setuphold's but has separate setup and hold forms
  */
 static void set_half_setuphold_tchk_defs(struct tclst_t *tclhd,
- int sdf_tctyp, struct itree_t *itp, struct mod_t *ctmdp)
+ int32 sdf_tctyp, struct itree_t *itp, struct mod_t *ctmdp)
 {
  register struct tclst_t *tclp;
  struct tchk_t *tcp;
@@ -3415,7 +3421,7 @@ static void set_half_setuphold_tchk_defs(struct tclst_t *tclhd,
  * SDF that does not have recrem's but has separate recovery and removal
  */
 static void set_half_recrem_tchk_defs(struct tclst_t *tclhd,
- int sdf_tctyp, struct itree_t *itp, struct mod_t *ctmdp)
+ int32 sdf_tctyp, struct itree_t *itp, struct mod_t *ctmdp)
 {
  register struct tclst_t *tclp;
  struct tchk_t *tcp;
@@ -3496,9 +3502,9 @@ static void set_half_recrem_tchk_defs(struct tclst_t *tclhd,
  * here for matching
  *
  */
-static int rdset_2term_1v_tchk(struct tclst_t **tclhd, int *match_tctyp,
- FILE *f, struct mod_t *ctmdp, char *sdf_tcnam, int tchktyp, int lcnt,
- int *sav_lcnt)
+static int32 rdset_2term_1v_tchk(struct tclst_t **tclhd, int32 *match_tctyp,
+ FILE *f, struct mod_t *ctmdp, char *sdf_tcnam, int32 tchktyp, int32 lcnt,
+ int32 *sav_lcnt)
 {
  struct tcterm_t reftct, dattct;
  
@@ -3606,8 +3612,8 @@ fail_do_free:
  * for (WIDTH, and (PERIOD
  * delay put into sdf delp global work vpi delay record
  */
-static int rdset_1term_1v_tchk(struct tclst_t **tclhd, FILE *f,
- struct mod_t *ctmdp, char *sdf_tcnam, int tchktyp, int lcnt, int *sav_lcnt)
+static int32 rdset_1term_1v_tchk(struct tclst_t **tclhd, FILE *f,
+ struct mod_t *ctmdp, char *sdf_tcnam, int32 tchktyp, int32 lcnt, int32 *sav_lcnt)
 {
  struct tcterm_t reftct;
  
@@ -3650,10 +3656,10 @@ static int rdset_1term_1v_tchk(struct tclst_t **tclhd, FILE *f,
  *
  * for (SETUPHOLD, (RECREM, and (NOCHANGE (no scond and cond for this)
  */
-static int rdset_2term_2v_tchk(struct tclst_t **tclhd, FILE *f,
- struct mod_t *ctmdp, char *sdf_tcnam, int tchktyp, int lcnt, int *sav_lcnt)
+static int32 rdset_2term_2v_tchk(struct tclst_t **tclhd, FILE *f,
+ struct mod_t *ctmdp, char *sdf_tcnam, int32 tchktyp, int32 lcnt, int32 *sav_lcnt)
 {
- int seen_scond, seen_ccond;
+ int32 seen_scond, seen_ccond;
  struct t_vpi_time tmpda;
  struct tcterm_t reftct, dattct;
 
@@ -3759,7 +3765,7 @@ read_cond:
 static void prep_sdftchk_verbmsg(struct tchk_t *tcp, char *tcnam,
  struct gate_t *ogp, struct itree_t *itp, struct mod_t *mdp, char *limnam)
 {
- register int ii;
+ register int32 ii;
  register struct itree_t *itp2;
  char s1[RECLEN], s2[RECLEN];
 
@@ -3807,10 +3813,10 @@ static void emit_sdftchk_verbmsg(struct tchk_t *tcp, char *tcnam,
  * other possibility just [port spec]
  * where [port spec] can be (edge [port ref.]) or [port ref.]
  */
-static int rd_port_tchk(FILE *f, struct tcterm_t *tctp)
+static int32 rd_port_tchk(FILE *f, struct tcterm_t *tctp)
 {
  char pnam[IDLEN];
- int i1, i2, eval, ettyp;
+ int32 i1, i2, eval, ettyp;
 
  tctp->ti1 = tctp->ti2 = -1;
  tctp->cndnam = NULL;
@@ -3862,10 +3868,10 @@ static int rd_port_tchk(FILE *f, struct tcterm_t *tctp)
  * know (COND read and reads final port spec and ending ) 
  * record good only if returns T
  */
-static int rd_tchk_cond(FILE *f, struct tcterm_t *tctp)
+static int32 rd_tchk_cond(FILE *f, struct tcterm_t *tctp)
 {
  char labnam[IDLEN], nam[IDLEN];
- int ni1, i1, i2, eval;
+ int32 ni1, i1, i2, eval;
 
  get_sdftok(f);
  /* save literal string "label" but for now not used */
@@ -3930,9 +3936,9 @@ static int rd_tchk_cond(FILE *f, struct tcterm_t *tctp)
  *
  * know scalar ID read and reads one past end
  */
-static int rd_scalar_node(FILE *f, char *nnam, int *i1)
+static int32 rd_scalar_node(FILE *f, char *nnam, int32 *i1)
 {
- int i2;
+ int32 i2;
 
  *i1 = -1;
  if (__id_qualpath)
@@ -3956,7 +3962,7 @@ static int rd_scalar_node(FILE *f, char *nnam, int *i1)
  * convert from SDF timing check token type to internal tchk number
  * returns -1 on error
  */
-static int from_sdf_tctyp(int sdf_tctyp)
+static int32 from_sdf_tctyp(int32 sdf_tctyp)
 {
  switch ((byte) sdf_tctyp) {
   case SDF_SETUP: return(TCHK_SETUP);
@@ -3989,12 +3995,12 @@ static int from_sdf_tctyp(int sdf_tctyp)
  * know reftctp always set but dattctp may be nil
  */
 static struct tclst_t *bld_match_tchk(struct mod_t *ctmdp,
- struct tcterm_t *reftctp, struct tcterm_t *dattctp, int tctyp,
+ struct tcterm_t *reftctp, struct tcterm_t *dattctp, int32 tctyp,
  char *sdf_tcnam)
 {
  register struct tchk_t *tcp;
- int tci1, tci2;
- int rv, rv2;
+ int32 tci1, tci2;
+ int32 rv, rv2;
  struct tclst_t *tclp, *tclhd, *tclend;
  struct net_t *np;
  char s1[RECLEN]; 
@@ -4105,10 +4111,10 @@ static struct tclst_t *bld_match_tchk(struct mod_t *ctmdp,
  * compare a tc term condition (know exists) against tchk condx (expr.)
  * returns T on match else F
  */
-static int same_tchk_cond(struct tcterm_t *tctp, struct expr_t *condxp)
+static int32 same_tchk_cond(struct tcterm_t *tctp, struct expr_t *condxp)
 {
- int i1, i2, cval; 
- word *wp;
+ int32 i1, i2, cval; 
+ word32 *wp;
  struct net_t *np;
  struct expr_t *xp;
 
@@ -4144,11 +4150,11 @@ do_scalar_var:
    xp = condxp->lu.x; 
    goto do_scalar_var;
   case RELCEQ: case RELEQ: case RELCNEQ: case RELNEQ:
-   if (tctp->cnd_op != (int) xp->optyp) return(FALSE); 
+   if (tctp->cnd_op != (int32) xp->optyp) return(FALSE); 
    if (xp->ru.x->szu.xclen != 1) __misc_terr(__FILE__, __LINE__);
    wp = &(__contab[xp->ru.x->ru.xvi]);
    if (wp[1] != 0L) __misc_terr(__FILE__, __LINE__);
-   cval = (int) wp[0];
+   cval = (int32) wp[0];
 
    if (cval != 0 && cval != 1) __misc_terr(__FILE__, __LINE__);
    if (cval != tctp->cnd_const) return(FALSE);
@@ -4194,11 +4200,11 @@ static void free_tct_insides(struct tcterm_t *tctp)
  *
  * here port can and will usually be qualified name
  */
-static int rdset_port_mipd(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
+static int32 rdset_port_mipd(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
  char *formnam)
 {
- register int ii;
- int sav_lcnt, lcnt, si1, si2, ndels, none_set;
+ register int32 ii;
+ int32 sav_lcnt, lcnt, si1, si2, ndels, none_set;
  struct itree_t *itp2;
  char qualport[IDLEN];
 
@@ -4255,11 +4261,11 @@ static int rdset_port_mipd(FILE *f, struct itree_t *itp, struct mod_t *ctmdp,
  * MIPD delays are 16 value (both old and new used in get_del)
  * know this called just before sim, i.e. n lds lists built
  */
-static void set_mipd_dels(struct itree_t *itp, char *qualport, int si1,
- int si2)
+static void set_mipd_dels(struct itree_t *itp, char *qualport, int32 si1,
+ int32 si2)
 {
- register int ndx;
- int fr, to, bi;
+ register int32 ndx;
+ int32 fr, to, bi;
  struct tenp_t *prtnetmap;
  struct mipd_t *mipdp;
  struct net_t *np;
@@ -4409,7 +4415,7 @@ static char *msgpref_tostr(char *s, struct mod_pin_t *mpp)
  */
 static struct itree_t *find_1under_itp(struct mod_t *ctmdp)
 {
- register int ii;
+ register int32 ii;
  struct itree_t *itp;
 
  /* if top level context, any will do, know at least one */
@@ -4434,7 +4440,7 @@ static struct itree_t *find_1under_itp(struct mod_t *ctmdp)
  * error is emitted
  * select of last component allowed
  */
-static int xtrct_portdev(struct itree_t **itp2, char *nam, char *qualport,
+static int32 xtrct_portdev(struct itree_t **itp2, char *nam, char *qualport,
  struct itree_t *itp, char *formnam, char *onam)
 {
  struct expr_t *glbndp;
@@ -4499,7 +4505,7 @@ static int xtrct_portdev(struct itree_t **itp2, char *nam, char *qualport,
 static struct mod_pin_t *get_inport_fr_nam(struct mod_t *mdp, char *pnam)
 {
  register struct net_pin_t *npp;
- int pi;
+ int32 pi;
  struct sy_t *syp;
  struct net_t *np; 
  struct mod_pin_t *mpp;
@@ -4535,9 +4541,9 @@ nd_srch:
  * slow sequential but only needed if not found in normal name space
  * maybe fix this - can be SDF problem if lots of sarching needed
  */
-static int getsrch_portnam(struct mod_t *mdp, register char *nam)
+static int32 getsrch_portnam(struct mod_t *mdp, register char *nam)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
 
  for (pi = 0; pi < mdp->mpnum; pi++)
@@ -4557,7 +4563,7 @@ static int getsrch_portnam(struct mod_t *mdp, register char *nam)
 static struct mod_pin_t *get_outport_fr_nam(struct mod_t *mdp, char *pnam)
 {
  register struct net_pin_t *npp;
- int pi;
+ int32 pi;
  struct sy_t *syp;
  struct net_t *np; 
  struct mod_pin_t *mpp;
@@ -4594,7 +4600,7 @@ nd_srch:
  */
 static struct mod_pin_t *get_bidport_fr_nam(struct mod_t *mdp, char *pnam)
 {
- int pi;
+ int32 pi;
  struct mod_pin_t *mpp;
 
  if ((pi = getsrch_portnam(mdp, pnam)) == -1) return(NULL);
@@ -4616,11 +4622,11 @@ static struct mod_pin_t *get_bidport_fr_nam(struct mod_t *mdp, char *pnam)
  * need to support single source (same as (PORT for path dest.)
  * because design compiler emits (INTERCONNECT delays
  */
-static int rdset_interconn_dels(FILE *f, struct itree_t *itp,
+static int32 rdset_interconn_dels(FILE *f, struct itree_t *itp,
  struct mod_t *ctmdp, char *formnam)
 {
- register int ii;
- int ndels, none_set, si1, si2, di1, di2, sav_lcnt, lcnt;
+ register int32 ii;
+ int32 ndels, none_set, si1, si2, di1, di2, sav_lcnt, lcnt;
  struct itree_t *itp2;
  char portsrc[IDLEN], portdst[IDLEN]; 
 
@@ -4675,10 +4681,10 @@ static int rdset_interconn_dels(FILE *f, struct itree_t *itp,
  * for all instances case - decomposed above so this called for each inst
  */
 static void chkset_interconn_dels(struct itree_t *itp, char *portsrc,
- int si1, int si2, char *portdst, int di1, int di2)
+ int32 si1, int32 si2, char *portdst, int32 di1, int32 di2)
 {
- register int ndx;
- int fr, to, swid, dwid, bi;
+ register int32 ndx;
+ int32 fr, to, swid, dwid, bi;
  struct tenp_t *prtnetmap;
  struct mipd_t *mipdp;
  struct itree_t *sitp2, *ditp2;
@@ -4841,7 +4847,7 @@ static void chkset_interconn_dels(struct itree_t *itp, char *portsrc,
 /*
  * build a port reference name
  */
-static char *bld_prefnam(char *s, char *pnam, int i1, int i2)
+static char *bld_prefnam(char *s, char *pnam, int32 i1, int32 i2)
 {
  if (i1 == -1) strcpy(s, pnam);
  else if (i1 == i2) sprintf(s, "%s[%d]", pnam, i1); 
@@ -4855,9 +4861,9 @@ static char *bld_prefnam(char *s, char *pnam, int i1, int i2)
  * this is called from inside dest range loop so same as full path
  */
 static void add_srcdst_impth(struct mipd_t *mipdp, struct mod_pin_t *smpp,
- int si1, int si2, struct itree_t *sitp, char *s1)
+ int32 si1, int32 si2, struct itree_t *sitp, char *s1)
 {
- int fr, to, bi, save_append_flg, ndx;
+ int32 fr, to, bi, save_append_flg, ndx;
  word64 tmpdval; 
  struct tenp_t *prtnetmap;
  struct gate_t ngat, ogat;
@@ -4923,10 +4929,10 @@ static void add_srcdst_impth(struct mipd_t *mipdp, struct mod_pin_t *smpp,
  * this can be qualified name (all outputs of the xmr path dest in xmr dest
  * cell) but iopath because have both source and dest. can not be qualified
  */
-static int rdset_devpath_dels(FILE *f, struct itree_t *itp,
+static int32 rdset_devpath_dels(FILE *f, struct itree_t *itp,
  struct mod_t *ctmdp, char *formnam)
 {
- int si1, si2, ndels, sav_lcnt, lcnt;
+ int32 si1, si2, ndels, sav_lcnt, lcnt;
  char portdst[IDLEN];
 
  /* DBG remove -- */
@@ -5003,12 +5009,12 @@ static void set_allpths_dels(struct itree_t *itp, struct mod_t *ctmdp)
  * this differs from all paths by matching output and range 
  * if any path component (, list in Verilog) matches delay is set for all 
  */
-static void set_alloutpths_dels(char *qualport, int pi1, int pi2,
+static void set_alloutpths_dels(char *qualport, int32 pi1, int32 pi2,
  struct itree_t *itp, struct mod_t *ctmdp)
 {
  register struct spcpth_t *pthp;
  register struct pthlst_t *plp;
- int pei;
+ int32 pei;
  struct pthlst_t *plhd, *plend;
  struct itree_t *cor_itp, *itp2;
  struct mod_t *mdp;
@@ -5092,7 +5098,7 @@ nxt_pth:;
  *
  * here always check inout and passed port type
  */
-static int not_a_port(char *pnam, int ptyp, struct mod_t *mdp, char *formnam)
+static int32 not_a_port(char *pnam, int32 ptyp, struct mod_t *mdp, char *formnam)
 {
  if (ptyp == IO_BID)
   {
@@ -5128,9 +5134,9 @@ static int not_a_port(char *pnam, int ptyp, struct mod_t *mdp, char *formnam)
  * maybe user would code timing checks for simulation checking?
  *
  */
-static int rdskip_te_defs(FILE *f)
+static int32 rdskip_te_defs(FILE *f)
 {
- int first_time, i1, i2, eval;
+ int32 first_time, i1, i2, eval;
  char tenam[RECLEN], constraint_name[IDLEN], pnam[IDLEN];
 
  if (__sdf_verbose)
@@ -5187,7 +5193,7 @@ bad_name:
        return(FALSE); 
       }
      if (__toktyp != RPAR) formend_err(tenam);
-     /* would process constaint here */
+     /* would process constaint32 here */
      break;
     case SDF_PERIODCONSTRAINT:
      get_sdftok(f);
@@ -5286,9 +5292,9 @@ bad_name:
  *
  * know ( read and reads ending )
  */
-static int rd_exception(FILE *f)
+static int32 rd_exception(FILE *f)
 {
- int first_time;
+ int32 first_time;
 
  get_sdftok(f);
  if (__toktyp != SDF_EXCEPTION)
@@ -5327,9 +5333,9 @@ bad_except:
  *
  * know ( read and reads ending )
  */
-static int rd_constraint_path(FILE *f, char *formnam, int required)
+static int32 rd_constraint_path(FILE *f, char *formnam, int32 required)
 {
- int i1, i2;
+ int32 i1, i2;
  char pnam[IDLEN];
  
  get_sdftok(f);
@@ -5349,9 +5355,9 @@ static int rd_constraint_path(FILE *f, char *formnam, int required)
  * LOOKATME - should always be (negedge (num))(posedge (num)) or opposite but  
  * not checked for now
  */
-static int rd_edgepair_list(FILE *f)
+static int32 rd_edgepair_list(FILE *f)
 {
- int first_time;
+ int32 first_time;
 
  for (first_time = TRUE;;)
   {
@@ -5405,12 +5411,12 @@ bad_elend:
  *
  * qualified names illegal here - (INSTANCE must select exact instance
  */
-static int rdset_labels(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
+static int32 rdset_labels(FILE *f, struct itree_t *itp, struct mod_t *ctmdp)
 {
- register int ii;
- int first_time, is_incr, is_minus, wlen, sav_lcnt, lcnt;
+ register int32 ii;
+ int32 first_time, is_incr, is_minus, wlen, sav_lcnt, lcnt;
  double d1;
- word *wp;
+ word32 *wp;
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
  struct sy_t *syp;
  struct net_t *np;
@@ -5541,7 +5547,7 @@ got_lab_param:
      if (np->srep == SR_PISNUM) 
       {
        wp = np->nva.wp;
-       np->nva.wp = (word *) __my_malloc(2*wlen*WRDBYTES);
+       np->nva.wp = (word32 *) __my_malloc(2*wlen*WRDBYTES);
        __my_free((char *) wp, mdp->flatinum*2*wlen*WRDBYTES); 
        np->srep = SR_PNUM; 
       }
@@ -5606,9 +5612,9 @@ done:
  * range illegal
  * itp and *itp2 can both be nil 
  */
-static int xtrct_param(struct itree_t **itp2, char *pnam, struct itree_t *itp)
+static int32 xtrct_param(struct itree_t **itp2, char *pnam, struct itree_t *itp)
 {
- int i1, i2;
+ int32 i1, i2;
  struct expr_t *glbndp;
  struct sy_t *tailsyp;
  char s1[IDLEN], s2[RECLEN];
@@ -5683,7 +5689,7 @@ static int xtrct_param(struct itree_t **itp2, char *pnam, struct itree_t *itp)
  */
 static struct xstk_t *sdf_push_rvalue(struct net_t *np, double d1)
 {
- int i1;
+ int32 i1;
  word64 timval;
  struct xstk_t *xsp;
 
@@ -5691,9 +5697,9 @@ static struct xstk_t *sdf_push_rvalue(struct net_t *np, double d1)
   {
    if (np->ntyp == N_INT) 
     {
-     i1 = (int) d1;
+     i1 = (int32) d1;
      push_xstk_(xsp, np->nwid);
-     xsp->ap[0] = (word) i1;
+     xsp->ap[0] = (word32) i1;
      xsp->bp[0] = 0L;
     }
    else
@@ -5706,8 +5712,8 @@ static struct xstk_t *sdf_push_rvalue(struct net_t *np, double d1)
        return(NULL);
       }
      push_xstk_(xsp, 64);
-     xsp->ap[0] = (word) (timval & WORDMASK_ULL);
-     xsp->ap[1] = (word) ((timval >> 32) & WORDMASK_ULL);
+     xsp->ap[0] = (word32) (timval & WORDMASK_ULL);
+     xsp->ap[1] = (word32) ((timval >> 32) & WORDMASK_ULL);
      xsp->bp[0] = xsp->bp[1] = 0L;
      if (np->nwid != 64) __sizchgxs(xsp, np->nwid);
     }
@@ -5745,9 +5751,9 @@ static void emit_sdflblverb_msg(struct net_t *np, struct xstk_t *xsp,
  *
  * leaves expr. stack same as entry
  */
-static int sdf_adjust_incr(struct net_t *np, struct xstk_t *xsp, int is_minus)
+static int32 sdf_adjust_incr(struct net_t *np, struct xstk_t *xsp, int32 is_minus)
 {
- int i1, i2, isxz, cmp;
+ int32 i1, i2, isxz, cmp;
  double d1, d2;
  struct xstk_t *xsp2, *xsp3;
 
@@ -5770,18 +5776,18 @@ static int sdf_adjust_incr(struct net_t *np, struct xstk_t *xsp, int is_minus)
    __pop_xstk();
    return(FALSE);
   }
- /* int - result can be negative */
+ /* int32 - result can be negative */
  /* know neiher value can have x/z bits on */
  if (np->ntyp == N_INT)
   {
-   i1 = (int) xsp2->ap[0]; 
-   i2 = (int) xsp->ap[0];
+   i1 = (int32) xsp2->ap[0]; 
+   i2 = (int32) xsp->ap[0];
    if (is_minus) i2 -= i1; else i2 += i1;
    xsp->ap[0] = i2;
    __pop_xstk();
    return(TRUE);
   }
- /* unsigned case fits in word case */
+ /* word32 case fits in word32 case */
  if (np->nwid <= WBITS)
   {
    if (is_minus)
@@ -5790,7 +5796,7 @@ static int sdf_adjust_incr(struct net_t *np, struct xstk_t *xsp, int is_minus)
       {
 incr_neg:
        __pv_ferr(1250,
-        "(LABEL INCREMENT form impossible - unsigned parameter %s incremented value negative",
+        "(LABEL INCREMENT form impossible - word32 parameter %s incremented value negative",
         np->nsym->synam);
        __pop_xstk();
        return(FALSE);
@@ -5802,7 +5808,7 @@ incr_neg:
    __pop_xstk();
    return(TRUE);
   }
- /* unsigned wider than one word */
+ /* word32 wider than one word32 */
  push_xstk_(xsp3, np->nwid);
  if (is_minus)
   {
@@ -5829,13 +5835,13 @@ incr_neg:
  */
 extern void __chg_param_tois(struct net_t *np, struct mod_t *imdp)
 {
- register int ii;
- int wlen2x;
- word *wp, *wp2;
+ register int32 ii;
+ int32 wlen2x;
+ word32 *wp, *wp2;
 
  wlen2x = 2*wlen_(np->nwid);
  wp = np->nva.wp;
- wp2 = (word *) __my_malloc(wlen2x*WRDBYTES*imdp->flatinum); 
+ wp2 = (word32 *) __my_malloc(wlen2x*WRDBYTES*imdp->flatinum); 
  for (ii = 0; ii < imdp->flatinum; ii++)
   { memcpy(&(wp2[ii*wlen2x]), wp, WRDBYTES*wlen2x); }
  __my_free((char *) wp, WRDBYTES*wlen2x);
@@ -5862,12 +5868,12 @@ extern void __chg_param_tois(struct net_t *np, struct mod_t *imdp)
  * this can be called multiple times provided append flg turned off
  * also if append flg turned off, itp can be passed as il
  */
-static int bld_sdfnewdu(struct gate_t *ngp, struct gate_t *ogp,
- p_vpi_delay delay_p, struct itree_t *itp, int is_path, int is_trireg,
+static int32 bld_sdfnewdu(struct gate_t *ngp, struct gate_t *ogp,
+ p_vpi_delay delay_p, struct itree_t *itp, int32 is_path, int32 is_trireg,
  char *sdfmsg)
 {
- register int di;
- int ndels, ondels, negdel[16], empty_fld[16], has_emp;
+ register int32 di;
+ int32 ndels, ondels, negdel[16], empty_fld[16], has_emp;
  word64 tim[16], otim[16], ntim[16], *dtab;
 
  /* if empty place holders in delay p, set to old delay or 0 if append */ 
@@ -6012,11 +6018,11 @@ no_reduce1:
  * for empty () place holders, set empty_fld for pos. and time to 0
  * but also removed all end since have no effect
  */
-static int sdf_fillchk_tim(word64 *tim, int *negdel, int *empty_fld,
- int *has_emp, p_vpi_delay delay_p,  char *sdfmsg)
+static int32 sdf_fillchk_tim(word64 *tim, int32 *negdel, int32 *empty_fld,
+ int32 *has_emp, p_vpi_delay delay_p,  char *sdfmsg)
 {
- register int di, nndels;
- int ndels, has_empty;
+ register int32 di, nndels;
+ int32 ndels, has_empty;
  double d1;
  struct t_vpi_time *vpitimp;
 
@@ -6094,9 +6100,9 @@ static int sdf_fillchk_tim(word64 *tim, int *negdel, int *empty_fld,
  *
  * used for MIPDs to not set 0 delays
  */
-static int vpi_delay_all0s(p_vpi_delay delay_p)
+static int32 vpi_delay_all0s(p_vpi_delay delay_p)
 {
- register int di;
+ register int32 di;
  register struct t_vpi_time *vpitimp;
  double d1;
 
@@ -6144,9 +6150,9 @@ static int vpi_delay_all0s(p_vpi_delay delay_p)
  * SJM 10/23/00 - () not at end was not working - i.e. it was not being added
  * to delay list as empty form - now do not just skip when seeing ()
  */
-static int rd_sdf_dellst(FILE *f, char *formnam)
+static int32 rd_sdf_dellst(FILE *f, char *formnam)
 {
- register int nvals;
+ register int32 nvals;
  struct t_vpi_time *vtp = &(__sdf_delp->da[0]);
  struct t_vpi_time tmpvtim;
 
@@ -6246,10 +6252,10 @@ nxt_del:
  * LOOKATME - possibly faster if not always convert to double but
  * think SDF standard requires
  */
-static int rd_rtriple(FILE *f, register struct t_vpi_time *dap)
+static int32 rd_rtriple(FILE *f, register struct t_vpi_time *dap)
 {
  double d1, d2, d3;
- register int has_min, has_typ, has_max;
+ register int32 has_min, has_typ, has_max;
 
  d1 = d2 = d3 = 0.0;
  dap->type = vpiScaledRealTime;
@@ -6311,7 +6317,7 @@ set_val:
  * get a form ([name] (name in token) or )
  * return F on error
  */
-static int rd_sdf_formtyp(FILE *f)
+static int32 rd_sdf_formtyp(FILE *f)
 {
  if (__toktyp != LPAR)
   {
@@ -6333,7 +6339,7 @@ static int rd_sdf_formtyp(FILE *f)
  * get a form ([name] (name in token) - error if not present
  * return F on error
  */
-static int rd2_sdf_formtyp(FILE *f)
+static int32 rd2_sdf_formtyp(FILE *f)
 {
  get_sdftok(f);
  if (__toktyp != LPAR)
@@ -6356,7 +6362,7 @@ static int rd2_sdf_formtyp(FILE *f)
  * puts string into sdf work string - caller must allocate
  * in SDF 3.0, value can not be missing
  */
-static int rd_sdf_strval(FILE *f)
+static int32 rd_sdf_strval(FILE *f)
 {
  get_sdftok(f);
  if (__toktyp != LITSTR)
@@ -6432,11 +6438,11 @@ static void get_sdftok(FILE *f)
  */
 static void get_sdftok(FILE *f)
 {
- /* the char must be an int for machine independence */
- register int c, ctval;
+ /* the char must be an int32 for machine independence */
+ register int32 c, ctval;
  register char *cp;
- register int len, c1, t1typ;
- int toolong;
+ register int32 len, c1, t1typ;
+ int32 toolong;
  
  len = 0;
  /* these must be turned off because possibly set by last call */
@@ -6695,10 +6701,10 @@ end_id:
 /*
  * read a comment (either / * or //)
  */
-static int sdf_rd_comment(FILE *f)
+static int32 sdf_rd_comment(FILE *f)
 {
- register int c;
- int c2;
+ register int32 c;
+ int32 c2;
 
  c2 = getc(f);
  /* /[ID] possible as path - return with indicator */  
@@ -6746,11 +6752,11 @@ got_star:
 /*
  * collect an sdf file form string
  */
-static int sdf_collect_str(FILE *f)
+static int32 sdf_collect_str(FILE *f)
 {
  register char *cp;
- register int c;
- int namlen;
+ register int32 c;
+ int32 namlen;
 
  for (cp = __token, namlen = 0;;)
   {
@@ -6788,10 +6794,10 @@ unterm_str:
  * collect a number and convert to value
  * if has . becomes real - this uses c scanf to read
  */
-static int sdf_collect_num(FILE *f, int c)
+static int32 sdf_collect_num(FILE *f, int32 c)
 {
  register char *cp;
- int c1, fill, namlen, is_real, errnum, signv, t1;
+ int32 c1, fill, namlen, is_real, errnum, signv, t1;
  double d1;
  char *endp;
  
@@ -6868,11 +6874,11 @@ got_num:
  * this builds the Verilog path ID that is converted to xmr expr later
  * indices here extracted according to SDF format and convert to Verilog fmt
  */
-static int chkcnv_sdfpath(char *verid, int *i1, int *i2, char *sdfid,
- int allow_select)
+static int32 chkcnv_sdfpath(char *verid, int32 *i1, int32 *i2, char *sdfid,
+ int32 allow_select)
 {
  register char *chp, *chp2;
- int ind1, ind2;
+ int32 ind1, ind2;
  char s1[IDLEN], s2[RECLEN];
 
  /* step 1: convert from rooted if needed */
@@ -6949,11 +6955,11 @@ again:
  * if called with path (non escaped separator(s)) in non path context
  * becomes escaped ID and will probably not match Verilog 
  */
-static int chkcnv_sdfid(char *verid, int *i1, int *i2, char *sdfid,
- int allow_select)
+static int32 chkcnv_sdfid(char *verid, int32 *i1, int32 *i2, char *sdfid,
+ int32 allow_select)
 {
  register char *chp, *chp2;
- int nd_escver_id;
+ int32 nd_escver_id;
  char s1[IDLEN], s2[IDLEN];
 
  *i1 = *i2 = -1;
@@ -7015,7 +7021,7 @@ toolong:
  * because passed with real (non escaped) [ at start no escape checking needed
  * escaped digit or escaped ] is error
  */
-static int sdf_getsel_indices(int *i1, int *i2, char *s)
+static int32 sdf_getsel_indices(int32 *i1, int32 *i2, char *s)
 {
  register char *chp, *chp2;
  char s1[RECLEN], s2[RECLEN];
@@ -7060,9 +7066,9 @@ static int sdf_getsel_indices(int *i1, int *i2, char *s)
  * after reading ([name] form - skip to matching )
  * returns F on no match before eof
  */
-static int sdf_skip_form(FILE *f)
+static int32 sdf_skip_form(FILE *f)
 {
- register int par_cnt = 0;
+ register int32 par_cnt = 0;
 
  for (;;)
   {
@@ -7082,10 +7088,10 @@ static int sdf_skip_form(FILE *f)
  * timing checks allow edge expressions but not paths
  * only called in places where operators illegal
  */
-static int rd_edge_ident(FILE *f)
+static int32 rd_edge_ident(FILE *f)
 {
  register char *cp;
- int c, ctval, len;
+ int32 c, ctval, len;
 
  /* skip white space */
  do { ctval = sdf_ctab[(c = getc(f)) & 0x7f]; } while (ctval == 1);
@@ -7128,9 +7134,9 @@ static int rd_edge_ident(FILE *f)
  * this must read chars since not normal tokens
  * this expect nothing read and reads just to end of constant
  */
-static int rd_scalar_const(FILE *f)
+static int32 rd_scalar_const(FILE *f)
 {
- int c, ctval;
+ int32 c, ctval;
 
  /* skip white space */
  do { ctval = sdf_ctab[(c = getc(f)) & 0x7f]; } while (ctval == 1);
@@ -7229,7 +7235,7 @@ static char *prt_sdftok(void)
 /* keyword types (already know token is a name) */
 struct sdfkeywds_t {
  char *sknam;
- int sknum;
+ int32 sknum;
 };
 
 /* since sharing operators for expr. processing with Verilog, first > 99 */
@@ -7299,10 +7305,10 @@ static struct sdfkeywds_t skeywds[] = {
  * determine type of keyword or ident
  * binary search because the table is so big
  */
-static int get_sdfkeywrd(register char *tstr)
+static int32 get_sdfkeywrd(register char *tstr)
 {
- int l, h;
- register int m, cv;
+ int32 l, h;
+ register int32 m, cv;
 
  l = 0; h = NSKEYWDS - 1;
  for (;;)
@@ -7319,9 +7325,9 @@ static int get_sdfkeywrd(register char *tstr)
  * determine keyword name from number
  * must use linear search since not sorted
  */
-static char *get_skeynam(char *s, int knum)
+static char *get_skeynam(char *s, int32 knum)
 {
- register int vi;
+ register int32 vi;
 
  for (vi = 0; vi < NSKEYWDS; vi++)
   {

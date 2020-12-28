@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -55,124 +55,125 @@ static void resolve_from_ydir(struct vylib_t *);
 static struct undef_t *add_undef_el(struct sy_t *, struct undef_t **,
  struct undef_t **);
 static void bld_ylb_dirfiles(struct vylib_t *);
-static int srch_yfiles(char *, struct mydir_t *, unsigned);
-static int fn_cmp(const void *, const void *);
+static int32 srch_yfiles(char *, struct mydir_t *, word32);
+static int32 fn_cmp(const void *, const void *);
 static void rd_vlibfil(struct undef_t *);
 static void rescan_process_lib(void);
 static void rescan_resolve_from_ydir(struct vylib_t *, struct undef_t *);
 static void free_tnblks(void);
 static void sep_mdgates(void);
-static int count_minum_and_mgnum(int *, struct mod_t *);
+static int32 count_minum_and_mgnum(int32 *, struct mod_t *);
 static void cellrep_to_gate(struct cell_t *, struct gate_t *);
 static void add_mod_attrs_toinst(struct inst_t *);
-static int pndparams_explicit(struct namparam_t *, int *);
+static int32 pndparams_explicit(struct namparam_t *, int32 *);
 static struct paramlst_t *bld_gate_paramlst(struct namparam_t *);
-static void bld_giarr(struct mod_t *, int, struct cell_t *, int);
+static void bld_giarr(struct mod_t *, int32, struct cell_t *, int32);
 static void init_giarr(struct giarr_t *);
-static int cnt_gateprts(struct cell_t *);
+static int32 cnt_gateprts(struct cell_t *);
 static void cellrep_to_inst(struct cell_t *, struct inst_t *);
 static void init_inst(struct inst_t *);
 static struct expr_t **inst_nparms_to_xtab(struct namparam_t *,
  struct inst_t *);
 static struct expr_t **match_namparam_exprtab(struct namparam_t *,
  struct inst_t *);
-static int chk1_pndparam(char *, struct inst_t *, struct namparam_t *,
- int, int);
-static int prmtab_cmp(const void *, const void *);
+static int32 chk1_pndparam(char *, struct inst_t *, struct namparam_t *,
+ int32, int32);
+static int32 prmtab_cmp(const void *, const void *);
 static struct expr_t **match_implprm_exprtab(struct namparam_t *,
  struct inst_t *);
-static void bld_miarr(struct mod_t *, int, struct cell_t *, int);
-static int fix_modcell_nl(void);
-static int count_static_instances(struct mod_t *);
-static int chk_dag(void);
+static void bld_miarr(struct mod_t *, int32, struct cell_t *, int32);
+static int32 fix_modcell_nl(void);
+static int32 count_static_instances(struct mod_t *);
+static int32 chk_dag(void);
 static void fix_port_conns(void);
 static void setchk_modports(void);
-static int chk_prtref(struct expr_t *, struct mod_pin_t *, int);
-static int chk_prtntyp(struct mod_pin_t *, struct net_t *);
+static int32 chk_prtref(struct expr_t *, struct mod_pin_t *, int32);
+static int32 chk_prtntyp(struct mod_pin_t *, struct net_t *);
 static void conn_mod_insts(void);
 static void conn_impl_mports(struct inst_t *, struct cell_pin_t *,
  struct mod_t *, struct expr_t **, struct srcloc_t *);
 static void conn_expl_mports(struct inst_t *, struct cell_pin_t *,
  struct mod_t *, struct expr_t **, struct srcloc_t *);
-static int chk_mdports_named(struct inst_t *, struct mod_t *, struct expr_t **);
+static int32 chk_mdports_named(struct inst_t *, struct mod_t *, struct expr_t **);
 static void bld_srted_mdpins(struct mod_t *);
-static int smp_cmp(const void *, const void *);
-static int bld_srted_ipins(struct inst_t *, register struct cell_pin_t *,
- int, struct cell_pin_t **);
-static int cpn_cmp(const void *, const void *);
+static int32 smp_cmp(const void *, const void *);
+static int32 bld_srted_ipins(struct inst_t *, register struct cell_pin_t *,
+ int32, struct cell_pin_t **);
+static int32 cpn_cmp(const void *, const void *);
 static void free_cpblks(void);
 static void free_cppblks(void);
 static void count_flat_insts(void);
 static void count2_flat_insts(struct mod_t *);
 static void chg_params_to_tab(void);
-static int cnt_prms(struct net_t *);
+static int32 cnt_prms(struct net_t *);
 static void free_param_listform(struct net_t *);
 static void do_giarr_splitting(void);
 static void mark_gia_rng_params(struct mod_t *);
-static int in_giarng_markparam(struct giarr_t *, struct expr_t *);
-static int down_hasgiarngdet_param(struct mod_t *);
+static int32 in_giarng_markparam(struct giarr_t *, struct expr_t *);
+static int32 down_hasgiarngdet_param(struct mod_t *);
 static void bld_top_virtinsts(void);
-static int topip_cmp(const void *, const void *);
+static int32 topip_cmp(const void *, const void *);
 static void save_all_param_vals(void);
 static void free_all_param_vals(void);
 static void set_giarr_ranges(void);
 static void eval1_arr_of_gates_rng(struct giarr_t *, struct mod_t *,
- struct itree_t *, int);
-static int gi_ndxexpr_chk(struct expr_t *, int, int, char *); 
-static int gi_ndxval_chk(struct xstk_t *, int, int, char *);
+ struct itree_t *, int32);
+static int32 gi_ndxexpr_chk(struct expr_t *, int32, int32, char *); 
+static int32 gi_ndxval_chk(struct xstk_t *, int32, int32, char *);
 static void eval1_arr_of_insts_rng(struct giarr_t *, struct mod_t *,
- struct itree_t *, int);
+ struct itree_t *, int32);
 static void set_pnd_gi_rnges(void);
 static void set2_pnd_gi_rnges(struct mod_t *, struct itree_t *);
 static void set_gia_expr_pndparms(struct expr_t *, struct itree_t *);
 static void set1_giarr_pndparm(struct net_t *, struct itree_t *); 
 static void unsave_gia_expr_pndparms(struct expr_t *, struct itree_t *);
 static void rebld_mod_giarrs(void);
-static int gia_sym_cmp(const void *, const void *);
-static void add_new_gsym(struct gate_t *, int);  
-static void add_new_isym(struct inst_t *, int); 
+static int32 gia_sym_cmp(const void *, const void *);
+static void add_new_gsym(struct gate_t *, int32);  
+static void add_new_isym(struct inst_t *, int32); 
 static void chk_defparams(void);
-static int lhs_chk1dfparam(struct dfparam_t *);
-static int gref_has_giarr_ndxes(struct gref_t *);
+static int32 lhs_chk1dfparam(struct dfparam_t *);
+static int32 gref_has_giarr_ndxes(struct gref_t *);
 static void set_1defparam_iis(struct dfparam_t *, struct gref_t *);
 static void resolve_xmrs(void);
-static int resolve_local_path(struct gref_t *, struct expr_t *);
-static int chk_xmr_tail_wire(struct gref_t *, struct sy_t *, int);
-static int fill_dfp_gsymhead(struct gref_t *, struct expr_t *);
-static int fill_gsymhead(struct gref_t *, struct expr_t *);
-static int chk_all_uprels_same(struct gref_t *, struct sy_t *, char *,
+static int32 resolve_local_path(struct gref_t *, struct expr_t *);
+static int32 chk_xmr_tail_wire(struct gref_t *, struct sy_t *, int32);
+static int32 fill_dfp_gsymhead(struct gref_t *, struct expr_t *);
+static int32 fill_gsymhead(struct gref_t *, struct expr_t *);
+static int32 chk_all_uprels_same(struct gref_t *, struct sy_t *, char *,
  struct expr_t *);
 static struct sy_t *fnd_uprel_inst(char *, struct itree_t *);
-static int fnd_uprel_mod(struct sy_t *, struct itree_t *);
+static int32 fnd_uprel_mod(struct sy_t *, struct itree_t *);
 static struct mod_t *fnd_uprel_tskfunc(struct sy_t **, char *,
  struct itree_t *);
 static struct sy_t *fnd_tskfunc_inscope(char *, struct symtab_t *);
-static int fill_grestsyms(struct gref_t *, struct expr_t *);
+static int32 fill_grestsyms(struct gref_t *, struct expr_t *);
 static struct sy_t *find_inmod_sym(struct gref_t *, struct expr_t *,
  struct sy_t *, struct symtab_t **);
-static int chk_glb_inst_sels(struct gref_t *);
+static int32 chk_glb_inst_sels(struct gref_t *);
 static void free_gone_glbs(void);
 static void mark_poundparam_splitinsts(void);
-static int indir_widthdet_markparam(struct expr_t *);
+static int32 indir_widthdet_markparam(struct expr_t *);
 static void do_poundparam_splitting(void);
-static void split_upd_mod(struct mod_t *, struct inst_t *, int); 
+static void split_upd_mod(struct mod_t *, struct inst_t *, int32); 
 static void copy_mod(struct mod_t *, char *);
 static void copy_modsymtabs(void);
 static void copy_lowsymtab(register struct symtab_t *, struct symtab_t *);
 static struct symtab_t *copy_1symtab(struct symtab_t *);
-static struct sy_t **copy_stsyms(struct sy_t **, unsigned);
+static struct sy_t **copy_stsyms(struct sy_t **, word32);
 static void copy_modports(void);
 static void copy_wires(struct symtab_t *);
-static struct net_t *copy_params(struct net_t *, int, int);
+static struct net_t *copy_params(struct net_t *, int32, int32);
 static void copy_defparams(void);
 static void copy_insts(void);
 static struct attr_t *copy_attrs(struct attr_t *);
-static void copy_1inst(struct inst_t *, struct inst_t *, int);
+static struct varinitlst_t *copy_varinits(struct varinitlst_t *);
+static void copy_1inst(struct inst_t *, struct inst_t *, int32);
 static struct expr_t **copy_pndxtab(struct inst_t *);
 static void copy_iports(struct inst_t *, struct inst_t *);
 static void copy_miarr(void);
 static void copy_gates(void);
-static void copy_1gate(struct gate_t *, struct gate_t *, int);
+static void copy_1gate(struct gate_t *, struct gate_t *, int32);
 static void copy_mgarr(void);
 static void copy_contas(void);
 static void copy_mdtasks(void);
@@ -189,27 +190,27 @@ static void copy_spcpths(struct spfy_t *, struct spfy_t *);
 static void copy_timchks(struct spfy_t *, struct spfy_t *);
 static struct tchk_t *copy1_tchk(struct tchk_t *);
 static void bld2_flat_itree(struct itree_t *);
-static int dmp_down_itree(struct itree_t *, int, int);
-static void do_dmp(struct itree_t *, int);
+static int32 dmp_down_itree(struct itree_t *, int32, int32);
+static void do_dmp(struct itree_t *, int32);
 static void free2_flat_itree(struct itree_t *);
 static void bld_moditps(void);
 static void bld2_itnum_to_itp(struct itree_t *);
 
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int, int);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32, int32);
 extern char *__pv_stralloc(char *);
 extern struct ncomp_t *__alloc_arrncomp(void);
 extern char *__prt_vtok(void);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern int __isleaf(struct expr_t *);
-extern int __wide_vval_is0(register word *, int);
+extern int32 __isleaf(struct expr_t *);
+extern int32 __wide_vval_is0(register word32 *, int32);
 extern struct expr_t *__alloc_newxnd(void);
 extern struct exprlst_t *__alloc_xprlst(void);
-extern char *__to_ptnam(char *, unsigned);
+extern char *__to_ptnam(char *, word32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_sytyp(char *, unsigned);
+extern char *__to_sytyp(char *, word32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern void __bld_flat_itree(void);
@@ -217,15 +218,15 @@ extern void __free_flat_itree(void);
 /* DBG */
 extern void __dmp_itree(struct itree_t *); 
 /* --- */
-extern struct sy_t *__zget_sym(char *, struct sy_t **, unsigned);
+extern struct sy_t *__zget_sym(char *, struct sy_t **, word32);
 extern struct sy_t *__add_modsym(char *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern struct symtab_t *__alloc_symtab(int);
+extern struct symtab_t *__alloc_symtab(int32);
 extern struct paramlst_t *__alloc_pval(void);
 extern struct delctrl_t *__alloc_dctrl(void);
 extern struct csitem_t *__alloc_csitem(void);
 extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern void __process_defparams(void);
 extern void __set_poundparams(void);
 extern void __process_timescales(void);
@@ -243,14 +244,14 @@ extern void __chkfix_spfy(void);
 extern void __free_specify(struct mod_t *);
 extern void __free_tchks(struct tchk_t *);
 extern void __emit_param_informs(void);
-extern void __grow_infils(int);
-extern void __my_free(char *, int);
+extern void __grow_infils(int32);
+extern void __my_free(char *, int32);
 extern void __get_vtok(void);
 extern void __process_cdir(void);
-extern int __vskipto_modend(int);
-extern int __vskipto2_modend(int, int);
-extern int __rd_moddef(struct symtab_t *, int);
-extern int __rd_udpdef(struct symtab_t *);
+extern int32 __vskipto_modend(int32);
+extern int32 __vskipto2_modend(int32, int32);
+extern int32 __rd_moddef(struct symtab_t *, int32);
+extern int32 __rd_udpdef(struct symtab_t *);
 extern void __my_rewind(FILE *);
 extern void __my_fclose(FILE *);
 extern FILE *__tilde_fopen(char *, char *);
@@ -258,57 +259,56 @@ extern void __free_xtree(struct expr_t *);
 extern void __free2_xtree(struct expr_t *);
 extern void __bld_unc_expr(void);
 extern void __in_xpr_markparam(struct expr_t *);
-extern int __chk_paramexpr(struct expr_t *, int);
-extern void __set_numval(struct expr_t *, word, word, int);
+extern int32 __chk_paramexpr(struct expr_t *, int32);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
 extern void __free_1dfparam(struct dfparam_t *);
-extern struct gref_t *__alloc_grtab(struct gref_t *, int);
+extern struct gref_t *__alloc_grtab(struct gref_t *, int32);
 extern void __resolve_glbnam(struct gref_t *);
-extern int __ip_indsrch(char *);
+extern int32 __ip_indsrch(char *);
 extern void __free_1glb_flds(struct gref_t *);
 extern void __bld_mlevel_lists(void);
 extern void __mark_widdet_params(struct mod_t *);
 extern void __do_mdsplit(struct mod_t *);
 extern void __init_itree_node(struct itree_t *);
-extern int __chk_giarr_ndx_expr(struct expr_t *);
-extern int __get_giarr_wide(struct giarr_t *);
-extern int __expr_has_glb(struct expr_t *);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
+extern int32 __chk_giarr_ndx_expr(struct expr_t *);
+extern int32 __get_giarr_wide(struct giarr_t *);
+extern int32 __expr_has_glb(struct expr_t *);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern void __free_namedparams(struct namparam_t *);
-extern int __chkndx_expr(struct expr_t *, char *);
+extern int32 __chkndx_expr(struct expr_t *, char *);
 extern void __cnvt_param_stkval(struct xstk_t *, struct expr_t *,
  struct net_t *, char *);
 extern void __assgn_nonis_param(struct net_t *, struct expr_t *,
  struct xstk_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern int __get_arrwide(struct net_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern int32 __get_arrwide(struct net_t *);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
 extern struct mod_t *__get_mast_mdp(struct mod_t *);
 extern void __set_drvr_bits(void);
-extern void __chk_chg_port_dir(int);
-extern int __open_lbfil(int);
-
+extern void __chk_chg_port_dir(int32);
+extern int32 __open_lbfil(int32);
 
 extern void __cv_msg(char *, ...);
 extern void __crit_msg(char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *,...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __finform(int, char *, ...);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __finform(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __gfterr(int, unsigned, int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_gfterr(char *, int, unsigned, int);
+extern void __sgfinform(int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __gfterr(int32, word32, int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_gfterr(char *, int32, word32, int32);
 
 /*
  * DESIGN WIDE SYNTAX/SEMANTICS CHECKING ROUTINES
@@ -319,7 +319,7 @@ extern void __misc_gfterr(char *, int, unsigned, int);
  * this is second pass on internal data structure
  * returns T to get cannot continue message
  */
-extern int __fixup_nl(void)
+extern int32 __fixup_nl(void)
 {
  register struct mod_t *mdp;
 
@@ -540,7 +540,7 @@ extern int __fixup_nl(void)
  */
 extern void __prt_top_mods(void)
 {
- register int tpii;
+ register int32 tpii;
  struct inst_t *ip;
 
  __cv_msg("Highest level modules:\n");
@@ -594,7 +594,7 @@ static void process_lib(void)
 {
  register struct undef_t *undefp;
  register struct vylib_t *vyp;
- int num_passes, sav_last_lbf;
+ int32 num_passes, sav_last_lbf;
  struct sy_t *syp;
 
  /* go thru libs in order */
@@ -677,9 +677,9 @@ static void process_lib(void)
  */
 static void resolve_from_ydir(struct vylib_t *vyp)
 {
- register int lbxi;
+ register int32 lbxi;
  register struct undef_t *undefp;
- int dfi, sav_last_lbf, got_err;
+ int32 dfi, sav_last_lbf, got_err;
  struct undef_t *tmphd, *tmptail, *tmpundefp, *undefp2;
  char fnam[IDLEN], stem[IDLEN];
 
@@ -791,8 +791,8 @@ static struct undef_t *add_undef_el(struct sy_t *syp,
  */
 static void bld_ylb_dirfiles(struct vylib_t *vyp)
 {
- register int last_fi;
- register int numdfils, siz_mydir, bytlen, obytlen;
+ register int32 last_fi;
+ register int32 numdfils, siz_mydir, bytlen, obytlen;
  DIR *dirp;
 #if defined(__SVR4) || defined(__hpux) || defined(__CYGWIN32__)
  struct dirent *dp;
@@ -850,7 +850,7 @@ static void bld_ylb_dirfiles(struct vylib_t *vyp)
    bytlen = numdfils*sizeof(struct mydir_t); 
    mdtab = (struct mydir_t *) __my_realloc((char *) mdtab, obytlen, bytlen); 
   } 
- qsort((char *) mdtab, (unsigned) numdfils, sizeof(struct mydir_t), fn_cmp); 
+ qsort((char *) mdtab, (word32) numdfils, sizeof(struct mydir_t), fn_cmp); 
  vyp->vyfnam_ind = numdfils;
  vyp->yfiles = mdtab;
  __num_ys++;
@@ -859,11 +859,11 @@ static void bld_ylb_dirfiles(struct vylib_t *vyp)
 /*
  * find index in sorted -y directory yfiles table
  */
-static int srch_yfiles(char *nam, struct mydir_t *mdtab, 
- unsigned numdfiles)
+static int32 srch_yfiles(char *nam, struct mydir_t *mdtab, 
+ word32 numdfiles)
 {
- int l, h;
- register int m, cv;
+ int32 l, h;
+ register int32 m, cv;
 
  if (numdfiles == 0) return(-1);
  l = 0; h = numdfiles - 1;
@@ -880,7 +880,7 @@ static int srch_yfiles(char *nam, struct mydir_t *mdtab,
 /*
  * module port name comparison routine
  */
-static int fn_cmp(const void *dp1, const void *dp2)
+static int32 fn_cmp(const void *dp1, const void *dp2)
 {
  return(strcmp(((struct mydir_t *) dp1)->dirfnam,
   ((struct mydir_t *) dp2)->dirfnam));
@@ -900,7 +900,7 @@ static int fn_cmp(const void *dp1, const void *dp2)
  */
 static void rd_vlibfil(struct undef_t *res_undefp)
 {
- int nd_repeat, len, rewind_pass;
+ int32 nd_repeat, len, rewind_pass;
  struct undef_t *hd, *tail, *undefp, *undefp2;
  struct sy_t *syp;
  char *chp, savtoken[IDLEN];
@@ -992,9 +992,7 @@ try_add_unref:
        __pv_ferr(708, "library file udp primitive name expected - %s read",
 	__prt_vtok());
        /* since err, just try to skip to end primitive */
-       __letendnum_state = TRUE;
        __vskipto_modend(ENDPRIMITIVE);
-       __letendnum_state = FALSE;
        goto nxt_tok;
       }
      /* if rescan specific one to resolve skip all but that one */
@@ -1003,16 +1001,13 @@ try_add_unref:
       { 
        /* must save module name - skip overwrites */
        strcpy(savtoken, __token);
-       __letendnum_state = TRUE;
        if (!__vskipto_modend(ENDPRIMITIVE))
         {
          __pv_ferr(702,
 	  "syntax error in skipped (defined or not referenced) library primitive %s",
           __token);
-         __letendnum_state = FALSE;
          goto nxt_tok;
         }
-       __letendnum_state = FALSE;
        goto try_add_unref;
       }
      /* notice name token read */
@@ -1097,7 +1092,7 @@ chk_ifdef:
  * in fils of last lbf must be filled with file name
  * since know last_lbf > last_inf - on EOF get_vtok will resturn to caller
  */
-extern int __open_lbfil(int is_dir)
+extern int32 __open_lbfil(int32 is_dir)
 {
  /* if not first time, close previous file */
  if (__visp->vi_s != NULL) { __my_fclose(__visp->vi_s); __visp->vi_s = NULL; }
@@ -1149,7 +1144,7 @@ static void rescan_process_lib(void)
  register struct vylib_t *vyp;
  struct undef_t *sav_undefhd;
  struct sy_t *syp;
- int sav_last_lbf, passi;
+ int32 sav_last_lbf, passi;
 
  if (__lib_verbose)
   {
@@ -1241,8 +1236,8 @@ resolve_nxt:;
 static void rescan_resolve_from_ydir(struct vylib_t *vyp,
  struct undef_t *undefp)
 {
- register int lbxi;
- int dfi, sav_last_lbf, got_err;
+ register int32 lbxi;
+ int32 dfi, sav_last_lbf, got_err;
  struct undef_t *tmpundefp, *undefp2, *tmphd, *tmptail;
  char fnam[IDLEN], stem[IDLEN];
 
@@ -1358,10 +1353,10 @@ static void free_tnblks(void)
  */
 static void chg_params_to_tab(void)
 {
- register int pi;
+ register int32 pi;
  register struct net_t *pnp, *pnp2;
  register struct mod_t *mdp;
- int pnum;
+ int32 pnum;
  struct net_t *nptab;
  struct task_t *tskp;
  struct spfy_t *spfyp;
@@ -1440,10 +1435,10 @@ nxt_mod:
 /*
  * count params in list form
  */
-static int cnt_prms(struct net_t *np)
+static int32 cnt_prms(struct net_t *np)
 {
  register struct net_t *parm_np;
- int pnum;
+ int32 pnum;
 
  for (pnum = 0, parm_np = np; parm_np != NULL; parm_np = parm_np->nu2.nnxt)
   { pnum++; }
@@ -1484,7 +1479,7 @@ static void free_param_listform(struct net_t *parm_np)
 static void sep_mdgates(void)
 {
  register struct cell_t *cp;
- int modinum, modgnum, ii, gi, nbytes;
+ int32 modinum, modgnum, ii, gi, nbytes;
  struct mod_t *mdp;
  struct inst_t *iptab;
  struct gate_t *gptab;
@@ -1557,10 +1552,10 @@ static void sep_mdgates(void)
  * need array that is parallel to itree array for instances so must
  * count in order to allocate before building array
  */
-static int count_minum_and_mgnum(int *gnum, struct mod_t *mdp)
+static int32 count_minum_and_mgnum(int32 *gnum, struct mod_t *mdp)
 {
  register struct cell_t *cp;
- int inum;
+ int32 inum;
  struct sy_t *syp;
 
  for (inum = *gnum = 0, cp = mdp->mcells; cp != NULL; cp = cp->cnxt)
@@ -1580,9 +1575,9 @@ static int count_minum_and_mgnum(int *gnum, struct mod_t *mdp)
  */
 static void cellrep_to_gate(struct cell_t *cp, struct gate_t *gp)
 {
- register int pi;
+ register int32 pi;
  register struct cell_pin_t *cpp;
- int pnum, nbytes, all_named;
+ int32 pnum, nbytes, all_named;
  char s1[RECLEN];
 
  /* how is a port connect lost */
@@ -1675,10 +1670,10 @@ static void cellrep_to_gate(struct cell_t *cp, struct gate_t *gp)
  * return T if param name list has any explicit named forms
  * if returns T, also sets flag if all are explicit form
  */
-static int pndparams_explicit(struct namparam_t *npmphdr, int *all_named)
+static int32 pndparams_explicit(struct namparam_t *npmphdr, int32 *all_named)
 {
  register struct namparam_t *npmp;
- int has_named, all2_named;
+ int32 has_named, all2_named;
 
  *all_named = FALSE;
  has_named = FALSE;
@@ -1701,7 +1696,7 @@ static int pndparams_explicit(struct namparam_t *npmphdr, int *all_named)
 static struct paramlst_t *bld_gate_paramlst(struct namparam_t *npmphdr)
 {
  register struct namparam_t *npmp;
- int pi;
+ int32 pi;
  struct paramlst_t *nplphdr, *nplp, *last_nplp;
 
  nplphdr = last_nplp = NULL;
@@ -1731,9 +1726,9 @@ static struct paramlst_t *bld_gate_paramlst(struct namparam_t *npmphdr)
  * build parallel array to mgates index element 
  * only called if array form has range expr
  */
-static void bld_giarr(struct mod_t *mdp, int gi, struct cell_t *cp, int mgnum)
+static void bld_giarr(struct mod_t *mdp, int32 gi, struct cell_t *cp, int32 mgnum)
 {
- int i;
+ int32 i;
  struct giarr_t *giap;
 
  if (mdp->mgarr == NULL)
@@ -1767,9 +1762,9 @@ static void init_giarr(struct giarr_t *giap)
  * build parallel array to marrs index element 
  * only called if module has arrays of insts
  */
-static void bld_miarr(struct mod_t *mdp, int ii, struct cell_t *cp, int minum)
+static void bld_miarr(struct mod_t *mdp, int32 ii, struct cell_t *cp, int32 minum)
 {
- int i;
+ int32 i;
  struct giarr_t *giap;
 
  if (mdp->miarr == NULL)
@@ -1788,10 +1783,10 @@ static void bld_miarr(struct mod_t *mdp, int ii, struct cell_t *cp, int minum)
 /*
  * count the number of ports a gate has
  */
-static int cnt_gateprts(struct cell_t *cp)
+static int32 cnt_gateprts(struct cell_t *cp)
 {
  register struct cell_pin_t *cpp;
- int pnum;
+ int32 pnum;
 
  for (pnum = 0, cpp = cp->cpins; cpp != NULL; cpp = cpp->cpnxt) pnum++;
  return(pnum);
@@ -1922,7 +1917,7 @@ nxt_mod_attr:;
 static struct expr_t **inst_nparms_to_xtab(struct namparam_t *npmphdr,
  struct inst_t *ip)
 {
- int all_named;
+ int32 all_named;
  struct expr_t **npxtab;
 
  /* new explicitly named form */
@@ -1957,7 +1952,7 @@ static struct expr_t **inst_nparms_to_xtab(struct namparam_t *npmphdr,
 static struct expr_t **match_namparam_exprtab(struct namparam_t *npmphdr,
  struct inst_t *ip)
 {
- register int pi;
+ register int32 pi;
  register struct namparam_t *npmp;
  struct mod_t *mdp;
  struct net_t *np, **prmtab;
@@ -1984,7 +1979,7 @@ static struct expr_t **match_namparam_exprtab(struct namparam_t *npmphdr,
    /* need original ndx of param (net) in table so can set after sorting */
    prmtab[pi]->nu2.npi = pi;
   }
- qsort((char *) prmtab, (unsigned) mdp->mprmnum, sizeof(struct net_t *),
+ qsort((char *) prmtab, (word32) mdp->mprmnum, sizeof(struct net_t *),
   prmtab_cmp); 
  /* allocate inst named param expr ptr table and set to unuused (ni) */
  npxtab = (struct expr_t **) __my_malloc(mdp->mprmnum*sizeof(struct expr_t *));
@@ -2045,7 +2040,7 @@ some_good:
 /*
  * compare for sort of table of ptrs order module parameter table
  */
-static int prmtab_cmp(const void *np1, const void *np2)
+static int32 prmtab_cmp(const void *np1, const void *np2)
 {
  return(strcmp((*((struct net_t **) np1))->nsym->synam,
  ((*(struct net_t **) np2))->nsym->synam));
@@ -2057,10 +2052,10 @@ static int prmtab_cmp(const void *np1, const void *np2)
  * if error, return -1 so caller does not add to ipx table
  * folding done later
  */
-static int chk1_pndparam(char *s1, struct inst_t *ip, struct namparam_t *npmp,
- int pi, int npi)
+static int32 chk1_pndparam(char *s1, struct inst_t *ip, struct namparam_t *npmp,
+ int32 pi, int32 npi)
 {
- int rv, sav_sfnam_ind, sav_slin_cnt;
+ int32 rv, sav_sfnam_ind, sav_slin_cnt;
  struct mod_t *imdp;
  struct net_t *parm_np;
 
@@ -2098,7 +2093,7 @@ static int chk1_pndparam(char *s1, struct inst_t *ip, struct namparam_t *npmp,
 static struct expr_t **match_implprm_exprtab(struct namparam_t *npmphdr,
  struct inst_t *ip)
 {
- register int pi;
+ register int32 pi;
  register struct namparam_t *npmp;
  struct mod_t *mdp;
  struct expr_t **npxtab;
@@ -2166,7 +2161,7 @@ static struct expr_t **match_implprm_exprtab(struct namparam_t *npmphdr,
  * parameter values still unknown but this builds global strength anal. and
  * splitting info
  */
-static int fix_modcell_nl(void)
+static int32 fix_modcell_nl(void)
 {
  register struct mod_t *mdp;
 
@@ -2191,9 +2186,9 @@ static int fix_modcell_nl(void)
  * 0 means top, 1 exactly once, 2 more than once
  * value here is static unflattened number of instantiations
  */
-static int count_static_instances(struct mod_t *mdp)
+static int32 count_static_instances(struct mod_t *mdp)
 {
- register int ii; 
+ register int32 ii; 
  register struct inst_t *ip;
  struct sy_t *syp;
  struct mod_t *imdp;
@@ -2217,11 +2212,11 @@ static int count_static_instances(struct mod_t *mdp)
  * check to see if any instantiation loops and set levelized level
  * for multiple instantiations level is level of lowest one
  */
-static int chk_dag(void)
+static int32 chk_dag(void)
 {
- register int ii;
+ register int32 ii;
  register struct mod_t *mdp;
- int i, change, allmark;
+ int32 i, change, allmark;
  struct inst_t *ip;
  struct mod_t *imdp;
 
@@ -2327,9 +2322,9 @@ static void fix_port_conns(void)
  */
 static void setchk_modports(void)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int pnum, port_gd;
+ int32 pnum, port_gd;
 
  if ((pnum = __inst_mod->mpnum) == 0) return;
  for (pi = 0; pi < pnum; pi++)
@@ -2366,8 +2361,8 @@ static void setchk_modports(void)
  * also checks and sets I/O direction
  * this is called before wire and port ranges known
  */
-static int chk_prtref(struct expr_t *ndp, struct mod_pin_t *mpp,
- int is_top)
+static int32 chk_prtref(struct expr_t *ndp, struct mod_pin_t *mpp,
+ int32 is_top)
 {
  struct net_t *np;
  struct expr_t *idndp;
@@ -2463,7 +2458,7 @@ chk_dir:
 /*
  * check a port wire to make sure net type legal
  */
-static int chk_prtntyp(struct mod_pin_t *mpp, struct net_t *np)
+static int32 chk_prtntyp(struct mod_pin_t *mpp, struct net_t *np)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -2496,9 +2491,9 @@ static int chk_prtntyp(struct mod_pin_t *mpp, struct net_t *np)
  */
 static void conn_mod_insts(void)
 {
- register int ii;
+ register int32 ii;
  register struct cell_pin_t *cpp;
- int nbytes;
+ int32 nbytes;
  struct inst_t *ip;
  struct sy_t *syp;
  struct mod_t *imdp;
@@ -2580,9 +2575,9 @@ nxt_cell:
 static void conn_impl_mports(struct inst_t *ip, struct cell_pin_t *cpp,
  struct mod_t *mdp, struct expr_t **xphdr, struct srcloc_t *srclocp)
 {
- register int pi;
+ register int32 pi;
  struct cell_pin_t *last_cpp;
- int pnum, num_unc_ports;
+ int32 pnum, num_unc_ports;
 
  ip->ip_explicit = FALSE;
  pnum = mdp->mpnum;
@@ -2656,10 +2651,10 @@ too_few:
 static void conn_expl_mports(struct inst_t *ip, struct cell_pin_t *cpp,
  struct mod_t *imdp, struct expr_t **xphdr, struct srcloc_t *srclocp)
 {
- register int pi, mpi;
- register int cpnum, pnum;
- register int cv;
- int num_unc_ports;
+ register int32 pi, mpi;
+ register int32 cpnum, pnum;
+ register int32 cv;
+ int32 num_unc_ports;
  struct cell_pin_t **srtcptab;
  struct srtmp_t *srtmptab;
  struct cell_pin_t *scpp;
@@ -2760,12 +2755,12 @@ free_pin_tab:
  * also initialized instance port expression table to NULL
  * only called for explicit conn. instances
  */
-static int chk_mdports_named(struct inst_t *ip,
+static int32 chk_mdports_named(struct inst_t *ip,
  struct mod_t *mdp, struct expr_t **xphdr)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int pnum, __err_seen;
+ int32 pnum, __err_seen;
 
  if ((pnum = mdp->mpnum) == 0) return(FALSE);
 
@@ -2792,11 +2787,11 @@ static int chk_mdports_named(struct inst_t *ip,
  */
 static void bld_srted_mdpins(struct mod_t *mdp)
 {
- register int pi; 
+ register int32 pi; 
  register struct srtmp_t *smpp;
  register struct mod_pin_t *mpp;
  struct srtmp_t *smptab;  
- int pnum;
+ int32 pnum;
 
  pnum = mdp->mpnum;
  smptab = (struct srtmp_t *) __my_malloc(pnum*sizeof(struct srtmp_t)); 
@@ -2807,13 +2802,13 @@ static void bld_srted_mdpins(struct mod_t *mdp)
    smpp->smp = mpp;
    smpp->mppos = pi;
   }
- qsort((char *) smptab, (unsigned) pnum, sizeof(struct srtmp_t), smp_cmp); 
+ qsort((char *) smptab, (word32) pnum, sizeof(struct srtmp_t), smp_cmp); 
 }
 
 /*
  * module port name comparison routine
  */
-static int smp_cmp(const void *srp1, const void *srp2)
+static int32 smp_cmp(const void *srp1, const void *srp2)
 {
  return(strcmp(((struct srtmp_t *) srp1)->smp->mpsnam,
  ((struct srtmp_t *) srp2)->smp->mpsnam));
@@ -2824,10 +2819,10 @@ static int smp_cmp(const void *srp1, const void *srp2)
  * built for each explicitly connected instance
  * free when instance connections made
  */
-static int bld_srted_ipins(struct inst_t *ip,
- register struct cell_pin_t *cpp, int pnum, struct cell_pin_t **scptab)
+static int32 bld_srted_ipins(struct inst_t *ip,
+ register struct cell_pin_t *cpp, int32 pnum, struct cell_pin_t **scptab)
 {
- register int pi; 
+ register int32 pi; 
  register struct cell_pin_t *cpp2;
  char *chp;
 
@@ -2842,7 +2837,7 @@ static int bld_srted_ipins(struct inst_t *ip,
     }
    scptab[pi] = cpp;
   }
- qsort((char *) scptab, (unsigned) pnum, sizeof(struct cell_pin_t *), cpn_cmp); 
+ qsort((char *) scptab, (word32) pnum, sizeof(struct cell_pin_t *), cpn_cmp); 
 
  /* must check for duplicate of same name since illegal */
  /* LOOKATME - think none impossible but doing nothing is right if happens */ 
@@ -2866,7 +2861,7 @@ static int bld_srted_ipins(struct inst_t *ip,
 /*
  * module port name comparison routine
  */
-static int cpn_cmp(const void *cpp1, const void *cpp2)
+static int32 cpn_cmp(const void *cpp1, const void *cpp2)
 {
  return(strcmp((*((struct cell_pin_t **) cpp1))->pnam,
   (*(struct cell_pin_t **) cpp2)->pnam));
@@ -2923,7 +2918,7 @@ static void free_cppblks(void)
  */
 static void count_flat_insts(void)
 {
- register int ii;
+ register int32 ii;
  register struct mod_t *mdp;
  struct inst_t *ip;
  struct mod_t *imdp;
@@ -2966,7 +2961,7 @@ static void count_flat_insts(void)
  */
 static void count2_flat_insts(struct mod_t *mdp)
 {
- register int ii;
+ register int32 ii;
  register struct inst_t *ip;
  struct mod_t *imdp;
 
@@ -2996,7 +2991,7 @@ static void count2_flat_insts(struct mod_t *mdp)
  */
 static void do_giarr_splitting(void)
 {
- register int ii, mlevel;
+ register int32 ii, mlevel;
  register struct mod_t *mdp; 
  struct inst_t *ip;
  struct mod_t *imdp;
@@ -3025,8 +3020,12 @@ static void do_giarr_splitting(void)
 
        /* because static src inst loc. has pnd params, if any gate must */
        /* try to set any gate range params */
-       if (!imdp->mgiarngdone && imdp->mgarr != NULL)
-        { mark_gia_rng_params(imdp); imdp->mgiarngdone = TRUE; }
+       /* AIV 07/12/04 - old checking and was wrong nad mark gia rng checks */
+       if (!imdp->mgiarngdone)
+        {
+         mark_gia_rng_params(imdp);
+         imdp->mgiarngdone = TRUE;
+        }
 
        /* eliminate if instance not arrayed at this src loc. */ 
        if (__inst_mod->miarr == NULL || __inst_mod->miarr[ii] == NULL)
@@ -3065,7 +3064,7 @@ static void do_giarr_splitting(void)
  */
 static void mark_gia_rng_params(struct mod_t *pmdp)
 {
- register int gi, ii;
+ register int32 gi, ii;
  struct giarr_t *giap;
 
  if (pmdp->mgarr != NULL)
@@ -3100,9 +3099,9 @@ static void mark_gia_rng_params(struct mod_t *pmdp)
  *
  * only called for expressions in gate/inst range indices
  */
-static int in_giarng_markparam(struct giarr_t *giap, struct expr_t *xp)
+static int32 in_giarng_markparam(struct giarr_t *giap, struct expr_t *xp)
 {
- int rv1, rv2;
+ int32 rv1, rv2;
  struct net_t *np;
 
  rv1 = rv2 = FALSE;
@@ -3130,9 +3129,9 @@ static int in_giarng_markparam(struct giarr_t *giap, struct expr_t *xp)
  * return T if any down instance (module type ipmdp) pound parameter
  * determines array of gates or instances range
  */
-static int down_hasgiarngdet_param(struct mod_t *ipmdp)
+static int32 down_hasgiarngdet_param(struct mod_t *ipmdp)
 {
- register int pi;
+ register int32 pi;
  struct net_t *parm_np;
  
  /* if # param list short ok, do not bother changing missing at end */
@@ -3178,9 +3177,9 @@ static int down_hasgiarngdet_param(struct mod_t *ipmdp)
  */
 static void bld_top_virtinsts(void)
 {
- register int tpii;
+ register int32 tpii;
  register struct mod_t *mdp;
- int ii;
+ int32 ii;
  struct inst_t *ip;
  struct sy_t *syp;
  struct itree_t *itp;
@@ -3238,9 +3237,9 @@ static void bld_top_virtinsts(void)
    ip->ip_explicit = FALSE;
    ip->ipins = NULL;
   }
- __top_ipind = (int *) __my_malloc(__numtopm*sizeof(int)); 
+ __top_ipind = (int32 *) __my_malloc(__numtopm*sizeof(int32)); 
  for (ii = 0; ii < __numtopm; ii++) __top_ipind[ii] = ii;
- qsort((char *) __top_ipind, (unsigned) __numtopm, sizeof(int), topip_cmp);
+ qsort((char *) __top_ipind, (word32) __numtopm, sizeof(int32), topip_cmp);
 
  /* table of pointers to root entries */
  __it_roots = (struct itree_t **)
@@ -3263,12 +3262,12 @@ static void bld_top_virtinsts(void)
 /*
  * comparison routines for sorting top modules index
  */
-static int topip_cmp(const void *ii1, const void *ii2)
+static int32 topip_cmp(const void *ii1, const void *ii2)
 {
  struct inst_t *ip1, *ip2;
 
- ip1 = __top_itab[*((int *) ii1)];
- ip2 = __top_itab[*((int *) ii2)];
+ ip1 = __top_itab[*((int32 *) ii1)];
+ ip2 = __top_itab[*((int32 *) ii2)];
  return(strcmp(ip1->imsym->synam, ip2->imsym->synam));
 }
 
@@ -3295,10 +3294,10 @@ extern void __init_itree_node(struct itree_t *itp)
  */
 static void save_all_param_vals(void)
 {
- register int pi;
+ register int32 pi;
  register struct mod_t *mdp;
  register struct net_t *parm_np;
- int nbytes;
+ int32 nbytes;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -3307,7 +3306,7 @@ static void save_all_param_vals(void)
    for (pi = 0, parm_np = &(mdp->mprms[0]); pi < mdp->mprmnum; pi++, parm_np++)
     {
      nbytes = 2*WRDBYTES*wlen_(parm_np->nwid);
-     parm_np->nu2.wp = (word *) __my_malloc(nbytes);
+     parm_np->nu2.wp = (word32 *) __my_malloc(nbytes);
      memcpy(parm_np->nu2.wp, parm_np->nva.wp, nbytes);
     }
   }
@@ -3318,7 +3317,7 @@ static void save_all_param_vals(void)
  */
 static void free_all_param_vals()
 {
- register int pi;
+ register int32 pi;
  register struct mod_t *mdp;
  register struct net_t *parm_np;
 
@@ -3353,7 +3352,7 @@ static void free_all_param_vals()
  */
 static void set_giarr_ranges(void)
 {
- register int gi, ii2;
+ register int32 gi, ii2;
  register struct mod_t *mdp;
  struct giarr_t *giap;
 
@@ -3403,9 +3402,9 @@ static void set_giarr_ranges(void)
  * elaborated values because defparams may change
  */
 static void eval1_arr_of_gates_rng(struct giarr_t *giap, struct mod_t *mdp,
- struct itree_t *itp, int gi)
+ struct itree_t *itp, int32 gi)
 {
- int bad_rng;
+ int32 bad_rng;
  struct gate_t *gp;
  struct xstk_t *xsp1, *xsp2;
 
@@ -3465,8 +3464,8 @@ static void eval1_arr_of_gates_rng(struct giarr_t *giap, struct mod_t *mdp,
  /* if error do not know range - convert back to one gate */
  if (!bad_rng) 
   {
-   giap->gia1 = (int) xsp1->ap[0];
-   giap->gia2 = (int) xsp2->ap[0];
+   giap->gia1 = (int32) xsp1->ap[0];
+   giap->gia2 = (int32) xsp2->ap[0];
   }
  __pop_xstk();
  __pop_xstk();
@@ -3476,7 +3475,7 @@ static void eval1_arr_of_gates_rng(struct giarr_t *giap, struct mod_t *mdp,
  * check a gate or instance array index constant expression 
  * returns F on error 
  */
-static int gi_ndxexpr_chk(struct expr_t *xp, int lfnind, int lcnt,
+static int32 gi_ndxexpr_chk(struct expr_t *xp, int32 lfnind, int32 lcnt,
  char *emsg) 
 {
  if (__expr_has_glb(xp) || !__chk_giarr_ndx_expr(xp))
@@ -3495,7 +3494,7 @@ static int gi_ndxexpr_chk(struct expr_t *xp, int lfnind, int lcnt,
  *
  * LOOKATME - maybe need warn or inform if >32 bits but higher 0's
  */
-static int gi_ndxval_chk(struct xstk_t *xsp, int lfnind, int lcnt, char *emsg)
+static int32 gi_ndxval_chk(struct xstk_t *xsp, int32 lfnind, int32 lcnt, char *emsg)
 {
  if (xsp->xslen > WBITS)
   {
@@ -3521,9 +3520,9 @@ static int gi_ndxval_chk(struct xstk_t *xsp, int lfnind, int lcnt, char *emsg)
  * elaborated values because defparams may change
  */
 static void eval1_arr_of_insts_rng(struct giarr_t *giap, struct mod_t *mdp,
- struct itree_t *itp, int ii)
+ struct itree_t *itp, int32 ii)
 {
- int bad_rng;
+ int32 bad_rng;
  struct inst_t *ip;
  struct xstk_t *xsp1, *xsp2;
 
@@ -3584,8 +3583,8 @@ static void eval1_arr_of_insts_rng(struct giarr_t *giap, struct mod_t *mdp,
  /* if error do not know range - convert back to one gate */
  if (!bad_rng)
   {
-   giap->gia1 = (int) xsp1->ap[0];
-   giap->gia2 = (int) xsp2->ap[0];
+   giap->gia1 = (int32) xsp1->ap[0];
+   giap->gia2 = (int32) xsp2->ap[0];
   }
  __pop_xstk();
  __pop_xstk();
@@ -3601,7 +3600,7 @@ static void eval1_arr_of_insts_rng(struct giarr_t *giap, struct mod_t *mdp,
  */
 static void set_pnd_gi_rnges(void)
 {
- register int ii;
+ register int32 ii;
  struct itree_t *itp;
  struct mod_t *mdp;
 
@@ -3627,7 +3626,7 @@ static void set_pnd_gi_rnges(void)
  */
 static void set2_pnd_gi_rnges(struct mod_t *up_mdp, struct itree_t *up_itp)
 {
- register int gi, ii, ii2;
+ register int32 gi, ii, ii2;
  struct mod_t *imdp;
  struct itree_t *itp;
  struct giarr_t *giap;
@@ -3709,7 +3708,7 @@ static void set_gia_expr_pndparms(struct expr_t *xp, struct itree_t *itp)
  */
 static void set1_giarr_pndparm(struct net_t *np, struct itree_t *itp) 
 {
- int pndpi;
+ int32 pndpi;
  struct itree_t *up_itp;
  struct mod_t *up_mdp;
  struct inst_t *up_ip;
@@ -3760,7 +3759,7 @@ static void set1_giarr_pndparm(struct net_t *np, struct itree_t *itp)
  */
 static void unsave_gia_expr_pndparms(struct expr_t *xp, struct itree_t *itp)
 {
- int pndpi;
+ int32 pndpi;
  struct net_t *np;
  struct itree_t *up_itp;
  struct inst_t *ip;
@@ -3809,10 +3808,10 @@ static void unsave_gia_expr_pndparms(struct expr_t *xp, struct itree_t *itp)
  */
 static void rebld_mod_giarrs(void)
 {
- register int i, i2, i3;
+ register int32 i, i2, i3;
  register struct mod_t *mdp, *imdp;
- int has_iarrs, newgnum, newinum, osize, nsize, giawid, j;
- int arrsynum, bi, gia_dir, new_stsiz;
+ int32 has_iarrs, newgnum, newinum, osize, nsize, giawid, j;
+ int32 arrsynum, bi, gia_dir, new_stsiz;
  struct gate_t *gptab, *gp;
  struct inst_t *iptab, *ip;
  struct giarr_t *giap, **giatab;
@@ -3999,7 +3998,7 @@ static void rebld_mod_giarrs(void)
      mdp->minum = newinum;
     }
    /* must re-sort symbol table - because table of ptr el union right */
-   qsort((char *) __wrkstab, (unsigned) new_stsiz, sizeof(struct sy_t *),
+   qsort((char *) __wrkstab, (word32) new_stsiz, sizeof(struct sy_t *),
     gia_sym_cmp);
    mdp->msymtab->numsyms = new_stsiz;
    mdp->msymtab->stsyms = __wrkstab;
@@ -4014,7 +4013,7 @@ static void rebld_mod_giarrs(void)
 /*
  * comparison routine for sorting symbol table after expand g/i added 
  */
-static int gia_sym_cmp(const void *sy1, const void *sy2)
+static int32 gia_sym_cmp(const void *sy1, const void *sy2)
 {
  return(strcmp((*((struct sy_t **) sy1))->synam,
   (*(struct sy_t **) sy2)->synam));
@@ -4023,9 +4022,9 @@ static int gia_sym_cmp(const void *sy1, const void *sy2)
 /*
  * get width of array of inst/gate
  */
-extern int __get_giarr_wide(struct giarr_t *giap)
+extern int32 __get_giarr_wide(struct giarr_t *giap)
 {
- int r1, r2;
+ int32 r1, r2;
 
  r1 = giap->gia1;
  r2 = giap->gia2;
@@ -4039,7 +4038,7 @@ extern int __get_giarr_wide(struct giarr_t *giap)
  * routine to add new (still unusuable and unsorted) symbol table
  * because stored in range order never need to normalize here
  */
-static void add_new_gsym(struct gate_t *gp, int bi)  
+static void add_new_gsym(struct gate_t *gp, int32 bi)  
 {
  struct sy_t *gsyp;
  char nsynam[2*IDLEN];
@@ -4057,7 +4056,7 @@ static void add_new_gsym(struct gate_t *gp, int bi)
  * routine to update new (still unusuable and unsorted) symbol table
  * because stored in range order never need to normalize here
  */
-static void add_new_isym(struct inst_t *ip, int bi)  
+static void add_new_isym(struct inst_t *ip, int32 bi)  
 {
  struct sy_t *isyp;
  char nsynam[2*IDLEN];
@@ -4139,7 +4138,7 @@ static void chk_defparams(void)
  *
  * array of instance selects illegal in defparams  
  */
-static int lhs_chk1dfparam(struct dfparam_t *dfpp)
+static int32 lhs_chk1dfparam(struct dfparam_t *dfpp)
 {
  struct gref_t *grp;
  struct expr_t *lhsndp;
@@ -4224,9 +4223,9 @@ is_local:
 /*
  * return T if resolved global name has instance array index component
  */
-static int gref_has_giarr_ndxes(struct gref_t *grp)
+static int32 gref_has_giarr_ndxes(struct gref_t *grp)
 {
- register int gri;
+ register int32 gri;
 
  for (gri = 0; gri <= grp->last_gri; gri++) 
   {
@@ -4244,15 +4243,15 @@ static int gref_has_giarr_ndxes(struct gref_t *grp)
 static void set_1defparam_iis(struct dfparam_t *dfpp,
  struct gref_t *grp)
 {
- register int gi;
- int ii;
+ register int32 gi;
+ int32 ii;
  byte *bp1, *bp2;
  struct sy_t *syp;
  struct inst_t *ip;
  struct mod_t *up_mdp;
 
  dfpp->last_dfpi = grp->last_gri;
- dfpp->dfpiis = (int *) __my_malloc((dfpp->last_dfpi + 1)*sizeof(int));
+ dfpp->dfpiis = (int32 *) __my_malloc((dfpp->last_dfpi + 1)*sizeof(int32));
  dfpp->dfp_rooted = (grp->is_rooted) ? TRUE : FALSE;
  if (dfpp->dfp_rooted)
   {
@@ -4299,7 +4298,7 @@ static void set_1defparam_iis(struct dfparam_t *dfpp,
  */
 static void resolve_xmrs(void)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *grp; 
  register struct mod_t *mdp;
 
@@ -4332,7 +4331,7 @@ static void resolve_xmrs(void)
  */
 extern void __resolve_glbnam(struct gref_t *grp)
 {
- register int gi;
+ register int32 gi;
  struct sy_t *syp;
  struct sy_t **syarr;
  struct expr_t *gcmp_ndp, **syxarr;
@@ -4373,13 +4372,24 @@ extern void __resolve_glbnam(struct gref_t *grp)
  /* handle special scope form 1 component global */
  /* only scope place [top mod] or [inst] as simple name can get here */ 
  /* LOOKATME think this case handled in resolve local path */
- if (gcmp_ndp->ru.x == NULL && grp->gr_inst_ok)
+ if (gcmp_ndp->ru.x == NULL)
   {
-   /* this needs to be 1 component global where targsyp and path same */
-   /* here both target and last inst. scope symbol are the same */ 
-   syp = __glbsycmps[0]; 
-   grp->targsyp = syp;
    /* fake last component index - since only access one back from end */
+   syp = NULL;
+   if (grp->gr_inst_ok)
+    {
+     /* this needs to be 1 component global where targsyp and path same */
+     /* here both target and last inst. scope symbol are the same */ 
+     syp = __glbsycmps[0]; 
+     grp->targsyp = syp;
+    }
+   else if (grp->is_upreltsk)
+    {
+     /* upward rel converts to [mod name].[func name] */
+     syp = __glbsycmps[0]; 
+     grp->targsyp = __glbsycmps[1]; 
+    }
+   else __case_terr(__FILE__, __LINE__);
    goto fill_glb;
   }
  /* this is a normal xmr - fill rest of xmr path */
@@ -4482,7 +4492,7 @@ bad_end:
  * here caller handled instance arrays - know in module scope symbols
  * are never arrayed (error emitted if select appears)
  */
-static int resolve_local_path(struct gref_t *grp, struct expr_t *ghd_ndp)
+static int32 resolve_local_path(struct gref_t *grp, struct expr_t *ghd_ndp)
 {
  struct symtab_t *sytp;
  struct sy_t *syphd, *syptail;
@@ -4637,8 +4647,8 @@ local_sel_err:
  * check a wire tail to make sure not illegal parameter wire form
  * know symbol is wire to be called 
  */
-static int chk_xmr_tail_wire(struct gref_t *grp, struct sy_t *tailsyp,
- int is_loc1cmp)
+static int32 chk_xmr_tail_wire(struct gref_t *grp, struct sy_t *tailsyp,
+ int32 is_loc1cmp)
 {
  struct net_t *np;
 
@@ -4679,9 +4689,9 @@ static int chk_xmr_tail_wire(struct gref_t *grp, struct sy_t *tailsyp,
  *
  * return F on error else T - error message emitted here
  */
-static int fill_dfp_gsymhead(struct gref_t *grp, struct expr_t *ghd_ndp)
+static int32 fill_dfp_gsymhead(struct gref_t *grp, struct expr_t *ghd_ndp)
 {
- int comp_isel; 
+ int32 comp_isel; 
  struct sy_t *syp, *modsyp;
  struct symtab_t *sytp;
  struct expr_t *ndp;
@@ -4774,9 +4784,9 @@ try_mod1st:
  *
  * return F on error else T - error message emitted here
  */
-static int fill_gsymhead(struct gref_t *grp, struct expr_t *ghd_ndp)
+static int32 fill_gsymhead(struct gref_t *grp, struct expr_t *ghd_ndp)
 {
- int comp_isel; 
+ int32 comp_isel; 
  struct sy_t *syp, *syp2, *modsyp, *scope_syp;
  struct symtab_t *sytp;
  struct expr_t *ndp;
@@ -4901,7 +4911,7 @@ try_rooted:
     grp->gnam, ncmp);
    return(FALSE);
   }
- /* if head is type name, seee if upward relative module name */
+ /* if head is type name, see if upward relative module name */
  if (modsyp != NULL)
   {
    if (!fnd_uprel_mod(modsyp, in_itp)) goto try_tskscope;
@@ -4978,12 +4988,12 @@ found_ref:
  *
  * also checks each instance's uprel
  */
-static int chk_all_uprels_same(struct gref_t *grp, struct sy_t *modsyp,
+static int32 chk_all_uprels_same(struct gref_t *grp, struct sy_t *modsyp,
  char *ncmp, struct expr_t *ghd_ndp)
 {
- register int ii;
+ register int32 ii;
  register struct itree_t *in_itp;
- int uprel_typ, got_one, fnd_ii, sav_ecnt; 
+ int32 uprel_typ, got_one, fnd_ii, sav_ecnt; 
  struct sy_t *uprel_syp, *scope_syp, *syp;
  struct mod_t *imdp;
 
@@ -5090,7 +5100,7 @@ static struct sy_t *fnd_uprel_inst(char *ncmp, struct itree_t *in_itp)
 /*
  * match upward relative instance - if found returns T else FALSE
  */
-static int fnd_uprel_mod(struct sy_t *modsyp, struct itree_t *in_itp)
+static int32 fnd_uprel_mod(struct sy_t *modsyp, struct itree_t *in_itp)
 {
  register struct itree_t *up_itp;
  struct mod_t *up_mdp, *up_mast_mdp, *imdp, *mast_imdp;
@@ -5156,10 +5166,10 @@ static struct sy_t *fnd_tskfunc_inscope(char *ncmp,
  * set hierarchical global reference symbols for rest of path
  * know head (pos. 0) filled
  */
-static int fill_grestsyms(struct gref_t *grp, struct expr_t *gcmp_ndp)
+static int32 fill_grestsyms(struct gref_t *grp, struct expr_t *gcmp_ndp)
 {
- register int gi;
- int comp_isel;
+ register int32 gi;
+ int32 comp_isel;
  struct sy_t *syp;
  struct symtab_t *sytp;
  struct expr_t *ndp;
@@ -5175,6 +5185,8 @@ static int fill_grestsyms(struct gref_t *grp, struct expr_t *gcmp_ndp)
    if (gcmp_ndp->lu.x->optyp == XMRID) ndp = gcmp_ndp->lu.x;
    else if (gcmp_ndp->lu.x->optyp == LSB)
     { ndp = gcmp_ndp->lu.x->lu.x; comp_isel = TRUE; }
+   /* SJM 02/02/05 - part select legal but same as ID here */
+   else if (gcmp_ndp->lu.x->optyp == PARTSEL) ndp = gcmp_ndp->lu.x->lu.x;
    else { __case_terr(__FILE__, __LINE__); return(FALSE); }
 
    ncmp = ndp->ru.qnchp;
@@ -5333,10 +5345,10 @@ static struct sy_t *find_inmod_sym(struct gref_t *grp, struct expr_t *gcmp_ndp,
  * error if select of non inst array and non select of inst. array
  * this is called during global input, can not check select exprs
  */
-static int chk_glb_inst_sels(struct gref_t *grp)
+static int32 chk_glb_inst_sels(struct gref_t *grp)
 {
- register int gi;
- int good, ii;
+ register int32 gi;
+ int32 good, ii;
  struct sy_t *syp, *up_syp;
  struct inst_t *ip;
  struct mod_t *mdp, *up_mdp;
@@ -5410,7 +5422,7 @@ static int chk_glb_inst_sels(struct gref_t *grp)
  */
 extern struct expr_t *__glbnam_to_expr(char *irefs)
 {
- int slen, ind, esc_name;
+ int32 slen, ind, esc_name;
  struct expr_t *glbndp, *gcmp_ndp, *sel_ndp;
  char *chp, *chp2, *chp3, *sepchp;
  char s1[IDLEN], s2[IDLEN], s3[IDLEN];
@@ -5531,7 +5543,7 @@ bad_sel_index:
      sel_ndp->lu.x->optyp = XMRID;
      sel_ndp->lu.x->ru.qnchp = __pv_stralloc(s2);
      sel_ndp->ru.x = __alloc_newxnd();
-     __set_numval(sel_ndp->ru.x, (word) ind, 0L, WBITS);
+     __set_numval(sel_ndp->ru.x, (word32) ind, 0L, WBITS);
 
      gcmp_ndp->ru.x = __alloc_newxnd();
      gcmp_ndp->ru.x->optyp = XMRCOM;
@@ -5563,7 +5575,8 @@ extern char *__to_glbcmp_nam(struct expr_t *gcmp_ndp)
  char *chp;
 
  if (gcmp_ndp->lu.x->optyp == XMRID) chp = gcmp_ndp->lu.x->ru.qnchp;
- else if (gcmp_ndp->lu.x->optyp == LSB) chp = gcmp_ndp->lu.x->lu.x->ru.qnchp;
+ else if (gcmp_ndp->lu.x->optyp == LSB || gcmp_ndp->lu.x->optyp == PARTSEL)
+  chp = gcmp_ndp->lu.x->lu.x->ru.qnchp;
  else { __case_terr(__FILE__, __LINE__); return(NULL); }
  return(chp);
 }
@@ -5582,7 +5595,7 @@ extern char *__to_glbcmp_nam(struct expr_t *gcmp_ndp)
 extern void __free_1dfparam(struct dfparam_t *dfpp)
 {
  if (dfpp->last_dfpi > -1 && dfpp->dfpiis != NULL)
-  __my_free((char *) dfpp->dfpiis, (dfpp->last_dfpi + 1)*sizeof(int));
+  __my_free((char *) dfpp->dfpiis, (dfpp->last_dfpi + 1)*sizeof(int32));
  __free_xtree(dfpp->dfpxlhs);
  /* notice cannot free rhs since moved to parameter value rhs */
  /* if error, will stop so no need to free */
@@ -5597,11 +5610,11 @@ extern void __free_1dfparam(struct dfparam_t *dfpp)
  */
 static void free_gone_glbs(void)
 { 
- register int gri, ngri;
+ register int32 gri, ngri;
  register struct gref_t *grp;
  register struct mod_t *mdp;
  struct gref_t *ngrtab;
- int ngrnum;
+ int32 ngrnum;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -5654,9 +5667,9 @@ nxt_mod:
  *
  * also always fixes up r_u ptrs from expr. to to newly alloced global
  */
-extern struct gref_t *__alloc_grtab(struct gref_t *oldgrtab, int grnum)
+extern struct gref_t *__alloc_grtab(struct gref_t *oldgrtab, int32 grnum)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *grp; 
  struct gref_t *ngrtab;
 
@@ -5715,10 +5728,10 @@ extern void __free_1glb_flds(struct gref_t *grp)
  */
 static void mark_poundparam_splitinsts(void)
 {
- register int ii, mlevel, pi;
- int split_inst;
+ register int32 ii, mlevel, pi;
+ int32 split_inst;
  struct mod_t *mdp;
- int giawid;
+ int32 giawid;
  struct inst_t *ip;
  struct mod_t *imdp;
  struct giarr_t *giap;
@@ -5852,9 +5865,9 @@ static void mark_poundparam_splitinsts(void)
  * set the indirect width determining bit for any wire up pound param expr
  * return T if any params in this up expr else F
  */
-static int indir_widthdet_markparam(struct expr_t *xp)
+static int32 indir_widthdet_markparam(struct expr_t *xp)
 {
- int rv, rv2;
+ int32 rv, rv2;
  struct net_t *np;
 
  rv = rv2 = FALSE;
@@ -5891,9 +5904,9 @@ static int indir_widthdet_markparam(struct expr_t *xp)
  */
 static void do_poundparam_splitting(void)
 {
- register int ii, mlevel;
+ register int32 ii, mlevel;
  register struct mod_t *mdp;
- int giawid;
+ int32 giawid;
  struct inst_t *ip;
  struct mod_t *imdp;
  struct giarr_t *giap;
@@ -5973,7 +5986,7 @@ static void do_poundparam_splitting(void)
  * called after conditions for split determined to be true
  * does copy and update the static (in source text) instance d.s.
  */
-static void split_upd_mod(struct mod_t *imdp, struct inst_t *ip, int mlevel) 
+static void split_upd_mod(struct mod_t *imdp, struct inst_t *ip, int32 mlevel) 
 {
  struct mod_t *ipmdp, *sav_inst_mod;
 
@@ -6150,6 +6163,8 @@ static void copy_mod(struct mod_t *omdp, char *newnam)
  if (__oinst_mod->mdfps != NULL) copy_defparams();
  if (__oinst_mod->mattrs != NULL)
   __inst_mod->mattrs = copy_attrs(__oinst_mod->mattrs);
+ if (__oinst_mod->mvarinits != NULL)
+  __inst_mod->mvarinits = copy_varinits(__oinst_mod->mvarinits);
 
  copy_insts();
  copy_miarr();
@@ -6159,7 +6174,6 @@ static void copy_mod(struct mod_t *omdp, char *newnam)
 
  copy_contas();
  copy_mdtasks();
-
 
  __inst_mod->ialst = copy_ialst(__oinst_mod->ialst);
  if (__oinst_mod->mspfy != NULL) copy_specify();
@@ -6216,7 +6230,7 @@ static void copy_lowsymtab(register struct symtab_t *osytp,
  */
 static struct symtab_t *copy_1symtab(struct symtab_t *osytp)
 {
- int ofreezes;
+ int32 ofreezes;
  struct symtab_t *nsytp;
 
  ofreezes = osytp->freezes;
@@ -6240,16 +6254,16 @@ static struct symtab_t *copy_1symtab(struct symtab_t *osytp)
  * copy stsyms - know at least one symbol in table
  */
 static struct sy_t **copy_stsyms(struct sy_t **osytab,
- unsigned nsyms)
+ word32 nsyms)
 {
- register int i;
+ register int32 i;
  struct sy_t **sytbp;
  struct sy_t *nsyp;
- int bytes;
+ int32 bytes;
 
  bytes = nsyms*sizeof(struct sy_t *);
  __wrkstab = (struct sy_t **) __my_malloc(bytes);
- for (i = 0; i < (int) nsyms; i++)
+ for (i = 0; i < (int32) nsyms; i++)
   {
    /* allocate the new symbol */
    nsyp = (struct sy_t *) __my_malloc(sizeof(struct sy_t));
@@ -6269,9 +6283,9 @@ static struct sy_t **copy_stsyms(struct sy_t **osytab,
  */
 static void copy_modports(void)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *ompp, *nmpp;
- int pnum;
+ int32 pnum;
 
  if ((pnum = __oinst_mod->mpnum) == 0) return;
 
@@ -6295,12 +6309,12 @@ static void copy_modports(void)
  */
 static void copy_wires(struct symtab_t *sytp)
 {
- register int syi;
+ register int32 syi;
  struct sy_t **syms;
  struct sy_t *syp;
  struct net_t *onp, *nnp;
 
- for (syms = sytp->stsyms, syi = 0; syi < (int) sytp->numsyms; syi++)
+ for (syms = sytp->stsyms, syi = 0; syi < (int32) sytp->numsyms; syi++)
   {
    syp = syms[syi];
    if (syp->sytyp != SYM_N) continue;
@@ -6359,11 +6373,11 @@ static void copy_wires(struct symtab_t *sytp)
  * value of param as parm_var net is assumed to be in pxp format
  * and expr. copied.
  */
-static struct net_t *copy_params(struct net_t *onptab, int oprmnum,
- int pclass)
+static struct net_t *copy_params(struct net_t *onptab, int32 oprmnum,
+ int32 pclass)
 {
- register int ni;
- int nbytes, awid;
+ register int32 ni;
+ int32 nbytes, awid;
  struct sy_t *syp;
  struct net_t *nnp, *onp, *nnptab;
 
@@ -6417,7 +6431,7 @@ static struct net_t *copy_params(struct net_t *onptab, int oprmnum,
      nbytes = 2*WRDBYTES*wlen_(onp->nwid); 
     }
    /* alloc and copy value */
-   nnp->nva.wp = (word *) __my_malloc(nbytes);
+   nnp->nva.wp = (word32 *) __my_malloc(nbytes);
    memcpy(nnp->nva.wp, onp->nva.wp, nbytes);
 
    /* and copy source expr for params kept in n_dels_u field */
@@ -6443,7 +6457,7 @@ static struct net_t *copy_params(struct net_t *onptab, int oprmnum,
 static void copy_defparams(void)
 {
  register struct dfparam_t *odfpp, *ndfpp;
- register int dfi;
+ register int32 dfi;
  struct dfparam_t *ndfphdr, *ndfpend;
 
  ndfphdr = ndfpend = NULL;
@@ -6467,7 +6481,7 @@ static void copy_defparams(void)
    ndfpp->dfpnxt = NULL;
 
    /* must look up target symbols for defparam at end, no copy here */ 
-   ndfpp->dfpiis = (int *) __my_malloc((ndfpp->last_dfpi + 1)*sizeof(int));
+   ndfpp->dfpiis = (int32 *) __my_malloc((ndfpp->last_dfpi + 1)*sizeof(int32));
    for (dfi = 1; dfi <= ndfpp->last_dfpi + 1; dfi++)
     ndfpp->dfpiis[dfi] = odfpp->dfpiis[dfi];
 
@@ -6503,12 +6517,38 @@ static struct attr_t *copy_attrs(struct attr_t *oattrp)
 }
 
 /*
+ * routine for copy module variable initializ assign var init records
+ *
+ * notice this must be copied after copying wires and parameters 
+ */
+static struct varinitlst_t *copy_varinits(struct varinitlst_t *oinitp)
+{
+ register struct varinitlst_t *ninitp, *nvarinit_hd, *last_initp; 
+
+ last_initp = NULL;
+ nvarinit_hd = NULL;
+ ninitp = NULL;
+ for (; oinitp != NULL; oinitp = oinitp->varinitnxt)
+  {
+   ninitp = (struct varinitlst_t *) __my_malloc(sizeof(struct varinitlst_t));
+   *ninitp = *oinitp;
+   ninitp->init_syp = oinitp->init_syp->spltsy;
+   ninitp->init_xp = __copy_expr(oinitp->init_xp); 
+   ninitp->varinitnxt = NULL;
+   if (last_initp == NULL) nvarinit_hd = ninitp;
+   else last_initp->varinitnxt = ninitp;
+   last_initp = ninitp;
+  }
+ return(ninitp);
+}
+
+/*
  * routine for copying module instances
  */
 static void copy_insts(void)
 {
- register int ii, ii2;
- int giawid;
+ register int32 ii, ii2;
+ int32 giawid;
  struct inst_t *oip, *nip;
  struct giarr_t *giap;
 
@@ -6544,7 +6584,7 @@ static void copy_insts(void)
 /*
  * copy 1 instance
  */
-static void copy_1inst(struct inst_t *nip, struct inst_t *oip, int nd_cp_ipins)
+static void copy_1inst(struct inst_t *nip, struct inst_t *oip, int32 nd_cp_ipins)
 {
  struct sy_t *syp;
 
@@ -6572,7 +6612,7 @@ static void copy_1inst(struct inst_t *nip, struct inst_t *oip, int nd_cp_ipins)
  */
 static struct expr_t **copy_pndxtab(struct inst_t *oip)
 {
- register int pi;
+ register int32 pi;
  struct expr_t **nnpxtab, **onpxtab;
  struct mod_t *imdp;
 
@@ -6594,7 +6634,7 @@ static struct expr_t **copy_pndxtab(struct inst_t *oip)
  */
 static void copy_iports(struct inst_t *nip, struct inst_t *oip)
 {
- register int pi, pnum;
+ register int32 pi, pnum;
 
  if ((pnum = oip->imsym->el.emdp->mpnum) != 0)
   {
@@ -6611,8 +6651,8 @@ static void copy_iports(struct inst_t *nip, struct inst_t *oip)
  */
 static void copy_miarr(void)
 {
- register int ii, ii2;
- int giawid;
+ register int32 ii, ii2;
+ int32 giawid;
  struct giarr_t *ogiap, *ngiap;
  struct sy_t *syp;
 
@@ -6658,8 +6698,8 @@ static void copy_miarr(void)
  */
 static void copy_gates(void)
 {
- register int gi, gi2;
- int giawid;
+ register int32 gi, gi2;
+ int32 giawid;
  struct gate_t *ogp, *ngp;
  struct giarr_t *giap;
 
@@ -6695,10 +6735,10 @@ static void copy_gates(void)
 /*
  * copy 1 gate (passes already allocated address in gate tables)
  */
-static void copy_1gate(struct gate_t *ngp, struct gate_t *ogp, int nd_cp_gpins)
+static void copy_1gate(struct gate_t *ngp, struct gate_t *ogp, int32 nd_cp_gpins)
 {
- register int pi;
- int pnum;
+ register int32 pi;
+ int32 pnum;
  struct sy_t *syp;
 
  pnum = ogp->gpnum;
@@ -6733,8 +6773,8 @@ static void copy_1gate(struct gate_t *ngp, struct gate_t *ogp, int nd_cp_gpins)
  */
 static void copy_mgarr(void)
 {
- register int gi, gi2;
- int giawid;
+ register int32 gi, gi2;
+ int32 giawid;
  struct giarr_t *ogiap, *ngiap;
  struct sy_t *syp;
 
@@ -6789,7 +6829,7 @@ static void copy_contas(void)
 
  __inst_mod->mcas = NULL; 
  last_ncap = NULL;
- for (ocap = __oinst_mod->mcas; ocap != NULL; ocap = ocap->canxt)
+ for (ocap = __oinst_mod->mcas; ocap != NULL; ocap = ocap->pbcau.canxt)
   {
    ncap = (struct conta_t *) __my_malloc(sizeof(struct conta_t));
 
@@ -6803,10 +6843,10 @@ static void copy_contas(void)
    ncap->lhsx = __copy_expr(ocap->lhsx);
    ncap->rhsx = __copy_expr(ocap->rhsx);
    if (last_ncap == NULL) __inst_mod->mcas = ncap;
-   else last_ncap->canxt = ncap;
+   else last_ncap->pbcau.canxt = ncap;
    last_ncap = ncap;  
   }
- if (last_ncap != NULL) last_ncap->canxt = NULL;
+ if (last_ncap != NULL) last_ncap->pbcau.canxt = NULL;
 }
 
 /*
@@ -6950,9 +6990,14 @@ static struct st_t *copy_stmt(struct st_t *ostp)
     ndcp->dc_iact = odcp->dc_iact; 
     /* SJM 08/02/02 - need to also explicitly copy new non blking flag */ 
     ndcp->dc_nblking = odcp->dc_nblking;
+    /* SJM 08/17/04 - f2016 was failing because this was not set */
+    ndcp->implicit_evxlst = odcp->implicit_evxlst;
     ndcp->dc_delrep = odcp->dc_delrep;
     ndcp->dc_du.pdels = __copy_dellst(odcp->dc_du.pdels);
     ndcp->repcntx = __copy_expr(odcp->repcntx);
+    /* SJM 08/17/04 - also repcnts was not set - used during sim */
+    ndcp->dce_repcnts = odcp->dce_repcnts;
+
     ndcp->dceschd_tevs = NULL;
     /* can be list because of #10 begin ... end */
     ndcp->actionst = copy_lstofsts(odcp->actionst);
@@ -6971,8 +7016,8 @@ static struct st_t *copy_stmt(struct st_t *ostp)
    break;
   case S_UNFJ:
    { 
-    register int fji;
-    int num_fji;
+    register int32 fji;
+    int32 num_fji;
     struct st_t *ofjstp;
 
     /* first count number of statements in fj */
@@ -6981,7 +7026,7 @@ static struct st_t *copy_stmt(struct st_t *ostp)
 
     nstp->st.fj.fjstps = (struct st_t **)
      __my_malloc((num_fji + 1)*sizeof(struct st_t *));
-    nstp->st.fj.fjlabs = (int *) __my_malloc((num_fji + 1)*sizeof(int));
+    nstp->st.fj.fjlabs = (int32 *) __my_malloc((num_fji + 1)*sizeof(int32));
 
     /* know fork-join will always have at least 1 statement (maybe null) */
     /* also if labeled it will be surrounded by named block */
@@ -7167,7 +7212,8 @@ extern struct expr_t *__copy_expr(struct expr_t *src)
      syp = src->lu.sy;
      /* for system tasks/functions copied symbol is same as original */
      if (syp->sytyp != SYM_STSK && syp->sytyp != SYM_SF
-      && syp->synam[0] != '$') dst->lu.sy = (struct sy_t *) syp->spltsy;
+      && syp->synam[0] != '$')
+      dst->lu.sy = (struct sy_t *) syp->spltsy;
     }
    break;
   case XMRID:
@@ -7211,7 +7257,7 @@ extern struct expr_t *__copy_expr(struct expr_t *src)
  }
  return(dst);
 }
-
+ 
 /*
  * copy an expressions - special version for xform and vpi 
  * that does not count in size of expr table
@@ -7247,9 +7293,9 @@ extern struct expr_t *__sim_copy_expr(struct expr_t *src)
  */
 static void copy_mgrefs(void)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *ogrp, *ngrp;
- int num_grefs;
+ int32 num_grefs;
 
  if (__oinst_mod->mgrnum == 0) return;
 
@@ -7420,7 +7466,7 @@ static struct tchk_t *copy1_tchk(struct tchk_t *otcp)
  */
 extern void __bld_flat_itree(void)
 {
- register int ii;
+ register int32 ii;
 
  for (ii = 0; ii < __numtopm; ii++) bld2_flat_itree(__it_roots[ii]);
  /* DBG remove ---
@@ -7438,7 +7484,7 @@ extern void __bld_flat_itree(void)
  */
 static void bld2_flat_itree(struct itree_t *new_itp)
 {
- register int ii;
+ register int32 ii;
  struct inst_t *ip;
  struct itree_t *itp;
  struct mod_t *up_imdp, *imdp;
@@ -7482,7 +7528,7 @@ static void bld2_flat_itree(struct itree_t *new_itp)
  */
 extern void __dmp_itree(struct itree_t *itp) 
 {
- register int i;
+ register int32 i;
 
  __dbg_msg("--- dumping instance tree ---.\n");
  /* dump top */
@@ -7493,10 +7539,10 @@ extern void __dmp_itree(struct itree_t *itp)
 /*
  * dump a down level of a tree
  */
-static int dmp_down_itree(struct itree_t *itp, int lev, int more_down)
+static int32 dmp_down_itree(struct itree_t *itp, int32 lev, int32 more_down)
 {
- register int i; 
- int ofsnum, retval;
+ register int32 i; 
+ int32 ofsnum, retval;
 
  if (more_down == 0) { do_dmp(itp, lev); return(TRUE); }
  if ((ofsnum = itp->itip->imsym->el.emdp->minum) == 0) return(FALSE);
@@ -7511,9 +7557,9 @@ static int dmp_down_itree(struct itree_t *itp, int lev, int more_down)
 /*
  * do actual dump for level of 1 itp at level lev
  */
-static void do_dmp(struct itree_t *itp, int lev)
+static void do_dmp(struct itree_t *itp, int32 lev)
 {
- int ofsnum;
+ int32 ofsnum;
  char *chp, s1[RECLEN];
 
  /* DBG remove --- */
@@ -7532,7 +7578,7 @@ static void do_dmp(struct itree_t *itp, int lev)
  */
 extern void __free_flat_itree(void)
 {
- register int ii;
+ register int32 ii;
  register struct mod_t *mdp;
 
  for (ii = 0; ii < __numtopm; ii++) free2_flat_itree(__it_roots[ii]);
@@ -7546,7 +7592,7 @@ extern void __free_flat_itree(void)
  */
 static void free2_flat_itree(struct itree_t *cur_itp)
 {
- register int ii;
+ register int32 ii;
  struct mod_t *cur_imdp;
 
  cur_imdp = cur_itp->itip->imsym->el.emdp;
@@ -7576,7 +7622,7 @@ static void free2_flat_itree(struct itree_t *cur_itp)
 static void bld_moditps(void)
 {
  register struct mod_t *mdp;
- register int ii;
+ register int32 ii;
  struct itree_t *itp, *itp2;
 
  /* first allocate the inst num to itree location tables */
@@ -7617,7 +7663,7 @@ static void bld_moditps(void)
  */
 static void bld2_itnum_to_itp(struct itree_t *itp)
 {
- register int ii;
+ register int32 ii;
  struct mod_t *mdp;
  
  mdp = itp->itip->imsym->el.emdp;

@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -41,42 +41,42 @@
 #include "cvmacros.h"
 
 /* local prototypes */
-static void disp_toexprline(register struct expr_t *, int);
-static char *sep_real_fmt(char *, char *, int);
-static void sdisph(word *, word *, int, int);
-static char bitsto_char(word, word, int);
-static void sdispd(word *, word *, int, int, int);
-static char get_decxz(word *, word *, int);
-static int bld_tfmt_val(char *, struct expr_t *, word *, word *, int,
- int, int);
-static void sdispo(word *, word *, int, int);
-static void vstr_to_cstr(char *, int, int, int, int);
-static void disp_ufmt_binval(word *, word *, int);
-static void disp_zfmt_binval(word *, word *, int);
-static void numexpr_disp(struct expr_t *, int);
-static void st_regab_disp(byte *, int);
-static void disp_stvar(struct net_t *, int, int);
-static int get_ovrsign(struct net_t *, char);
-static void dmp_arr_insts(struct net_t *, int, int);
-static void dmp_arr(struct net_t *, int, int, int);
-static void dmp1n_nplst(struct mod_t *, struct net_t *, int);
-static int cnt_nplstels(register struct net_pin_t *);
-static word get_dce_edgeval(struct mod_t *, struct dcevnt_t *);
-static int bin_trim_abval(word *, word *, int);
-static int trim_abval(word *, word *, int);
-static int bithi_is0(word, int);
-static int trim1_1val(word *, int);
-static int vval_isall_xs(word *, word *, int);
-static int vval_hasx(word *, word *, int);
-static long my_strtol(char *, char **, int, int *);
-static void dmp_dig_attr_list(FILE *, struct attr_t *, int);
+static void disp_toexprline(register struct expr_t *, int32);
+static char *sep_real_fmt(char *, char *, int32);
+static void sdisph(word32 *, word32 *, int32, int32);
+static char bitsto_char(word32, word32, int32);
+static void sdispd(word32 *, word32 *, int32, int32, int32);
+static char get_decxz(word32 *, word32 *, int32);
+static int32 bld_tfmt_val(char *, struct expr_t *, word32 *, word32 *, int32,
+ int32, int32);
+static void sdispo(word32 *, word32 *, int32, int32);
+static void vstr_to_cstr(char *, int32, int32, int32, int32);
+static void disp_ufmt_binval(word32 *, word32 *, int32);
+static void disp_zfmt_binval(word32 *, word32 *, int32);
+static void numexpr_disp(struct expr_t *, int32);
+static void st_regab_disp(byte *, int32);
+static void disp_stvar(struct net_t *, int32, int32);
+static int32 get_ovrsign(struct net_t *, char);
+static void dmp_arr_insts(struct net_t *, int32, int32);
+static void dmp_arr(struct net_t *, int32, int32, int32);
+static void dmp1n_nplst(struct mod_t *, struct net_t *, int32);
+static int32 cnt_nplstels(register struct net_pin_t *);
+static word32 get_dce_edgeval(struct mod_t *, struct dcevnt_t *);
+static int32 bin_trim_abval(word32 *, word32 *, int32);
+static int32 trim_abval(word32 *, word32 *, int32);
+static int32 bithi_is0(word32, int32);
+static int32 trim1_1val(word32 *, int32);
+static int32 vval_isall_xs(word32 *, word32 *, int32);
+static int32 vval_hasx(word32 *, word32 *, int32);
+static long my_strtol(char *, char **, int32, int32 *);
+static void dmp_dig_attr_list(FILE *, struct attr_t *, int32);
 static void dmp_modports(FILE *, struct mod_t *);
 static void dmp_mod_lofp_hdr(FILE *, struct mod_t *);
 static void dmp_decls(FILE *, struct mod_t *);
 static void dmp_1portdecl(FILE *, struct expr_t *);
 static void dmp_1netdecl(FILE *, struct net_t *);
-static int nd_iowirdecl(struct net_t *);
-static void dmp_paramdecls(FILE *, struct net_t *, int, char *);
+static int32 nd_iowirdecl(struct net_t *);
+static void dmp_paramdecls(FILE *, struct net_t *, int32, char *);
 static void dmp_defparams(FILE *, struct mod_t *);
 static void dmp_mdtasks(FILE *, struct mod_t *);
 static void dmp_insts(FILE *, struct mod_t *);
@@ -84,7 +84,7 @@ static void dmp_insts(FILE *, struct mod_t *);
 static void dmp_1inst(FILE *, struct inst_t *, struct giarr_t *);
 /* DBG */ static void dbg_dmp_1inst(FILE *f, struct inst_t *ip, char *inam);
 static void dmp_pnd_params(FILE *, struct inst_t *, struct mod_t *);
-static int impl_pndparams(struct inst_t *, struct mod_t *);
+static int32 impl_pndparams(struct inst_t *, struct mod_t *);
 static void dmp_iports(FILE *, struct inst_t *, struct expr_t **);
 static void dmp_1gate(FILE *, struct gate_t *, struct giarr_t *);
 /* DBG */ static void dbg_dmp_1gate(FILE *f, struct gate_t *gp, char *gnam);
@@ -101,148 +101,149 @@ static void dmp_tfdecls(FILE *, struct task_t *);
 static void dmp_tf_lofp_hdr(FILE *, struct task_t *);
 static void dmp_mdspfy(FILE *, struct mod_t *);
 static void dmp_specpths(FILE *, register struct spcpth_t *);
-static void dmp_pthlst(FILE *, struct spcpth_t *, int);
+static void dmp_pthlst(FILE *, struct spcpth_t *, int32);
 static void dmp_pthel(FILE *, struct pathel_t *);
 static void dmp_tchks(FILE *, register struct tchk_t *);
-static void dmp_tchk_selector(FILE *, unsigned, struct expr_t *,
+static void dmp_tchk_selector(FILE *, word32, struct expr_t *,
  struct expr_t *);
 static void dmp_mod_grefs(FILE *, struct mod_t *);
 static char *to_glbinfo(char *, struct gref_t *);
 static void dmp_casesel(FILE *, struct st_t *);
-static void dmp_delay(FILE *, union del_u, unsigned, char *);
+static void dmp_delay(FILE *, union del_u, word32, char *);
 static void dmp_dellst(FILE *, register struct paramlst_t *);
 static void dmp_lstofsts(FILE *, struct st_t *);
 static void tox_wrange(FILE *, struct expr_t *, struct expr_t *);
 static void dmp_expr(FILE *, struct expr_t *);
-static int is_simplex(struct expr_t *);
+static int32 is_simplex(struct expr_t *);
 static void dmp_catexpr(FILE *, struct expr_t *);
 static void dmp_catel(FILE *, struct expr_t *);
 static void dmp_fcallx(FILE *, struct expr_t *);
 static void dmp_evor_chain(FILE *, struct expr_t *);
 static void sdisp_st(struct expr_t *);
-static int find_deepest_level(struct optlst_t *);
-static int cnt_beg_to_endmark(struct optlst_t *, int);
-static int cnt_level0(struct optlst_t *);
-static void dump_vpi_argv(int, char **);
-static void dump_nest_vpi_argv(int, char **);
+static int32 find_deepest_level(struct optlst_t *);
+static int32 cnt_beg_to_endmark(struct optlst_t *, int32);
+static int32 cnt_level0(struct optlst_t *);
+static void dump_vpi_argv(int32, char **);
+static void dump_nest_vpi_argv(int32, char **);
 static void dmp1_optlst(struct optlst_t *, char *);
 
 
 /* extern prototypes defined elsewhere */
-extern char *__my_realloc(char *, int, int);
-extern char *__my_malloc(int);
-extern char *__mytf_malloc(int);
+extern char *__my_realloc(char *, int32, int32);
+extern char *__my_malloc(int32);
+extern char *__mytf_malloc(int32);
 extern char *__pv_stralloc(char *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__msgtox_wrange(char *, struct expr_t *, struct expr_t *);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_wtnam2(char *, unsigned);
-extern char *__to_ptnam(char *, unsigned);
+extern char *__to_wtnam2(char *, word32);
+extern char *__to_ptnam(char *, word32);
 extern char *__to_wrange(char *, struct net_t *);
-extern char *__to_stren_nam(char *, int, int);
-extern char *__to_stval_nam(char *, unsigned);
-extern char *__to_opname(unsigned);
-extern char *__to_vvstnam(char *, word);
-extern char *__to_sytyp(char *, unsigned);
-extern char *__to_tcnam(char *, unsigned);
-extern char *__to_edgenam(char *, unsigned);
-extern char *__to_timunitnam(char *, unsigned);
+extern char *__to_stren_nam(char *, int32, int32);
+extern char *__to_stval_nam(char *, word32);
+extern char *__to_opname(word32);
+extern char *__to_vvstnam(char *, word32);
+extern char *__to_sytyp(char *, word32);
+extern char *__to_tcnam(char *, word32);
+extern char *__to_edgenam(char *, word32);
+extern char *__to_timunitnam(char *, word32);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__xregab_tostr(char *, word *, word *, int, struct expr_t *);
-extern char *__strab_tostr(char *, word *, int, int, int);
-extern char *__vval_to_vstr(word *, int, int *);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern char *__xregab_tostr(char *, word32 *, word32 *, int32, struct expr_t *);
+extern char *__strab_tostr(char *, word32 *, int32, int32, int32);
+extern char *__vval_to_vstr(word32 *, int32, int32 *);
 extern char *__to_arr_range(char *, struct net_t *);
 extern char *__to_mpnam(char *, char *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
 extern struct xstk_t *__ndst_eval_xpr(struct expr_t *);
 extern char *__to_timstr(char *, word64 *);
-extern char *__to_vvnam(char *, word);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__to_vvnam(char *, word32);
+extern char *__bld_lineloc(char *, word32, int32);
 extern struct task_t *__find_thrdtsk(struct thread_t *);
-extern char *__alloc_vval_to_cstr(word *, int, int, int);
+extern char *__alloc_vval_to_cstr(word32 *, int32, int32, int32);
+extern char *__to_sttyp(char *, word32);
 
 extern struct expr_t *__disp_1fmt_to_exprline(char *, struct expr_t *);
 extern struct task_t *__getcur_scope_tsk(void);
 extern void __wrap_puts(char *, FILE *);
-extern void __wrap_putc(int, FILE *);
+extern void __wrap_putc(int32, FILE *);
 extern void __nl_wrap_puts(char *, FILE *);
-extern void __chg_xprline_size(int);
+extern void __chg_xprline_size(int32);
 extern void __disp_itree_path(register struct itree_t *, struct task_t *);
-extern void __declcnv_tostr(char *, word *, int, int);
+extern void __declcnv_tostr(char *, word32 *, int32, int32);
 extern void __adds(char *);
-extern void __sdispb(register word *, register word *, int, int);
-extern int __trim1_0val(word *, int);
-extern void __xline_vval_to_cstr(word *, int, int, int, int);
-extern void __my_free(char *, int);
-extern void __regab_disp(word *, word *, int, int, int, int);
-extern void __trunc_cstr(char *, int, int);
-extern int __vval_isallzs(word *, word *, int);
+extern void __sdispb(register word32 *, register word32 *, int32, int32);
+extern int32 __trim1_0val(word32 *, int32);
+extern void __xline_vval_to_cstr(word32 *, int32, int32, int32, int32);
+extern void __my_free(char *, int32);
+extern void __regab_disp(word32 *, word32 *, int32, int32, int32, int32);
+extern void __trunc_cstr(char *, int32, int32);
+extern int32 __vval_isallzs(word32 *, word32 *, int32);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern void __by16_ldivmod(word *, word *, word *, word, int);
-extern int __wide_vval_is0(register word *, int);
-extern int __v64_to_real(double *, word64 *);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern void __by16_ldivmod(word32 *, word32 *, word32 *, word32, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __v64_to_real(double *, word64 *);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int);
-extern void __rhspsel(register word *, register word *, register int,
- register int);
-extern void __disp_var(struct net_t *, int, int, int, char);
-extern int __cnt_dcelstels(register struct dcevnt_t *);
-extern int __get_arrwide(struct net_t *);
-extern void __ld_arr_val(register word *, register word *, union pck_u,
- int, int, int);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
-extern void __ld_bit(register word *, register word *, register struct net_t *,
- int);
-extern void __ld_psel(register word *, register word *,
- register struct net_t *, int, int);
-extern void __getarr_range(struct net_t *, int *, int *, int *);
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *, int32);
+extern void __rhspsel(register word32 *, register word32 *, register int32,
+ register int32);
+extern void __disp_var(struct net_t *, int32, int32, int32, char);
+extern int32 __cnt_dcelstels(register struct dcevnt_t *);
+extern int32 __get_arrwide(struct net_t *);
+extern void __ld_arr_val(register word32 *, register word32 *, union pck_u,
+ int32, int32, int32);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern void __ld_bit(register word32 *, register word32 *, register struct net_t *,
+ int32);
+extern void __ld_psel(register word32 *, register word32 *,
+ register struct net_t *, int32, int32);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
 extern void __dmp1_nplstel(struct mod_t *, struct net_t *, struct net_pin_t *);
 extern void __dmp1_dcelstel(struct mod_t *, struct dcevnt_t *);
-extern int __get_dcewid(struct dcevnt_t *, struct net_t *);
-extern void __ld_perinst_val(register word *, register word *, union pck_u,
- int);
-extern int __vval_is1(register word *, int);
-extern void __sizchgxs(struct xstk_t *, int);  
-extern int __fr_cap_size(int);
-extern int __get_netwide(struct net_t *);
-extern void __dmp_proc_assgn(FILE *, struct st_t *, struct delctrl_t *, int);
-extern void __dmp_stmt(FILE *, struct st_t *, int);
+extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
+extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
+ int32);
+extern int32 __vval_is1(register word32 *, int32);
+extern void __sizchgxs(struct xstk_t *, int32);  
+extern int32 __fr_cap_size(int32);
+extern int32 __get_netwide(struct net_t *);
+extern void __dmp_proc_assgn(FILE *, struct st_t *, struct delctrl_t *, int32);
+extern void __dmp_stmt(FILE *, struct st_t *, int32);
 
 extern void __dmp_nbproc_assgn(FILE *, struct st_t *, struct delctrl_t *);
 extern void __dmp_forhdr(FILE *, struct for_t *);
 extern void __dmp_dctrl(FILE *, struct delctrl_t *);
 extern void __dmp_tskcall(FILE *, struct st_t *);
 extern void __map_16v_to_12vform(word64 *, word64 *);
-extern void __try_reduce_16vtab(word64 *, int *);
-extern void __dmp_dcxpr(FILE *, union del_u, unsigned);
-extern int __isleaf(struct expr_t *);
-extern void __getwir_range(struct net_t *, int *, int *);
-extern int __unnormalize_ndx(struct net_t *, int);
-extern int __get_giarr_wide(struct giarr_t *);
-extern char *__get_vkeynam(char *, int);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __try_reduce_16vtab(word64 *, int32 *);
+extern void __dmp_dcxpr(FILE *, union del_u, word32);
+extern int32 __isleaf(struct expr_t *);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
+extern int32 __get_giarr_wide(struct giarr_t *);
+extern char *__get_vkeynam(char *, int32);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern int __is_lnegative(word *, int); 
-extern word __cp_lnegate(word *, register word *, int); 
+extern int32 __is_lnegative(word32 *, int32); 
+extern word32 __cp_lnegate(word32 *, register word32 *, int32); 
 
 extern void __cvsim_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *,...);
-extern void __sgfwarn(int, char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __gfterr(int, unsigned, int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __sgfinform(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __gfterr(int32, word32, int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
 
-extern word __masktab[];
-extern int errno;
+extern word32 __masktab[];
+extern int32 errno;
 extern double __dbl_toticks_tab[];
 
 /* LOOKATME - on mach ten and sunos fmod is drem - but maybe not same */
@@ -264,11 +265,11 @@ extern double __dbl_toticks_tab[];
  *
  * axp must be function call comma operator even if only 1 argument
  */
-extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
+extern void __fio_do_disp(register struct expr_t *axp, int32 dflt_fmt, int32 nd_nl,
  char *namstsk) 
 {
- register int i;
- word mcd; 
+ register int32 i;
+ word32 mcd; 
  struct xstk_t *xsp;
  char s1[RECLEN];
 
@@ -292,9 +293,9 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
  /* SJM 09/09/03 - fd case easy because only one stream to write to */
  if ((mcd & FIO_MSB) == FIO_MSB)
   {
-   int fd;
+   int32 fd;
 
-   fd = (int) (mcd & ~FIO_MSB);
+   fd = (int32) (mcd & ~FIO_MSB);
    /* if fd does not correspond to open file, just set error indicator */
    if (__fio_fdtab[fd] == NULL) { errno = EBADF; __cur_sofs = 0; return; }
    fputs(__exprline, __fio_fdtab[fd]->fd_s);
@@ -345,7 +346,7 @@ extern void __fio_do_disp(register struct expr_t *axp, int dflt_fmt, int nd_nl,
  *
  * notice this is write not display so no new line at end
  */
-extern void __str_do_disp(struct expr_t *axp, int dflt_fmt)
+extern void __str_do_disp(struct expr_t *axp, int32 dflt_fmt)
 {
  __cur_sofs = 0;
  disp_toexprline(axp, dflt_fmt);
@@ -357,7 +358,7 @@ extern void __str_do_disp(struct expr_t *axp, int dflt_fmt)
  * for now this shares line wrap line output code so must save and restore
  * axp must be function call comma operator even if only 1 argument
  */
-extern void __do_disp(register struct expr_t *axp, int dflt_fmt)
+extern void __do_disp(register struct expr_t *axp, int32 dflt_fmt)
 {
  __cur_sofs = 0;
  disp_toexprline(axp, dflt_fmt);
@@ -373,10 +374,10 @@ extern void __do_disp(register struct expr_t *axp, int dflt_fmt)
  * notice this run time routine and any called routines should
  * not emit messages - exception is round to time if has bits 52-64 on
  */
-static void disp_toexprline(register struct expr_t *axp, int dflt_fmt)
+static void disp_toexprline(register struct expr_t *axp, int32 dflt_fmt)
 {
  register char *chp;
- int base, chlen;
+ int32 base, chlen;
  char *start_fp;
  struct expr_t *xp;
  struct xstk_t *xsp;
@@ -430,8 +431,8 @@ static void disp_toexprline(register struct expr_t *axp, int dflt_fmt)
  */
 extern struct expr_t *__disp_1fmt_to_exprline(char *chp, struct expr_t *axp)
 {
- int trim, fmt_pos, fmt_non_real, blen;
- word *ap, *bp;
+ int32 trim, fmt_pos, fmt_non_real, blen;
+ word32 *ap, *bp;
  double d1;
  char *new_chp;
  struct expr_t *xp;
@@ -649,7 +650,7 @@ extern struct task_t *__getcur_scope_tsk(void)
 extern void __chk_fmt(register struct expr_t *axp, byte *argnonvtab) 
 {
  register char *chp;
- int trim, fmt_pos, fmt_non_real, chlen, argi;
+ int32 trim, fmt_pos, fmt_non_real, chlen, argi;
  char *new_chp, *start_fp;
  struct expr_t *xp;
  char rfmtstr[RECLEN], s1[RECLEN];
@@ -836,7 +837,7 @@ extern char *__msg2_blditree(char *s, struct itree_t *itp)
  */
 extern char *__msg_blditree(char *s, struct itree_t *itp, struct task_t *tskp)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  __disp_itree_path(itp, tskp);
  __trunc_cstr(&(__exprline[sav_sofs]), MSGTRUNCLEN, FALSE);
@@ -854,7 +855,7 @@ extern char *__msg_blditree(char *s, struct itree_t *itp, struct task_t *tskp)
  */
 extern void __disp_itree_path(register struct itree_t *itp, struct task_t *tskp)
 {
- register int gi;
+ register int32 gi;
  struct symtab_t *sytp;
  char *chp;
 
@@ -898,9 +899,9 @@ extern void __disp_itree_path(register struct itree_t *itp, struct task_t *tskp)
  * this is format preprocessing routine
  * think ascii standard says '-' can go anywhere
  */
-static char *sep_real_fmt(char *fmtstr, char *chp, int trim)
+static char *sep_real_fmt(char *fmtstr, char *chp, int32 trim)
 {
- int i;
+ int32 i;
  char *fchp;
 
  /* first see if can find real format end char within reasonable distance */
@@ -950,11 +951,11 @@ col_digs:
  * convert a Verilog value to a printable hex string
  * if trim false must pad with leading spaces
  */
-static void sdisph(word *ap, word *bp, int blen, int trim)
+static void sdisph(word32 *ap, word32 *bp, int32 blen, int32 trim)
 {
- register int bi, wi;
- int swlen, bi2, trimmed_blen, highused;
- word tmpa, tmpb;
+ register int32 bi, wi;
+ int32 swlen, bi2, trimmed_blen, highused;
+ word32 tmpa, tmpb;
  char ch;
 
  /* short circuit common 1 bit case */
@@ -1007,10 +1008,10 @@ done:
  * convert hex/oct/bin bit pattern to ascii character
  * all bits z = lower case else upper case (same for x)
  */
-static char bitsto_char(word a, word b, int bwid)
+static char bitsto_char(word32 a, word32 b, int32 bwid)
 {
  char ch;
- word mask;
+ word32 mask;
 
  if (!b) { ch = (char) valtoch_(a); return(ch); }
  mask = __masktab[bwid];
@@ -1032,18 +1033,18 @@ static char bitsto_char(word a, word b, int bwid)
  * dsigned false for signed value - like %u in c
  * if caller added [size]'d will never be signed
  */
-static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
+static void sdispd(word32 *ap, word32 *bp, int32 blen, int32 trim, int32 dsigned)
 {
- register int i;
- int ochnum, trimblen, widnumlen;
- sword sval;
+ register int32 i;
+ int32 ochnum, trimblen, widnumlen;
+ sword32 sval;
  struct xstk_t *xsp;
  char ch, *chp, *chp2, s1[RECLEN];
 
  if (!trim) 
   {
    /* need ceil here */
-   ochnum = (int) (blen*LG2_DIV_LG10 + 0.999999);
+   ochnum = (int32) (blen*LG2_DIV_LG10 + 0.999999);
    if (dsigned) ochnum++;
   }
  else ochnum = 0;
@@ -1062,22 +1063,32 @@ static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
    /* for decimal leading untrimmed must be spaces */
    if (dsigned)
     {
-     if (blen == WBITS) sprintf(s1, "%ld", (sword) ap[0]);
+     if (blen == WBITS) sprintf(s1, "%ld", (sword32) ap[0]);
      else
       {
        if ((ap[0] & (1 << (blen - 1))) != 0)
         {
-         sval = ~((int) ap[0]);
-         sval++;
          /* SJM 10/20/03 - 1 bit width vars can't be signed so works */ 
-         if (blen == 1) sval = 0; else sval &= __masktab[blen - 1];
-         sprintf(s1, "-%ld", sval);
+         if (blen == 1)
+          {
+           /* AIV 09/15/04 - LOOKATME - should this be -1? */
+           strcpy(s1, "0");
+          }
+         else
+          {
+           sval = ~((int32) ap[0]);
+           sval++;
+           sval &= __masktab[blen - 1];
+           /* AIV 09/15/04 - was wrongly printing - 0 for most negative */
+           if (sval == 0) sprintf(s1, "-%ld", ap[0]);
+           else sprintf(s1, "-%ld", sval);
+          }
         }
        else sprintf(s1, "%lu", ap[0]);
       }
     }
    else sprintf(s1, "%lu", ap[0]);
-   for (i = 0; i < ochnum - (int) strlen(s1); i++) addch_(' ');
+   for (i = 0; i < ochnum - (int32) strlen(s1); i++) addch_(' ');
    __adds(s1);
    return;
   }
@@ -1121,11 +1132,11 @@ static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
    __exprline[__cur_sofs] = '\0';
    return;
   }
- /* next wide that trims to 1 word */
+ /* next wide that trims to 1 word32 */
  if (trimblen <= WBITS)
   {
    sprintf(s1, "%lu", ap[0]);
-   for (i = 0; i < ochnum - (int) strlen(s1); i++) addch_(' ');
+   for (i = 0; i < ochnum - (int32) strlen(s1); i++) addch_(' ');
    __adds(s1);
    return;
   }
@@ -1138,16 +1149,16 @@ static void sdispd(word *ap, word *bp, int blen, int trim, int dsigned)
 }
 
 /*
- * convert an array of words (unsigned contiguous Verilog multiword value)
+ * convert an array of words (word32 contiguous Verilog multiword value)
  * into a string s known to be wide enough
  * know blen > WBITS for will not be called
  * this does not use exprline or a part
  */
-extern void __declcnv_tostr(char *s, word *wp, int trimblen, int widnumlen)
+extern void __declcnv_tostr(char *s, word32 *wp, int32 trimblen, int32 widnumlen)
 {
- register int chi;
- word *quot, *u, r0;
- int wlen;
+ register int32 chi;
+ word32 *quot, *u, r0;
+ int32 wlen;
  struct xstk_t *xsp;
 
  wlen = wlen_(trimblen);
@@ -1161,7 +1172,7 @@ extern void __declcnv_tostr(char *s, word *wp, int trimblen, int widnumlen)
  /* repeatedly divide by 10 filling from end to front */
  for (chi = widnumlen - 1;;)
   {
-   __by16_ldivmod(quot, &r0, u, (word) 10, trimblen);
+   __by16_ldivmod(quot, &r0, u, (word32) 10, trimblen);
    s[chi--] = (char) (r0 + '0'); 
    if (vval_is0_(quot, trimblen)) break;
    if (chi < 0) __case_terr(__FILE__, __LINE__);
@@ -1181,7 +1192,7 @@ extern void __declcnv_tostr(char *s, word *wp, int trimblen, int widnumlen)
  */
 extern char *__to_timstr(char *s, word64 *t)
 {
- /* UNUSED - int trimblen, widnumlen; */
+ /* UNUSED - int32 trimblen, widnumlen; */
  word64 t1;
 
  /* hard absolute unit case */
@@ -1192,18 +1203,18 @@ extern char *__to_timstr(char *s, word64 *t)
  sprintf(s, "%llu", t1); 
 
  /* LOOKATME - can this be eliminated ---
- if ((t1 >> 32) == 0ULL) sprintf(s, "%lu", (word) (t1 & WORDMASK_ULL));
+ if ((t1 >> 32) == 0ULL) sprintf(s, "%lu", (word32) (t1 & WORDMASK_ULL));
  else
   {
-   word t1a[2];
+   word32 t1a[2];
 
    -* low at 0th address and high at next *-
-   t1a[0] = (word) (t1 & WORDMASK_ULL);
-   t1a[1] = (word) ((t1 >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) (t1 & WORDMASK_ULL);
+   t1a[1] = (word32) ((t1 >> 32) & WORDMASK_ULL);
    -* notice this case makes use of c require that fields are in order *-
    trimblen = __trim1_0val(t1a, TIMEBITS);
    -* need ceil here *-
-   widnumlen = (int) (trimblen*LG2_DIV_LG10 + 0.999999);
+   widnumlen = (int32) (trimblen*LG2_DIV_LG10 + 0.999999);
    __declcnv_tostr(s, t1a, trimblen, widnumlen);
   }
  --- */
@@ -1215,7 +1226,7 @@ extern char *__to_timstr(char *s, word64 *t)
  * return decimal x/z/X/Z char ' ' for non x/z
  * could write routine that does not call routines but eliminates
  */
-static char get_decxz(word *ap, word *bp, int blen)
+static char get_decxz(word32 *ap, word32 *bp, int32 blen)
 {
  if (vval_is0_(bp, blen)) return(' ');
  if (vval_isall_xs(ap, bp, blen)) return('x');
@@ -1237,10 +1248,10 @@ static char get_decxz(word *ap, word *bp, int blen)
  * could do some case in exact 64 bit unsigned?
  * this string never wider than RECLEN and does not use expr line
  */
-static int bld_tfmt_val(char *s, struct expr_t *xp, word *ap, word *bp,
- int blen, int trim, int fmt_pos)
+static int32 bld_tfmt_val(char *s, struct expr_t *xp, word32 *ap, word32 *bp,
+ int32 blen, int32 trim, int32 fmt_pos)
 {
- int unit;
+ int32 unit;
  word64 usertim;
  double d1;
  struct mod_t *mdp;
@@ -1257,7 +1268,7 @@ static int bld_tfmt_val(char *s, struct expr_t *xp, word *ap, word *bp,
     {
      /* this causes decimal style x with no suffix string to be emitted */
      if (bp[1] != 0L || bp[0] != 0L) return(FALSE);
-     /* SJM 02/03/00 - works because ap[0] unsigned */
+     /* SJM 02/03/00 - works because ap[0] word32 */
      usertim = ((word64) ap[0]) | (((word64) ap[1]) << 32);
      if (!__v64_to_real(&d1, &usertim))
       __sgfwarn(572,
@@ -1288,10 +1299,10 @@ static int bld_tfmt_val(char *s, struct expr_t *xp, word *ap, word *bp,
  /* this can never fail */
  if (!trim)
   {
-   sprintf(s, "%*.*f%s", (int) (__tfmt_minfwid - strlen(__tfmt_suf)),
-    (int) __tfmt_precunits, d1, __tfmt_suf);
+   sprintf(s, "%*.*f%s", (int32) (__tfmt_minfwid - strlen(__tfmt_suf)),
+    (int32) __tfmt_precunits, d1, __tfmt_suf);
   }
- else sprintf(s, "%.*f%s", (int) __tfmt_precunits, d1, __tfmt_suf);
+ else sprintf(s, "%.*f%s", (int32) __tfmt_precunits, d1, __tfmt_suf);
  return(TRUE);
 }
 
@@ -1307,10 +1318,10 @@ static int bld_tfmt_val(char *s, struct expr_t *xp, word *ap, word *bp,
  * know correct itree loc. set here
  */
 extern char *__alloc_getasfmt(struct expr_t *xp, struct tfrec_t *tfrp,
- int fmtchar)
+ int32 fmtchar)
 {
- int sav_sofs, slen, vsigned, valreal;
- word *wp;
+ int32 sav_sofs, slen, vsigned, valreal;
+ word32 *wp;
  double d1;
  struct xstk_t *xsp;
  char *chp, s1[RECLEN];
@@ -1321,7 +1332,7 @@ extern char *__alloc_getasfmt(struct expr_t *xp, struct tfrec_t *tfrp,
   {
    if (fmtchar == 'v' || fmtchar == 'V') return(NULL);
    push_xstk_(xsp, tfrp->fretsiz);
-   wp = (word *) tfrp->tfargs[0].arg.awp;
+   wp = (word32 *) tfrp->tfargs[0].arg.awp;
    /* SJM 12/12/01 - this was wrong was copying over stk ptr */
    memcpy(xsp->ap, wp, 2*wlen_(tfrp->fretsiz)*WRDBYTES);
 
@@ -1330,7 +1341,7 @@ extern char *__alloc_getasfmt(struct expr_t *xp, struct tfrec_t *tfrp,
    goto xl_disp;
   }
 
- /* return 32 bit int as pointer to string */
+ /* return 32 bit int32 as pointer to string */
  /* if really literal string format letter ignored */ 
  if (xp->optyp == NUMBER && xp->is_string)
   {
@@ -1362,18 +1373,20 @@ xl_disp:
    if (valreal) __cnv_stk_fromreal_toreg32(xsp);
  }
 
+ /* SJM 08/03/04 - this code was wrongly trimmming leading 0s */
+ /* LRM  requires keeping leading 0s */
  switch ((byte) fmtchar) {
   case 'h': case 'H': case 'x': case'X':
-   sdisph(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   sdisph(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'd': case 'D':
-   sdispd(xsp->ap, xsp->bp, xsp->xslen, TRUE, vsigned);
+   sdispd(xsp->ap, xsp->bp, xsp->xslen, FALSE, vsigned);
    break;
   case 'o': case 'O':
-   sdispo(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   sdispo(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'b': case 'B':
-   __sdispb(xsp->ap, xsp->bp, xsp->xslen, TRUE);
+   __sdispb(xsp->ap, xsp->bp, xsp->xslen, FALSE);
    break;
   case 'g': case 'G': case 'f': case 'F':
    sprintf(s1, "%g", d1);
@@ -1394,17 +1407,17 @@ xl_done:
 /*
  * convert a Verilog value to a printable oct string
  */
-static void sdispo(word *ap, word *bp, int blen, int trim)
+static void sdispo(word32 *ap, word32 *bp, int32 blen, int32 trim)
 {
- register int bi;
- word psaval, psbval;
- int digs, trimmed_blen, highused, tmp;
+ register int32 bi;
+ word32 psaval, psbval;
+ int32 digs, trimmed_blen, highused, tmp;
  char ch;
 
  /* short circuit common 1 bit case */
  if (blen == 1)
   {
-   tmp = (int) (ap[0] | (bp[0] << 1)); 
+   tmp = (int32) (ap[0] | (bp[0] << 1)); 
    if (tmp < 2) ch = '0' + ((char) tmp);
    else if (tmp == 2) ch = 'z';
    else ch = 'x';
@@ -1423,11 +1436,11 @@ static void sdispo(word *ap, word *bp, int blen, int trim)
  /* notice -1 correction start at right part of 3 bit field */
  digs = ((trimmed_blen + 2)/3) - 1;
 
- /* notice selects required here because bits overlap word boundaries */
+ /* notice selects required here because bits overlap word32 boundaries */
  if ((highused = (trimmed_blen % 3)) == 0) highused = 3;
  for (bi = 3*digs; bi >= 0; bi -= 3)
   {
-   /* need part select here since word overlap */
+   /* need part select here since word32 overlap */
    __rhspsel(&psaval, ap, bi, highused);
    __rhspsel(&psbval, bp, bi, highused);
    addch_(bitsto_char(psaval, psbval, highused));
@@ -1442,11 +1455,11 @@ done:
  * if any prefix that must be preserved - sofs points to 1st usable pos.
  * notice this must be efficient since used for value change dump
  */
-extern void __sdispb(register word *ap, register word *bp, int blen, int trim)
+extern void __sdispb(register word32 *ap, register word32 *bp, int32 blen, int32 trim)
 {
- register int wi, bi;
- register word tmpa, tmpb;
- int swlen, trimmed_blen;
+ register int32 wi, bi;
+ register word32 tmpa, tmpb;
+ int32 swlen, trimmed_blen;
  char ch;
 
  /* short circuit common 1 bit case */
@@ -1501,10 +1514,10 @@ done:
  * convert a value as Verilog string to printable string
  * truncating version
  */
-extern char *__strab_tostr(char *s, word *ap, int blen, int nd_quotes,
- int space_0)
+extern char *__strab_tostr(char *s, word32 *ap, int32 blen, int32 nd_quotes,
+ int32 space_0)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  __xline_vval_to_cstr(ap, blen, nd_quotes, space_0, FALSE);
  /* here keeps low part if trunc needed */
@@ -1521,10 +1534,10 @@ extern char *__strab_tostr(char *s, word *ap, int blen, int nd_quotes,
  *
  * caller must insure big enough 
  */
-extern char *__strab2_tostr(char *s, word *ap, int blen, int nd_quotes,
- int space_0)
+extern char *__strab2_tostr(char *s, word32 *ap, int32 blen, int32 nd_quotes,
+ int32 space_0)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  __xline_vval_to_cstr(ap, blen, nd_quotes, space_0, FALSE);
  /* here keeps low part if trunc needed */
@@ -1540,10 +1553,10 @@ extern char *__strab2_tostr(char *s, word *ap, int blen, int nd_quotes,
  * for values that are being printed in some type of display
  * dmp_expr uses this to add string to accumulating line
  */
-extern void __xline_vval_to_cstr(word *ap, int blen, int nd_quotes,
- int space_0, int esc_esc)
+extern void __xline_vval_to_cstr(word32 *ap, int32 blen, int32 nd_quotes,
+ int32 space_0, int32 esc_esc)
 {
- int chlen;
+ int32 chlen;
  char *chp;
 
  /* convert to pascal (no ending 0) string  - malloc storage */
@@ -1558,15 +1571,15 @@ extern void __xline_vval_to_cstr(word *ap, int blen, int nd_quotes,
  * convert a verilog string to a cstring - substitutes chars and adds \0
  * and put result in __exprline starting at current place 
  */
-static void vstr_to_cstr(char *vstr, int blen, int space_0, int nd_quotes,
- int esc_esc)
+static void vstr_to_cstr(char *vstr, int32 blen, int32 space_0, int32 nd_quotes,
+ int32 esc_esc)
 {
- register int i; 
+ register int32 i; 
  register char *chp;
- int chlen;
+ int32 chlen;
  char s1[RECLEN];
 
- /* this will never extend higher than high word, could have inform if */
+ /* this will never extend higher than high word32, could have inform if */
  /* not even 8 bits but no way to locate for user */ 
  chlen = (blen + 7)/8;
  /* DBG remove --- */
@@ -1611,17 +1624,17 @@ INVERSE:
     | ((b1 & 0xff) << 24);
 --- */
 /*
- * write 'u' format binary 0/1 one word using machine's endianness
+ * write 'u' format binary 0/1 one word32 using machine's endianness
  * into __exprline
  *
  * for u format output is a words only but if b bit set value is 0
  */
-static void disp_ufmt_binval(word *ap, word *bp, int blen)
+static void disp_ufmt_binval(word32 *ap, word32 *bp, int32 blen)
 {
- register int j;
- register word wrd;
+ register int32 j;
+ register word32 wrd;
  byte bval;
- int wi;
+ int32 wi;
   
  for (wi = 0; wi < wlen_(blen); wi++)
   {
@@ -1649,10 +1662,10 @@ static void disp_ufmt_binval(word *ap, word *bp, int blen)
  *
  * for z format output is a and b words interleaved
  */
-static void disp_zfmt_binval(word *ap, word *bp, int blen)
+static void disp_zfmt_binval(word32 *ap, word32 *bp, int32 blen)
 {
- register int j;
- int wi;
+ register int32 j;
+ int32 wi;
  byte bval;
 
  for (wi = 0; wi < wlen_(blen); wi++)
@@ -1684,11 +1697,11 @@ static void disp_zfmt_binval(word *ap, word *bp, int blen)
  * this will always build some kind of string
  * this must be called with actual string or number object
  */
-extern char *__get_eval_cstr(struct expr_t *xp, int *chlen)
+extern char *__get_eval_cstr(struct expr_t *xp, int32 *chlen)
 {
- register int i;
+ register int32 i;
  register char *chp; 
- int sav_sofs, slen;
+ int32 sav_sofs, slen;
  struct xstk_t *xsp;
 
  xsp = __eval_xpr(xp); 
@@ -1724,7 +1737,7 @@ extern char *__get_eval_cstr(struct expr_t *xp, int *chlen)
 /*
  * convert constant string stored as Verilog value to Verilog style string
  * know b val always 0 and still must convert to C style string for print
- * copy little endian chars in words, bit endian word reg to big endian
+ * copy little endian chars in words, bit endian word32 reg to big endian
  *
  * always puts a \0 at end of string in case needed (usually not)
  * also not Verilog value in sense that high chars are not zeroed
@@ -1733,13 +1746,13 @@ extern char *__get_eval_cstr(struct expr_t *xp, int *chlen)
  * all this stuff is not 8 bit clean
  * loop probably better than the inlining here
  * notice assuming 8 bit byte
- * this routines is 32 bit word dependent
+ * this routines is 32 bit word32 dependent
  */
-extern char *__vval_to_vstr(word *ap, int blen, int *slen)
+extern char *__vval_to_vstr(word32 *ap, int32 blen, int32 *slen)
 {
- register int si, wi;
+ register int32 si, wi;
  char *s;
- int wlen, nchs;
+ int32 wlen, nchs;
 
  /* make sure one extra character at end, if need to convert to */
  /* binary style c string for sreadmem */
@@ -1777,7 +1790,7 @@ done:
  */
 extern char *__strenexpr_tostr(char *s, struct expr_t *xp)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  sdisp_st(xp);
  /* here keeps low part if trunc needed */
@@ -1799,8 +1812,8 @@ extern char *__strenexpr_tostr(char *s, struct expr_t *xp)
  */
 static void sdisp_st(struct expr_t *xp)
 {
- register int bi;
- int first_time;
+ register int32 bi;
+ int32 first_time;
  byte *sbp; 
  struct xstk_t *xsp;
  char s1[10];
@@ -1811,7 +1824,7 @@ static void sdisp_st(struct expr_t *xp)
  for (first_time = TRUE, bi = xsp->xslen/4 - 1; bi >= 0; bi--)
   {
    if (first_time) first_time = FALSE; else addch_(' '); 
-   __adds(__to_vvstnam(s1, (word) sbp[bi]));
+   __adds(__to_vvstnam(s1, (word32) sbp[bi]));
   }
  __pop_xstk();  
 }
@@ -1825,9 +1838,9 @@ static void sdisp_st(struct expr_t *xp)
  * truncated string form of num expr to value
  * this uses high env 
  */
-extern char *__msgnumexpr_tostr(char *s, struct expr_t *ndp, int inum)
+extern char *__msgnumexpr_tostr(char *s, struct expr_t *ndp, int32 inum)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
  
  numexpr_disp(ndp, inum);
  __trunc_cstr(&(__exprline[sav_sofs]), MSGTRUNCLEN, FALSE);
@@ -1844,10 +1857,10 @@ extern char *__msgnumexpr_tostr(char *s, struct expr_t *ndp, int inum)
  * does not set cur_sofs - can add into middle, but caller must set it
  * also if inum not known and IS form - must pass 0
  */
-static void numexpr_disp(struct expr_t *ndp, int inum)
+static void numexpr_disp(struct expr_t *ndp, int32 inum)
 {
- word *ap, *bp, *wp;
- int wlen, base;
+ word32 *ap, *bp, *wp;
+ int32 wlen, base;
  double d1;
  char s1[RECLEN];
 
@@ -1897,11 +1910,11 @@ disp_real:
     }
    if (ndp->sizdflt) __adds("'d");
    else { sprintf(s1, "%d'd", ndp->szu.xclen); __adds(s1); }
-   /* if no. even decimal has 'd, always unsigned and trimmed */
+   /* if no. even decimal has 'd, always word32 and trimmed */
    sdispd(ap, bp, ndp->szu.xclen, TRUE, FALSE);
    break;
   case BHEX:
-   /* know rest all unsigned */
+   /* know rest all word32 */
    /* [size]'h prefixed number always trimmed */
    if (ndp->sizdflt) __adds("'h");
    else { sprintf(s1, "%d'h", ndp->szu.xclen); __adds(s1); }
@@ -1927,7 +1940,7 @@ disp_real:
  * truncate __exprline to newsize - __cur_sofs points to end
  * know truncation must be less than RECLEN (512)
  */
-extern void __trunc_exprline(int newsize, int from_front)
+extern void __trunc_exprline(int32 newsize, int32 from_front)
 {
  if (__cur_sofs < newsize) return;
 
@@ -1955,9 +1968,9 @@ extern void __trunc_exprline(int newsize, int from_front)
  * this removes prefix when truncation needed 
  * know truncation must be less than RECLEN (512)
  */
-extern void __trunc_cstr(char *s, int newsize, int from_front)
+extern void __trunc_cstr(char *s, int32 newsize, int32 from_front)
 {
- int slen;
+ int32 slen;
 
  if ((slen = strlen(s)) < newsize) return;
    
@@ -1988,10 +2001,10 @@ extern void __trunc_cstr(char *s, int newsize, int from_front)
  * this handles string constants in both forms
  * LOOKATME - how does this routine differ from num expr disp
  */
-extern char *__xregab_tostr(char *s, word *ap, word *bp, int blen,
+extern char *__xregab_tostr(char *s, word32 *ap, word32 *bp, int32 blen,
  struct expr_t *xp)
 {
- int signv, base;
+ int32 signv, base;
 
  /* if expr. is string, write as unquoted string */
  if (xp->is_string)
@@ -2021,9 +2034,9 @@ extern char *__xregab_tostr(char *s, word *ap, word *bp, int blen,
  * version of regab to string that gets format from parameter ncomp record
  * this handles string constants in both forms
  */
-extern char *__pregab_tostr(char *s, word *ap, word *bp, struct net_t *np)
+extern char *__pregab_tostr(char *s, word32 *ap, word32 *bp, struct net_t *np)
 {
- int signv, base;
+ int32 signv, base;
 
  /* DBG remove --- */
  if (np->nrngrep != NX_CT || !np->n_isaparam)
@@ -2055,10 +2068,10 @@ extern char *__pregab_tostr(char *s, word *ap, word *bp, struct net_t *np)
  * notice this prints passed string not chp of next pos.
  * string passed must be at least RECLEN 
  */
-extern char *__regab_tostr(char *s, word *ap, word *bp, int blen, int base,
- int hassign)
+extern char *__regab_tostr(char *s, word32 *ap, word32 *bp, int32 blen, int32 base,
+ int32 hassign)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  __regab_disp(ap, bp, blen, base, TRUE, hassign);
  /* here keeps low part if trunc needed */
@@ -2072,10 +2085,10 @@ extern char *__regab_tostr(char *s, word *ap, word *bp, int blen, int base,
 /*
  * version of regab to string that allows turning trim off
  */
-extern char *__regab2_tostr(char *s, word *ap, word *bp, int blen, int base,
- int hassign, int trim)
+extern char *__regab2_tostr(char *s, word32 *ap, word32 *bp, int32 blen, int32 base,
+ int32 hassign, int32 trim)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  __regab_disp(ap, bp, blen, base, trim, hassign);
  __trunc_cstr(&(__exprline[sav_sofs]), MSGTRUNCLEN, TRUE);
@@ -2092,8 +2105,8 @@ extern char *__regab2_tostr(char *s, word *ap, word *bp, int blen, int base,
  *
  * notice if can be using exprline caller must save
  */
-extern void __regab_disp(word *ap, word *bp, int blen, int base, int trim,
- int hassign)
+extern void __regab_disp(word32 *ap, word32 *bp, int32 blen, int32 base, int32 trim,
+ int32 hassign)
 {
  char s1[RECLEN];
 
@@ -2122,9 +2135,9 @@ extern void __regab_disp(word *ap, word *bp, int blen, int base, int trim,
  * can always print value by loading to stk and calling this
  * s must be at least RECLEN wide
  */
-extern char *__st_regab_tostr(char *s, byte *sbp, int blen)
+extern char *__st_regab_tostr(char *s, byte *sbp, int32 blen)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  st_regab_disp(sbp, blen);
  /* truncate from front if needed - keep low bits */
@@ -2138,15 +2151,15 @@ extern char *__st_regab_tostr(char *s, byte *sbp, int blen)
 /*
  * display a strength value into expr line
  */
-static void st_regab_disp(byte *sbp, int blen)
+static void st_regab_disp(byte *sbp, int32 blen)
 {
- register int i;
+ register int32 i;
  char s1[RECLEN];
 
  /* maybe need some kind of separator here */
  for (i = blen - 1;; i--)
   {
-   __adds(__to_vvstnam(s1, (word) sbp[i]));
+   __adds(__to_vvstnam(s1, (word32) sbp[i]));
    if (i <= 0) break;
    addch_(' '); 
   }
@@ -2159,7 +2172,7 @@ static void st_regab_disp(byte *sbp, int blen)
  */
 extern char *__msgtox_wrange(char *s, struct expr_t *x1, struct expr_t *x2)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  tox_wrange((FILE *) NULL, x1, x2);
  __trunc_cstr(&(__exprline[sav_sofs]), MSGTRUNCLEN, FALSE);
@@ -2175,7 +2188,7 @@ extern char *__msgtox_wrange(char *s, struct expr_t *x1, struct expr_t *x2)
  */
 extern char *__msgexpr_tostr(char *s, struct expr_t *ndp)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  dmp_expr((FILE *) NULL, ndp);
  __trunc_cstr(&(__exprline[sav_sofs]), MSGTRUNCLEN, FALSE);
@@ -2196,9 +2209,9 @@ extern char *__msgexpr_tostr(char *s, struct expr_t *ndp)
 /*
  * convert a variable to a string
  */
-extern char *__var_tostr(char *s, struct net_t *np, int i1, int i2, int base)
+extern char *__var_tostr(char *s, struct net_t *np, int32 i1, int32 i2, int32 base)
 {
- int sav_sofs = __cur_sofs;
+ int32 sav_sofs = __cur_sofs;
 
  /* use sign from var. */
  __disp_var(np, i1, i2, base, '?');
@@ -2212,7 +2225,7 @@ extern char *__var_tostr(char *s, struct net_t *np, int i1, int i2, int base)
 
 /*
  * display variable (possibly part or bit select range out of [i1,i2]) with
- * base base and force signed '-' or unsigned ' ' or use variable sign
+ * base base and force signed '-' or word32 ' ' or use variable sign
  * in other case
  *
  * for array - may need to be called multiple times but will index one
@@ -2220,10 +2233,10 @@ extern char *__var_tostr(char *s, struct net_t *np, int i1, int i2, int base)
  *
  * expects __cur_sofs to be set and builds in expr line 
  */  
-extern void __disp_var(struct net_t *np, int i1, int i2, int base,
+extern void __disp_var(struct net_t *np, int32 i1, int32 i2, int32 base,
  char vsign_ovride)
 {
- int arrwid, hassign, netwid;
+ int32 arrwid, hassign, netwid;
  double d1;
  struct xstk_t *xsp;
  char s1[RECLEN];
@@ -2303,16 +2316,16 @@ do_print:
 /*
  * display a possible section of a strength variable (from the wire)
  */
-static void disp_stvar(struct net_t *np, int i1, int i2)
+static void disp_stvar(struct net_t *np, int32 i1, int32 i2)
 {
- register int i;
+ register int32 i;
  char s1[RECLEN];
 
  if (i1 == -1) { i1 = np->nwid - 1; i2 = 0; }
  /* maybe need some kind of separator here */
  for (i = i1; i >= i2; i--)
   {
-   __adds(__to_vvstnam(s1, (word) np->nva.bp[i]));
+   __adds(__to_vvstnam(s1, (word32) np->nva.bp[i]));
    if (i > i2) addch_(' ');
   }
  __exprline[__cur_sofs] = '\0'; 
@@ -2321,7 +2334,7 @@ static void disp_stvar(struct net_t *np, int i1, int i2)
 /*
  * return sign by testing over-ride variable - if not use wire sign
  */
-static int get_ovrsign(struct net_t *np, char ovride)
+static int32 get_ovrsign(struct net_t *np, char ovride)
 {
  if (ovride == '-') return(TRUE);
  else if (ovride == ' ') return(FALSE);
@@ -2333,7 +2346,7 @@ static int get_ovrsign(struct net_t *np, char ovride)
  * only called if debug on and inst ptr set
  *
  */
-extern void __dmp_arr_all(struct net_t *np, int ifr, int ito)
+extern void __dmp_arr_all(struct net_t *np, int32 ifr, int32 ito)
 {
  if (!np->n_isarr) __arg_terr(__FILE__, __LINE__);
  dmp_arr_insts(np, ifr, ito);
@@ -2343,10 +2356,10 @@ extern void __dmp_arr_all(struct net_t *np, int ifr, int ito)
  * dmp instance ifr to ito of arr var. np from mfr to mto
  * mfr and mto assume normalized h:0 form not actual range
  */
-static void dmp_arr_insts(struct net_t *np, int ifr, int ito)
+static void dmp_arr_insts(struct net_t *np, int32 ifr, int32 ito)
 {
- register int i;
- int ri1, ri2, arrwid;
+ register int32 i;
+ int32 ri1, ri2, arrwid;
 
  if (!np->n_isarr) __arg_terr(__FILE__, __LINE__);
  __getarr_range(np, &ri1, &ri2, &arrwid);
@@ -2356,10 +2369,10 @@ static void dmp_arr_insts(struct net_t *np, int ifr, int ito)
 /*
  * dump an array from index mifr to mito for instance inum
  */
-static void dmp_arr(struct net_t *np, int mifr, int mito, int inum)
+static void dmp_arr(struct net_t *np, int32 mifr, int32 mito, int32 inum)
 {
- register int mi;
- int arrwid, ri1, ri2, h0_arri;
+ register int32 mi;
+ int32 arrwid, ri1, ri2, h0_arri;
  struct xstk_t *xsp;
 
  if (!np->n_isarr) __arg_terr(__FILE__, __LINE__);
@@ -2388,14 +2401,14 @@ static void dmp_arr(struct net_t *np, int mifr, int mito, int inum)
  * dump the np and dce lists for one module 
  * only called if debug flag on
  */
-extern void __dmpmod_nplst(struct mod_t *mdp, int dces_only)
+extern void __dmpmod_nplst(struct mod_t *mdp, int32 dces_only)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
  register struct task_t *tskp;
 
  /* DBG remove ---
- --   int ii;
+ --   int32 ii;
  if (__debug_flg)
   {
    for (ii = 0; ii < __numtopm; ii++) __dmp_itree(__it_roots[ii]);
@@ -2425,11 +2438,11 @@ extern void __dmpmod_nplst(struct mod_t *mdp, int dces_only)
 /*
  * dump the net pin list elements for 1 net
  */
-static void dmp1n_nplst(struct mod_t *mdp, struct net_t *np, int dces_only)
+static void dmp1n_nplst(struct mod_t *mdp, struct net_t *np, int32 dces_only)
 {
  register struct net_pin_t *npp;
  register struct dcevnt_t *dcep;
- int first_time;
+ int32 first_time;
  char s1[RECLEN];
 
  if (np->ntyp == N_EVENT)
@@ -2479,9 +2492,9 @@ try_dces:
  * count drivers or loads (inst. specific counted for each inst.)
  * SJM 07/25/01 - although MIPD is a load, it is not counted
  */
-static int cnt_nplstels(register struct net_pin_t *npp)
+static int32 cnt_nplstels(register struct net_pin_t *npp)
 { 
- int i;
+ int32 i;
 
  for (i = 0; npp != NULL; npp = npp->npnxt)
   {
@@ -2493,9 +2506,9 @@ static int cnt_nplstels(register struct net_pin_t *npp)
 /*
  * count delay control/dump vars events
  */
-extern int __cnt_dcelstels(register struct dcevnt_t *dcep)
+extern int32 __cnt_dcelstels(register struct dcevnt_t *dcep)
 { 
- int i;
+ int32 i;
 
  for (i = 0; dcep != NULL; dcep = dcep->dcenxt)
   {
@@ -2514,7 +2527,7 @@ extern int __cnt_dcelstels(register struct dcevnt_t *dcep)
 extern void __dmp1_nplstel(struct mod_t *mdp, struct net_t *np,
  struct net_pin_t *npp)
 {
- unsigned stval;
+ word32 stval;
  struct inst_t *ip;
  struct gate_t *gp;
  struct mod_t *imdp, *tmp_mdp;
@@ -2636,7 +2649,7 @@ extern void __dmp1_nplstel(struct mod_t *mdp, struct net_t *np,
    stval = gp->g_stval << 2;
    if (npp->pullval == 1) stval |= 1; 
    __dbg_msg("%s to %s on %s at %s\n",
-    gp->gmsym->synam, __to_vvstnam(s1, (word) stval),  
+    gp->gmsym->synam, __to_vvstnam(s1, (word32) stval),  
     __msgexpr_tostr(__xs, gp->gpins[npp->obnum]), __bld_lineloc(__xs2,
     gp->gsym->syfnam_ind, gp->gsym->sylin_cnt));
    break;
@@ -2734,12 +2747,12 @@ extern void __dmp1_dcelstel(struct mod_t *mdp, struct dcevnt_t *dcep)
  * load a dce edge value with strength removed if attached to stren wire
  * know 1 bit and does not use itree loc. - gets from 1st instance
  */
-static word get_dce_edgeval(struct mod_t *mdp, struct dcevnt_t *dcep)
+static word32 get_dce_edgeval(struct mod_t *mdp, struct dcevnt_t *dcep)
 {
  struct net_t *np;
- int dcewid;
+ int32 dcewid;
  byte *sbp;
- word val, aw, bw;
+ word32 val, aw, bw;
  struct xstk_t *xsp;
  
  /* here edge always 1 bit */
@@ -2754,7 +2767,7 @@ static word get_dce_edgeval(struct mod_t *mdp, struct dcevnt_t *dcep)
   {
    np = dcep->dce_np;
    /* this is low bit of 1st inst. */
-   if (np->n_stren) { sbp = dcep->prevval.bp; val = (word) (sbp[0] & 3); }
+   if (np->n_stren) { sbp = dcep->prevval.bp; val = (word32) (sbp[0] & 3); }
    else
     {
      /* since edge, know low bit used for range */
@@ -2787,10 +2800,10 @@ static word get_dce_edgeval(struct mod_t *mdp, struct dcevnt_t *dcep)
  *
  * this maybe would be better converting to blen and using that
  */
-static int bin_trim_abval(word *ap, word *bp, int blen)
+static int32 bin_trim_abval(word32 *ap, word32 *bp, int32 blen)
 {
- int ahigh0, bhigh0;
- int wlen, ubits, trimalen, trimblen;
+ int32 ahigh0, bhigh0;
+ int32 wlen, ubits, trimalen, trimblen;
 
  /* this adjusts 0 to WBITS */
  wlen = wlen_(blen);
@@ -2838,10 +2851,10 @@ static int bin_trim_abval(word *ap, word *bp, int blen)
  *
  * this maybe would be better converting to blen and using that
  */
-static int trim_abval(word *ap, word *bp, int blen)
+static int32 trim_abval(word32 *ap, word32 *bp, int32 blen)
 {
- int ahigh0, bhigh0;
- int wlen, ubits, trimalen, trimblen;
+ int32 ahigh0, bhigh0;
+ int32 wlen, ubits, trimalen, trimblen;
 
  /* this adjusts 0 to WBITS */
  wlen = wlen_(blen);
@@ -2869,9 +2882,9 @@ static int trim_abval(word *ap, word *bp, int blen)
 /*
  * return T if bit i is 0 (32 >= i >= 1)
  */
-static int bithi_is0(word val, int ubits)
+static int32 bithi_is0(word32 val, int32 ubits)
 {
- word mask;
+ word32 mask;
 
  mask = 1L << (ubits - 1);
  if ((mask & val) == 0L) return(TRUE);
@@ -2891,11 +2904,11 @@ static byte clz_tab[] =
  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
 };
 
-/* notice this routine in 32 bit word dependent */
-extern int __count_leading_zeros(register word xr)
+/* notice this routine in 32 bit word32 dependent */
+extern int32 __count_leading_zeros(register word32 xr)
 {
- register word a;
- register int count;
+ register word32 a;
+ register int32 count;
 
  a = xr < (1L << 16) ? (xr < (1L << 8) ? 0 : 8) : (xr < (1L << 24) ? 16: 24);
  count = 32 - (clz_tab[xr >> a] + a);
@@ -2909,14 +2922,14 @@ extern int __count_leading_zeros(register word xr)
  * this works on either a or b part but not both at once - caller must
  * combine
  */
-extern int __trim1_0val(word *wp, int blen)
+extern int32 __trim1_0val(word32 *wp, int32 blen)
 {
- register int swi;
- int hbits, wlen;
+ register int32 swi;
+ int32 hbits, wlen;
 
- /* adjust so blen value as if all bits in high word used */
+ /* adjust so blen value as if all bits in high word32 used */
  wlen = wlen_(blen);
- /* notice this works from high word toward low */
+ /* notice this works from high word32 toward low */
  for (swi = wlen - 1; swi >= 0; swi--)
   {
    if (wp[swi] != 0L)
@@ -2932,11 +2945,11 @@ extern int __trim1_0val(word *wp, int blen)
  * trim a 1 value - returns new length that is 0 if all 1's
  * know all high unsued bits 1 in value with new length
  */
-static int trim1_1val(word *wp, int blen)
+static int32 trim1_1val(word32 *wp, int32 blen)
 {
- register int swi;
- word tmp;
- int wlen, hbits, ubits;
+ register int32 swi;
+ word32 tmp;
+ int32 wlen, hbits, ubits;
 
  wlen = wlen_(blen);
  ubits = ubits_(blen);
@@ -2948,7 +2961,7 @@ static int trim1_1val(word *wp, int blen)
    if (tmp != 0L)
     { hbits = __count_leading_zeros(tmp); return(WBITS*(wlen + 1) - hbits); }
   }
- /* notice this works from high word toward low */
+ /* notice this works from high word32 toward low */
  for (swi = wlen - 1; swi >= 0; swi--)
   {
    if ((tmp = ~wp[swi]) != 0L)
@@ -2963,9 +2976,9 @@ static int trim1_1val(word *wp, int blen)
 /*
  * return T if value is all z's
  */
-extern int __vval_isallzs(word *ap, word *bp, int blen)
+extern int32 __vval_isallzs(word32 *ap, word32 *bp, int32 blen)
 {
- int v1, v2;
+ int32 v1, v2;
 
  /* v1, v2 here for debugging only */
  v1 = vval_is0_(ap, blen);
@@ -2978,9 +2991,9 @@ extern int __vval_isallzs(word *ap, word *bp, int blen)
  * return T for strength value that is all z's
  * <0:0=z (i.e. 00000010) is only z value
  */
-extern int __st_vval_isallzs(byte *sbp, int blen)
+extern int32 __st_vval_isallzs(byte *sbp, int32 blen)
 {
- register int i;
+ register int32 i;
 
  for (i = 0; i < blen; i++) if (*sbp != 3) return(FALSE);
  return(TRUE);
@@ -2989,7 +3002,7 @@ extern int __st_vval_isallzs(byte *sbp, int blen)
 /*
  * return T if value is all x's
  */
-static int vval_isall_xs(word *ap, word *bp, int blen)
+static int32 vval_isall_xs(word32 *ap, word32 *bp, int32 blen)
 {
  if (!__vval_is1(ap, blen)) return(FALSE);
  if (!__vval_is1(bp, blen)) return(FALSE);
@@ -2998,11 +3011,11 @@ static int vval_isall_xs(word *ap, word *bp, int blen)
 
 /*
  * return T is has any x's, even 1 x implies X, else Z
- * notice half word here ok
+ * notice half word32 here ok
  */
-static int vval_hasx(word *ap, word *bp, int blen)
+static int32 vval_hasx(word32 *ap, word32 *bp, int32 blen)
 {
- register int wi;
+ register int32 wi;
 
  for (wi = 0; wi < wlen_(blen); wi++)
   {
@@ -3013,13 +3026,13 @@ static int vval_hasx(word *ap, word *bp, int blen)
 
 /*
  * return T if value is all 1's (processes either a or b value not both)
- * notice half word blen here ok
+ * notice half word32 blen here ok
  */
-extern int __vval_is1(register word *wp, int blen)
+extern int32 __vval_is1(register word32 *wp, int32 blen)
 {
- register int i;
- register word mask;
- int wlen;
+ register int32 i;
+ register word32 mask;
+ int32 wlen;
 
  wlen = wlen_(blen);
  for (i = 0; i < wlen - 1; i++) if (wp[i] != ALL1W) return(FALSE);
@@ -3030,15 +3043,15 @@ extern int __vval_is1(register word *wp, int blen)
 
 /*
  * return T if value is all 0's (processes either a or b value)
- * passed with 2 word length for both a and b values
+ * passed with 2 word32 length for both a and b values
  * only for values wider than WBITS
- * notice must be word since 2 word length possible
+ * notice must be word32 since 2 word32 length possible
  *
  * this is invoked from a macro
  */
-extern int __wide_vval_is0(register word *wp, int blen)
+extern int32 __wide_vval_is0(register word32 *wp, int32 blen)
 {
- register int i;
+ register int32 i;
 
  for (i = 0; i < wlen_(blen); i++) if (*wp++ != 0L) return(FALSE);
  return(TRUE);
@@ -3049,21 +3062,21 @@ extern int __wide_vval_is0(register word *wp, int blen)
  */
 
 /*
- * convert a 64 bit ver. unsigned  to a ieee double real value
+ * convert a 64 bit ver. word32  to a ieee double real value
  * return F on error - caller can emit warning - d1 as good as possible
  *
- * FIXME - since tim now word 64, maybe can just assign
+ * FIXME - since tim now word32 64, maybe can just assign
  * PORTABLE - assumes IEEE floating point
  */
-extern int __v64_to_real(double *d1, word64 *tim)
+extern int32 __v64_to_real(double *d1, word64 *tim)
 {
- int good;
- register word w0, w1, mask;
+ int32 good;
+ register word32 w0, w1, mask;
  double dbase;
 
  /* easy case, fit in 32 bits */
- w0 = (word) ((*tim) & WORDMASK_ULL);
- w1 = (word) (((*tim) >> 32) & WORDMASK_ULL);
+ w0 = (word32) ((*tim) & WORDMASK_ULL);
+ w1 = (word32) (((*tim) >> 32) & WORDMASK_ULL);
  if (w1 == 0L) { *d1 = (double) w0; return(TRUE); }
 
  good = TRUE;
@@ -3071,9 +3084,9 @@ extern int __v64_to_real(double *d1, word64 *tim)
  mask = __masktab[WBITS - (_DEXPLEN + 1)];
  if ((w1 & ~mask) != 0L) good = FALSE;
  dbase = ((double) (0xffffffff)) + 1.0; 
- /* cannot use base 2**32 because conversion to double assumes int */
- /* even if value is unsigned */
- /* conversion from double to unsigned int works if double is positive */
+ /* cannot use base 2**32 because conversion to double assumes int32 */
+ /* even if value is word32 */
+ /* conversion from double to word32 works if double is positive */
  *d1 = (double) w0 + dbase*((double) w1);
  return(good); 
 }
@@ -3081,10 +3094,10 @@ extern int __v64_to_real(double *d1, word64 *tim)
 /*
  * convert a stack value to a real and 
  */
-extern double __cnvt_stk_to_real(struct xstk_t *xsp, int is_signed)
+extern double __cnvt_stk_to_real(struct xstk_t *xsp, int32 is_signed)
 {
- int i;
- unsigned u;
+ int32 i;
+ word32 u;
  word64 tim;
  double d1;
  
@@ -3105,8 +3118,8 @@ not_real:
   }
  else
   {
-   if (is_signed) { i = (int) xsp->ap[0]; d1 = (double) i; }
-   else { u = (unsigned) xsp->ap[0]; d1 = (double) u; } 
+   if (is_signed) { i = (int32) xsp->ap[0]; d1 = (double) i; }
+   else { u = (word32) xsp->ap[0]; d1 = (double) u; } 
   }
  return(d1);
 }
@@ -3118,7 +3131,7 @@ not_real:
  */
 extern double __unscale_realticks(word64 *ticksval, struct mod_t *mdp)
 {
- unsigned unit;
+ word32 unit;
  double d1;
 
  if (!__v64_to_real(&d1, ticksval))
@@ -3143,7 +3156,7 @@ extern double __unscale_realticks(word64 *ticksval, struct mod_t *mdp)
  */
 extern void __exec_scale(struct expr_t *fax)
 {
- int unit;
+ int32 unit;
  double d1; 
  word64 tval;
  struct xstk_t *xsp;
@@ -3191,7 +3204,7 @@ done:
  */
 extern void __src_rd_cnv_stk_fromreal_toreg32(struct xstk_t *xsp)
 {
- int sav_slin_cnt, sav_sfnam_ind;
+ int32 sav_slin_cnt, sav_sfnam_ind;
 
  /* can assign specparam value immediately */
  /* SJM 06/17/99 - needs to run in run/fixup mode - statement loc set */
@@ -3212,17 +3225,17 @@ extern void __src_rd_cnv_stk_fromreal_toreg32(struct xstk_t *xsp)
  * know real will always be WBITS with b part part of real
  * this routine is 32 bit dependent
  *
- * algorith converts real to int (32 bit) then move bit pattern to reg32
+ * algorith converts real to int32 (32 bit) then move bit pattern to reg32
  * notice output can be signed
  */
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *xsp)
 {
  double d1; 
- int i;
+ int32 i;
 
  memcpy(&d1, xsp->ap, sizeof(double)); 
  i = ver_rint_(d1);
- xsp->ap[0] = (word) i;
+ xsp->ap[0] = (word32) i;
  xsp->bp[0] = 0L;
 }
 
@@ -3230,9 +3243,9 @@ extern void __cnv_stk_fromreal_toreg32(struct xstk_t *xsp)
  * wrapper for cnv stk from reg to realwhen reading source
  * purpose to set up right source line
  */
-extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *xsp, int src_signed)
+extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *xsp, int32 src_signed)
 {
- int sav_slin_cnt, sav_sfnam_ind;
+ int32 sav_slin_cnt, sav_sfnam_ind;
 
  /* can assign specparam value immediately */
  /* SJM 06/17/99 - needs to run in run/fixup mode - statement loc set */
@@ -3251,12 +3264,12 @@ extern void __src_rd_cnv_stk_fromreg_toreal(struct xstk_t *xsp, int src_signed)
 /*
  * convert a tos evaluated value from reg to real
  * need run time warning if does not fit - since if high bits 0 ok
- * this is real width and word width dependent
+ * this is real width and word32 width dependent
  */ 
-extern void __cnv_stk_fromreg_toreal(struct xstk_t *xsp, int src_signed)
+extern void __cnv_stk_fromreg_toreal(struct xstk_t *xsp, int32 src_signed)
 {
- int i;
- word w;
+ int32 i;
+ word32 w;
  double d1;
 
  if ((xsp->xslen > WBITS && !vval_is0_(&(xsp->ap[1]), xsp->xslen - WBITS)) 
@@ -3269,7 +3282,7 @@ extern void __cnv_stk_fromreg_toreal(struct xstk_t *xsp, int src_signed)
    d1 = 0.0;
    goto done;
   }
- if (src_signed) { i = (int) xsp->ap[0]; d1 = (double) i;  }
+ if (src_signed) { i = (int32) xsp->ap[0]; d1 = (double) i;  }
  else { w = xsp->ap[0]; d1 = (double) w; }
 
  /* next must adjust stack - know will have enough room */
@@ -3294,12 +3307,12 @@ done:
  * If endptr is not nil, endptr contains addr of 1 afer end
  * notice here error EINVAL set even no digits - standard just sets to 0
  */
-extern double __my_strtod(char *nptr, char **endptr, int *errnum)
+extern double __my_strtod(char *nptr, char **endptr, int32 *errnum)
 {
  register char *s;
  short int sign;
  long int tmpexp;
- int got_dot, got_digit, save;
+ int32 got_dot, got_digit, save;
  long int exponent;
  double num;
  char *end;
@@ -3357,7 +3370,7 @@ extern double __my_strtod(char *nptr, char **endptr, int *errnum)
  if (endptr != NULL) *endptr = s;
  if (num == 0.0) return(0.0);
 
- /* multiply int part by 10 to exponent as power */ 
+ /* multiply int32 part by 10 to exponent as power */ 
  if (exponent < 0)
   { if (num < MY_MINDOUBLE * pow(10.0, (double) -exponent)) goto underflow; }
  else if (exponent > 0)
@@ -3381,13 +3394,13 @@ noconv:
 }
 
 /*
- * convert string to unsigned long
+ * convert string to word32 long
  */
-extern unsigned long __my_strtoul(char *nptr, char **endptr, int *errnum)
+extern word32 __my_strtoul(char *nptr, char **endptr, int *errnum)
 {
- unsigned long ul;
+ word32 ul;
 
- ul = (unsigned long) my_strtol(nptr, endptr, FALSE, errnum);
+ ul = (word32) my_strtol(nptr, endptr, FALSE, errnum);
  return(ul);
 }
 
@@ -3395,16 +3408,16 @@ extern unsigned long __my_strtoul(char *nptr, char **endptr, int *errnum)
  * convert string at nptr to long int and point endptr to 1 past end
  * notice here error EINVAL set even no digits - standard just sets to 0
  */
-static long my_strtol(char *nptr, char **endptr, int sign, int *errnum)
+static long my_strtol(char *nptr, char **endptr, int32 sign, int32 *errnum)
 {
  register char *s;
  register unsigned char c;
- register unsigned long int i;
- int negative;
- unsigned long int cutoff;
- unsigned int cutlim;
+ register word32 i;
+ int32 negative;
+ word32 cutoff;
+ word32 cutlim;
  char *save;
- int overflow;
+ int32 overflow;
 
  s = nptr;
  /* skip white space */
@@ -3414,7 +3427,7 @@ static long my_strtol(char *nptr, char **endptr, int sign, int *errnum)
  /* check for a sign */
  if (*s == '-')
   {
-   /* unsigned can not have sign prefix - maybe should allow and convert */
+   /* word32 can not have sign prefix - maybe should allow and convert */
    if (!sign) goto noconv;
    negative = 1;
    s++;
@@ -3424,9 +3437,9 @@ static long my_strtol(char *nptr, char **endptr, int sign, int *errnum)
 
  /* save pointer to test for no digits */
  save = s;
- /* this is unsigned long max */
- cutoff = ALL1W / (unsigned long int) 10;
- cutlim = ALL1W % (unsigned long int) 10;
+ /* this is word32 max */
+ cutoff = ALL1W / (word32) 10;
+ cutlim = ALL1W % (word32) 10;
  for (overflow = 0, i = 0, c = *s; c != '\0'; c = *++s)
   {
    if (isdigit(c)) c -= '0'; else break;
@@ -3439,11 +3452,11 @@ static long my_strtol(char *nptr, char **endptr, int sign, int *errnum)
  /* store endptr if user passed non nil */
  if (endptr != NULL) *endptr = (char *) s;
 
- /* check for in unsigned long but outside long int */
+ /* check for in word32 but outside long int */
  /* FIXME - what is this supposed to do? */
  if (sign)
   {
-   if (i > (negative ? - (unsigned long int) MY_LONG_MIN
+   if (i > (negative ? - (word32) MY_LONG_MIN
     : (unsigned long int) MY_LONG_MAX)) overflow = 1;
    if (overflow)
     { *errnum = ERANGE; return(negative ? MY_LONG_MIN : MY_LONG_MAX); }
@@ -3536,10 +3549,10 @@ extern void __dmp_mod(FILE *f, struct mod_t *mdp)
 /*
  * routine to dump an attribute_instance
  */
-static void dmp_dig_attr_list(FILE *f, struct attr_t *attr_hd, int nd_nl)
+static void dmp_dig_attr_list(FILE *f, struct attr_t *attr_hd, int32 nd_nl)
 {
  register struct attr_t *attrp;
- int first_time = TRUE;
+ int32 first_time = TRUE;
 
  if (nd_nl && __outlinpos != 0) __nl_wrap_puts("", f);
  __wrap_puts("(* ", f);
@@ -3563,9 +3576,9 @@ static void dmp_dig_attr_list(FILE *f, struct attr_t *attr_hd, int nd_nl)
  */
 static void dmp_modports(FILE *f, struct mod_t *mdp)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int first_time, pnum;
+ int32 first_time, pnum;
 
  first_time = TRUE;
  __pv_stlevel++;
@@ -3603,9 +3616,9 @@ static void dmp_modports(FILE *f, struct mod_t *mdp)
  */
 static void dmp_mod_lofp_hdr(FILE *f, struct mod_t *mdp)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int first_time, pnum;
+ int32 first_time, pnum;
  struct net_t *np;
  char s1[RECLEN];
 
@@ -3664,8 +3677,8 @@ static void dmp_mod_lofp_hdr(FILE *f, struct mod_t *mdp)
 static void dmp_decls(FILE *f, struct mod_t *mdp)
 {
  register struct net_t *np;
- register int i;
- int pnum;
+ register int32 i;
+ int32 pnum;
  struct mod_pin_t *mpp;
 
  __pv_stlevel++;
@@ -3755,7 +3768,7 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
  if (np->n_capsiz != CAP_NONE)
   {
    __wrap_putc(' ', f);
-   __wrap_puts(__to_stren_nam(s1, __fr_cap_size((int) np->n_capsiz),
+   __wrap_puts(__to_stren_nam(s1, __fr_cap_size((int32) np->n_capsiz),
     ST_STRONG), f);
   }
  /* never emit scalared/vectored for reg */
@@ -3784,7 +3797,7 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
 
  /* these only write something if delay present */
  if (np->nrngrep == NX_CT) dmp_delay(f, np->nu.ct->n_dels_u,
-  (unsigned) DT_CMPLST, "#");
+  (word32) DT_CMPLST, "#");
  else if (np->nrngrep == NX_DWIR)
   dmp_delay(f, np->nu.rngdwir->n_du, np->nu.rngdwir->n_delrep, "#");
 
@@ -3802,7 +3815,7 @@ static void dmp_1netdecl(FILE *f, struct net_t *np)
  * default wire type in Verilog already handled because undeclared wires
  * will be assigned default wire type
  */
-static int nd_iowirdecl(struct net_t *np)
+static int32 nd_iowirdecl(struct net_t *np)
 {
  if (np->n_isavec || np->n_isarr || np->nattrs != NULL) return(TRUE);
 
@@ -3830,11 +3843,11 @@ static int nd_iowirdecl(struct net_t *np)
  * dump locally declared param declarations
  * this does not work if f == NULL - does nothing
  */
-static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int pnum,
+static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int32 pnum,
  char *pclassnam)
 {
- register int pi;
- int varwid, base;
+ register int32 pi;
+ int32 varwid, base;
  struct net_t *parm_np;
  struct xstk_t *xsp;
  char s1[RECLEN], s2[RECLEN];
@@ -3919,7 +3932,7 @@ static void dmp_paramdecls(FILE *f, struct net_t *parm_nptab, int pnum,
  */
 static void dmp_defparams(FILE *f, struct mod_t *mdp)
 {
- register int i;
+ register int32 i;
  struct dfparam_t *dfpp;
  struct itree_t *itp;
 
@@ -3974,7 +3987,7 @@ static void dmp_mdtasks(FILE *f, struct mod_t *mdp)
  */
 static void dmp_insts(FILE *f, struct mod_t *mdp)
 {
- register int ii, gi;
+ register int32 ii, gi, cai;
  register struct giarr_t *giap;
  struct gate_t *gp;
  register struct conta_t *cap;
@@ -4010,7 +4023,8 @@ static void dmp_insts(FILE *f, struct mod_t *mdp)
      gi++;
     } 
   }
- for (cap = mdp->mcas; cap != NULL; cap = cap->canxt) dmp_1conta(f, cap);
+ for (cap = &(mdp->mcas[0]), cai = 0; cai < mdp->mcanum; cai++, cap++)
+  dmp_1conta(f, cap);
  __pv_stlevel--;
 }
 
@@ -4058,8 +4072,8 @@ static void dmp_1inst(FILE *f, struct inst_t *ip, struct giarr_t *giap)
  */
 static void dmp_pnd_params(FILE *f, struct inst_t *ip, struct mod_t *imdp)
 {
- register int pi;
- int first_time;
+ register int32 pi;
+ int32 first_time;
  struct expr_t *pxp;
  struct net_t *modnp;
 
@@ -4077,7 +4091,7 @@ static void dmp_pnd_params(FILE *f, struct inst_t *ip, struct mod_t *imdp)
      if (first_time) first_time = FALSE; else __wrap_puts(", ", f);
      if (__debug_flg)
       {
-       int wid, base;
+       int32 wid, base;
        struct xstk_t *xsp;
        char s1[RECLEN];
    
@@ -4121,7 +4135,7 @@ static void dmp_pnd_params(FILE *f, struct inst_t *ip, struct mod_t *imdp)
      __wrap_putc('(', f);
      if (__debug_flg)
       {
-       int wid, base;
+       int32 wid, base;
        struct xstk_t *xsp;
        char s1[RECLEN];
    
@@ -4161,9 +4175,9 @@ static void dmp_pnd_params(FILE *f, struct inst_t *ip, struct mod_t *imdp)
  * only called if at least 1 pound param
  * either all present in ip expr table or only tail missing
  */
-static int impl_pndparams(struct inst_t *ip, struct mod_t *imdp)
+static int32 impl_pndparams(struct inst_t *ip, struct mod_t *imdp)
 {
- register int pi, pi2;
+ register int32 pi, pi2;
  struct expr_t *pxp;
 
  imdp = ip->imsym->el.emdp; 
@@ -4191,9 +4205,9 @@ static int impl_pndparams(struct inst_t *ip, struct mod_t *imdp)
 /* DBG --- */ 
 static void dbg_dmp_insts(FILE *f, struct mod_t *mdp)
 {
- register int ii, gi;
+ register int32 ii, gi, cai;
  register struct conta_t *cap;
- int slen;
+ int32 slen;
  struct gate_t *gp;
  struct inst_t *ip;
  char *chp, s1[IDLEN];
@@ -4234,9 +4248,11 @@ static void dbg_dmp_insts(FILE *f, struct mod_t *mdp)
 
    dbg_dmp_1gate(f, gp, s1);
   }
- for (cap = mdp->mcas; cap != NULL; cap = cap->canxt) dmp_1conta(f, cap);
+ for (cap = &(mdp->mcas[0]), cai = 0; cai < mdp->mcanum; cai++, cap++)
+  dmp_1conta(f, cap);
  __pv_stlevel--;
 }
+
 /* --- */
 
 /*
@@ -4262,9 +4278,9 @@ static void dbg_dmp_1inst(FILE *f, struct inst_t *ip, char *inam)
  */
 static void dmp_iports(FILE *f, struct inst_t *ip, struct expr_t **iptab)
 {
- register int pi;
+ register int32 pi;
  register struct mod_pin_t *mpp;
- int first_time, pnum;
+ int32 first_time, pnum;
  struct expr_t *cxp;
  struct mod_t *mdp;
 
@@ -4310,8 +4326,8 @@ static void dmp_iports(FILE *f, struct inst_t *ip, struct expr_t **iptab)
  */
 static void dmp_1gate(FILE *f, struct gate_t *gp, struct giarr_t *giap)
 {
- register int pi;
- int gid, first_time;
+ register int32 pi;
+ int32 gid, first_time;
  char s1[RECLEN];
 
  /* 1 bit continous assign simulated as gate must be dumped as ca */
@@ -4355,7 +4371,7 @@ static void dmp_1gate(FILE *f, struct gate_t *gp, struct giarr_t *giap)
     }
   }
  __wrap_putc('(', f);
- for (first_time = TRUE, pi = 0; pi < (int) gp->gpnum; pi++)
+ for (first_time = TRUE, pi = 0; pi < (int32) gp->gpnum; pi++)
   {
    if (first_time) first_time = FALSE; else __wrap_puts(", ", f);
    if (giap != NULL) dmp_expr(f, giap->giapins[pi]);
@@ -4370,8 +4386,8 @@ static void dmp_1gate(FILE *f, struct gate_t *gp, struct giarr_t *giap)
 /* DBG --- */
 static void dbg_dmp_1gate(FILE *f, struct gate_t *gp, char *gnam)
 {
- register int pi;
- int gid, first_time;
+ register int32 pi;
+ int32 gid, first_time;
  char s1[RECLEN];
 
  if (gp->g_class == GC_LOGIC)
@@ -4394,7 +4410,7 @@ static void dbg_dmp_1gate(FILE *f, struct gate_t *gp, char *gnam)
    __wrap_puts(gnam, f);
   }
  __wrap_putc('(', f);
- for (first_time = TRUE, pi = 0; pi < (int) gp->gpnum; pi++)
+ for (first_time = TRUE, pi = 0; pi < (int32) gp->gpnum; pi++)
   {
    if (first_time) first_time = FALSE; else __wrap_puts(", ", f);
    /* this dumps post expanded pins */
@@ -4470,7 +4486,7 @@ static void dmp_ialst(FILE *f, struct mod_t *mdp)
  *
  * notice this cannot be called with f== nil
  */
-extern void __dmp_stmt(FILE *f, struct st_t *stp, int nd_nl)
+extern void __dmp_stmt(FILE *f, struct st_t *stp, int32 nd_nl)
 {
  struct st_t *stp2;
  struct for_t *frs;
@@ -4480,9 +4496,14 @@ extern void __dmp_stmt(FILE *f, struct st_t *stp, int nd_nl)
  if (f == NULL) __arg_terr(__FILE__, __LINE__);
  if (nd_nl == NL && __outlinpos != 0) __nl_wrap_puts("", f);
  switch ((byte) stp->stmttyp) {
-  case S_NULL: __wrap_putc(';', f); break;
-  /* none is place holder for empty block, emit nothing */
-  case S_STNONE: break;
+  case S_NULL:
+   __wrap_putc(';', f);
+   if (__debug_flg) __wrap_puts("** S_NULL **", f);
+   break;
+  case S_STNONE:
+   /* none is place holder for empty block, emit nothing */
+   if (__debug_flg) __wrap_puts("** S_STNONE **", f);
+   break;
   case S_PROCA: case S_FORASSGN: case S_RHSDEPROCA:
    __dmp_proc_assgn(f, stp, (struct delctrl_t *) NULL, FALSE);
    break;
@@ -4602,20 +4623,20 @@ extern void __dmp_stmt(FILE *f, struct st_t *stp, int nd_nl)
   case S_GOTO:
    if (__debug_flg)
     {
-     char s1[RECLEN];
+     char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN];
 
      gtstp = stp->st.sgoto;
-     __wrap_puts("** added goto target ", f);
-     /* SJM REMOVEME ??? - or add internal error */
-     if (gtstp == NULL)
-      {
-       strcpy(s1, "** ERROR - NULL**");
-       __wrap_puts(s1, f);
-       break;
-      }
+     /* DBG remove -- */
+     if (gtstp == NULL) __misc_terr(__FILE__, __LINE__);
      /* --- */
-     __wrap_puts(__in_fils[gtstp->stfnam_ind], f);
-     sprintf(s1, "(%d)", gtstp->stlin_cnt);
+     sprintf(s1,
+      "** add goto at %s [lpend=%0d,dc=%0d,lstend=%0d,dst=%0d] targ %s at %s [lpend=%0d,dc=%0d,lstend=%0d,dst=%0d]",
+      __bld_lineloc(s2, stp->stfnam_ind, stp->stlin_cnt),
+      stp->lpend_goto, stp->dctrl_goto, stp->lstend_goto, stp->lpend_goto_dest,
+      __to_sttyp(s3, gtstp->stmttyp),
+      __bld_lineloc(s4, gtstp->stfnam_ind, gtstp->stlin_cnt),
+      gtstp->lpend_goto, gtstp->dctrl_goto, gtstp->lstend_goto,
+      gtstp->lpend_goto_dest);
      __wrap_puts(s1, f);
     }
    break;
@@ -4632,7 +4653,7 @@ static void dmp_case(FILE *f, struct st_t *stp)
 {
  register struct csitem_t *csip;
  register struct exprlst_t *xplp;
- int first_time;
+ int32 first_time;
  struct csitem_t *dflt_csip;
 
  /* dump the case selector */
@@ -4674,7 +4695,7 @@ static void dmp_case_dflt(FILE *f, struct csitem_t *dflt_csip)
  */
 static void dmp_fj_stlst(FILE *f, struct st_t *stp)
 {
- register int fji;
+ register int32 fji;
  register struct st_t *fjstp;
 
  for (fji = 0;; fji++)
@@ -4791,7 +4812,7 @@ static void dmp_nblock(FILE *f, struct task_t *tskp, char *bnam)
  */
 static void dmp_tfdecls(FILE *f, struct task_t *tskp)
 {
- register int i;
+ register int32 i;
  register struct task_pin_t *tpp;
  register struct net_t *regp;
  struct sy_t *syp;
@@ -4842,7 +4863,7 @@ static void dmp_tfdecls(FILE *f, struct task_t *tskp)
 static void dmp_tf_lofp_hdr(FILE *f, struct task_t *tskp)
 {
  register struct task_pin_t *tpp;
- int first_time;
+ int32 first_time;
  struct sy_t *syp;
  struct net_t *regp;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
@@ -4978,9 +4999,9 @@ static void dmp_specpths(FILE *f, register struct spcpth_t *pthp)
 /*
  * dump a path list
  */
-static void dmp_pthlst(FILE *f, struct spcpth_t *pthp, int is_pein)
+static void dmp_pthlst(FILE *f, struct spcpth_t *pthp, int32 is_pein)
 {
- register int pthi;
+ register int32 pthi;
 
  if (is_pein)
   {
@@ -5058,7 +5079,7 @@ static void dmp_tchks(FILE *f, register struct tchk_t *tcp)
 /*
  * dump a timing check selector expression form
  */
-static void dmp_tchk_selector(FILE *f, unsigned edgval, struct expr_t *xp,
+static void dmp_tchk_selector(FILE *f, word32 edgval, struct expr_t *xp,
  struct expr_t *condx)
 {
  char s1[RECLEN];
@@ -5074,7 +5095,7 @@ static void dmp_tchk_selector(FILE *f, unsigned edgval, struct expr_t *xp,
  */
 static void dmp_mod_grefs(FILE *f, struct mod_t *mdp)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *grp;
  char s1[RECLEN];
 
@@ -5147,11 +5168,11 @@ static void dmp_casesel(FILE *f, struct st_t *stp)
  * handles no delay case (its a union) and if writes insert leading space 
  * notice dumping delays always just emits the 1st
  */
-static void dmp_delay(FILE *f, union del_u du, unsigned drep, char *sharps)
+static void dmp_delay(FILE *f, union del_u du, word32 drep, char *sharps)
 {
- register int i; 
- int ndels; 
- word t1a[2], t1b[2];
+ register int32 i; 
+ int32 ndels; 
+ word32 t1a[2], t1b[2];
  word64 tarr[16], tlist[16], *timp; 
  char s1[RECLEN];
 
@@ -5166,24 +5187,24 @@ static void dmp_delay(FILE *f, union del_u du, unsigned drep, char *sharps)
  switch ((byte) drep) {
   case DT_1V:
    /* 1 v is a ptr to an 8 byte rec., is1v is ptr to array but use 1st */
-   t1a[0] = (word) ((*du.d1v) & WORDMASK_ULL);
-   t1a[1] = (word) (((*du.d1v) >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) ((*du.d1v) & WORDMASK_ULL);
+   t1a[1] = (word32) (((*du.d1v) >> 32) & WORDMASK_ULL);
    __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
    if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
    break;
   case DT_IS1V:
    /* 1 v is a ptr to an 8 byte rec., is1v is ptr to array but use 1st */
-   t1a[0] = (word) (du.dis1v[0] & WORDMASK_ULL);
-   t1a[1] = (word) ((du.dis1v[0] >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) (du.dis1v[0] & WORDMASK_ULL);
+   t1a[1] = (word32) ((du.dis1v[0] >> 32) & WORDMASK_ULL);
    __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
    if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
    break;
   case DT_IS1V1:
-   sprintf(s1, "%u", (unsigned) du.dis1v1[0]);
+   sprintf(s1, "%lu", (word32) du.dis1v1[0]);
    __wrap_puts(s1, f);
    break;
   case DT_IS1V2:
-   sprintf(s1, "%u", (unsigned) du.dis1v2[0]);
+   sprintf(s1, "%lu", (word32) du.dis1v2[0]);
    __wrap_puts(s1, f);
    break;
   case DT_4V: timp = du.d4v; goto do4;
@@ -5192,33 +5213,33 @@ static void dmp_delay(FILE *f, union del_u du, unsigned drep, char *sharps)
 do4:
    /* for IS 4 v linear array of groups of 4 so just use first */
    __wrap_putc('(', f);
-   t1a[0] = (word) (timp[1] & WORDMASK_ULL);
-   t1a[1] = (word) ((timp[1] >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) (timp[1] & WORDMASK_ULL);
+   t1a[1] = (word32) ((timp[1] >> 32) & WORDMASK_ULL);
 
    __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
    if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
    __wrap_puts(", ", f);
-   t1a[0] = (word) (timp[0] & WORDMASK_ULL);
-   t1a[1] = (word) ((timp[0] >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) (timp[0] & WORDMASK_ULL);
+   t1a[1] = (word32) ((timp[0] >> 32) & WORDMASK_ULL);
    __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
    if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
    __wrap_puts(", ", f);
-   t1a[0] = (word) (timp[2] & WORDMASK_ULL);
-   t1a[1] = (word) ((timp[2] >> 32) & WORDMASK_ULL);
+   t1a[0] = (word32) (timp[2] & WORDMASK_ULL);
+   t1a[1] = (word32) ((timp[2] >> 32) & WORDMASK_ULL);
    __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
    if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
    __wrap_putc(')', f);
    break;
   case DT_IS4V1:
    /* for IS 4 v linear array of groups of 4 so just use first */
-   sprintf(s1, "(%u, %u, %u)", (unsigned) du.dis4v1[1],
-    (unsigned) du.dis4v1[0], (unsigned) du.dis4v1[2]);
+   sprintf(s1, "(%lu, %lu, %lu)", (word32) du.dis4v1[1],
+    (word32) du.dis4v1[0], (word32) du.dis4v1[2]);
    __wrap_puts(s1, f);
    break;
   case DT_IS4V2:
    /* for IS 4 v linear array of groups of 4 so just use first */
-   sprintf(s1, "(%u, %u, %u)", (unsigned) du.dis4v2[1],
-    (unsigned) du.dis4v2[0], (unsigned) du.dis4v2[2]);
+   sprintf(s1, "(%lu, %lu, %lu)", (word32) du.dis4v2[1],
+    (word32) du.dis4v2[0], (word32) du.dis4v2[2]);
    __wrap_puts(s1, f);
    break;
   /* notice all the 6 forms are really size 16 tables */
@@ -5235,8 +5256,8 @@ try_reduce:
    for (i = 0; i < ndels; i++) 
     {
      if (i != 0) __wrap_puts(", ", f);
-     t1a[0] = (word) (tlist[i] & WORDMASK_ULL);
-     t1a[1] = (word) ((tlist[i] >> 32) & WORDMASK_ULL);
+     t1a[0] = (word32) (tlist[i] & WORDMASK_ULL);
+     t1a[1] = (word32) ((tlist[i] >> 32) & WORDMASK_ULL);
      __regab_disp(t1a, t1b, TIMEBITS, BDEC, TRUE, FALSE);
      if (f != NULL) { __wrap_puts(__exprline, f); __cur_sofs = 0; }
     }
@@ -5276,7 +5297,7 @@ done:
  */
 static void dmp_dellst(FILE *f, register struct paramlst_t *pmp)
 {
- int first_time;
+ int32 first_time;
  struct expr_t *xp;
 
  __force_base = BDEC;
@@ -5306,7 +5327,7 @@ static void dmp_dellst(FILE *f, register struct paramlst_t *pmp)
  */
 extern void __dmp_forhdr(FILE *f, struct for_t *frs)
 {
- int sav_debug_flg;
+ int32 sav_debug_flg;
 
  sav_debug_flg = __debug_flg;
  __debug_flg = TRUE;
@@ -5329,7 +5350,7 @@ extern void __dmp_forhdr(FILE *f, struct for_t *frs)
  * for rhs delay control statement is dctrl action statement
  */
 extern void __dmp_proc_assgn(FILE *f, struct st_t *stp, struct delctrl_t *dctp,
- int force_for)
+ int32 force_for)
 {
  /* for assign moved to before for, but must not emit */
  if (!force_for && stp->stmttyp == S_FORASSGN && stp->stnxt != NULL
@@ -5431,9 +5452,9 @@ non_rhs:
  * dump the actual delay
  * can be used during compilation or after prep. where ticks (scaled) dumped 
  */
-extern void __dmp_dcxpr(FILE *f, union del_u du, unsigned drep)
+extern void __dmp_dcxpr(FILE *f, union del_u du, word32 drep)
 {
- int leaf;
+ int32 leaf;
  struct expr_t *dxp;
 
  __force_base = BDEC;
@@ -5463,7 +5484,7 @@ extern void __dmp_dcxpr(FILE *f, union del_u du, unsigned drep)
 extern void __dmp_tskcall(FILE *f, struct st_t *stp)
 {
  register struct expr_t *xp;
- int first_time;
+ int32 first_time;
 
  dmp_expr(f, stp->st.stkc.tsksyx);
  first_time = TRUE;
@@ -5491,7 +5512,8 @@ static void dmp_lstofsts(FILE *f, struct st_t *hdstp)
    __pv_stlevel++;
    __wrap_puts("begin", f);
    __pv_stlevel++;
-   for (stp = hdstp; stp != NULL; stp = stp->stnxt) __dmp_stmt(f, stp, NL);
+   for (stp = hdstp; stp != NULL; stp = stp->stnxt)
+    __dmp_stmt(f, stp, NL);
    if (__outlinpos != 0) __nl_wrap_puts("", f);
    __pv_stlevel--;
    __nl_wrap_puts("end", f);
@@ -5499,7 +5521,8 @@ static void dmp_lstofsts(FILE *f, struct st_t *hdstp)
    return;
   }
  /* added control statements if being printed go on same line */
- for (stp = hdstp; stp != NULL; stp = stp->stnxt) __dmp_stmt(f, stp, NONL);
+ for (stp = hdstp; stp != NULL; stp = stp->stnxt)
+  __dmp_stmt(f, stp, NONL);
 }
 
 /*
@@ -5511,7 +5534,7 @@ static void dmp_lstofsts(FILE *f, struct st_t *hdstp)
  */
 extern char *__to_arr_range(char *s, struct net_t *np)
 {
- int r1, r2, awid;
+ int32 r1, r2, awid;
 
  if (np->n_isarr)
   {
@@ -5536,7 +5559,7 @@ extern char *__to_arr_range(char *s, struct net_t *np)
  */
 extern char *__to_wrange(char *s, struct net_t *np)
 {
- int r1, r2;
+ int32 r1, r2;
 
  if (np->n_isavec)
   {
@@ -5587,8 +5610,8 @@ static void tox_wrange(FILE *f, struct expr_t *x1, struct expr_t *x2)
  */
 static void dmp_expr(FILE *f, struct expr_t *ndp)
 {
- int indv, ind1, ind2, nd_par, sav_spos;
- word *wp;
+ int32 indv, ind1, ind2, nd_par, sav_spos;
+ word32 *wp;
  struct net_t *np;
  char *chp;
  char s1[RECLEN];
@@ -5639,7 +5662,7 @@ static void dmp_expr(FILE *f, struct expr_t *ndp)
     {
      /* notice for dumping - convention is to use IS 0th */
      wp = &(__contab[ndp->ru.x->ru.xvi]);
-     indv = __unnormalize_ndx(ndp->lu.x->lu.sy->el.enp, (int) wp[0]);
+     indv = __unnormalize_ndx(ndp->lu.x->lu.sy->el.enp, (int32) wp[0]);
      sprintf(s1, "%d", indv);
      __wrap_puts(s1, f);
      __wrap_putc(']', f);
@@ -5656,9 +5679,9 @@ static void dmp_expr(FILE *f, struct expr_t *ndp)
      np = ndp->lu.x->lu.sy->el.enp;
      /* know part select range never IS form */
      wp = &(__contab[ndp->ru.x->lu.x->ru.xvi]);
-     ind1 = __unnormalize_ndx(np, (int) wp[0]);
+     ind1 = __unnormalize_ndx(np, (int32) wp[0]);
      wp = &(__contab[ndp->ru.x->ru.x->ru.xvi]);
-     ind2 = __unnormalize_ndx(np, (int) wp[0]);
+     ind2 = __unnormalize_ndx(np, (int32) wp[0]);
      sprintf(s1, "%d:%d]", ind1, ind2);
      __wrap_puts(s1, f);
     }
@@ -5733,7 +5756,7 @@ static void dmp_expr(FILE *f, struct expr_t *ndp)
  * return T if is simple object expr. leaf, concat, or fcall
  * that does not need parenthesis
  */
-static int is_simplex(struct expr_t *xp)
+static int32 is_simplex(struct expr_t *xp)
 {
  if (__isleaf(xp)) return(TRUE);
  switch (xp->optyp) {
@@ -5748,7 +5771,7 @@ static int is_simplex(struct expr_t *xp)
  */
 static void dmp_catexpr(FILE *f, struct expr_t *ndp)
 {
- int first_time;
+ int32 first_time;
 
  __wrap_putc('{', f);
  /* know { operator left always unused */
@@ -5781,7 +5804,7 @@ static void dmp_catel(FILE *f, struct expr_t *ndp)
  */
 static void dmp_fcallx(FILE *f, struct expr_t *ndp)
 {
- int first_time;
+ int32 first_time;
  char paren;
 
  dmp_expr(f, ndp->lu.x);
@@ -5832,7 +5855,7 @@ static void dmp_evor_chain(FILE *f, struct expr_t *ndp)
  */
 extern void __wrap_puts(char *s, FILE *f)
 {
- int ll;
+ int32 ll;
 
  ll = strlen(s);
  if (f == NULL)
@@ -5882,7 +5905,7 @@ extern void __wrap_puts(char *s, FILE *f)
 /*
  * source statement put char analog of put string above 
  */
-extern void __wrap_putc(int c, FILE *f)
+extern void __wrap_putc(int32 c, FILE *f)
 {
  if (f == NULL) { addch_(c); return; }
 
@@ -5937,7 +5960,7 @@ extern void __nl_wrap_puts(char *s, FILE *f)
  */
 extern void __adds(char *s)
 {
- int slen;
+ int32 slen;
 
  slen = strlen(s);
  if (__cur_sofs + slen >= __exprlinelen - 1) __chg_xprline_size(slen + 1);
@@ -5950,9 +5973,9 @@ extern void __adds(char *s)
  * if need to increase increase by needed amount plus large (1024) piece
  * requires that __exprline always be \0 terminated before calling this
  */
-extern void __chg_xprline_size(int slen)
+extern void __chg_xprline_size(int32 slen)
 {
- int newlen;
+ int32 newlen;
 
  newlen = slen + ((__exprlinelen < 4*IDLEN) ? __exprlinelen + IDLEN
   : __exprlinelen + BIG_ALLOC_SIZE);
@@ -5972,9 +5995,9 @@ extern void __chg_xprline_size(int slen)
  */
 extern void __bld_vpi_argv(void)
 {
- register int lev, i;
+ register int32 lev, i;
  register struct optlst_t *olp;
- int maxlev, argnum, nbytes;
+ int32 maxlev, argnum, nbytes;
  struct optlst_t *bmark_olp;
  char **down_argv;
 
@@ -6062,10 +6085,10 @@ extern void __bld_vpi_argv(void)
 /*
  * find highest (deepest level) because convert bottom up to PLI **argv tabs
  */
-static int find_deepest_level(struct optlst_t *olphd)
+static int32 find_deepest_level(struct optlst_t *olphd)
 {
  register struct optlst_t *olp;
- int level;
+ int32 level;
 
  for (level = 0, olp = olphd; olp != NULL; olp = olp->optlnxt)
   { if (olp->optlev > level) level = olp->optlev; }
@@ -6079,9 +6102,9 @@ static int find_deepest_level(struct optlst_t *olphd)
  * level passed for checking - all counted must be at level lev or internal err
  * BMARK counted for file name and EMARK counted for ending NULL
  */
-static int cnt_beg_to_endmark(struct optlst_t *olp, int lev)
+static int32 cnt_beg_to_endmark(struct optlst_t *olp, int32 lev)
 {
- int onum;
+ int32 onum;
 
  if (!olp->is_bmark) __arg_terr(__FILE__, __LINE__);
  olp = olp->optlnxt;
@@ -6107,9 +6130,9 @@ static int cnt_beg_to_endmark(struct optlst_t *olp, int lev)
 /*
  * count top level (0) non argv done olps
  */
-static int cnt_level0(struct optlst_t *olp)
+static int32 cnt_level0(struct optlst_t *olp)
 {
- int onum;
+ int32 onum;
 
  for (onum = 0; olp != NULL; olp = olp->optlnxt)
   {
@@ -6129,9 +6152,9 @@ static int cnt_level0(struct optlst_t *olp)
 /*
  * dump a vpi argv/argc d.s.
  */
-static void dump_vpi_argv(int argc, char **argv)
+static void dump_vpi_argv(int32 argc, char **argv)
 {
- register int i;
+ register int32 i;
 
  __dbg_msg("TOP ARGC: %d\n", argc);
  for (i = 0; i < argc; i++) 
@@ -6151,9 +6174,9 @@ static void dump_vpi_argv(int argc, char **argv)
 /*
  * dump a contained nested file
  */
-static void dump_nest_vpi_argv(int lev, char **argv)
+static void dump_nest_vpi_argv(int32 lev, char **argv)
 {
- register int i;
+ register int32 i;
 
  __dbg_msg("LEVEL %d: arg 0: file %s\n", lev, argv[0]);
  for (i = 1;; i++)

@@ -12,3 +12,160 @@ Fri Jun 18 13:30:16 CDT 2004
   compilation on all supported platforms.  200a contained some incorrectly 
   placed compiler directives. Cygwin's lack of support for d_type in 
   dirent structs was corrected using stat().
+
+Wed Aug 18 12:32:10 CDT 2004
+
+  Bug fix Release 2.00c.  2.00c is much more stable than 2.00b.
+
+1. Fixed wrong syntax error when @* was used instead of @(*).
+
+2. Changed port declaration code for both new ansii style port headers
+   and old style port headers to add the completed port definition concept,
+   i.e. new style port declarations are completed in the header.  Now,
+   for old style declarations, once the range and/or net type are given, the
+   port's definition is completed, and it is a syntax error to redeclare
+   the port.
+
+   There is still a possible minor problem because the wire declaration
+   continous assignment form can't be used with new ansii style port
+   declarations as specified in LRM.  Only assign keyword is allowed for
+   port wire continuous assigns.
+
+3. Fixed problem with tf_strgetp.  It was wrongly trimmming the input
+   string's leading zeros.       
+
+4. Removed incorrect bit and part select warning when @(*) was used and
+   the implicit event list needs to build bit part select elements where
+   ranges where not <high>:0 form.
+
+5. Fixed problem with both delay controls and event controls in modules
+   that require splitting because of per instance pound or def params.
+   The new implicit event control and event control list code would
+   sometimes overwrite the delay or event control expression with a 
+   different wrong expression.  Main symptom was that delays controls
+   delayed for the wrong amount of time in 200b.
+
+6. Fixed incorrect handling of the new Verilog 2001 file descriptors
+   in the vpi_ file I/O routines. 
+
+Thu Sep 16 09:50:08 CDT 2004
+
+  Bug fix Release 2.00d.  Some bugs in signed wide arithmetic fixed.
+
+1. Fixed bug in wide signed operations when one operand was signed
+   and another was unsigned (or 0).  The wide negate routines were
+   incorrectly setting bits higher than 32.
+
+2. Fixed bug in hold and hold part of setuphold.  Was wrongly
+   emitting timing check for 0 width pulse.
+
+3. Fixed bug in printing of signed values.  Smallest negative number
+   was printing as "-0" instead of its negative value.
+
+4. Fixed bug that caused "./[file]" form when used in `include directives 
+   to be treated as absolute path.  It is now correctly treated as
+   a relative path.
+ 
+Tue Oct 12 14:52:37 CDT 2004
+
+  Major release that adds more Verilog 2001 features, fixes problems
+related to new FPGA libraries that use Verilog 2001 features, and changes
+to explicitly sized C types so compile and run in 32 bit mode works
+on 64 bit Linux systems.
+
+1. Added support for initializing variable declaration assignments (see 2001
+   LRM section 6.2.1).  Example is: "integer i = 3;".   Following the LRM
+   the assignment is made at the beginning of time 0, so the initial value
+   will not be passed to declaration constructs until time 0.
+
+2. Fixed bug in wider than 32 bit arithmetic right shift.  This bug was
+   causing new FPGA designs using wide signed libraries to get wrong answers.
+
+3. Changed so that all types used in Cver source contain their explicit
+   size, i.e. int32, word32, word64 etc.  Change allows Cver to compile
+   and run in 32 bit mode on 64 bit Linux systems.
+
+4. Changed behavior of unsized number widening to follow Verilog 2001.
+   Now instead of widening unsized and unsigned constants where the high
+   order bit is x/z to 32 bits of x/z and then zeroing any high bits,
+   the number is x/z extended to the size of the expression containing
+   the number.  See Note at the bottom of the first page of section 2.5.1.
+   for discussion of the change.  This change is not backward compatible
+   with Verilog 1995 so if needed, we could put in a switch to turn it off.
+
+5. Fixed bug in signed mult and add and other binary operators whose
+   result width is determined by the operands.  The operation was wrongly
+   being evaluated as unsigned.
+
+6. Constant folding was wrongly removing signs.
+
+7. Multi-word widing was sometimes not sign extending or wrongly setting
+   some bits to x/z.  For very wide vector sign extends, the widening
+   would also sometimes core dump.  This happened for both signed and
+   unsigned widening.
+
+8. Fix bug in timing checks that was causing spurious and wrong extra 
+   timing violations to be detected and printed.  Problem was that
+   sometimes the data event was being recorded as the reference event.
+   It happened when a second data event edge occured within on time tick.
+
+9. Fixed parameter problem when a per instance value was set by a pound
+   or defparam and a design contained many constants.  The symptom was
+   a core dump during the second elaboration pass.
+
+Thu Feb  3 14:30:50 CST 2005
+
+  Minor release that fixes a a few problems involving not matching the LRM
+  (and other simulators).  Also a few changes to simplify code.
+
+1. Rewrote acc_next_load PLI routine algorithm to better match XL.  This
+   acc_ PLI routines requires matching XL port collapsing algorithm.  The new
+   version handles vectors and part selects better.
+
+2. Added support for function and task references that are upward relative,
+   but do not have any module name qualifier.  This is required by the LRM.
+   Result is that using a function or task name before declaration
+   causes searching both declarations later in the given module and
+   all function declarations in every declared module.  The scope rules are
+   then used to select the declaration in the current scope if declared later
+   or the the first declaration in a module above the current instance in the
+   instance tree.
+
+3. Fixed bug in $dumpvars.  When the scope form of $dumpvars was used,
+   an extra $upscope was generated at the end.
+
+4. Fixed problem with pound parameter over-rides for parameters that
+   were assigned values of other parameters in the parameter definition 
+   statement.  The over-riding parameter was not inhibiting assignments
+   when a right hand side parameter was changed.
+
+5. Fixed bug that sometimes caused internal error when printing hierarchical
+   part select names using PLI print routines.
+
+6. Fixed wrong error message when complex edge expressions were used
+   in modules that were resolved from library or config processing.
+
+Mon Feb 28 12:47:20 CST 2005
+
+  Minor release that mainly fixes a problem that caused some designs
+using Xilinx libraries to leak memory. 
+
+1. Fixed problem with shared constant table that caused non blocking 
+   assignments with left hand side variable indices to continually
+   allocate new constant indices during simulation.  Unfortunately,
+   this problem occurs in Xilinx libraries.  Memory leak would eventually
+   cause correct designs to run out of memory.
+
+2. Fixed some memory allocation and variable initialization problems that
+   caused configs to incorrectly fail.
+
+3. Fixed bug in vpi_ that results in incorrect error messages (and 
+   incorrect behavior) when bits of a vector were forced or released using 
+   vpi_.  Problem was a wrong error when vpi_ is used to force or release
+   anything but an entire vector.
+
+4. Fixed problem with unary not (~) not propagating left hand side
+   width down to operands of unary not following LRM rule.  This example
+   was previously not evaluating the ~ operator using left hand side
+   context "cg = ~(a << b);" 
+

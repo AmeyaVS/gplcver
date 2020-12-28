@@ -1,4 +1,4 @@
-/* Copyright (c) 1986-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1986-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -51,8 +51,8 @@
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
 #if defined(__sparc) && !defined(__SVR4)  
-extern int tolower(int);
-extern ungetc(int c, FILE *);
+extern int32 tolower(int32);
+extern ungetc(int32 c, FILE *);
 extern long time (long *);
 #endif
 
@@ -60,146 +60,146 @@ extern long time (long *);
 #include "cvmacros.h"
 
 /* local prototypes */
-static char *expand_arg_macro(struct sy_t *, int *);
+static char *expand_arg_macro(struct sy_t *, int32 *);
 static void process_macdef(void);
 static void dmp_macdef_exptab(char *, struct macexp_t *);
 static void process_macundef(void);
-static char *bld_macdef_arglist(int *);
+static char *bld_macdef_arglist(int32 *);
 static char *remchk_macdef_coms(char *);
-static struct macexp_t *bld_mac_expandtab(char *, char *, int);
-static int find_mac_formal_arg(char *);
+static struct macexp_t *bld_mac_expandtab(char *, char *, int32);
+static int32 find_mac_formal_arg(char *);
 static void free_macexplst(register struct macexp_t *);
-static void do_argmacdefine(char *, struct macexp_t *, int);
-static int cskip_ifdef_section(FILE *, int);
-static int my_getc(FILE *);
-static int rd_comment(FILE *);
-static int skipto_attr_end(FILE *); 
+static void do_argmacdefine(char *, struct macexp_t *, int32);
+static int32 cskip_ifdef_section(FILE *, int32);
+static int32 my_getc(FILE *);
+static int32 rd_comment(FILE *);
+static int32 skipto_attr_end(FILE *); 
 static void rd_attribute(FILE *);
-static int vgetstr(FILE *);
+static int32 vgetstr(FILE *);
 static void str_tovval(void);
-static void unget2_vtok(int);
-static int rd_num(FILE *, int);
+static void unget2_vtok(int32);
+static int32 rd_num(FILE *, int32);
 static void rem_lead_0chars(char *);
-static int voverwhite(FILE *, register int);
-static int chlen_to_bitlen(int, int);
-static void chg_abwrklen(int);
-static void to_dec(int *);
-static void wide_strtoverdec(int);
-static void to_bin(int);
-static void to_oct(int);
-static void to_hex(int);
-static int vnum_toowide(word *, int);
-static int nibblexz(word, word, int);
-static int octdigxz(word *, word *, int);
-static void widen_val(word *, int, int, word);
-static char *prt2_vtok(int);
-static int get_vkeywrd(register char *);
-static int set_syncto_tokclass(byte);
-static int set_specitem_class(void);
-static int set_udpsyncto(byte);
-static int get_cfgkeywrd(char *);
-static int get_cmdcomment(FILE *);
+static int32 voverwhite(FILE *, register int32);
+static int32 chlen_to_bitlen(int32, int32);
+static void chg_abwrklen(int32);
+static void to_dec(int32 *);
+static void wide_strtoverdec(int32);
+static void to_bin(int32);
+static void to_oct(int32);
+static void to_hex(int32);
+static int32 vnum_toowide(word32 *, int32);
+static int32 nibblexz(word32, word32, int32);
+static int32 octdigxz(word32 *, word32 *, int32);
+static void widen_val(word32 *, int32, int32, word32);
+static char *prt2_vtok(int32);
+static int32 get_vkeywrd(register char *);
+static int32 set_syncto_tokclass(byte);
+static int32 set_specitem_class(void);
+static int32 set_udpsyncto(byte);
+static int32 get_cfgkeywrd(char *);
+static int32 get_cmdcomment(FILE *);
 static void one_rot(struct tnode_t *, struct tnode_t *, struct tnode_t *);
 static void two_rot(struct tnode_t *, struct tnode_t *, struct tnode_t *);
 static struct tnode_t *alloc_tnode(struct symtab_t *);
-static char *__to_nppsubtyp(char *, unsigned);
-static char *decompnum_to_str(char *, char *, int, int);
-static char *nfbig_alloc(int);
-static char *tilde_expand(char *, int *);
+static char *__to_nppsubtyp(char *, word32);
+static char *decompnum_to_str(char *, char *, int32, int32);
+static char *nfbig_alloc(int32);
+static char *tilde_expand(char *, int32 *);
 static char *pv_stralloc2(char *);
-static int try_chg_tononesc(void);
-static int ch_tobits(word *, word *, int);
-static int ch_toocts(word *, word *, int);
-static int ch_tohexs(word *, word *, int);
+static int32 try_chg_tononesc(void);
+static int32 ch_tobits(word32 *, word32 *, int32);
+static int32 ch_toocts(word32 *, word32 *, int32);
+static int32 ch_tohexs(word32 *, word32 *, int32);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __get_vtok(void);
-extern int __chk_beg_line(int);
+extern int32 __chk_beg_line(int32);
 extern void __collect_line(void);
 extern void __skipover_line(void);
 extern void __do_macdefine(char *, char *);
-extern int __bqline_emptytail(register char *);
+extern int32 __bqline_emptytail(register char *);
 extern void __do_include(void);
-extern int __rd_ialine(void);
-extern int __get1_vtok(FILE *);
-extern void __vstr_to_vval(word *, char *, int);
+extern int32 __rd_ialine(void);
+extern int32 __get1_vtok(FILE *);
+extern void __vstr_to_vval(word32 *, char *, int32);
 extern struct xstk_t *__cstr_to_vval(char *);
 extern void __unget_vtok(void);
-extern int __to_base(int);
-extern int __is_vdigit(int, int);
-extern void __to_dhboval(int, int);
+extern int32 __to_base(int32);
+extern int32 __is_vdigit(int32, int32);
+extern void __to_dhboval(int32, int32);
 extern char *__prt_vtok(void);
-extern char *__to_opname(unsigned);
-extern char *__get_vkeynam(char *, int);
-extern int __vskipto_modend(int);
-extern int __vskipto2_modend(int, int);
-extern int __vskipto3_modend(int, int, int);
-extern int __vskipto_any(int);
-extern int __vskipto2_any(int, int);
-extern int __vskipto3_any(int, int, int);
-extern int __vskipto4_any(int, int, int, int);
-extern int __spec_vskipto_any(int);
-extern int __spec_vskipto2_any(int, int);
-extern int __spec_vskipto3_any(int, int, int);
-extern int __udp_vskipto_any(int);
-extern int __udp_vskipto2_any(int, int);
-extern int __udp_vskipto3_any(int, int, int);
-extern int __get_cmdtok(FILE *);
+extern char *__to_opname(word32);
+extern char *__get_vkeynam(char *, int32);
+extern int32 __vskipto_modend(int32);
+extern int32 __vskipto2_modend(int32, int32);
+extern int32 __vskipto3_modend(int32, int32, int32);
+extern int32 __vskipto_any(int32);
+extern int32 __vskipto2_any(int32, int32);
+extern int32 __vskipto3_any(int32, int32, int32);
+extern int32 __vskipto4_any(int32, int32, int32, int32);
+extern int32 __spec_vskipto_any(int32);
+extern int32 __spec_vskipto2_any(int32, int32);
+extern int32 __spec_vskipto3_any(int32, int32, int32);
+extern int32 __udp_vskipto_any(int32);
+extern int32 __udp_vskipto2_any(int32, int32);
+extern int32 __udp_vskipto3_any(int32, int32, int32);
+extern int32 __get_cmdtok(FILE *);
 extern struct sy_t *__get_sym_env(char *);
 extern struct sy_t *__find_sym(char *);
 extern struct sy_t *__decl_sym(char *, struct symtab_t *);
 extern void __add_sym(char *, struct tnode_t *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
-extern struct sy_t *__zget_sym(char *, struct sy_t **, unsigned);
-extern struct symtab_t *__alloc_symtab(int);
-extern int __ip_indsrch(char *);
+extern struct sy_t *__zget_sym(char *, struct sy_t **, word32);
+extern struct symtab_t *__alloc_symtab(int32);
+extern int32 __ip_indsrch(char *);
 extern char *__to_idnam(struct expr_t *);
 extern char *__to_mpnam(char *, char *);
-extern int __fr_wtnam(int);
+extern int32 __fr_wtnam(int32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_wtnam2(char *, unsigned);
-extern char *__to_ptnam(char *, unsigned);
-extern char *__to_splt_nam(char *, int);
-extern unsigned __fr_stren_nam(int);
-extern char *__to_stren_nam(char *, int, int);
-extern char *__to_stval_nam(char *, unsigned);
-extern char *__to1_stren_nam(char *, int, int);
-extern int __is_capstren(int);
-extern int __fr_cap_size(int);
-extern unsigned __to_cap_size(int);
-extern char *__to_sytyp(char *, unsigned);
-extern char *__to_tsktyp(char *, unsigned);
-extern char *__to_sttyp(char *, unsigned);
-extern char *__to_qctyp(char *, unsigned);
-extern char *__to_tetyp(char *, unsigned);
+extern char *__to_wtnam2(char *, word32);
+extern char *__to_ptnam(char *, word32);
+extern char *__to_splt_nam(char *, int32);
+extern word32 __fr_stren_nam(int32);
+extern char *__to_stren_nam(char *, int32, int32);
+extern char *__to_stval_nam(char *, word32);
+extern char *__to1_stren_nam(char *, int32, int32);
+extern int32 __is_capstren(int32);
+extern int32 __fr_cap_size(int32);
+extern word32 __to_cap_size(int32);
+extern char *__to_sytyp(char *, word32);
+extern char *__to_tsktyp(char *, word32);
+extern char *__to_sttyp(char *, word32);
+extern char *__to_qctyp(char *, word32);
+extern char *__to_tetyp(char *, word32);
 extern char *__to_npptyp(char *, struct net_pin_t *);
-extern char *__to_deltypnam(char *, unsigned);
-extern char *__to_tcnam(char *, unsigned);
-extern int __fr_tcnam(char *);
-extern char *__to_gonam(char *, struct gate_t *, unsigned);
-extern char *__to_ginam(char *, struct gate_t *, unsigned, int);
-extern char *__to_vnam(char *, unsigned, word);
-extern char *__to_vvstnam(char *, word);
-extern char *__to_vvnam(char *, word);
-extern char *__to_uvvnam(char *, word);
-extern char __to_baselet(int);
-extern char *__to_timunitnam(char *, unsigned);
-extern char *__to_edgenam(char *, unsigned);
-extern char *__to_dcenam(char *, unsigned);
+extern char *__to_deltypnam(char *, word32);
+extern char *__to_tcnam(char *, word32);
+extern int32 __fr_tcnam(char *);
+extern char *__to_gonam(char *, struct gate_t *, word32);
+extern char *__to_ginam(char *, struct gate_t *, word32, int32);
+extern char *__to_vnam(char *, word32, word32);
+extern char *__to_vvstnam(char *, word32);
+extern char *__to_vvnam(char *, word32);
+extern char *__to_uvvnam(char *, word32);
+extern char __to_baselet(int32);
+extern char *__to_timunitnam(char *, word32);
+extern char *__to_edgenam(char *, word32);
+extern char *__to_dcenam(char *, word32);
 extern char *__pv_stralloc(char *);
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
-extern char *__my_realloc(char *, int, int);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
+extern char *__my_realloc(char *, int32, int32);
 extern void __my_fclose(FILE *);
 extern void __my_rewind(FILE *);
-extern int __tilde_open(char *, int);
+extern int32 __tilde_open(char *, int32);
 extern FILE *__tilde_fopen(char *, char *);
 extern FILE *__my_fopen(char *, char *);
-extern int __tilde_creat(char *);
-extern int __my_creat(char *);
+extern int32 __tilde_creat(char *);
+extern int32 __my_creat(char *);
 extern char *__schop(char *, char *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern void __init_sy(struct sy_t *);
 
 extern void __crit_msg(char *, ...);
@@ -207,64 +207,64 @@ extern void __sysfatal_msg(char *, ...);
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __misc_terr(char *, int);
-extern void __misc_fterr(char *, int);
-extern void __misc_gfterr(char *, int, unsigned, int);
-extern void __misc_sgfterr(char *, int);
-extern void __case_terr(char *, int);
-extern void __arg_terr(char *, int);
-extern void __pv_terr(int, char *, ...);
-extern void __fterr(int, char *, ...);
-extern void __sgfterr(int, char *, ...);
-extern void __gfterr(int, unsigned, int, char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __ia_err(int, char *, ...);
-extern void __via_err(int, char *, va_list, va_list);
-extern void __pv_warn(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __sgfwarn(int, char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __ia_warn(int, char *, ...);
-extern void __via_warn(int, char *, va_list, va_list);
-extern void __inform(int, char *, ...);
-extern void __finform(int, char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern int __em_suppr(int);
+extern void __misc_terr(char *, int32);
+extern void __misc_fterr(char *, int32);
+extern void __misc_gfterr(char *, int32, word32, int32);
+extern void __misc_sgfterr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __arg_terr(char *, int32);
+extern void __pv_terr(int32, char *, ...);
+extern void __fterr(int32, char *, ...);
+extern void __sgfterr(int32, char *, ...);
+extern void __gfterr(int32, word32, int32, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_ferr(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __ia_err(int32, char *, ...);
+extern void __via_err(int32, char *, va_list, va_list);
+extern void __pv_warn(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __ia_warn(int32, char *, ...);
+extern void __via_warn(int32, char *, va_list, va_list);
+extern void __inform(int32, char *, ...);
+extern void __finform(int32, char *, ...);
+extern void __sgfinform(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern int32 __em_suppr(int32);
 extern void __my_fprintf(FILE *, char *, ...);
 extern void __my_vfprintf(FILE *, char *, va_list, va_list);
 extern void __vpi_error_trycall(void);
-extern void __cberror_fill_einfo(int, int, char *, char *, int);
+extern void __cberror_fill_einfo(int32, int32, char *, char *, int32);
 
-extern int __pop_vifstk(void);
-extern int __open_sfil(void);
+extern int32 __pop_vifstk(void);
+extern int32 __open_sfil(void);
 extern void __push_vinfil(void);
-extern void __grow_infils(int);
+extern void __grow_infils(int32);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern double __my_strtod(char *, char **, int *);
-extern unsigned long __my_strtoul(char *, char **, int *);
-extern int __trim1_0val(word *, int);
-extern void __lmult(register word *, register word *, register word *, int);
-extern void __ladd(word *, word *, word *, int);
-extern void __lhsbsel(register word *, register int, word);
-extern void __lhspsel(register word *, register int, register word *, register int);
-extern void __rhspsel(register word *, register word *, register int, register int);
-extern void __my_exit(int, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern double __my_strtod(char *, char **, int32 *);
+extern word32 __my_strtoul(char *, char **, int *);
+extern int32 __trim1_0val(word32 *, int32);
+extern void __lmult(register word32 *, register word32 *, register word32 *, int32);
+extern void __ladd(word32 *, word32 *, word32 *, int32);
+extern void __lhsbsel(register word32 *, register int32, word32);
+extern void __lhspsel(register word32 *, register int32, register word32 *, register int32);
+extern void __rhspsel(register word32 *, register word32 *, register int32, register int32);
+extern void __my_exit(int32, int32);
 extern char *__to_timstr(char *, word64 *);
-extern int __notokenize_skiplines(char *);
-extern char *__to_dispst_str(char *, unsigned);
+extern int32 __notokenize_skiplines(char *);
+extern char *__to_dispst_str(char *, word32);
 
 
 extern struct opinfo_t __opinfo[];
 extern byte __stren_map_tab[];
-extern word __masktab[];
+extern word32 __masktab[];
 
 /* system stuff */
-extern int errno;
+extern int32 errno;
 
 /* jmp buf defined in v_dbg */
 extern jmp_buf __iact_jmpbuf;
@@ -285,7 +285,7 @@ extern char __pv_ctab[];
  */
 extern void __get_vtok(void)
 {
- int ttyp, ifdtyp, len, savlin_cnt;
+ int32 ttyp, ifdtyp, len, savlin_cnt;
  struct sy_t *syp, *tmpsyp;
  char *chp;
 
@@ -304,7 +304,7 @@ extern void __get_vtok(void)
    /* extremely rare number push back case */
    if (__toktyp == NUMBER)
     {
-     word wlen; 
+     word32 wlen; 
 
      __itokbase = __lastitokbase;
      __itoksized = __lastitoksized;
@@ -495,7 +495,7 @@ skip_rest:
       } 
      else 
       {
-       int sav_first_num_eol;
+       int32 sav_first_num_eol;
 
        /* save first tok state, if `xx expands to compiler dir. must be 1st */
        /* 2 stage num eol in get 1 vtok sets first of line */ 
@@ -547,7 +547,7 @@ ret_id:
 /* macro for adding char and growing mac wrk str */
 #define addto_macwrkstr_(c) \
  do { \
-  int osize; \
+  int32 osize; \
   if (++len >= __macwrklen - 1) \
    { \
     osize = __macwrklen; \
@@ -570,11 +570,11 @@ ret_id:
  * notice sections of text with unmatched ) or , are illegal since
  * in Verilog \ escapes an identifier
  */
-static char *expand_arg_macro(struct sy_t *syp, int *explen)
+static char *expand_arg_macro(struct sy_t *syp, int32 *explen)
 {
- register int c;
+ register int32 c;
  register char *chp, *chp2;
- int ttyp, par_cnt, setb_cnt, setb_err, last_argno, last_i, len;
+ int32 ttyp, par_cnt, setb_cnt, setb_err, last_argno, last_i, len;
  struct amac_t *amacp;
  struct macexp_t *mxp;
  struct macarg_t *macap, *macap2, *maca_hdr, *maca_end, **mactab;
@@ -733,7 +733,7 @@ done:
  */
 static void process_macdef(void)
 {
- int ttyp, has_err, savlin_cnt, nargs, c, space_before_lpar;
+ int32 ttyp, has_err, savlin_cnt, nargs, c, space_before_lpar;
  char *mactxt_chp, dnam[IDLEN];
  struct macexp_t *mxp;
 
@@ -823,7 +823,7 @@ do_nonarg:
  */
 static void dmp_macdef_exptab(char *dnam, struct macexp_t *mxp)
 {
- int argno;
+ int32 argno;
 
  __dbg_msg("+++ arg text macro %s defined - expands from:\n", dnam);
  for (argno = 1; mxp != NULL; mxp = mxp->macexpnxt, argno++)
@@ -839,7 +839,7 @@ static void dmp_macdef_exptab(char *dnam, struct macexp_t *mxp)
  */
 static void process_macundef(void)
 {
- int ttyp, has_err, savlin_cnt;
+ int32 ttyp, has_err, savlin_cnt;
  struct sy_t *syp;
  char dnam[IDLEN];
 
@@ -903,7 +903,7 @@ static void process_macundef(void)
  * problem here is caused by Verilog semantics that treat compiler directives
  * as having \n as token but in normal code not a token
  */
-extern int __chk_beg_line(int cdtyp)
+extern int32 __chk_beg_line(int32 cdtyp)
 {
  /* ---
  if (__iact_state)
@@ -934,9 +934,9 @@ extern int __chk_beg_line(int cdtyp)
  */
 extern void __collect_line(void)
 {
- register int c;
+ register int32 c;
  register char *chp;
- int len;
+ int32 len;
 
  for (;;) { c = my_getc(__in_s); if (!vis_nonnl_white_(c)) break; }
  if (c == '\n' || c == EOF)
@@ -972,7 +972,7 @@ extern void __collect_line(void)
  */ 
 extern void __skipover_line(void)
 {
- register int c;
+ register int32 c;
 
  for (;;)
   {
@@ -991,9 +991,9 @@ extern void __skipover_line(void)
 /*
  * read a line into passed string
  */
-extern int __my_getlin(register char *lp)
+extern int32 __my_getlin(register char *lp)
 {
- register int c, len;
+ register int32 c, len;
 
  for (len = 0;;)
   {
@@ -1017,11 +1017,11 @@ extern int __my_getlin(register char *lp)
  *
  * FIXME make table larger so can be 8 bit clean 
  */
-static char *bld_macdef_arglist(int *nargs)
+static char *bld_macdef_arglist(int32 *nargs)
 {
  register char *chp;
  char *chp2, *chp3;
- int argno, arglen, toolong;
+ int32 argno, arglen, toolong;
  struct macarg_t *marp, *macarg_end;
  char argnam[IDLEN];
  
@@ -1102,7 +1102,7 @@ static char *bld_macdef_arglist(int *nargs)
 static char *remchk_macdef_coms(char *mchp)
 {
  register char *chp, *nchp;
- int llen, first_time;
+ int32 llen, first_time;
  char *newwrkstr, *start_mchp;
 
  /* macro text starts with non white */
@@ -1233,10 +1233,10 @@ at_end:
  * also know all quoted strings completed
  * LOOKATME - is it true this cannot fail
  */
-static struct macexp_t *bld_mac_expandtab(char *dnam, char *dval, int nargs)
+static struct macexp_t *bld_mac_expandtab(char *dnam, char *dval, int32 nargs)
 {
  register char *chp;
- register int andx;
+ register int32 andx;
  register struct macarg_t *marp;
  byte *argutab;
  struct macexp_t *mxp, *mxp_hdr, *mxp_end;
@@ -1338,9 +1338,9 @@ static struct macexp_t *bld_mac_expandtab(char *dnam, char *dval, int nargs)
  * search an formal argument list to match a legal ID name
  * returns nil if not found
  */
-static int find_mac_formal_arg(char *argnam)
+static int32 find_mac_formal_arg(char *argnam)
 {
- register int anum;
+ register int32 anum;
  register struct macarg_t *marp;
 
  anum = 0;
@@ -1421,7 +1421,7 @@ static void free_macexplst(register struct macexp_t *mxp)
  * dval here is really rest of line that may be ""
  * illegal conflicts with predefined compiler directives caught before here
  */
-static void do_argmacdefine(char *dnam, struct macexp_t *mxp, int nformal_args)
+static void do_argmacdefine(char *dnam, struct macexp_t *mxp, int32 nformal_args)
 {
  struct tnode_t *tnp;
  struct sy_t *syp;
@@ -1472,7 +1472,7 @@ static void do_argmacdefine(char *dnam, struct macexp_t *mxp, int nformal_args)
  * if / * comment but be completed on line
  * return T if good
  */
-extern int __bqline_emptytail(register char *cp)
+extern int32 __bqline_emptytail(register char *cp)
 {
  for (; *cp != '\0'; cp++)
   {
@@ -1510,9 +1510,9 @@ nxt_white:;
  */
 extern void __do_include(void)
 {
- register int idi;
+ register int32 idi;
  register char *cp;
- int inflen, plen;
+ int32 inflen, plen;
  FILE *f;
  struct incloc_t *ilp;
  char *chp, incfnam[RECLEN], incpth[RECLEN];
@@ -1539,8 +1539,8 @@ bad_fnam:
  if ((f = __tilde_fopen(incfnam, "r")) == NULL)
   {
    /* if file absolute, do not search incdir list */
-   if (incfnam[0] == '/' || incfnam[0] == '.' || incfnam[0] == '~')
-    goto nonrel_notfnd; 
+   /* AIV 09/15/04 - ./[name] form is relative not absolute */
+   if (incfnam[0] == '/' || incfnam[0] == '~') goto nonrel_notfnd; 
 
    if (__last_incdir >= 0)
     {
@@ -1631,10 +1631,10 @@ found_path:
  *
  * FIXME - looks like if `end never found in infinite loop?
  */
-static int cskip_ifdef_section(FILE *f, int begtok)
+static int32 cskip_ifdef_section(FILE *f, int32 begtok)
 {
- int level, ttyp2, sav_lin_cnt;
- int savfnam_ind;
+ int32 level, ttyp2, sav_lin_cnt;
+ int32 savfnam_ind;
 
  /* ifdef must be on line by itself - anything treated as comment */
  __skipover_line();
@@ -1666,12 +1666,12 @@ static int cskip_ifdef_section(FILE *f, int begtok)
       {
        __pv_terr(313,
         "`ifdef/`ifndef line %s - no matching `else or `endif before **EOF**",
-        __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
+        __bld_lineloc(__xs, (word32) savfnam_ind, sav_lin_cnt));  
       }
      else
       {
        __pv_terr(313, "`else line %s - no matching `endif before **EOF**",
-        __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
+        __bld_lineloc(__xs, (word32) savfnam_ind, sav_lin_cnt));  
       }
      continue;
     case CDIR_IFDEF: case CDIR_IFNDEF: 
@@ -1697,7 +1697,7 @@ static int cskip_ifdef_section(FILE *f, int begtok)
         {
          __pv_ferr(1011,
           "`else line %s - followed by same nesting level `else",
-          __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
+          __bld_lineloc(__xs, (word32) savfnam_ind, sav_lin_cnt));  
          /* keep looking for `endif */
          continue;
         }
@@ -1713,7 +1713,7 @@ static int cskip_ifdef_section(FILE *f, int begtok)
       {
        __pv_terr(328,
         "skipped `language at %s in `ifdef/`ifndef no matching `endlanguage before **EOF**",
-       __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
+       __bld_lineloc(__xs, (word32) savfnam_ind, sav_lin_cnt));  
       }
      break;
     case CDIR_TIMESCALE:
@@ -1744,9 +1744,9 @@ static int cskip_ifdef_section(FILE *f, int begtok)
  * (command) and any adding to history list
  * ending new line is removed
  */
-extern int __rd_ialine(void)
+extern int32 __rd_ialine(void)
 {
- int len, totlen, osize, intr_num;
+ int32 len, totlen, osize, intr_num;
  char *chp;
  FILE *f;
 
@@ -1865,12 +1865,12 @@ char __pv_ctab[128] = {
  * get a Verilog token
  * (modified from yylex in "The Unix Programming Environment" p. 337)
  */
-extern int __get1_vtok(FILE *f)
+extern int32 __get1_vtok(FILE *f)
 {
- register int c, ctval;
+ register int32 c, ctval;
  register char *cp;
- int c1, len, toolong;
- int t1typ;
+ int32 c1, len, toolong;
+ int32 t1typ;
 
 again:
  /* not first line token since always push back new line except number */
@@ -2069,9 +2069,9 @@ end_id:
 /*
  * get character routine that can read from macro
  */
-static int my_getc(FILE *f)
+static int32 my_getc(FILE *f)
 {
- register int c;
+ register int32 c;
 
 again:
  if (f == NULL)
@@ -2094,10 +2094,10 @@ again:
 /*
  * get a comment
  */
-static int rd_comment(FILE *f)
+static int32 rd_comment(FILE *f)
 {
- register int c;
- int c2;
+ register int32 c;
+ int32 c2;
 
  /* // to EOL comment */
  if ((c2 = my_getc(f)) == '/')
@@ -2154,7 +2154,7 @@ got_star:
 /* macro for adding char and growing attr wrk str */
 #define addto_attrwrkstr_(c) \
  do { \
-  int osize; \
+  int32 osize; \
   if (++len >= __attrwrklen - 1) \
    { \
     osize = __attrwrklen; \
@@ -2180,7 +2180,7 @@ got_star:
 static void rd_attribute(FILE *f)
 {
  register char *chp;
- int c, c2, len, wrk_fnam_ind, wrk_lin_cnt;
+ int32 c, c2, len, wrk_fnam_ind, wrk_lin_cnt;
 
  wrk_fnam_ind = __cur_fnam_ind;
  wrk_lin_cnt = __lin_cnt;
@@ -2286,8 +2286,8 @@ done:
   {
    __pv_ferr(3401,
     "more than one attribute_instance in row - using last at %s instead of first at %s",
-    __bld_lineloc(__xs, (unsigned) wrk_fnam_ind, wrk_lin_cnt),
-    __bld_lineloc(__xs2, (unsigned) __attr_fnam_ind, __attr_lin_cnt));
+    __bld_lineloc(__xs, (word32) wrk_fnam_ind, wrk_lin_cnt),
+    __bld_lineloc(__xs2, (word32) __attr_fnam_ind, __attr_lin_cnt));
   }
  __attr_fnam_ind = wrk_fnam_ind;
  __attr_lin_cnt = wrk_lin_cnt;
@@ -2296,7 +2296,7 @@ done:
  if (__debug_flg)
   {
    __dbg_msg("&&& at %s attribute_instance string [%s])\n",
-    __bld_lineloc(__xs, (unsigned) __attr_fnam_ind, __attr_lin_cnt),
+    __bld_lineloc(__xs, (word32) __attr_fnam_ind, __attr_lin_cnt),
     __attrwrkstr);
   }
  /* --- */
@@ -2305,9 +2305,9 @@ done:
 /*
  * skip to attribute ending *)
  */
-static int skipto_attr_end(FILE *f) 
+static int32 skipto_attr_end(FILE *f) 
 {
- register int c;
+ register int32 c;
 
  __attr_fnam_ind = 0;
  __attr_lin_cnt = 0;
@@ -2345,10 +2345,10 @@ done:
  * notice %% must be left here as 2 characters - processed by display
  * also value collected in token is not a 0 terminated c string (no \0) 
  */
-static int vgetstr(FILE *f)
+static int32 vgetstr(FILE *f)
 {
  register char *cp;
- int c, c1, len, toolong, nsize;
+ int32 c, c1, len, toolong, nsize;
 
  /* return string - should save length - Ver. strings not \0 terminated */
  if ((c = my_getc(f)) == '"')
@@ -2449,10 +2449,10 @@ done:
  * need to convert form escaped ID to normal if escaped (after \\ is legal)
  * notice although '$' is a class 0 and can go in IDs, it can not start ID
  */
-static int try_chg_tononesc(void) 
+static int32 try_chg_tononesc(void) 
 {
  register char *chp;
- register int len, ctval;
+ register int32 len, ctval;
  char s1[IDLEN];
 
  chp = __token;
@@ -2503,7 +2503,7 @@ static int try_chg_tononesc(void)
  */
 static void str_tovval(void)
 {
- register int wlen;
+ register int32 wlen;
 
  wlen = wlen_(__itoklen);
  if (wlen > __abwrkwlen || (__abwrkwlen > DFLTIOWORDS && wlen <= DFLTIOWORDS))
@@ -2518,18 +2518,18 @@ static void str_tovval(void)
  * know ap wide enough and all bits zeroed before called here
  * notice this has built in dependency on 32 bit words  
  */
-extern void __vstr_to_vval(word *ap, char *s, int bitlen)
+extern void __vstr_to_vval(word32 *ap, char *s, int32 bitlen)
 {
- register int i;
- register int bi;
- int slen;
+ register int32 i;
+ register int32 bi;
+ int32 slen;
 
  slen = bitlen/8;
  /* fill val from low char (right str) to high char (const left to right) */
  for (i = slen - 1, bi = 0; i >= 0; i--)
   {
-   if (bi == 0) *ap = (word) s[i];
-   else *ap |= (((word) s[i]) << bi);
+   if (bi == 0) *ap = (word32) s[i];
+   else *ap |= (((word32) s[i]) << bi);
    if (bi == 24) { bi = 0; ap++; } else bi += 8;
   }
 }
@@ -2540,7 +2540,7 @@ extern void __vstr_to_vval(word *ap, char *s, int bitlen)
  */
 extern struct xstk_t *__cstr_to_vval(char *s)
 {
- int blen, slen;
+ int32 blen, slen;
  struct xstk_t *xsp;
 
  slen = strlen(s);
@@ -2556,9 +2556,9 @@ extern struct xstk_t *__cstr_to_vval(char *s)
  * push back for internal use by unget routines where get1_vtok value
  * must be pushed back
  */
-static void unget2_vtok(int ttyp)
+static void unget2_vtok(int32 ttyp)
 {
- int save_ttyp;
+ int32 save_ttyp;
 
  save_ttyp = __toktyp;
  __toktyp = ttyp;
@@ -2580,7 +2580,7 @@ extern void __unget_vtok(void)
  /* extremely rare number push back case */
  if (__toktyp == NUMBER) 
   {
-   int wlen;
+   int32 wlen;
 
    __lastitokbase = __itokbase;
    __lastitoksized = __itoksized;
@@ -2591,8 +2591,8 @@ extern void __unget_vtok(void)
    /* must malloc to save in rare pushed back case */
    /* SJM 03/20/00 - no unget of num token since already in a/b wrk as val */
    wlen = wlen_(__itoklen);
-   __lastacwrk = (word *) __my_malloc(wlen*WRDBYTES);
-   __lastbcwrk = (word *) __my_malloc(wlen*WRDBYTES);
+   __lastacwrk = (word32 *) __my_malloc(wlen*WRDBYTES);
+   __lastbcwrk = (word32 *) __my_malloc(wlen*WRDBYTES);
    memcpy(__lastacwrk, __acwrk, wlen*WRDBYTES);
    memcpy(__lastbcwrk, __bcwrk, wlen*WRDBYTES);
    return;
@@ -2619,12 +2619,12 @@ extern void __unget_vtok(void)
  *
  * notice '_' in number are just ignored and not added to token, is this ok
  */
-static int rd_num(FILE *f, int c1)
+static int32 rd_num(FILE *f, int32 c1)
 {
  register char *chp;
- register int c;
- int len, toolong, isreal, errnum, blen, nsize;
- word v;
+ register int32 c;
+ int32 len, toolong, isreal, errnum, blen, nsize;
+ word32 v;
  double d1;
  char *endp;
  /* SJM 03/20 - FIXME - for now limiting dec unsized to 16k digits */
@@ -2739,7 +2739,7 @@ ok_letend:
      if (errnum != 0 || *endp != '\0') __misc_terr(__FILE__, __LINE__); 
      __acwrk[0] = v;
      __bcwrk[0] = 0L;
-     if (__macro_sep_width) __macro_sav_nwid = (int) v; 
+     if (__macro_sep_width) __macro_sav_nwid = (int32) v; 
      return(NUMBER);
     }
    /* for implied WBITS number convert and truncate */
@@ -2749,7 +2749,17 @@ ok_letend:
  /* know c is ' */
  /* know token read after this is not first token on line because */
  /* number becuase size number ' is on next line */
- /* know '[base] form is unsized and unsigned but'[Ss][base] is signed */
+ /* know '[base] form is unsized and word32 but'[Ss][base] is signed */
+
+ /* AIV 07/09/04 - special case to handle:  8'h`DEFINE */
+ /* if `define macro contains a 'base it is illegal */
+ if (__macbs_flag)
+  {
+   __pv_ferr(3418,
+    "number with '[base] macro expansion %s contains extra '[base]", __token);
+   /* AIV 07/12/04 - not sure what happens with error resync here */ 
+   return(UNDEF);
+  }
 
  /* if this is too wide will be caught later - this sets [size]' size */
  if (strcmp(nwidtoken, "") != 0)
@@ -2809,6 +2819,22 @@ ok_letend:
   }
  c = my_getc(f);
  c = voverwhite(f, c);
+ /* AIV 07/09/04 - special case to handle:  8'h`DEFINE */
+ if (c == '`')
+  {
+   int32 stok;
+   my_ungetc_(c, f);
+   /* save the base */
+   stok = __itokbase;
+   /* set the flag to make sure macro doesn't contain a base */
+   __macbs_flag = TRUE;
+   /* AIV 07/12/04 - need recursive call but can't read another number */ 
+   __get_vtok();
+   __macbs_flag = FALSE;
+   __itokbase = stok;
+   goto do_convert;
+  }
+
  /* know c is 1st character of sized number */
  toolong = FALSE;
  for (chp = __numtoken, len = 0;;)
@@ -2876,8 +2902,8 @@ do_convert:
  */
 static void rem_lead_0chars(char *s)
 {
- register int i, j;
- int slen;
+ register int32 i, j;
+ int32 slen;
 
  /* first set index to first non 0 char */
  for (i = 0; ; i++)
@@ -2900,9 +2926,9 @@ static void rem_lead_0chars(char *s)
  * skip over white space and return char just after
  * expects current character to be in c - no skip if current not white space
  */
-static int voverwhite(FILE *f, register int c)
+static int32 voverwhite(FILE *f, register int32 c)
 {
- int ct;
+ int32 ct;
 
  for (;; c = my_getc(f))
   {
@@ -2918,7 +2944,7 @@ static int voverwhite(FILE *f, register int c)
 /*
  * convert a character to a Verilog number base
  */
-extern int __to_base(int c)
+extern int32 __to_base(int32 c)
 {
  switch (c) {
   case 'b': case 'B': return(BBIN);
@@ -2934,7 +2960,7 @@ extern int __to_base(int c)
  * return value if digit, -1 for non digit or -2 for out of range digit 
  * (ends number)
  */
-extern int __is_vdigit(int c, int base)
+extern int32 __is_vdigit(int32 c, int32 base)
 {
  switch (c) {
   case 'x': case 'X': return('x');
@@ -2972,11 +2998,11 @@ extern int __is_vdigit(int c, int base)
  * this is also used by tf_ string to value conversion routines 
  * sets values in __numtoken, __itoklen, __itok_signed
  */
-extern void __to_dhboval(int base, int emit_warn)
+extern void __to_dhboval(int32 base, int32 emit_warn)
 {
- register int chlen, wlen, srcwlen, ubits;
- int srcblen;
- word aival, bival;
+ register int32 chlen, wlen, srcwlen, ubits;
+ int32 srcblen;
+ word32 aival, bival;
  char s1[RECLEN];
 
  chlen = strlen(__numtoken);
@@ -2986,7 +3012,7 @@ extern void __to_dhboval(int base, int emit_warn)
  if (srcblen < __itoklen) srcblen = __itoklen; 
 
  /* SJM 10/02/03 now wide decimal or numbers with s/S base part signed */ 
- /* therefore itok is int global not accessed here */
+ /* therefore itok is int32 global not accessed here */
 
  wlen = wlen_(srcblen);
  /* if need to widen or wider than default, change allocated length */
@@ -3011,7 +3037,7 @@ extern void __to_dhboval(int base, int emit_warn)
 
  /* words and occupied bits of number represented by chars */
  /* check case of number of character wider - maybe too wide number */
- /* __itoklen is number of bits that word must be stored in */
+ /* __itoklen is number of bits that word32 must be stored in */
  /* srcblen is number of bits in source input number */
  if (srcblen > __itoklen)
   {
@@ -3019,7 +3045,7 @@ extern void __to_dhboval(int base, int emit_warn)
    if (vnum_toowide(__acwrk, srcblen) || vnum_toowide(__bcwrk, srcblen))
     {
      /* no warning for [3-1]'h[zx] or [2-1]'o[zx] in high position */
-     /* notice for hex, must be in same word to have not too wide nibble */
+     /* notice for hex, must be in same word32 to have not too wide nibble */
      if (base == BHEX)
       {
        if (srcblen - __itoklen < 4 && wlen == srcwlen
@@ -3070,9 +3096,9 @@ do_mask:
  * computer number of bits + 1 needed to store number in base of chlen
  * worst case - could contain '_' place holders
  */
-static int chlen_to_bitlen(int chlen, int base)
+static int32 chlen_to_bitlen(int32 chlen, int32 base)
 {
- int bitlen;
+ int32 bitlen;
  double d1;
 
  switch (base) {
@@ -3080,7 +3106,7 @@ static int chlen_to_bitlen(int chlen, int base)
    /* here must make sure bit enough if rounding error */
    /* actual conversion will compute exact bit length */
    d1 = ((double) chlen)/LG2_DIV_LG10 + WBITS;
-   bitlen = (int) d1;
+   bitlen = (int32) d1;
    break;
   case BBIN: bitlen = chlen; break;
   case BOCT: bitlen = 3*chlen; break;
@@ -3095,15 +3121,15 @@ static int chlen_to_bitlen(int chlen, int base)
  * only gets here if either blen (__itoklen) or abwork len wider than default
  * notice __ac wrk and __bc wrk not necessary contiguous
  */
-static void chg_abwrklen(int wlen)
+static void chg_abwrklen(int32 wlen)
 {
- int olen, nlen;
+ int32 olen, nlen;
 
  olen = WRDBYTES*__abwrkwlen;
  if (wlen <= DFLTIOWORDS) __abwrkwlen = DFLTIOWORDS; else __abwrkwlen = wlen;
  nlen = WRDBYTES*__abwrkwlen;
- __acwrk = (word *) __my_realloc((char *) __acwrk, olen, nlen);
- __bcwrk = (word *) __my_realloc((char *) __bcwrk, olen, nlen);
+ __acwrk = (word32 *) __my_realloc((char *) __acwrk, olen, nlen);
+ __bcwrk = (word32 *) __my_realloc((char *) __bcwrk, olen, nlen);
 }
 
 /*
@@ -3111,7 +3137,7 @@ static void chg_abwrklen(int wlen)
  * know number initialized to 0 of itoklen width
  * LOOKATME - could maybe speed up by using scanf if fits in one word?
  */
-static void to_dec(int *blen) 
+static void to_dec(int32 *blen) 
 {
  /* know __ac wrk and __bc wrk set to 0 before this is called */
  if (strchr(__numtoken, 'z') != NULL)
@@ -3135,11 +3161,11 @@ static void to_dec(int *blen)
  * to be wide enough (blen width)
  * know all digits in token are legal decimal digits
  */
-static void wide_strtoverdec(int blen)
+static void wide_strtoverdec(int32 blen)
 {
  register char *chp;
- word *reg10, *newdig, *acc;
- int wlen;
+ word32 *reg10, *newdig, *acc;
+ int32 wlen;
  struct xstk_t *xsp;
 
  wlen = wlen_(blen);
@@ -3179,11 +3205,11 @@ static void wide_strtoverdec(int blen)
  * know will fit and correct
  * notice caller know to have zerod __ac wrk and __bc wrk
  */
-static void to_bin(int slen)
+static void to_bin(int32 slen)
 {
- register int i;
- word a, b;
- int bi;
+ register int32 i;
+ word32 a, b;
+ int32 bi;
 
  /* fill val from low char (rght str) to high char (const left to rght) */
  for (i = slen - 1, bi = 0; i >= 0; i--, bi++)
@@ -3197,7 +3223,7 @@ static void to_bin(int slen)
 /*
  * convert binary plus z-x character to bit
  */
-static int ch_tobits(word *ap, word *bp, int ch)
+static int32 ch_tobits(word32 *ap, word32 *bp, int32 ch)
 {
  *ap = *bp = 0L;
  switch (ch) {
@@ -3215,10 +3241,10 @@ static int ch_tobits(word *ap, word *bp, int ch)
  * input in token and token length set
  * know will fit and __ac wrk and __bc wrk zeroed 
  */
-static void to_oct(int slen)
+static void to_oct(int32 slen)
 {
- register int i, bi;
- word a, b;
+ register int32 i, bi;
+ word32 a, b;
 
  /* fill val from low char (rght str) to high char (const left to rght) */
  for (i = slen - 1, bi = 0; i >= 0; i--, bi += 3)
@@ -3233,7 +3259,7 @@ static void to_oct(int slen)
 /*
  * convert octal digit plus z-x character to bit
  */
-static int ch_toocts(word *ap, word *bp, int ch)
+static int32 ch_toocts(word32 *ap, word32 *bp, int32 ch)
 {
  *ap = *bp = 0L;
  switch (ch) {
@@ -3241,7 +3267,7 @@ static int ch_toocts(word *ap, word *bp, int ch)
   case 'x': case 'X': *ap = 0x7L; *bp = 0x7L; break;
   default:
    if (ch < '0' || ch > '7') return(FALSE);
-   *ap = (word) ((ch - '0') & 0x7L);
+   *ap = (word32) ((ch - '0') & 0x7L);
   }
  return(TRUE);
 }
@@ -3252,11 +3278,11 @@ static int ch_toocts(word *ap, word *bp, int ch)
  * know will fit and know acwrk and bcwrk already zeroed
  * sets tokval or tokptr if > WBITS
  */
-static void to_hex(int slen)
+static void to_hex(int32 slen)
 {
- register int i, bi;
- register word *ap, *bp;
- word a, b;
+ register int32 i, bi;
+ register word32 *ap, *bp;
+ word32 a, b;
 
  /* fill val from low char (right str) to high char (const left to right) */
  ap = __acwrk;
@@ -3275,7 +3301,7 @@ static void to_hex(int slen)
 /*
  * convert hex digit plus x and z to bit pattern
  */
-static int ch_tohexs(word *ap, word *bp, int ch)
+static int32 ch_tohexs(word32 *ap, word32 *bp, int32 ch)
 {
  *ap = *bp = 0L;
  switch (ch) {
@@ -3284,13 +3310,13 @@ static int ch_tohexs(word *ap, word *bp, int ch)
   default:
    if (ch >= '0' && ch <= '9')
     {
-     *ap = (word) ((ch - '0') & 0xfL);
+     *ap = (word32) ((ch - '0') & 0xfL);
      break;
     }
    if (isupper(ch)) ch = tolower(ch);
    if (ch >= 'a' && ch <= 'f')
     {
-     *ap = (word) ((10 + ch - 'a') & 0xfL);
+     *ap = (word32) ((10 + ch - 'a') & 0xfL);
      break;
     }
    /* should have already been caught */
@@ -3308,15 +3334,15 @@ static int ch_tohexs(word *ap, word *bp, int ch)
  * if too wide only because x or z hex or oct digit returns T here
  * but change to not too wide later
  */
-static int vnum_toowide(word *wp, int srcblen)
+static int32 vnum_toowide(word32 *wp, int32 srcblen)
 {
- register int i;
- int srcwlen, storwlen, storubits;
+ register int32 i;
+ int32 srcwlen, storwlen, storubits;
 
  srcwlen = wlen_(srcblen);
  storwlen = wlen_(__itoklen);
  storubits = ubits_(__itoklen);
- /* if high bits of high word from storage token length, too wide */
+ /* if high bits of high word32 from storage token length, too wide */
  if ((wp[storwlen - 1] & ~__masktab[storubits]) != 0L) return(TRUE);
  for (i = storwlen; i < srcwlen; i++) if (wp[i] != 0L) return(TRUE);
  return(FALSE);
@@ -3327,10 +3353,10 @@ static int vnum_toowide(word *wp, int srcblen)
  * know shubits is aligned on 4 bit boundary and both in same word
  * know if all high bits 0 won't get here
  */
-static int nibblexz(word aw, word bw, int srcblen)
+static int32 nibblexz(word32 aw, word32 bw, int32 srcblen)
 {
- int itokubits;
- word tmp;
+ int32 itokubits;
+ word32 tmp;
 
  /* know __itoklen has at least 1 high bit unused or will not get here */
  itokubits = ubits_(__itoklen);
@@ -3359,11 +3385,11 @@ static int nibblexz(word aw, word bw, int srcblen)
 /*
  * return T if high unused bits of high 3 bit nibble x or z
  */
-static int octdigxz(word *ap, word *bp, int srcblen)
+static int32 octdigxz(word32 *ap, word32 *bp, int32 srcblen)
 {
- word tmp, aw, bw;
+ word32 tmp, aw, bw;
 
- /* part select needed to isolate bits, oct can overlap word boundary */
+ /* part select needed to isolate bits, oct can overlap word32 boundary */
  __rhspsel(&bw, bp, __itoklen - 1, 3);
  switch (srcblen - __itoklen) {
   case 1:
@@ -3386,18 +3412,18 @@ static int octdigxz(word *ap, word *bp, int srcblen)
  * do not know what is in higher values
  * know valwp wide enough
  */
-static void widen_val(word *vwp, int lngblen, int shblen, word highval)
+static void widen_val(word32 *vwp, int32 lngblen, int32 shblen, word32 highval)
 {
- register int i;
- register word *wp;
- word mask;
- int shwlen, shubits, lngwlen, lngubits;
+ register int32 i;
+ register word32 *wp;
+ word32 mask;
+ int32 shwlen, shubits, lngwlen, lngubits;
 
  shwlen = wlen_(shblen);
  shubits = ubits_(shblen);
  lngwlen = wlen_(lngblen);
  lngubits = ubits_(lngblen);
- /* first extend unused part of old short high word */
+ /* first extend unused part of old short high word32 */
  if (shubits != 0)
   {
    mask = __masktab[shubits];
@@ -3416,7 +3442,7 @@ static void widen_val(word *vwp, int lngblen, int shblen, word highval)
   }
 
 done:
- /* finally zero unused portion of high word */
+ /* finally zero unused portion of high word32 */
  vwp[lngwlen - 1] &= __masktab[lngubits];
 }
 
@@ -3428,9 +3454,9 @@ done:
  * version of print vtoken where value is not in global _toktyp  
  * for use inside get token routines
  */ 
-static char *prt2_vtok(int ttyp)
+static char *prt2_vtok(int32 ttyp)
 {
- int save_ttyp;
+ int32 save_ttyp;
  char *chp; 
 
  save_ttyp = __toktyp;
@@ -3534,7 +3560,7 @@ extern char *__prt_vtok(void)
  * non expression token removed when tree built but included here
  * result 
  */
-extern char *__to_opname(unsigned otyp)
+extern char *__to_opname(word32 otyp)
 {
  /* token number %d illegal in expression */
  if (otyp > TEOF) __misc_fterr(__FILE__, __LINE__);
@@ -3546,7 +3572,7 @@ extern char *__to_opname(unsigned otyp)
 /* making as many things as possible Verilog since they are reserved */
 struct vkeywds_t {
  char *vknam;
- int vknum;
+ int32 vknum;
 };
 
 static struct vkeywds_t vkeywds[] = {
@@ -3618,7 +3644,7 @@ static struct vkeywds_t vkeywds[] = {
  { "initial", INITial },
  { "inout", INOUT },
  { "input", INPUT },
- /* not int */
+ /* not int32 */
  { "integer", INTEGER },
  { "join", JOIN },
  { "large", LARGE },
@@ -3633,6 +3659,7 @@ static struct vkeywds_t vkeywds[] = {
  { "pull0", PULL0 },
  { "pull1", PULL1 },
  { "real", REAL },
+ { "realtime", REALTIME },
  { "reg", REG },
  { "release", RELEASE },
  { "repeat", REPEAT },
@@ -3670,10 +3697,10 @@ static struct vkeywds_t vkeywds[] = {
  * determine type of keyword or ident
  * binary search because the table is so big
  */
-static int get_vkeywrd(register char *tstr)
+static int32 get_vkeywrd(register char *tstr)
 {
- int l, h;
- register int m, cv;
+ int32 l, h;
+ register int32 m, cv;
 
  l = 0; h = NVKEYWDS - 1;
  for (;;)
@@ -3690,9 +3717,9 @@ static int get_vkeywrd(register char *tstr)
  * determine keyword name from number
  * must use linear search since not sorted
  */
-extern char *__get_vkeynam(char *s, int knum)
+extern char *__get_vkeynam(char *s, int32 knum)
 {
- register int vi;
+ register int32 vi;
 
  for (vi = 0; vi < NVKEYWDS; vi++)
   {
@@ -3715,11 +3742,20 @@ extern char *__get_vkeynam(char *s, int knum)
  * rest of module not checked
  * return T if found targ1 else F
  */
-extern int __vskipto_modend(int targ1)
+extern int32 __vskipto_modend(int32 targ1)
 {
+ int32 sav_letendnum;
+
+ /* SJM 11/30/04 - save and restore edge illegal num errors when skip mod */
+ sav_letendnum = __letendnum_state;
+ __letendnum_state = TRUE;
  for (;;)
   {
-   if (__toktyp == targ1) return(TRUE);
+   if (__toktyp == targ1)
+    {
+     __letendnum_state = sav_letendnum;
+     return(TRUE);
+    }
    switch ((byte) __toktyp) {
     case ENDMODULE: case ENDPRIMITIVE:
      goto done;
@@ -3731,6 +3767,7 @@ extern int __vskipto_modend(int targ1)
    __get_vtok();
   }
 done:
+ __letendnum_state = sav_letendnum;
  return(FALSE);
 }
 
@@ -3739,11 +3776,20 @@ done:
  * est of module not checked
  * return T if found targ1 else F
  */
-extern int __vskipto2_modend(int targ1, int targ2)
+extern int32 __vskipto2_modend(int32 targ1, int32 targ2)
 {
+ int32 sav_letendnum;
+
+ /* SJM 11/30/04 - save and restore edge illegal num errors when skip mod */
+ sav_letendnum = __letendnum_state;
+ __letendnum_state = TRUE;
  for (;;)
   {
-   if (__toktyp == targ1 || __toktyp == targ2) return(TRUE);
+   if (__toktyp == targ1 || __toktyp == targ2)
+    {
+     __letendnum_state = sav_letendnum;
+     return(TRUE);
+    }
    switch ((byte) __toktyp) {
     case ENDMODULE: case ENDPRIMITIVE:
      goto done;
@@ -3756,6 +3802,7 @@ extern int __vskipto2_modend(int targ1, int targ2)
    __get_vtok();
   }
 done:
+ __letendnum_state = sav_letendnum;
  return(FALSE);
 }
 
@@ -3764,12 +3811,20 @@ done:
  * est of module not checked
  * return T if found targ1 else F
  */
-extern int __vskipto3_modend(int targ1, int targ2, int targ3)
+extern int32 __vskipto3_modend(int32 targ1, int32 targ2, int32 targ3)
 {
+ int32 sav_letendnum;
+
+ /* SJM 11/30/04 - save and restore edge illegal num errors when skip mod */
+ sav_letendnum = __letendnum_state;
+ __letendnum_state = TRUE;
  for (;;)
   {
    if (__toktyp == targ1 || __toktyp == targ2 || __toktyp == targ3)
-    return(TRUE);
+    {
+     __letendnum_state = sav_letendnum;
+     return(TRUE);
+    }
    switch ((byte) __toktyp) {
     case ENDMODULE: case ENDPRIMITIVE:
      goto done;
@@ -3782,6 +3837,7 @@ extern int __vskipto3_modend(int targ1, int targ2, int targ3)
    __get_vtok();
   }
 done:
+ __letendnum_state = sav_letendnum;
  return(FALSE);
 }
 
@@ -3798,7 +3854,7 @@ done:
  *   SYNC_STMT - start of statement
  *   SYNC_TARG - target found and return T
  */
-extern int __vskipto_any(int targ1)
+extern int32 __vskipto_any(int32 targ1)
 {
  /* for interactive just give up on any error - but must skip to end of line */
  if (__iact_state) longjmp(__iact_jmpbuf, 1);
@@ -3815,7 +3871,7 @@ extern int __vskipto_any(int targ1)
  return(FALSE);
 }
 
-extern int __vskipto2_any(int targ1, int targ2)
+extern int32 __vskipto2_any(int32 targ1, int32 targ2)
 {
  if (__iact_state) longjmp(__iact_jmpbuf, 1);
  for (;;)
@@ -3831,7 +3887,7 @@ extern int __vskipto2_any(int targ1, int targ2)
  return(FALSE);
 }
 
-extern int __vskipto3_any(int targ1, int targ2, int targ3)
+extern int32 __vskipto3_any(int32 targ1, int32 targ2, int32 targ3)
 {
  if (__iact_state) longjmp(__iact_jmpbuf, 1);
  for (;;)
@@ -3847,7 +3903,7 @@ extern int __vskipto3_any(int targ1, int targ2, int targ3)
  return(FALSE);
 }
 
-extern int __vskipto4_any(int targ1, int targ2, int targ3, int targ4)
+extern int32 __vskipto4_any(int32 targ1, int32 targ2, int32 targ3, int32 targ4)
 {
  if (__iact_state) longjmp(__iact_jmpbuf, 1);
  for (;;)
@@ -3870,7 +3926,7 @@ extern int __vskipto4_any(int targ1, int targ2, int targ3, int targ4)
  * special case because resyncs at port name keyword ID 
  * notice can't be used for new list of parameters form
  */
-extern int __vskipto_lofp_end()
+extern int32 __vskipto_lofp_end()
 {
  /* only for list of ports decl so can't be invoked from iact state */ 
  if (__iact_state) __misc_terr(__FILE__, __LINE__);
@@ -3897,7 +3953,7 @@ extern int __vskipto_lofp_end()
  * special case because resyncs at port name keyword ID 
  * notice can't be used for new list of parameters form
  */
-extern int __vskipto2_lofp_end()
+extern int32 __vskipto2_lofp_end()
 {
  /* only for list of ports decl so can't be invoked from iact state */ 
  if (__iact_state) __misc_terr(__FILE__, __LINE__);
@@ -3922,7 +3978,7 @@ extern int __vskipto2_lofp_end()
 /*
  * set __token class - return T if not a sync to
  */
-static int set_syncto_tokclass(byte ttyp) 
+static int32 set_syncto_tokclass(byte ttyp) 
 {
  switch (ttyp) {
   /* file level item */
@@ -3944,7 +4000,8 @@ static int set_syncto_tokclass(byte ttyp)
   case INPUT: case OUTPUT: case INOUT:
   case WIRE: case TRI: case TRI0: case TRI1: case TRIAND: 
   case TRIOR: case TRIREG: case WAND: case WOR: case SUPPLY0:
-  case SUPPLY1: case REG: case INTEGER: case TIME: case REAL: case EVENT:
+  case SUPPLY1: case REG: case INTEGER: case TIME: case REAL: case REALTIME:
+  case EVENT:
    __unget_vtok();
    __syncto_class = SYNC_MODLEVEL;
    break;
@@ -3972,7 +4029,7 @@ static int set_syncto_tokclass(byte ttyp)
 /*
  * for specify normal skip to any except also specify item level
  */
-extern int __spec_vskipto_any(int targ1)
+extern int32 __spec_vskipto_any(int32 targ1)
 {
  for (;;)
   {
@@ -3991,7 +4048,7 @@ extern int __spec_vskipto_any(int targ1)
  return(FALSE);
 }
 
-extern int __spec_vskipto2_any(int targ1, int targ2)
+extern int32 __spec_vskipto2_any(int32 targ1, int32 targ2)
 {
  for (;;)
   {
@@ -4011,7 +4068,7 @@ extern int __spec_vskipto2_any(int targ1, int targ2)
  return(FALSE);
 }
 
-extern int __spec_vskipto3_any(int targ1, int targ2, int targ3)
+extern int32 __spec_vskipto3_any(int32 targ1, int32 targ2, int32 targ3)
 {
  for (;;)
   {
@@ -4037,7 +4094,7 @@ extern int __spec_vskipto3_any(int targ1, int targ2, int targ3)
  * this needs to access global toktyp and token 
  * notice - cannot sync to most common ( for path start
  */
-static int set_specitem_class(void)
+static int32 set_specitem_class(void)
 {
  if (__toktyp == ID && *__token == '$')
   {
@@ -4058,7 +4115,7 @@ static int set_specitem_class(void)
  * skip to udp symbol - 
  * return T if found targ1 else F
  */
-extern int __udp_vskipto_any(int targ1)
+extern int32 __udp_vskipto_any(int32 targ1)
 {
  for (;;)
   {
@@ -4071,7 +4128,7 @@ extern int __udp_vskipto_any(int targ1)
  return(FALSE);
 }
 
-extern int __udp_vskipto2_any(int targ1, int targ2)
+extern int32 __udp_vskipto2_any(int32 targ1, int32 targ2)
 {
  for (;;)
   {
@@ -4085,7 +4142,7 @@ extern int __udp_vskipto2_any(int targ1, int targ2)
  return(FALSE);
 }
 
-extern int __udp_vskipto3_any(int targ1, int targ2, int targ3)
+extern int32 __udp_vskipto3_any(int32 targ1, int32 targ2, int32 targ3)
 {
  for (;;)
   {
@@ -4102,7 +4159,7 @@ extern int __udp_vskipto3_any(int targ1, int targ2, int targ3)
 /*
  * set udp token class - return T if token not a sync to
  */
-static int set_udpsyncto(byte ttyp) 
+static int32 set_udpsyncto(byte ttyp) 
 {
  switch (ttyp) {
   /* file level item */
@@ -4149,12 +4206,12 @@ static char __lbctab[128] = {
  * notice no push back token here
  * also handles normal / * and // comments
  */
-extern int __get_cmdtok(FILE *f)
+extern int32 __get_cmdtok(FILE *f)
 {
- /* the char must be an int for machine independence */
- register int c;
+ /* the char must be an int32 for machine independence */
+ register int32 c;
  register char *cp;
- int namlen;
+ int32 namlen;
 
 again:
  while ((c = getc(f)) == ' ' || c == '\t' || c == '\f' || c == '\r') ;
@@ -4217,12 +4274,12 @@ static char cfgctab[128] = {
  * complicated because need warnings and must handle quoting and
  * escaping but only within quoted names 
  */
-extern int __get_cfgtok(FILE *f)
+extern int32 __get_cfgtok(FILE *f)
 {
- /* the char must be an int for machine independence */
- register int c;
+ /* the char must be an int32 for machine independence */
+ register int32 c;
  register char *cp;
- int namlen, ttyp, qchar;
+ int32 namlen, ttyp, qchar;
 
 again:
  while ((c = getc(f)) == ' ' || c == '\t' || c == '\f' || c == '\r') ;
@@ -4265,7 +4322,7 @@ again:
       }
      else
       {
-       /* ending quote not part of ID and can't be key word */
+       /* ending quote not part of ID and can't be key word32 */
        if (c == qchar)
         {
          if (strcmp(__token, "") == 0)
@@ -4314,10 +4371,10 @@ end_nam:
 /*
  * look up a cfg file ID and convert to a keyword NUMBER
  *
- * notice keyword numbers disjoint from and overlap Verilog keywords 
+ * notice keyword numbers disjoint32 from and overlap Verilog keywords 
  * FIXME - should use binary search
  */
-static int get_cfgkeywrd(char *tstr)
+static int32 get_cfgkeywrd(char *tstr)
 {
  if (strcmp(tstr, "library") == 0) return(CFG_LIBRARY);
  if (strcmp(tstr, "config") == 0) return(CFG_CFG);
@@ -4334,7 +4391,7 @@ static int get_cfgkeywrd(char *tstr)
 /*
  * convert cfg toktyp number to name
  */
-extern char *__to_cfgtoknam(char *s, int ttyp)
+extern char *__to_cfgtoknam(char *s, int32 ttyp)
 { 
  switch (ttyp) {
   case CFG_UNKNOWN: strcpy(s, "??CFG-UNKNOWN??"); break;
@@ -4360,10 +4417,10 @@ extern char *__to_cfgtoknam(char *s, int ttyp)
 /*
  * get a comment
  */
-static int get_cmdcomment(FILE *f)
+static int32 get_cmdcomment(FILE *f)
 {
- register int c;
- int c2;
+ register int32 c;
+ int32 c2;
 
  /* // to EOL comment */
  if ((c2 = getc(f)) == '/')
@@ -4415,7 +4472,7 @@ got_star:
  */
 extern struct sy_t *__get_sym_env(char *nam)
 {
- int sti;
+ int32 sti;
  struct sy_t *syp;
  struct symtab_t *sytp;
 
@@ -4445,7 +4502,7 @@ extern struct sy_t *__get_sym_env(char *nam)
  */
 extern struct sy_t *__find_sym(char *nam)
 {
- register int sti;
+ register int32 sti;
  struct sy_t *syp;
  struct tnode_t *tnp;
  struct symtab_t *sytp;
@@ -4509,7 +4566,7 @@ extern void __add_sym(char *snam, struct tnode_t *tnp)
 static char *pv_stralloc2(char *s)
 {
  char *cp;
- int slen;
+ int32 slen;
 
  if (*s == '\0') slen = 1; else slen = strlen(s) + 1;
  cp = nfbig_alloc(slen);
@@ -4551,7 +4608,7 @@ extern void __init_sy(struct sy_t *syp)
 extern struct sy_t *__get_sym(char *nam, struct symtab_t *sytp)
 {
  struct tnode_t *cur;
- int cv;
+ int32 cv;
 
  /* interactive bld node accesses frozen symbol table */
  if (sytp->stsyms != NULL)
@@ -4589,7 +4646,7 @@ extern struct tnode_t *__vtfind(char *nam, struct symtab_t *sytp)
 {
  register struct tnode_t *cur, *down;
  struct tnode_t *balpt_par, *bal_pt, *vtnew, *bal_down;
- int cv;
+ int32 cv;
 
  /* DBG remove --
  if (sytp->stsyms != NULL) __misc_terr(__FILE__, __LINE__);
@@ -4755,10 +4812,10 @@ static struct tnode_t *alloc_tnode(struct symtab_t *sytp)
 /*
  * get a symbol in frozen table - notice nsyms is num. not last
  */
-extern struct sy_t *__zget_sym(char *nam, struct sy_t **syms, unsigned nsyms)
+extern struct sy_t *__zget_sym(char *nam, struct sy_t **syms, word32 nsyms)
 {
- register int l, h;
- register int m, cv;
+ register int32 l, h;
+ register int32 m, cv;
 
  if (nsyms == 0) return(NULL);
  l = 0; h = nsyms - 1;
@@ -4775,7 +4832,7 @@ extern struct sy_t *__zget_sym(char *nam, struct sy_t **syms, unsigned nsyms)
 /*
  * allocate a new empty symbol table
  */
-extern struct symtab_t *__alloc_symtab(int freezes)
+extern struct symtab_t *__alloc_symtab(int32 freezes)
 {
  struct symtab_t *sytp;
 
@@ -4801,10 +4858,10 @@ extern struct symtab_t *__alloc_symtab(int freezes)
  * here __top_ipind is sorted array of indexes into top_iptab which
  * is || to __it_roots
  */
-extern int __ip_indsrch(char *nam)
+extern int32 __ip_indsrch(char *nam)
 {
- int l, h;
- register int m, cv;
+ int32 l, h;
+ register int32 m, cv;
 
  if (__numtopm == 0) return(-1);
  l = 0; h = __numtopm - 1;
@@ -4848,9 +4905,9 @@ extern char *__to_mpnam(char *s, char *chp)
 /*
  * convert from a wire type token number to its wtyp value (-1 if no match)
  */
-extern int __fr_wtnam(int ttyp)
+extern int32 __fr_wtnam(int32 ttyp)
 {
- int wtyp;
+ int32 wtyp;
 
  switch ((byte) ttyp) {
   case WIRE: wtyp = N_WIRE; break;
@@ -4868,7 +4925,7 @@ extern int __fr_wtnam(int ttyp)
   case REG: wtyp = N_REG; break;
   case TIME: wtyp = N_TIME; break;
   case INTEGER: wtyp = N_INT; break;
-  case REAL: wtyp = N_REAL; break;
+  case REAL: case REALTIME: wtyp = N_REAL; break;
   case EVENT: wtyp = N_EVENT; break;
   default: wtyp = -1; break;
  }
@@ -4887,7 +4944,7 @@ extern char *__to_wtnam(char *s, struct net_t *np)
  * convert a wire type value into a output name (2nd variant constant wtyp)
  * not for I/O port types
  */
-extern char *__to_wtnam2(char *s, unsigned typ)
+extern char *__to_wtnam2(char *s, word32 typ)
 {
  switch ((byte) typ) {
   case N_WIRE: strcpy(s, "wire"); break;
@@ -4915,7 +4972,7 @@ extern char *__to_wtnam2(char *s, unsigned typ)
 /*
  * convert an i/o port type to a name (use lower case for these)
  */
-extern char *__to_ptnam(char *s, unsigned ptyp)
+extern char *__to_ptnam(char *s, word32 ptyp)
 {
  switch ((byte) ptyp) {
   case IO_IN: strcpy(s, "input"); break;
@@ -4931,7 +4988,7 @@ extern char *__to_ptnam(char *s, unsigned ptyp)
 /*
  * convert a wire splitting type to scalared/vectored state
  */
-extern char *__to_splt_nam(char *s, int sptyp)
+extern char *__to_splt_nam(char *s, int32 sptyp)
 {
  if (sptyp == SPLT_SCAL) strcpy(s, "scalared");
  else if (sptyp == SPLT_VECT) strcpy(s, "vectored");
@@ -4943,7 +5000,7 @@ extern char *__to_splt_nam(char *s, int sptyp)
  * convert from a token type number to a strength symbolic constant
  * return NO_STREN on not a strength - checking must be elsewhere
  */
-extern unsigned __fr_stren_nam(int ttyp)
+extern word32 __fr_stren_nam(int32 ttyp)
 {
  switch ((byte) ttyp) {
   case HIGHZ0: case HIGHZ1: return(ST_HIGHZ);
@@ -4962,7 +5019,7 @@ extern unsigned __fr_stren_nam(int ttyp)
  * convert a strength pair to a name
  * use this to write cap strength
  */
-extern char *__to_stren_nam(char *s, int stren1, int stren2)
+extern char *__to_stren_nam(char *s, int32 stren1, int32 stren2)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -4978,13 +5035,13 @@ extern char *__to_stren_nam(char *s, int stren1, int stren2)
  * not for cap. strength
  * and notice value coded in 6 bits (i.e. no value in low 2 bits
  */
-extern char *__to_stval_nam(char *s, unsigned stval)
+extern char *__to_stval_nam(char *s, word32 stval)
 {
- int st0, st1;
+ int32 st0, st1;
  char s1[RECLEN], s2[RECLEN];
 
- st0 = (int) (stval >> 3) & 7;
- st1 = (int) (stval) & 7;
+ st0 = (int32) (stval >> 3) & 7;
+ st1 = (int32) (stval) & 7;
  sprintf(s, "(%s, %s)", __to1_stren_nam(s1, st0, 0),
   __to1_stren_nam(s2, st1, 1));
  return(s);
@@ -4994,7 +5051,7 @@ extern char *__to_stval_nam(char *s, unsigned stval)
  * convert from a strength type and 0/1 value to a strength name
  * this is source driving strength - not net strength value
  */
-extern char *__to1_stren_nam(char *s, int st, int st01dir)
+extern char *__to1_stren_nam(char *s, int32 st, int32 st01dir)
 {
  switch ((byte) st) {
   case ST_HIGHZ: strcpy(s, "highz"); break;
@@ -5015,7 +5072,7 @@ extern char *__to1_stren_nam(char *s, int st, int st01dir)
 /*
  * return T if strength value is cap. strength
  */
-extern int __is_capstren(int st)
+extern int32 __is_capstren(int32 st)
 {
  switch ((byte) st) {
   case ST_SMALL: case ST_MEDIUM: case ST_LARGE: return(TRUE);
@@ -5026,9 +5083,9 @@ extern int __is_capstren(int st)
 /*
  * convert from a capacitor size constant to a capacitor strength 
  */
-extern int __fr_cap_size(int capsiz)
+extern int32 __fr_cap_size(int32 capsiz)
 {
- int st;
+ int32 st;
 
  switch ((byte) capsiz) {
   case CAP_NONE: st = ST_STRONG; break;
@@ -5044,9 +5101,9 @@ extern int __fr_cap_size(int capsiz)
  * convert to a capacitor size constant from a capacitor strength 
  * must catch non cap size strength input before here
  */
-extern unsigned __to_cap_size(int st)
+extern word32 __to_cap_size(int32 st)
 {
- int capsiz;
+ int32 capsiz;
 
  switch ((byte) st) {
   case ST_STRONG: capsiz = CAP_NONE; break;
@@ -5061,7 +5118,7 @@ extern unsigned __to_cap_size(int st)
 /*
  * build a $display style 2 char strength string
  */
-extern char *__to_dispst_str(char *s, unsigned st)
+extern char *__to_dispst_str(char *s, word32 st)
 {
  switch ((byte) st) {
   case ST_HIGHZ: strcpy(s, "Hi"); break;
@@ -5080,7 +5137,7 @@ extern char *__to_dispst_str(char *s, unsigned st)
 /*
  * build a symbol class name
  */
-extern char *__to_sytyp(char *s, unsigned styp)
+extern char *__to_sytyp(char *s, word32 styp)
 {
  switch ((byte) styp) {
   case SYM_UNKN: strcpy(s, "--unknown--"); break;
@@ -5106,7 +5163,7 @@ extern char *__to_sytyp(char *s, unsigned styp)
 /*
  * build a task type name - tskt is token number
  */
-extern char *__to_tsktyp(char *s, unsigned tskt)
+extern char *__to_tsktyp(char *s, word32 tskt)
 {
  switch ((byte) tskt) {
   case Begin: strcpy(s, "named begin"); break;
@@ -5120,7 +5177,7 @@ extern char *__to_tsktyp(char *s, unsigned tskt)
 /*
  * build a statement type name
  */
-extern char *__to_sttyp(char *s, unsigned sttyp)
+extern char *__to_sttyp(char *s, word32 sttyp)
 {
  switch ((byte) sttyp) {
   case S_NULL: strcpy(s, "empty"); break;
@@ -5156,7 +5213,7 @@ extern char *__to_sttyp(char *s, unsigned sttyp)
 /*
  * build the quasi-continue statement type name 
  */
-extern char *__to_qctyp(char *s, unsigned qctyp)
+extern char *__to_qctyp(char *s, word32 qctyp)
 {
  switch ((byte) qctyp) {
   case FORCE: strcpy(s, "force"); break;
@@ -5171,7 +5228,7 @@ extern char *__to_qctyp(char *s, unsigned qctyp)
 /*
  * build an event type name
  */
-extern char *__to_tetyp(char *s, unsigned tetyp) 
+extern char *__to_tetyp(char *s, word32 tetyp) 
 {
  switch ((byte) tetyp) {
   case TE_THRD: strcpy(s, "procedural"); break;
@@ -5229,7 +5286,7 @@ extern char *__to_npptyp(char *s, struct net_pin_t *npp)
 /*
  * build the net change subtype name 
  */
-static char *__to_nppsubtyp(char *s, unsigned subtyp)
+static char *__to_nppsubtyp(char *s, word32 subtyp)
 {
  switch ((byte) subtyp) {
   case NPCHG_TCSTART: strcpy(s, "tchk start ref."); break;
@@ -5243,7 +5300,7 @@ static char *__to_nppsubtyp(char *s, unsigned subtyp)
 /*
  * build a delay type name string
  */
-extern char *__to_deltypnam(char *s, unsigned dtyp)
+extern char *__to_deltypnam(char *s, word32 dtyp)
 {
  switch ((byte) dtyp) {
    case DT_NONE: strcpy(s, "?none?"); break; 
@@ -5271,7 +5328,7 @@ extern char *__to_deltypnam(char *s, unsigned dtyp)
 /*
  * convert timing check type to name
  */
-extern char *__to_tcnam(char *s, unsigned tctyp) 
+extern char *__to_tcnam(char *s, word32 tctyp) 
 {
  switch ((byte) tctyp) {
   case TCHK_SETUP: strcpy(s, "$setup"); break;
@@ -5296,7 +5353,7 @@ extern char *__to_tcnam(char *s, unsigned tctyp)
  * convert timing check name to type number - returns -1 if not found
  * expected the leading $ 
  */
-extern int __fr_tcnam(char *tcnam)
+extern int32 __fr_tcnam(char *tcnam)
 {
  if (*tcnam != '$') return(-1);
  switch (tcnam[1]) {
@@ -5331,7 +5388,7 @@ extern int __fr_tcnam(char *tcnam)
  * output a number that is decomposed from input token but not yet converted
  * to value for errors during input number processing
  */
-static char *decompnum_to_str(char *s, char *digs, int base, int width)
+static char *decompnum_to_str(char *s, char *digs, int32 base, int32 width)
 {
  sprintf(s, "%d'%c%s", width, __to_baselet(base), digs);
  return(s);
@@ -5341,16 +5398,16 @@ static char *decompnum_to_str(char *s, char *digs, int base, int width)
  * convert gate output value to printable
  * tricky because depending on gate class and stval may or may not need stren
  */
-extern char *__to_gonam(char *s, struct gate_t *gp, unsigned v)
+extern char *__to_gonam(char *s, struct gate_t *gp, word32 v)
 {
  switch ((byte) gp->g_class) { 
   case GC_LOGIC: case GC_UDP:
    if (gp->g_hasst)
     {
      if (v != 2) v |= (gp->g_stval << 2);
-     __to_vvstnam(s, (word) __stren_map_tab[v]);
+     __to_vvstnam(s, (word32) __stren_map_tab[v]);
     }
-   else __to_vvnam(s, (word) v); 
+   else __to_vvnam(s, (word32) v); 
    break;
   case GC_TRANIF:
    /* here gate "output" is conducting state */
@@ -5362,7 +5419,7 @@ extern char *__to_gonam(char *s, struct gate_t *gp, unsigned v)
   case GC_TRAN: case GC_PULL:
    __case_terr(__FILE__, __LINE__); strcpy(s, ""); 
   /* mos and bufif outputs always strength */
-  default: __to_vvstnam(s, (word) v);
+  default: __to_vvstnam(s, (word32) v);
  } 
  return(s);
 }
@@ -5371,18 +5428,18 @@ extern char *__to_gonam(char *s, struct gate_t *gp, unsigned v)
  * convert gate value to printable
  * tricky because depending on gate class and stval may or may not need stren
  */
-extern char *__to_ginam(char *s, struct gate_t *gp, unsigned v, int i)
+extern char *__to_ginam(char *s, struct gate_t *gp, word32 v, int32 i)
 {
  switch ((byte) gp->g_class) { 
   /* bufif inputs non stength even though drives strength */
   /* tranif 3rd input non strength and value not just on/off */ 
   case GC_LOGIC: case GC_UDP: case GC_BUFIF: case GC_TRANIF:
-   __to_vvnam(s, (word) v);
+   __to_vvnam(s, (word32) v);
    break;
   /* mos input 1 strength (added if needed) but control input non stren */
   case GC_MOS: case GC_CMOS: 
    /* only 1st mos or cmos input has strength not control(s) */
-   if (i == 1) __to_vvstnam(s, (word) v); else __to_vvnam(s, (word) v);
+   if (i == 1) __to_vvstnam(s, (word32) v); else __to_vvnam(s, (word32) v);
    break;
   /* tran and pull cannot use this routine */
   default: __case_terr(__FILE__, __LINE__);
@@ -5393,9 +5450,9 @@ extern char *__to_ginam(char *s, struct gate_t *gp, unsigned v, int i)
 /*
  * convert net value to printable
  */
-extern char *__to_vnam(char *s, unsigned is_stren, word v)
+extern char *__to_vnam(char *s, word32 is_stren, word32 v)
 {
- if (is_stren) __to_vvstnam(s, (word) v); else __to_vvnam(s, (word) v);
+ if (is_stren) __to_vvstnam(s, (word32) v); else __to_vvnam(s, (word32) v);
  return(s);
 }
 
@@ -5408,9 +5465,9 @@ extern char *__to_vnam(char *s, unsigned is_stren, word v)
  * has caused one of the illegal 129 stren values to be created 
  * algorithms do something slightly and undectably wrong if this happens
  */
-extern char *__to_vvstnam(char *s, word stval)
+extern char *__to_vvstnam(char *s, word32 stval)
 {
- unsigned st0, st1;
+ word32 st0, st1;
  byte val;
  char ch;
 
@@ -5459,7 +5516,7 @@ extern char *__to_vvstnam(char *s, word stval)
 /*
  * convert a 2 bit number to its verilog value name
  */
-extern char *__to_vvnam(char *s, word v)
+extern char *__to_vvnam(char *s, word32 v)
 {
  switch ((byte) v) {
   case 0: strcpy(s, "0"); break;
@@ -5471,7 +5528,7 @@ extern char *__to_vvnam(char *s, word v)
 }
 
 /* same but for udp 3-values */
-extern char *__to_uvvnam(char *s, word v)
+extern char *__to_uvvnam(char *s, word32 v)
 {
  switch ((byte) v) {
   case 0: strcpy(s, "0"); break;
@@ -5484,7 +5541,7 @@ extern char *__to_uvvnam(char *s, word v)
 /*
  * convert base code to letter
  */
-extern char __to_baselet(int bcod)
+extern char __to_baselet(int32 bcod)
 {
  char ch;
 
@@ -5501,7 +5558,7 @@ extern char __to_baselet(int bcod)
 /*
  * convert time unit string (0-15) code to time unit name  
  */
-extern char *__to_timunitnam(char *s, unsigned unit)
+extern char *__to_timunitnam(char *s, word32 unit)
 {
  switch ((byte) unit) {
   case 0: strcpy(s, "1 s"); break; 
@@ -5529,9 +5586,9 @@ extern char *__to_timunitnam(char *s, unsigned unit)
  * convert an edge bit byte into an edge name string
  * if posedge or negedge use name else use [...] form
  */
-extern char *__to_edgenam(char *s, unsigned eval)
+extern char *__to_edgenam(char *s, word32 eval)
 {
- int first_time;
+ int32 first_time;
  byte ebyte;
  
  switch ((ebyte = (byte) eval)) {
@@ -5579,7 +5636,7 @@ extern char *__to_edgenam(char *s, unsigned eval)
 /*
  * convert an delay control type to a name
  */
-extern char *__to_dcenam(char *s, unsigned dctyp)
+extern char *__to_dcenam(char *s, word32 dctyp)
 {
  switch ((byte) dctyp) {
   case DC_NONE: strcpy(s, "**NONE?**"); break; 
@@ -5605,7 +5662,7 @@ extern char *__to_dcenam(char *s, unsigned dctyp)
 extern char *__pv_stralloc(char *s)
 {
  char *cp;
- int slen;
+ int32 slen;
 
  if (*s == '\0') slen = 1; else slen = strlen(s) + 1;
  cp = __my_malloc(slen);
@@ -5619,15 +5676,15 @@ extern char *__pv_stralloc(char *s)
  * memory allocator for non freed memory
  * and allocate small piece from a large allocated block
  * aligns on 4 byte boundaries for VAX and 68000 too
- * notice this is 32 bit word dependent
+ * notice this is 32 bit word32 dependent
  *
  * could save space in pc by allocating only on bytes but would need always
  * at least 4 bytes - no since now using free by size header table
  */
-static char *nfbig_alloc(int size)
+static char *nfbig_alloc(int32 size)
 {
  char *cp;
- int rem, real_size;
+ int32 rem, real_size;
 
  if ((rem = size % 4) != 0) real_size = size + 4 - rem;
  else real_size = size;
@@ -5646,7 +5703,7 @@ static char *nfbig_alloc(int size)
  * call to malloc that dies if no memory available
  * these are normal OS memory allocation with error terminaton
  */
-extern char *__my_malloc(int size)
+extern char *__my_malloc(int32 size)
 {
  char *cp;
 
@@ -5654,7 +5711,7 @@ extern char *__my_malloc(int size)
  if (size <= 0) __arg_terr(__FILE__, __LINE__);
  /* --- */
 
- if ((cp = (char *) malloc((unsigned) size)) == NULL)
+ if ((cp = (char *) malloc((word32) size)) == NULL)
   {
    __sysfatal_msg(
    "**fatal err[1]: No more memory - at file %s line %d allocated %ld bytes\n",
@@ -5673,7 +5730,7 @@ extern char *__my_malloc(int size)
 /*
  * call to free 
  */
-extern void __my_free(char *mp, int size)
+extern void __my_free(char *mp, int32 size)
 {
  /* DBG remove --- */
  if (size <= 0) return;
@@ -5691,11 +5748,11 @@ extern void __my_free(char *mp, int size)
  * interface to system realloc()
  * can only call with malloced mp or cannot realloc
  */
-extern char *__my_realloc(char *mp, int osize, int nsize)
+extern char *__my_realloc(char *mp, int32 osize, int32 nsize)
 {
  char *cp;
 
- if ((cp = (char *) realloc(mp, (unsigned) nsize)) == NULL)
+ if ((cp = (char *) realloc(mp, (word32) nsize)) == NULL)
   {
    __sysfatal_msg(
     "**fatal err[1]: realloc failed - allocated %ld bytes\n", __mem_use);
@@ -5734,7 +5791,7 @@ extern void __my_fclose(FILE *f)
  * version of fd close that ends with fatal error if cannot close 
  * some unixes do not return anything on close failure
  */
-extern void __my_close(int fd)
+extern void __my_close(int32 fd)
 {
  if (fd == -1) __misc_terr(__FILE__, __LINE__);
  if (close(fd) == -1)
@@ -5761,11 +5818,11 @@ extern void __my_rewind(FILE *f)
  * FIXME - should allow ~[dir] form and look at some network directory
  * and allow ~ anywhere in path name
  */
-extern int __tilde_open(char *pthnam, int opmask)
+extern int32 __tilde_open(char *pthnam, int32 opmask)
 {
- int newlen;
+ int32 newlen;
  char *chp;
- int fd;
+ int32 fd;
 
  if (*pthnam != '~') return(open(pthnam, opmask)); 
  if ((chp = tilde_expand(pthnam, &newlen)) == NULL) return(-1);
@@ -5779,7 +5836,7 @@ extern int __tilde_open(char *pthnam, int opmask)
  */
 extern FILE *__tilde_fopen(char *pthnam, char *opmod)
 {
- int newlen;
+ int32 newlen;
  char *chp;
  FILE *f;
 
@@ -5797,10 +5854,10 @@ extern FILE *__tilde_fopen(char *pthnam, char *opmod)
  *
  * LOOKATME could allow /~/ component anywhere in path name for net addrs? 
  */
-static char *tilde_expand(char *pthnam, int *newlen)
+static char *tilde_expand(char *pthnam, int32 *newlen)
 {
  char *chp, *chp2;
- int hlen, plen;
+ int32 hlen, plen;
  char usernam[RECLEN];
 
  /* first ~/ form */
@@ -5836,11 +5893,11 @@ bld_expanded:
 /*
  * unbuffered creat for writing with expand leading tilde in file name using 
  */
-extern int __tilde_creat(char *pthnam)
+extern int32 __tilde_creat(char *pthnam)
 {
- int newlen;
+ int32 newlen;
  char *chp;
- int fd;
+ int32 fd;
 
  if (*pthnam != '~') return(__my_creat(pthnam)); 
  if ((chp = tilde_expand(pthnam, &newlen)) == NULL) return(-1);
@@ -5879,9 +5936,9 @@ extern FILE *__my_fopen(char *fnam, char *opmod)
  * version of non buffered creat that returns -1 when directory opened
  * unix allows opening directories for reading
  */
-extern int __my_creat(char *fnam)
+extern int32 __my_creat(char *fnam)
 {
- int fd;
+ int32 fd;
  struct stat sbuf;
 
  if ((fd = creat(fnam, 0666)) == -1) return(-1);
@@ -5908,7 +5965,7 @@ extern int __my_creat(char *fnam)
  */
 extern char *__schop(char *s1, char *s2)
 {
- int slen, sendi;
+ int32 slen, sendi;
 
  slen = strlen(s2);
  if (slen < (sendi = MSGTRUNCLEN - 4)) strcpy(s1, s2);
@@ -5921,7 +5978,7 @@ extern char *__schop(char *s1, char *s2)
  * this chops file name so know will fit
  * s must be RECLEN wide
  */
-extern char *__bld_lineloc(char *s, unsigned fnind, int fnlcnt)
+extern char *__bld_lineloc(char *s, word32 fnind, int32 fnlcnt)
 {
  char s1[RECLEN];
 
@@ -6125,7 +6182,7 @@ extern void __tr_msg(char *s, ...)
 /*
  * miscellaneous (most) internal fatal errors 
  */
-extern void __misc_terr(char *fnam, int lno)
+extern void __misc_terr(char *fnam, int32 lno)
 {
  /* SJM DBG REMOVE - malloc_chain_check(1); */
  if (lno == -1039)
@@ -6141,7 +6198,7 @@ extern void __misc_terr(char *fnam, int lno)
 /*
  * file miscellaneous (most) internal fatal errors (input file place known) 
  */
-extern void __misc_fterr(char *fnam, int lno)
+extern void __misc_fterr(char *fnam, int32 lno)
 {
  __fterr(303, "MISC INTERNAL - source line **%s(%d)", fnam, lno);
 }
@@ -6149,8 +6206,8 @@ extern void __misc_fterr(char *fnam, int lno)
 /*
  * global analysis phase internal error - object provides line number
  */
-extern void __misc_gfterr(char *fnam, int lno, unsigned gfnam_ind,
- int gflin_cnt)
+extern void __misc_gfterr(char *fnam, int32 lno, word32 gfnam_ind,
+ int32 gflin_cnt)
 {
  __gfterr(303, gfnam_ind, gflin_cnt,
   "MISC INTERNAL - source line **%s(%d)", fnam, lno);
@@ -6159,7 +6216,7 @@ extern void __misc_gfterr(char *fnam, int lno, unsigned gfnam_ind,
 /*
  * non execution statement type error __sfnam_ind contains location
  */
-extern void __misc_sgfterr(char *fnam, int lno)
+extern void __misc_sgfterr(char *fnam, int32 lno)
 {
  __gfterr(303, __sfnam_ind, __slin_cnt,
   "MISC INTERNAL - source lint **%s(%d)", fnam, lno);
@@ -6168,7 +6225,7 @@ extern void __misc_sgfterr(char *fnam, int lno)
 /*
  * simple case fatal error - can always find with debugger
  */
-extern void __case_terr(char *fnam, int lno)
+extern void __case_terr(char *fnam, int32 lno)
 {
  __pv_terr(324,
   "CASE INTERNAL - source line **%s(%d) - maybe at **%s(%d) or **%s(%d)",
@@ -6178,7 +6235,7 @@ extern void __case_terr(char *fnam, int lno)
 /*
  * simple argument passed to routine internal error
  */
-extern void __arg_terr(char *fnam, int lno)
+extern void __arg_terr(char *fnam, int32 lno)
 {
  __pv_terr(322,
   "ARG INTERNAL - source line **%s(%d) - maybe at **%s(%d) or **%s(%d)",
@@ -6192,10 +6249,10 @@ extern void __arg_terr(char *fnam, int lno)
  * notice error messages longer than 4k bytes will cause crash
  * caller of error routines must make sure no more than 4 ID called
  */
-extern void __pv_terr(int id_num, char *s, ...)
+extern void __pv_terr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  if (__vpierr_cb_active && !__iact_state)
@@ -6240,10 +6297,10 @@ extern void __pv_terr(int id_num, char *s, ...)
  * notice error messages longer than 4k bytes will cause crash
  * caller of error routines must make sure no more than 4 ID called
  */
-extern void __pv_vpi_terr(int id_num, char *s, ...)
+extern void __pv_vpi_terr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  if (__vpierr_cb_active && !__iact_state)
@@ -6283,10 +6340,10 @@ extern void __pv_vpi_terr(int id_num, char *s, ...)
  */
 
 /*VARARGS*/
-extern void __fterr(int id_num, char *s, ...)
+extern void __fterr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  if (__vpierr_cb_active && !__iact_state)
@@ -6328,10 +6385,10 @@ extern void __fterr(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __sgfterr(int id_num, char *s, ...)
+extern void __sgfterr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6379,11 +6436,11 @@ extern void __sgfterr(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __gfterr(int id_num, unsigned gfnam_ind, int gflin_cnt,
+extern void __gfterr(int32 id_num, word32 gfnam_ind, int32 gflin_cnt,
  char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6434,10 +6491,10 @@ extern void __gfterr(int id_num, unsigned gfnam_ind, int gflin_cnt,
  * serious but non-fatal error
  */
 /*VARARGS*/
-extern void __pv_err(int id_num, char *s, ...)
+extern void __pv_err(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __pv_err_cnt++;
@@ -6484,10 +6541,10 @@ extern void __pv_err(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __pv_ferr(int id_num, char *s, ...)
+extern void __pv_ferr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __pv_err_cnt++;
@@ -6544,10 +6601,10 @@ extern void __pv_ferr(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __sgferr(int id_num, char *s, ...)
+extern void __sgferr(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6601,11 +6658,11 @@ extern void __sgferr(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __gferr(int id_num, unsigned gfnam_ind, int gflin_cnt,
+extern void __gferr(int32 id_num, word32 gfnam_ind, int32 gflin_cnt,
  char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6665,7 +6722,7 @@ extern void __gferr(int id_num, unsigned gfnam_ind, int gflin_cnt,
  * notice this routine does not increment err number
  */
 /*VARARGS*/
-extern void __ia_err(int id_num, char *s, ...)
+extern void __ia_err(int32 id_num, char *s, ...)
 {
  va_list va, va2;
 
@@ -6681,7 +6738,7 @@ extern void __ia_err(int id_num, char *s, ...)
 } 
 
 /*VARARGS*/
-extern void __via_err(int id_num, char *s, va_list args, va_list args2)
+extern void __via_err(int32 id_num, char *s, va_list args, va_list args2)
 {
  if (__cmd_s == NULL) __my_fprintf(stdout, "--CMD ERROR** [%d] ", id_num);
  else __my_fprintf(stdout, "--%s(%d) CMD ERROR** [%d] ", __cmd_fnam,
@@ -6691,10 +6748,10 @@ extern void __via_err(int id_num, char *s, va_list args, va_list args2)
 }
 
 /*VARARGS*/
-extern void __pv_warn(int id_num, char *s, ...)
+extern void __pv_warn(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __pv_warn_cnt++;
@@ -6736,10 +6793,10 @@ extern void __pv_warn(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __pv_fwarn(int id_num, char *s, ...)
+extern void __pv_fwarn(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __pv_warn_cnt++;
@@ -6792,10 +6849,10 @@ extern void __pv_fwarn(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __sgfwarn(int id_num, char *s, ...)
+extern void __sgfwarn(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6846,11 +6903,11 @@ extern void __sgfwarn(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __gfwarn(int id_num, unsigned gfnam_ind, int gflin_cnt,
+extern void __gfwarn(int32 id_num, word32 gfnam_ind, int32 gflin_cnt,
  char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -6906,7 +6963,7 @@ extern void __gfwarn(int id_num, unsigned gfnam_ind, int gflin_cnt,
  * notice this routine does not increment warn number
  */
 /*VARARGS*/
-extern void __ia_warn(int id_num, char *s, ...)
+extern void __ia_warn(int32 id_num, char *s, ...)
 {
  va_list va, va2;
 
@@ -6923,7 +6980,7 @@ extern void __ia_warn(int id_num, char *s, ...)
 } 
 
 /*VARARGS*/
-extern void __via_warn(int id_num, char *s, va_list args, va_list args2)
+extern void __via_warn(int32 id_num, char *s, va_list args, va_list args2)
 {
  if (__cmd_s == NULL) __my_fprintf(stdout, "--CMD WARN** [%d] ", id_num);
  else __my_fprintf(stdout, "--%s(%d) CMD WARN** [%d] ", __cmd_fnam,
@@ -6933,10 +6990,10 @@ extern void __via_warn(int id_num, char *s, va_list args, va_list args2)
 }
 
 /*VARARGS*/
-extern void __inform(int id_num, char *s, ...)
+extern void __inform(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __inform_cnt++;
@@ -6978,10 +7035,10 @@ extern void __inform(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __finform(int id_num, char *s, ...)
+extern void __finform(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
  __inform_cnt++;
@@ -7024,10 +7081,10 @@ extern void __finform(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __sgfinform(int id_num, char *s, ...)
+extern void __sgfinform(int32 id_num, char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -7077,11 +7134,11 @@ extern void __sgfinform(int id_num, char *s, ...)
 }
 
 /*VARARGS*/
-extern void __gfinform(int id_num, unsigned gfnam_ind, int gflin_cnt,
+extern void __gfinform(int32 id_num, word32 gfnam_ind, int32 gflin_cnt,
  char *s, ...)
 {
  va_list va, va2, va3;
- int slen;
+ int32 slen;
  char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
  char s1[RECLEN], s2[RECLEN];
 
@@ -7134,10 +7191,10 @@ extern void __gfinform(int id_num, unsigned gfnam_ind, int gflin_cnt,
  * return T if this message marked to be suppressed
  * if warnings off all suppressed
  */
-extern int __em_suppr(int id)
+extern int32 __em_suppr(int32 id)
 {
- word w;
- int bi, wi;
+ word32 w;
+ int32 bi, wi;
 
  bi = id % WBITS;
  wi = id / WBITS;

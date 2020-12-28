@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -47,169 +47,173 @@ static void cnvt_nonis_selparm(struct net_t *, struct expr_t *,
 static void cnvt_is_bselparm(struct net_t *, struct expr_t *, struct expr_t *);
 static void cnvt_is_arrselparm(struct net_t *, struct expr_t *,
  struct expr_t *);
-static int get_nonis_param_ndx(struct net_t *, struct expr_t *);
-static int get_is_param_ndx(struct net_t *, struct expr_t *, int);
+static int32 get_nonis_param_ndx(struct net_t *, struct expr_t *);
+static int32 get_is_param_ndx(struct net_t *, struct expr_t *, int32);
 static void cnvt_nonis_pselparm(struct net_t *, struct expr_t *,
  struct expr_t *, struct expr_t *);
 static void cnvt_is_pselparm(struct net_t *, struct expr_t *, struct expr_t *,
  struct expr_t *);
-static void chk_struct_rhsexpr(struct expr_t *, int);
-static int chk_rhs_id(struct expr_t *);
+static void chk_struct_rhsexpr(struct expr_t *, int32);
+static int32 chk_rhs_id(struct expr_t *);
 static void unwind_rhsconcats(struct expr_t *);
 static void remove_0width_catrep_els(struct expr_t *);
-static void set_rhswidth(struct expr_t *, int);
-static void set2_rhswidth(struct expr_t *, int);
+static void set_rhswidth(struct expr_t *, int32);
+static void set2_rhswidth(struct expr_t *, int32);
 static void set_fcall_widths(struct expr_t *, struct task_t *);
 static void set_sysfcall_widths(struct expr_t *);
 static void set_rhs_signed(struct expr_t *);
-static int find_xbase(struct expr_t *);
+static int32 find_xbase(struct expr_t *);
 static void setchk_real_expr(struct expr_t *);
 static void real_setchk_quest(struct expr_t *);
 static void chk_specialop_rhsexpr(struct expr_t *);
-static int chk_srcbsel(struct expr_t *, int);
-static int chk_srcpsel(struct expr_t *, int);
+static int32 chk_srcbsel(struct expr_t *, int32);
+static int32 chk_srcpsel(struct expr_t *, int32);
 static void chkspecop_fcall(struct expr_t *);
-static int chk_mixedsign_relops(struct expr_t *);
+static int32 chk_mixedsign_relops(struct expr_t *);
 static void fold_subexpr(struct expr_t *);
-static int mark_constnd(register struct expr_t *, int *);
+static int32 mark_constnd(register struct expr_t *, int32 *);
 static void fold_const(struct expr_t *);
-static int is_signed_decimal(struct expr_t *);
+static int32 is_signed_decimal(struct expr_t *);
 static void chk_ndfolded_specops(struct expr_t *);
-static int chk_inrng_bsel(struct expr_t *);
-static int chknorm_range(struct expr_t *, int, int, char *, int);
-static int in_range(int, int, int, int *);
-static int chk_inrng_psel(struct expr_t *);
+static int32 chk_inrng_bsel(struct expr_t *);
+static int32 chknorm_range(struct expr_t *, int32, int32, char *, int32);
+static int32 in_range(int32, int32, int32, int32 *);
+static int32 chk_inrng_psel(struct expr_t *);
 static void chk_folded_fargs(struct expr_t *);
-static int nd_ndxisnum(struct expr_t *, char *, int);
+static int32 nd_ndxisnum(struct expr_t *, char *, int32);
 static void chk_sysfargs_syntax(struct expr_t *);
-static void chkbld_pli_func(struct expr_t *, int);
-static void chk_pli_arglist(register struct expr_t *, int);
-static int tfexpr_isrw(struct expr_t *);
-static int lhs_is_decl(struct expr_t *);
-static struct tfrec_t *chkalloc_tfrec(struct expr_t *, int);
-static struct tfarg_t *alloc_tfarg(register struct expr_t *, int, int);
-static void chksf_count_drivers(struct expr_t *, int);
-static int is_1bwire(struct expr_t *);
-static void chksf_getpattern(struct sy_t *, struct expr_t *, int);
-static void sf_errifn(struct sy_t *, int);
-static void chksf_q_full(struct expr_t *, int);
-static void chksf_rand(struct expr_t *, int, int);
-static int chksyn_lhsexpr(struct expr_t *, int, int);
+static void chkbld_pli_func(struct expr_t *, int32);
+static void chk_pli_arglist(register struct expr_t *, int32);
+static int32 tfexpr_isrw(struct expr_t *);
+static int32 lhs_is_decl(struct expr_t *);
+static struct tfrec_t *chkalloc_tfrec(struct expr_t *, int32);
+static struct tfarg_t *alloc_tfarg(register struct expr_t *, int32, int32);
+static void chksf_count_drivers(struct expr_t *, int32);
+static int32 is_1bwire(struct expr_t *);
+static void chksf_getpattern(struct sy_t *, struct expr_t *, int32);
+static void sf_errifn(struct sy_t *, int32);
+static void chksf_q_full(struct expr_t *, int32);
+static void chksf_rand(struct expr_t *, int32, int32);
+static int32 chksyn_lhsexpr(struct expr_t *, int32, int32);
 static void unwind_lhsconcats(struct expr_t *);
-static int idnd_var(struct sy_t *);
-static int nd_reg(struct expr_t *);
-static int xpr_hasfcall(struct expr_t *);
-static int xpr_has_nonsys_fcall(struct expr_t *);
+static int32 idnd_var(struct sy_t *);
+static int32 nd_reg(struct expr_t *);
+static int32 xpr_hasfcall(struct expr_t *);
+static int32 xpr_has_nonsys_fcall(struct expr_t *);
 static void chk_edge_expr(struct expr_t *);
 static void chk_systskenable(struct st_t *, struct tskcall_t *);
 static void mark_monit_in_src_nets(struct expr_t *);
-static void chkbld_pli_task(struct st_t *, int);
-static void st_errif_rng(struct sy_t *, int, int, int);
-static void st_errifn(struct sy_t *, int, int);
-static void chkst_dumpvars_enable(struct tskcall_t *, int);
-static void mark_mod_dvars_under(struct mod_t *, int);
+static void chkbld_pli_task(struct st_t *, int32);
+static void st_errif_rng(struct sy_t *, int32, int32, int32);
+static void st_errifn(struct sy_t *, int32, int32);
+static void chkst_dumpvars_enable(struct tskcall_t *, int32);
+static void mark_mod_dvars_under(struct mod_t *, int32);
 static void set_iact_dmpv_all_nd_nchgstore(void);
 static void set_iact_dmpvmod_nd_nchgstore(struct mod_t *);
-static void chkst_readmem(struct sy_t *, int, struct tskcall_t *);
-static int nd_unind_arr(struct expr_t *);
-static void chkst_sreadmem(struct sy_t *, int, struct tskcall_t *);
-static void chkst_sdfannotate_enable(struct tskcall_t *, int);
-static int chk_undef_specparams(struct symtab_t *);
-static int chk_1spcpth(struct spcpth_t *);
-static int expr_has_nonpth(struct expr_t *, unsigned *);
+static void chkst_readmem(struct sy_t *, int32, struct tskcall_t *);
+static int32 nd_unind_arr(struct expr_t *);
+static void chkst_sreadmem(struct sy_t *, int32, struct tskcall_t *);
+static void chkst_sdfannotate_enable(struct tskcall_t *, int32);
+static int32 chk_undef_specparams(struct symtab_t *);
+static int32 chk_1spcpth(struct spcpth_t *);
+static int32 expr_has_nonpth(struct expr_t *, word32 *);
 static void chk_rep_in_fullpth(struct spcpth_t *);
 static char *pth_tostr(char *, struct spcpth_t *, struct pathel_t *,
  struct pathel_t *);
 static char *pthel_tostr(char *, struct pathel_t *);
-static int pth_overlap(struct pathel_t *, struct pathel_t *);
+static int32 pth_overlap(struct pathel_t *, struct pathel_t *);
 static void chk_rep_sdpds(struct spfy_t *);
-static struct xpnd_pthel_t *xpnd_pths(struct spfy_t *, int *);
-static void chk_spterm(struct expr_t *, char *, char *, int);
-static int chk_1tchk(struct tchk_t *);
+static struct xpnd_pthel_t *xpnd_pths(struct spfy_t *, int32 *);
+static void chk_spterm(struct expr_t *, char *, char *, int32);
+static int32 chk_1tchk(struct tchk_t *);
 static void chk_tccond(struct expr_t *, char *, char *);
 static void chk_notifier(struct tchk_t *, char *);
 static struct tchk_t *bld_sup_of_suphld(struct tchk_t *);
 static struct tchk_t *bld_rec_of_recrem(struct tchk_t *);
 static void free_spcpths(struct spcpth_t *);
-static void free_spcparms(struct net_t *, int);
 static void free_frozen_symtab(struct symtab_t *);
+static void free_spcparms(struct net_t *, int32);
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
 extern char *__to_idnam(struct expr_t *);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_sytyp(char *, unsigned);
-extern char *__to_tcnam(char *, unsigned);
+extern char *__to_sytyp(char *, word32);
+extern char *__to_tcnam(char *, word32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern char *__to_opname(unsigned);
+extern char *__to_opname(word32);
 extern struct expr_t *__copy_expr(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern char *__msgnumexpr_tostr(char *, struct expr_t *, int);
+extern void __grow_xstk(void);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern char *__msgnumexpr_tostr(char *, struct expr_t *, int32);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern struct paramlst_t *__copy_dellst(struct paramlst_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern int __isleaf(struct expr_t *);
-extern struct expr_t *__dup_concat(int, struct expr_t *);
+extern char *__bld_lineloc(char *, word32, int32);
+extern int32 __isleaf(struct expr_t *);
+extern struct expr_t *__dup_concat(int32, struct expr_t *);
 extern struct expr_t *__find_catend(struct expr_t *);
-extern int __nd_ndxnum(struct expr_t *, char *, int);
+extern int32 __nd_ndxnum(struct expr_t *, char *, int32);
 extern void __free2_xtree(struct expr_t *);
 extern void __init_xnd(struct expr_t *);
-extern void __set_numval(struct expr_t *, word, word, int);
-extern int __get_netwide(struct net_t *);
-extern int __wide_vval_is0(register word *, int);
-extern int __is_paramconstxpr(struct expr_t *, int);
-extern void __rhspsel(register word *, register word *, register int,
- register int);
-extern int __get_rhswidth(struct expr_t *);
-extern int __get_widthclass(struct expr_t *);
-extern void __narrow_sizchg(register struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern void __getarr_range(struct net_t *, int *, int *, int *);
-extern void __getwir_range(struct net_t *, int *, int *);
-extern int __cnt_tfargs(register struct expr_t *);
-extern int __chk_lhsexpr(struct expr_t *, int);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
+extern int32 __get_netwide(struct net_t *);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __is_paramconstxpr(struct expr_t *, int32);
+extern void __rhspsel(register word32 *, register word32 *, register int32,
+ register int32);
+extern int32 __get_rhswidth(struct expr_t *);
+extern int32 __get_widthclass(struct expr_t *);
+extern void __narrow_sizchg(register struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern int32 __cnt_tfargs(register struct expr_t *);
+extern int32 __chk_lhsexpr(struct expr_t *, int32);
 extern void __chkbld_vpi_systf_func(struct expr_t *);
 extern void __pli_func_sizetf(struct expr_t *);
 extern void __set_lhswidth(struct expr_t *);
-extern int __nd_wire(struct expr_t *);
-extern int __chk_lhsdecl_scalared(struct expr_t *);
+extern int32 __nd_wire(struct expr_t *);
+extern int32 __chk_lhsdecl_scalared(struct expr_t *);
 extern void __set_expr_onrhs(struct expr_t *);  
-extern int __is_scope_sym(struct sy_t *); 
+extern int32 __is_scope_sym(struct sy_t *); 
 extern void __chk_fmt(register struct expr_t *, byte *); 
 extern void __chkbld_vpi_systf_task(struct st_t *);  
 extern void __set_xtab_errval(void);
-extern void __bld_xtree(int);
-extern void __xtract_wirng(struct expr_t *, struct net_t **, int *, int *);
+extern void __bld_xtree(int32);
+extern void __xtract_wirng(struct expr_t *, struct net_t **, int32 *, int32 *);
 extern void __free_xtree(struct expr_t *);
 extern void __chk_spec_delay(struct expr_t *, char *);
 extern void __free_dellst(struct paramlst_t *);
-extern int __chk_numdelay(struct expr_t *, char *);
-extern void __init_tchk(struct tchk_t *, unsigned);
+extern int32 __chk_numdelay(struct expr_t *, char *);
+extern void __init_tchk(struct tchk_t *, word32);
 extern void __free_tchks(struct tchk_t *);
 extern void __free_xprlst(struct exprlst_t *);
-extern int __expr_has_glb(struct expr_t *);
-extern int __alloc_cval(int);
-extern int __alloc_shareable_cval(word, word, int);
-extern int __alloc_shareable_rlcval(double);
-extern int __alloc_rlcval(int);
+extern int32 __expr_has_glb(struct expr_t *);
+extern int32 __alloc_is_cval(int32);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
+extern int32 __alloc_shareable_cval(word32, word32, int32);
+extern int32 __alloc_shareable_rlcval(double);
+extern int32 __alloc_rlcval(int32);
+extern struct expr_t *__widen_unsiz_rhs_assign(struct expr_t *, int);
 
-extern void __pv_warn(int, char *,...);
-extern void __sgfwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __ia_err(int, char *, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __ia_err(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_sgfterr(char *, int);
+extern void __sgfinform(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __misc_sgfterr(char *, int32);
 
 extern struct opinfo_t __opinfo[];
-extern word __masktab[];
+extern word32 __masktab[];
 
 /*
  * ROUTINES TO PROCESS AND CHECK RHS EXPRESSIONS
@@ -222,9 +226,9 @@ extern word __masktab[];
  *
  * all there is to rhs expression checking
  */
-extern int __chk_rhsexpr(struct expr_t *ndp, int csiz)
+extern int32 __chk_rhsexpr(struct expr_t *ndp, int32 csiz)
 {
- int saverr_cnt;
+ int32 saverr_cnt;
 
  saverr_cnt = __pv_err_cnt;
  /* intercept and convert any selects from paramters to num or is num */ 
@@ -241,7 +245,7 @@ extern int __chk_rhsexpr(struct expr_t *ndp, int csiz)
  /* in case expr. contains declared non wire symbol cannot try to fold */
  if (saverr_cnt != __pv_err_cnt) return(FALSE);
 
- /* emit warning for unsigned relations comparisons - needed before folding */
+ /* emit warning for word32 relations comparisons - needed before folding */
  chk_mixedsign_relops(ndp);
 
  /* LOOKATME - is here a problem folding analog expressions */
@@ -405,8 +409,9 @@ static void cnvt_paramsel_toconst(struct expr_t *ndp, struct net_t *np)
 static void cnvt_nonis_selparm(struct net_t *np, struct expr_t *ndp,
  struct expr_t *ndx)
 {
- int bi, wlen;
- word *wp, *wp2, av, bv;
+ int32 bi, wlen;
+ word32 *wp, av, bv;
+ struct xstk_t *xsp;
  
  bi = get_nonis_param_ndx(np, ndx);
  if (!np->n_isarr)
@@ -440,10 +445,11 @@ static void cnvt_nonis_selparm(struct net_t *np, struct expr_t *ndp,
       }
      else
       { 
-       ndp->ru.xvi = __alloc_cval(2*wlen);
-       wp2 = &(__contab[ndp->ru.xvi]);
-       one_allbits_(wp2, np->nwid);
-       one_allbits_(&(wp2[wlen]), np->nwid);
+       push_xstk_(xsp, np->nwid);
+       one_allbits_(xsp->ap, np->nwid);
+       one_allbits_(xsp->bp, np->nwid);
+       ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, wlen);
+       __pop_xstk();
       }
     }
    else
@@ -455,8 +461,7 @@ static void cnvt_nonis_selparm(struct net_t *np, struct expr_t *ndp,
       }
      else
       {
-       ndp->ru.xvi = __alloc_cval(2*wlen);
-       memcpy(&(__contab[ndp->ru.xvi]), wp, 2*WRDBYTES*wlen);
+       ndp->ru.xvi = __allocfill_cval_new(wp, &(wp[wlen]), wlen);
       }
     }
   }
@@ -471,15 +476,16 @@ static void cnvt_nonis_selparm(struct net_t *np, struct expr_t *ndp,
 static void cnvt_is_bselparm(struct net_t *np, struct expr_t *ndp,
  struct expr_t *ndx)
 {
- register int ii;
- int bi, nbytes, wlen, tmpxvi;
- word *wp, *wp2, av, bv;
+ register int32 ii;
+ int32 bi, nbytes, wlen, tmpxvi;
+ word32 *wp, *wp2, av, bv;
 
  /* bit select will be 1 bit IS constant */
  nbytes = __inst_mod->flatinum*2*WRDBYTES;  
 
  /* must not change ndp since still need to access ndx values */
- tmpxvi = __alloc_cval(2*__inst_mod->flatinum);
+ /* passes number of words in a part alloc multiplies by 2 for b part too */
+ tmpxvi = __alloc_is_cval(__inst_mod->flatinum);
  wp = &(__contab[tmpxvi]);
  memset(wp, 0, nbytes); 
  
@@ -520,16 +526,16 @@ static void cnvt_is_bselparm(struct net_t *np, struct expr_t *ndp,
 static void cnvt_is_arrselparm(struct net_t *np, struct expr_t *ndp,
  struct expr_t *ndx)
 {
- register int ii;
- register word *wp, *wp2;
- int bi, wsiz, wlen, tmpxvi;
+ register int32 ii;
+ register word32 *wp, *wp2;
+ int32 bi, wsiz, wlen, tmpxvi;
 
  wlen = wlen_(np->nwid);
- wsiz = __inst_mod->flatinum*2*wlen;  
+ wsiz = __inst_mod->flatinum*wlen;  
  /* must not change ndp since still need to access ndx values */
- tmpxvi = __alloc_cval(wsiz);
+ tmpxvi = __alloc_is_cval(wsiz);
  wp = &(__contab[tmpxvi]);
- memset(wp, 0, WRDBYTES*wsiz); 
+ memset(wp, 0, 2*WRDBYTES*wsiz); 
 
  for (ii = 0; ii < __inst_mod->flatinum; ii++) 
   {  
@@ -563,11 +569,11 @@ static void cnvt_is_arrselparm(struct net_t *np, struct expr_t *ndp,
  * access a non IS parameter index expr.
  * SJM - 08/23/00 - allow rng on params - rng h:0 if no declared range
  */
-static int get_nonis_param_ndx(struct net_t *np, struct expr_t *ndx)
+static int32 get_nonis_param_ndx(struct net_t *np, struct expr_t *ndx)
 {
- register word *wp;
- register int bi;
- int ri1, ri2, awid, bi1;
+ register word32 *wp;
+ register int32 bi;
+ int32 ri1, ri2, awid, bi1;
 
  wp = &(__contab[ndx->ru.xvi]);
  /* if x/z, warning already emitted but must return -1 */
@@ -583,13 +589,13 @@ static int get_nonis_param_ndx(struct net_t *np, struct expr_t *ndx)
 bad_rng:
      __sgfwarn(586,
       "parameter %s select index %d out of range [%d:%d]",
-      np->nsym->synam, (int) wp[0], ri1, ri2);
+      np->nsym->synam, (int32) wp[0], ri1, ri2);
      bi = -1;
      return(bi);
     }
   }
  else { if (wp[0] < ri1 || wp[0] > ri2) goto bad_rng; }
- bi1 = (int) wp[0];
+ bi1 = (int32) wp[0];
  bi = normalize_ndx_(bi1, ri1, ri2);
  return(bi);
 }
@@ -599,12 +605,12 @@ bad_rng:
  * need special routine since no range for parameters
  * know since index converted to 32 bit IS form before here
  */
-static int get_is_param_ndx(struct net_t *np, struct expr_t *ndx, int ii)
+static int32 get_is_param_ndx(struct net_t *np, struct expr_t *ndx, int32 ii)
 {
- register int bi;
- register word *wp;
- int bi1, ri1, ri2, awid;
- word wval;
+ register int32 bi;
+ register word32 *wp;
+ int32 bi1, ri1, ri2, awid;
+ word32 wval;
  
  wp = &(__contab[ndx->ru.xvi]);
  /* if x/z, warning already emitted */
@@ -629,7 +635,7 @@ bad_rng:
   }
  else { if (wval < ri1 || wval > ri2) goto bad_rng; }
  /* good range */
- bi1 = (int) wval;
+ bi1 = (int32) wval;
  bi = normalize_ndx_(bi1, ri1, ri2);
  return(bi);
 }
@@ -641,8 +647,9 @@ bad_rng:
 static void cnvt_nonis_pselparm(struct net_t *np, struct expr_t *ndp,
  struct expr_t *ndx1, struct expr_t *ndx2)
 {
- int bi1, bi2, pselwid, wlen;
- word *wp, *wp2;
+ int32 bi1, bi2, pselwid, wlen;
+ word32 *wp2;
+ struct xstk_t *xsp;
  
  /* parameters always range [(width - 1) to 0] */
  bi1 = get_nonis_param_ndx(np, ndx1);
@@ -665,14 +672,13 @@ static void cnvt_nonis_pselparm(struct net_t *np, struct expr_t *ndp,
  ndp->folded = TRUE;
 
  /* can't use shareable here becuase need to psel to set value */
- ndp->ru.xvi = __alloc_cval(2*wlen_(pselwid));
- wp = &(__contab[ndp->ru.xvi]);
- wp2 = np->nva.wp;
-
- /* here filling entire range since right size - do not need to 0 */ 
+ push_xstk_(xsp, pselwid);
  wlen = wlen_(np->nwid);
- __rhspsel(wp, wp2, bi2, pselwid);
- __rhspsel(&(wp[wlen_(pselwid)]), &(wp2[wlen]), bi2, pselwid);
+ wp2 = np->nva.wp; 
+ __rhspsel(xsp->ap, wp2, bi2, pselwid);
+ __rhspsel(xsp->bp, &(wp2[wlen]), bi2, pselwid);
+ ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, wlen_(pselwid));
+ __pop_xstk();
  return;
 }
 
@@ -683,9 +689,9 @@ static void cnvt_nonis_pselparm(struct net_t *np, struct expr_t *ndp,
 static void cnvt_is_pselparm(struct net_t *np, struct expr_t *ndp,
  struct expr_t *ndx1, struct expr_t *ndx2)
 {
- register int ii;
- int bi1, bi2, xwlen, wlen, wlen2, err, pselwid, tmp, tmpxvi;
- word *wp, *wp2;
+ register int32 ii;
+ int32 bi1, bi2, xwlen, wlen, wlen2, err, pselwid, tmp, tmpxvi;
+ word32 *wp, *wp2;
 
  pselwid = 0;
  for (err = FALSE, ii =  0; ii < __inst_mod->flatinum; ii++) 
@@ -712,7 +718,7 @@ static void cnvt_is_pselparm(struct net_t *np, struct expr_t *ndp,
 
  xwlen = __inst_mod->flatinum*wlen_(pselwid);  
  /* must not change ndp since still need to access ndx values */
- tmpxvi = __alloc_cval(2*xwlen);
+ tmpxvi = __alloc_is_cval(xwlen);
  wp = &(__contab[tmpxvi]);
  memset(wp, 0, 2*xwlen*WRDBYTES);
  
@@ -757,10 +763,10 @@ static void cnvt_is_pselparm(struct net_t *np, struct expr_t *ndp,
  * special case because needed before parameters set to final values
  * if wider than 32 bits or has x/zs caught after expr. eval
  */
-extern int __chk_giarr_ndx_expr(struct expr_t *ndp)
+extern int32 __chk_giarr_ndx_expr(struct expr_t *ndp)
 {
  chk_struct_rhsexpr(ndp, 0);
- /* emit warning for unsigned relations comparisons */
+ /* emit warning for word32 relations comparisons */
  chk_mixedsign_relops(ndp);
 
  /* real not allowed */
@@ -772,7 +778,7 @@ extern int __chk_giarr_ndx_expr(struct expr_t *ndp)
  * check either defparam or specparam rhs expr.
  * cannot go through chk rhs expr here since some rhs stuff not allowed
  */
-extern int __chk_paramexpr(struct expr_t *ndp, int xwid)
+extern int32 __chk_paramexpr(struct expr_t *ndp, int32 xwid)
 {
  /* FIXME - need to allow const user function calls in param rhs exprs */
  /* SJM 03/13/00 - now built-in sys funcs ok - chk later for non const args */
@@ -780,7 +786,7 @@ extern int __chk_paramexpr(struct expr_t *ndp, int xwid)
 
  chk_struct_rhsexpr(ndp, xwid);
  if (ndp->is_real) ndp->ibase = BDBLE;
- /* emit warning for unsigned relations comparisons */
+ /* emit warning for word32 relations comparisons */
  chk_mixedsign_relops(ndp);
 
  if (__is_paramconstxpr(ndp, TRUE)) return(TRUE);
@@ -794,9 +800,9 @@ extern int __chk_paramexpr(struct expr_t *ndp, int xwid)
  * this is for both def params and spec params 
  * notice for spec param can never be IS form
  */
-extern int __is_paramconstxpr(struct expr_t *ndp, int realok)
+extern int32 __is_paramconstxpr(struct expr_t *ndp, int32 realok)
 {
- int rv1, rv2;
+ int32 rv1, rv2;
  struct sy_t *syp;
  struct net_t *np;
  struct expr_t *fandp;
@@ -870,7 +876,7 @@ extern int __is_paramconstxpr(struct expr_t *ndp, int realok)
  * not done: part select and bit select normalization and range checking
  * constant folding, conversion to WBITS values for indices and ranges
  */
-static void chk_struct_rhsexpr(struct expr_t *ndp, int xwid)
+static void chk_struct_rhsexpr(struct expr_t *ndp, int32 xwid)
 {
  /* handle all leaves (special fast cases) */
  switch ((byte) ndp->optyp) {
@@ -920,7 +926,7 @@ static void chk_struct_rhsexpr(struct expr_t *ndp, int xwid)
  * check a rhs identifier 
  * for global checks target
  */
-static int chk_rhs_id(struct expr_t *ndp)
+static int32 chk_rhs_id(struct expr_t *ndp)
 {
  struct net_t *np;
  struct sy_t *syp;
@@ -1041,7 +1047,7 @@ static void unwind_rhsconcats(struct expr_t *ndp)
        continue;
       case CATREP:
        {
-        int repval;
+        int32 repval;
         struct expr_t *dupndp;
         struct xstk_t *xsp;
 
@@ -1056,7 +1062,7 @@ static void unwind_rhsconcats(struct expr_t *ndp)
            }
           else if (xsp->bp[0] != 0) goto bad_rep;
           
-          repval = (int) xsp->ap[0];
+          repval = (int32) xsp->ap[0];
           /* SJM 09/11/03 - also need error for negative */
           if (repval < 0) goto bad_rep;
           else if (repval == 0)
@@ -1114,7 +1120,7 @@ bad_rep:
 /*
  * return TRUE if node is leaf node (id, glbid, number)
  */
-extern int __isleaf(struct expr_t *ndp)
+extern int32 __isleaf(struct expr_t *ndp)
 {
  switch ((byte) ndp->optyp) {
   case ID: case GLBREF: case NUMBER: case ISNUMBER:
@@ -1127,9 +1133,9 @@ extern int __isleaf(struct expr_t *ndp)
 /*
  * duplicate a single level no embedded CATREP concatenate
  */
-extern struct expr_t *__dup_concat(int repcnt, struct expr_t *catndp)
+extern struct expr_t *__dup_concat(int32 repcnt, struct expr_t *catndp)
 {
- register int w;
+ register int32 w;
  struct expr_t *dupndp, *newndp, *end_ndp;
 
  /* now build longer chain repeated repval - 1 times */
@@ -1219,9 +1225,9 @@ static void remove_0width_catrep_els(struct expr_t *catndp)
 /*
  * set all width values of an expression in a given width context
  */
-static void set_rhswidth(struct expr_t *rhsx, int cwid)
+static void set_rhswidth(struct expr_t *rhsx, int32 cwid)
 {
- int cwid2, ibas;
+ int32 cwid2, ibas;
 
  cwid2 = __get_rhswidth(rhsx);
  if (cwid > cwid2) cwid2 = cwid;
@@ -1237,9 +1243,9 @@ static void set_rhswidth(struct expr_t *rhsx, int cwid)
  * calculate the width of a rhs expression
  * know width never IS NUMBER form
  */
-extern int __get_rhswidth(struct expr_t *rhsx)
+extern int32 __get_rhswidth(struct expr_t *rhsx)
 {
- int wclass, xwid, xwid2, r1, r2, sav_errcnt;
+ int32 wclass, xwid, xwid2, r1, r2, sav_errcnt;
  struct net_t *np;
  struct expr_t *psx1, *psx2;
 
@@ -1271,8 +1277,8 @@ extern int __get_rhswidth(struct expr_t *rhsx)
     || psx2->optyp != NUMBER) xwid = 1;
    else
     {
-     r1 = (int) __contab[psx1->ru.xvi];
-     r2 = (int) __contab[psx2->ru.xvi];
+     r1 = (int32) __contab[psx1->ru.xvi];
+     r2 = (int32) __contab[psx2->ru.xvi];
      xwid = (r1 > r2) ? (r1 - r2 + 1) : (r2 - r1 + 1);
     }
    break;
@@ -1292,7 +1298,7 @@ extern int __get_rhswidth(struct expr_t *rhsx)
     syp = rhsx->lu.x->lu.sy;
     if (syp->sytyp == SYM_SF)
      {
-      /* SJM 05/28/04 - $signed and $unsigned are special case that return */
+      /* SJM 05/28/04 - $signed and $word32 are special case that return */
       /* arg width - but need to recursively call get width to determine */
       if (syp->el.esyftbp->syfnum == STN_SIGNED
        || syp->el.esyftbp->syfnum == STN_UNSIGNED)
@@ -1346,7 +1352,7 @@ extern int __get_rhswidth(struct expr_t *rhsx)
 /*
  * get an operator's width class
  */
-extern int __get_widthclass(struct expr_t *rhsx)
+extern int32 __get_widthclass(struct expr_t *rhsx)
 {
  struct opinfo_t *opip;
 
@@ -1368,9 +1374,9 @@ extern int __get_widthclass(struct expr_t *rhsx)
  * pushing operands onto xstk, size changes of xstk are made where needed
  * according to LRM rules for propagating expression width to interim results
  */
-static void set2_rhswidth(struct expr_t *rhsx, int cwid)
+static void set2_rhswidth(struct expr_t *rhsx, int32 cwid)
 {
- int wclass, cat_stren, xwid, xwid2, r1, r2;
+ int32 wclass, cat_stren, xwid, xwid2, r1, r2;
  struct expr_t *tndp, *ndx1, *ndx2;
  struct sy_t *syp;
  struct net_t *np;
@@ -1421,8 +1427,8 @@ static void set2_rhswidth(struct expr_t *rhsx, int cwid)
    if ((ndx1->optyp == NUMBER || ndx1->optyp == ISNUMBER)
     && (ndx2->optyp == NUMBER || ndx2->optyp == ISNUMBER))
     {
-     r1 = (int) __contab[ndx1->ru.xvi];
-     r2 = (int) __contab[ndx2->ru.xvi];
+     r1 = (int32) __contab[ndx1->ru.xvi];
+     r2 = (int32) __contab[ndx2->ru.xvi];
      rhsx->szu.xclen = (r1 >= r2) ? (r1 - r2 + 1) : (r2 - r1 + 1);
     }
    /* using 32 bits - error caught later */
@@ -1441,7 +1447,7 @@ static void set2_rhswidth(struct expr_t *rhsx, int cwid)
    return;
   case FCALL:
    {
-    int frntyp;
+    int32 frntyp;
     struct task_t *tskp;
     struct task_pin_t *tpp;
 
@@ -1453,7 +1459,7 @@ static void set2_rhswidth(struct expr_t *rhsx, int cwid)
       struct sysfunc_t *syfp;
 
       syfp = syp->el.esyftbp;
-      /* SJM 05/28/04 - $signed and $unsigned are special case that return */
+      /* SJM 05/28/04 - $signed and $word32 are special case that return */
       /* arg width - but need to recursively call get width to determine */
       if (syp->el.esyftbp->syfnum == STN_SIGNED
        || syp->el.esyftbp->syfnum == STN_UNSIGNED)
@@ -1594,7 +1600,7 @@ static void set_fcall_widths(struct expr_t *fcrhsx,
 {
  struct expr_t *fandp;
  struct task_pin_t *tpp;
- int pwid;
+ int32 pwid;
 
  /* point 1 past extra first argument - not part of source call */
  tpp = tskp->tskpins->tpnxt;
@@ -1605,6 +1611,8 @@ static void set_fcall_widths(struct expr_t *fcrhsx,
 
    if (tpp == NULL || tpp->tpsy == NULL) pwid = 0;
    else pwid = __get_netwide(tpp->tpsy->el.enp);
+
+   /* notice for numbers this can't change width */
    set_rhswidth(fandp->lu.x, pwid);
   }
 }
@@ -1634,7 +1642,7 @@ static void set_sysfcall_widths(struct expr_t *fcrhsx)
 static void set_rhs_signed(struct expr_t *rhsx)
 {
  register struct expr_t *ndp2;
- int wclass;
+ int32 wclass;
  struct net_t *np;
  struct sy_t *syp;
  struct task_t *tskp;
@@ -1685,7 +1693,7 @@ static void set_rhs_signed(struct expr_t *rhsx)
     }
    else
     {
-     /* SJM 05/21/04 - not both signed - easiest to just make both unsigned */
+     /* SJM 05/21/04 - not both signed - easiest to just make both word32 */
      rhsx->has_sign = FALSE;
      rhsx->ru.x->lu.x->has_sign = FALSE;
      rhsx->ru.x->ru.x->has_sign = FALSE;
@@ -1766,7 +1774,7 @@ static void set_rhs_signed(struct expr_t *rhsx)
     case WIDLEFT:
      /* SHIFT */
      set_rhs_signed(rhsx->ru.x);
-     /* SJM 10/02/03 - LRM says shift count always unsigned */
+     /* SJM 10/02/03 - LRM says shift count always word32 */
      rhsx->ru.x->has_sign = FALSE;
      set_rhs_signed(rhsx->lu.x);
      rhsx->has_sign = rhsx->lu.x->has_sign;
@@ -1785,12 +1793,12 @@ static void set_rhs_signed(struct expr_t *rhsx)
  * find a number in an expression with a base and return 
  * means folded expr. will have base of first component
  */
-static int find_xbase(struct expr_t *ndp)
+static int32 find_xbase(struct expr_t *ndp)
 {
- int ibas;
+ int32 ibas;
 
  if (ndp->optyp == NUMBER) { ibas = ndp->ibase; return(ibas); }
- if (__isleaf(ndp)) return((int) '?');
+ if (__isleaf(ndp)) return((int32) '?');
  if (ndp->lu.x != NULL)
   {
    ibas = find_xbase(ndp->lu.x);
@@ -1801,7 +1809,7 @@ static int find_xbase(struct expr_t *ndp)
    ibas = find_xbase(ndp->ru.x);
    if (ibas != '?') return(ibas);
   }
- return((int) '?');
+ return((int32) '?');
 }
 
 /*
@@ -1817,7 +1825,7 @@ static int find_xbase(struct expr_t *ndp)
  */
 static void setchk_real_expr(struct expr_t *xrhs)
 {
- int i, oandnum, wclass;
+ int32 i, oandnum, wclass;
  struct opinfo_t *opip;
  struct expr_t *lx, *rx;
 
@@ -2107,7 +2115,7 @@ static void chk_specialop_rhsexpr(struct expr_t *ndp)
  * return F on error or x/z number - caller decides if error needed
  * will never get here for event since illegal in rhs or lhs expressions
  */
-static int chk_srcbsel(struct expr_t *ndp, int is_rhs)
+static int32 chk_srcbsel(struct expr_t *ndp, int32 is_rhs)
 {
  struct expr_t *idndp, *rconx;
  struct sy_t *syp;
@@ -2190,7 +2198,7 @@ bs_real:
  * part select values non x/z numbers and cannot be variable
  * returns F on error
  */
-static int chk_srcpsel(struct expr_t *ndp, int is_rhs)
+static int32 chk_srcpsel(struct expr_t *ndp, int32 is_rhs)
 {
  struct net_t *np;
  struct expr_t *idndp;
@@ -2288,10 +2296,10 @@ static void chkspecop_fcall(struct expr_t *ndp)
 }
 
 /*
- * emit warning for unsigned relationals
- * return T if fold unsigned so only 1 warning emitted
+ * emit warning for word32 relationals
+ * return T if fold word32 so only 1 warning emitted
  */
-static int chk_mixedsign_relops(struct expr_t *ndp)
+static int32 chk_mixedsign_relops(struct expr_t *ndp)
 {
  register struct expr_t *xp;
 
@@ -2328,7 +2336,7 @@ static int chk_mixedsign_relops(struct expr_t *ndp)
      if (ndp->lu.x->has_sign ^ ndp->ru.x->has_sign)
       {
        __sgfinform(440,
-        "relational operator has mixed signed and unsigned operands"); 
+        "relational operator has mixed signed and word32 operands"); 
        return(TRUE);
       }
    }
@@ -2346,7 +2354,7 @@ static int chk_mixedsign_relops(struct expr_t *ndp)
  */
 static void fold_subexpr(struct expr_t *ndp)
 {
- int isform;
+ int32 isform;
 
  /* notice any opempty will be marked as folded */
  if (!ndp->folded)
@@ -2374,14 +2382,15 @@ static void fold_subexpr(struct expr_t *ndp)
  * for unary if operand is IS so is result
  * for binary if either is IS, so is result, no reduction operators
  */
-static int mark_constnd(register struct expr_t *ndp, int *has_isform)
+static int32 mark_constnd(register struct expr_t *ndp, int32 *has_isform)
 {
  register struct net_t *np;
- int const_subtree, cat_isform;
- int is1, is2, is3, wlen, nwid, wsiz;
+ int32 const_subtree, cat_isform;
+ int32 is1, is2, is3, wlen, nwid, wsiz;
  double d1;
- word *wp;
+ word32 *wp;
  double *dp;
+ struct xstk_t *xsp;
 
  *has_isform = FALSE;
  switch ((byte) ndp->optyp) {
@@ -2421,7 +2430,7 @@ cnvt_gref_param:
          ndp->optyp = ISNUMBER;
          ndp->consub_is = TRUE;
          *has_isform = TRUE;
-          wsiz = wlen*__inst_mod->flatinum;
+         wsiz = wlen*__inst_mod->flatinum;
         }
        else if (np->srep == SR_PNUM)
         {
@@ -2442,10 +2451,18 @@ cnvt_gref_param:
         }
        else
         {
-         ndp->ru.xvi = __alloc_cval(2*wsiz);
-         wp = &(__contab[ndp->ru.xvi]);
-         /* notice because of different byte ordering must cast word form */ 
-         memcpy(wp, np->nva.wp, 2*WRDBYTES*wsiz);
+         /* IS forms can't be shared because are changed after added */
+         if (*has_isform)
+          {
+           ndp->ru.xvi = __alloc_is_cval(wsiz);
+           /* SJM 02/23/05 - IS const alloc no longer also sets the values */ 
+           memcpy(&(__contab[ndp->ru.xvi]), np->nva.wp, 2*wsiz*WRDBYTES);
+          }
+         else
+          {
+           ndp->ru.xvi = __allocfill_cval_new(np->nva.wp, &(np->nva.wp[wsiz]),
+            wsiz);
+          }
         }
       }
      else
@@ -2472,7 +2489,7 @@ cnvt_gref_param:
          ndp->consubxpr = TRUE;
          memcpy(&d1, np->nva.wp, sizeof(double));
          ndp->ru.xvi = __alloc_shareable_rlcval(d1);
-         /* notice because of different byte ordering must cast word form */ 
+         /* notice because of different byte ordering must cast word32 form */ 
         }
        else __case_terr(__FILE__, __LINE__);
        ndp->is_real = TRUE;
@@ -2503,11 +2520,11 @@ cnvt_gref_param:
       }
      else
       {
-       wlen = wlen_(np->nwid);
-       ndp->ru.xvi = __alloc_cval(2*wlen);
-       wp = &(__contab[ndp->ru.xvi]);
-       one_allbits_(wp, np->nwid);
-       one_allbits_(&(wp[wlen]), np->nwid);
+       push_xstk_(xsp, np->nwid); 
+       one_allbits_(xsp->ap, np->nwid);
+       one_allbits_(xsp->bp, np->nwid);
+       ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, wlen_(np->nwid));
+       __pop_xstk();
       }
      return(TRUE);
     }
@@ -2535,7 +2552,7 @@ cnvt_gref_param:
    /* mark top for folding if all components constants */
    {
     register struct expr_t *ctndp;
-    int canfold;
+    int32 canfold;
 
     cat_isform = FALSE;
     canfold = TRUE;
@@ -2564,7 +2581,7 @@ cnvt_gref_param:
    break;
   case QUEST:
    {
-    int m1, m2, m3;
+    int32 m1, m2, m3;
 
     /* only mark if all 3 constants - but really only need selector const */
     m1 = mark_constnd(ndp->lu.x, &is1);
@@ -2614,9 +2631,9 @@ cnvt_gref_param:
  */
 static void fold_const(struct expr_t *ndp)
 {
- register int iti;
- int wlen, xreal, base, xwi, sav_xclen;
- word *wp; 
+ register int32 iti;
+ int32 wlen, xreal, base, xwi, sav_xclen, xsign;
+ word32 *wp; 
  double d1;
  struct xstk_t *xsp;
 
@@ -2644,6 +2661,7 @@ static void fold_const(struct expr_t *ndp)
      xreal = FALSE;
      if (is_signed_decimal(ndp)) base = BDEC; else base = BHEX; 
     }
+ 
 
    /* case: foldable expression that does not contain or result in IS form */
    /* notice do not need current itree place here - will crash if problem */
@@ -2661,9 +2679,12 @@ is_1inst:
        else __sizchg_widen(xsp, ndp->szu.xclen);
       }
 
+     /* AIV 09/29/04 - need to save the sign for a folded expr */
+     xsign = ndp->has_sign; 
      __free2_xtree(ndp);
      __init_xnd(ndp);
      ndp->szu.xclen = xsp->xslen;
+     ndp->has_sign = xsign; 
 
      /* if real know value will be real - no need for conversion */
      if (xreal)
@@ -2680,14 +2701,12 @@ is_1inst:
        /* anything value set here must be (becomes) sized number */
        if (ndp->szu.xclen <= WBITS)
         {
-         ndp->ru.xvi = __alloc_shareable_cval(xsp->ap[0], xsp->ap[1], 
+         ndp->ru.xvi = __alloc_shareable_cval(xsp->ap[0], xsp->bp[0], 
           ndp->szu.xclen);
         } 
        else
         {
-         ndp->ru.xvi = __alloc_cval(2*wlen);
-         wp = &(__contab[ndp->ru.xvi]);
-         memcpy(wp, xsp->ap, 2*WRDBYTES*wlen);
+         ndp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, wlen);
         }
        /* must set standard after folded expr. node flags */
        ndp->optyp = NUMBER;
@@ -2708,7 +2727,7 @@ is_1inst:
    if (xreal) xwi = __alloc_rlcval(__inst_mod->flatinum);
    else
     {
-     xwi = __alloc_cval(2*wlen*__inst_mod->flatinum);
+     xwi = __alloc_is_cval(wlen*__inst_mod->flatinum);
      wp = &(__contab[xwi]);
     }
    sav_xclen = ndp->szu.xclen;
@@ -2840,7 +2859,7 @@ is_1inst:
 /*
  * check if constant signed decimal expression
  */
-static int is_signed_decimal(struct expr_t *xp)
+static int32 is_signed_decimal(struct expr_t *xp)
 {
  switch ((byte) xp->optyp) { 
   case MINUS: case PLUS: case TIMES: case DIV: case MOD:
@@ -2902,10 +2921,10 @@ static void chk_ndfolded_specops(struct expr_t *ndp)
  * 2nd part of bit select checking - requires pass 2 all parameter
  * substitution and splitting done
  */
-static int chk_inrng_bsel(struct expr_t *ndp)
+static int32 chk_inrng_bsel(struct expr_t *ndp)
 {
- int err;
- int ri1, ri2, obwid;
+ int32 err;
+ int32 ri1, ri2, obwid;
  struct expr_t *idndp, *rconx;
  struct net_t *np;
  char s1[RECLEN];
@@ -2960,19 +2979,19 @@ static int chk_inrng_bsel(struct expr_t *ndp)
  * for all selects - string of type passed
  * know value number or is number or will not be passed
  */
-static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
- char *emsg, int emit_err)
+static int32 chknorm_range(struct expr_t *rconx, int32 ri1, int32 ri2,
+ char *emsg, int32 emit_err)
 {
- register int iti, iti2;
- int err, indval, newindval, errindval, alloc_new_con;
- word *wp, *wp2;
+ register int32 iti, iti2;
+ int32 err, indval, newindval, errindval, alloc_new_con;
+ word32 *wp, *wp2;
 
  if (rconx->optyp == NUMBER)
   {
    /* err/warn already emitted for this case */
    if (__contab[rconx->ru.xvi + 1] != 0) return(FALSE);
   
-   indval = (int) __contab[rconx->ru.xvi];
+   indval = (int32) __contab[rconx->ru.xvi];
    /* ---
    if (__debug_flg) 
     __dbg_msg("$$$ in range check of %d in [%d:%d] - line %d\n",
@@ -2987,13 +3006,13 @@ static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
       indval, ri1, ri2);
      
      indval = errindval;
-     rconx->ru.xvi = __alloc_shareable_cval((word) indval, 0, WBITS);
+     rconx->ru.xvi = __alloc_shareable_cval((word32) indval, 0, WBITS);
     }
    /* normalize */
    newindval = normalize_ndx_(indval, ri1, ri2);
    if (newindval != indval)
     {
-     rconx->ru.xvi = __alloc_shareable_cval((word) newindval, 0, WBITS);
+     rconx->ru.xvi = __alloc_shareable_cval((word32) newindval, 0, WBITS);
      rconx->ind_noth0 = TRUE;
     }
    return(TRUE);
@@ -3006,7 +3025,7 @@ static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
   {
    /* must normal any that are good */
    if (wp[2*iti + 1] != 0L) continue; 
-   indval = (int) wp[2*iti];
+   indval = (int32) wp[2*iti];
    if (!in_range(indval, ri1, ri2, &errindval))
     {
      if (emit_err)
@@ -3017,7 +3036,7 @@ static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
      if (!alloc_new_con)
       { 
        /* allocate new and copy up to current */
-       rconx->ru.xvi = __alloc_cval(2*__inst_mod->flatinum);
+       rconx->ru.xvi = __alloc_is_cval(__inst_mod->flatinum);
        wp2 = &(__contab[rconx->ru.xvi]);
        alloc_new_con = TRUE;
        for (iti2 = 0; iti2 < iti; iti2++)
@@ -3047,7 +3066,7 @@ static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
    else if (newindval != indval)
     {
      /* allocate new and copy up to current */
-     rconx->ru.xvi = __alloc_cval(2*__inst_mod->flatinum);
+     rconx->ru.xvi = __alloc_is_cval(__inst_mod->flatinum);
      wp2 = &(__contab[rconx->ru.xvi]);
      alloc_new_con = TRUE;
      for (iti2 = 0; iti2 < iti; iti2++)
@@ -3069,7 +3088,7 @@ static int chknorm_range(struct expr_t *rconx, int ri1, int ri2,
  * return T if value av between v1a and v2a
  * if F, sets newv1a and newv2a to new extrema
  */
-static int in_range(int ai, int v1a, int v2a, int *newai)
+static int32 in_range(int32 ai, int32 v1a, int32 v2a, int32 *newai)
 {
  /* case 1 low to high */
  if (v1a < v2a)
@@ -3092,9 +3111,9 @@ static int in_range(int ai, int v1a, int v2a, int *newai)
  * 2nd part of bit select checking - requires pass 2 all parameter
  * substitution and splitting done
  */
-static int chk_inrng_psel(struct expr_t *ndp)
+static int32 chk_inrng_psel(struct expr_t *ndp)
 {
- int err, ri1, ri2, pseli1, pseli2;
+ int32 err, ri1, ri2, pseli1, pseli2;
  struct expr_t *idndp, *rcon1, *rcon2;
  struct net_t *np;
  char s1[RECLEN];
@@ -3118,8 +3137,8 @@ static int chk_inrng_psel(struct expr_t *ndp)
  /* if errror (x/z for example) in range, cannot check direction */
  if (!err)
   {
-   pseli1 = (int) __contab[rcon1->ru.xvi];
-   pseli2 = (int) __contab[rcon2->ru.xvi];
+   pseli1 = (int32) __contab[rcon1->ru.xvi];
+   pseli2 = (int32) __contab[rcon2->ru.xvi];
    if ((ri1 < ri2 && pseli1 > pseli2) || (ri1 > ri2 && pseli1 < pseli2))
     {
       __sgferr(879,
@@ -3137,8 +3156,8 @@ static int chk_inrng_psel(struct expr_t *ndp)
   err = TRUE;
  /* since will change out of range to top - need to reset widths */
  /* if no change will be same */
- pseli1 = (int) __contab[rcon1->ru.xvi];
- pseli2 = (int) __contab[rcon2->ru.xvi];
+ pseli1 = (int32) __contab[rcon1->ru.xvi];
+ pseli2 = (int32) __contab[rcon2->ru.xvi];
  ndp->szu.xclen = pseli1 - pseli2 + 1;  
  return(!err);
 }
@@ -3152,6 +3171,7 @@ static void chk_folded_fargs(struct expr_t *ndp)
 {
  register struct expr_t *fandp;
  register struct task_pin_t *tpp;
+ int32 pwid;
  struct sy_t *syp;
  struct expr_t *idndp;
  struct task_t *tskp;
@@ -3159,6 +3179,7 @@ static void chk_folded_fargs(struct expr_t *ndp)
  idndp = ndp->lu.x;
  syp = idndp->lu.sy;
 
+ /* SJM 10/08/04 - LOOKATME - think never need new ver 2001 x/z widening? */
  /* this checks system function arguments */
  if (syp->sytyp == SYM_SF) { chk_sysfargs_syntax(ndp); return; }
 
@@ -3189,6 +3210,21 @@ static void chk_folded_fargs(struct expr_t *ndp)
       "function %s called with too few arguments", __to_idnam(idndp));
      return;
     }
+
+   /* notice x/z widening does not effect num arg checking */
+
+
+   /* nwid field not set yet */
+   pwid = __get_netwide(tpp->tpsy->el.enp);
+   /* SJM 10/08/04 - for Ver 2001 because WBITS can be 64 - must widen */
+   /* unsized constant (unsiznum bit in expr rec on) to lhs width */
+   /* folded bit not set for these but will be folded to number */
+
+   if (fandp->lu.x->optyp == NUMBER && fandp->lu.x->unsiznum
+    && fandp->lu.x->szu.xclen < pwid)
+    {
+     fandp->lu.x = __widen_unsiz_rhs_assign(fandp->lu.x, pwid);
+    }
   }
  if (fandp != NULL)
   __sgferr(841, "function %s called with too many arguments",
@@ -3210,11 +3246,11 @@ static void chk_folded_fargs(struct expr_t *ndp)
  *
  * must be called with itree loc (inst and mod set)
  */
-extern int __nd_ndxnum(struct expr_t *ndp, char *emsg, int emit_err)
+extern int32 __nd_ndxnum(struct expr_t *ndp, char *emsg, int32 emit_err)
 {
- int wlen, err;
- word *ap, *bp;
- word av, bv;
+ int32 wlen, err;
+ word32 *ap, *bp;
+ word32 av, bv;
 
  switch ((byte) ndp->optyp) {
   case ISNUMBER: return(nd_ndxisnum(ndp, emsg, emit_err));
@@ -3285,11 +3321,11 @@ wr_err:
  * and make value WBIT x
  * assumes itree loc pushed
  */
-static int nd_ndxisnum(struct expr_t *ndp, char *emsg, int emit_err)
+static int32 nd_ndxisnum(struct expr_t *ndp, char *emsg, int32 emit_err)
 {
- register int iti;
- int good, wlen;
- word *wp, *wp2, *ap, *bp;
+ register int32 iti;
+ int32 good, wlen;
+ word32 *wp, *wp2, *ap, *bp;
  
  /* first do the checking */
  good = TRUE;
@@ -3333,7 +3369,7 @@ x_err:
    ndp->optyp = ISNUMBER;
    ndp->szu.xclen = WBITS;
    /* arg is words */
-   ndp->ru.xvi = __alloc_cval(2*__inst_mod->flatinum);
+   ndp->ru.xvi = __alloc_is_cval(__inst_mod->flatinum);
    wp2 = &(__contab[ndp->ru.xvi]);
 
    for (iti = 0; iti < __inst_mod->flatinum; iti++)
@@ -3367,7 +3403,7 @@ x_err:
 static void chk_sysfargs_syntax(struct expr_t *ndp)
 {
  register struct expr_t *fandp;
- int anum, special_syntax;
+ int32 anum, special_syntax;
  struct sy_t *syp;
  struct sysfunc_t *syfp;
  struct expr_t *fax;
@@ -3444,7 +3480,7 @@ static void chk_sysfargs_syntax(struct expr_t *ndp)
    __chk_rhsexpr(fax, 0);
    if (!fax->has_sign)
     __sgfinform(3007,
-     "argment %s to new 2001 $unsigned system task already unsigned",
+     "argment %s to new 2001 $word32 system task already unsigned",
      __msgexpr_tostr(__xs, fax));
    special_syntax = TRUE;
    break;
@@ -3483,7 +3519,7 @@ static void chk_sysfargs_syntax(struct expr_t *ndp)
    special_syntax = TRUE;
    break;
   case STN_RANDOM:
-   /* various dist. of random number generators - all params ins, ret. int */
+   /* various dist. of random number generators - all params ins, ret. int32 */
    chksf_rand(ndp, 1, anum);
    special_syntax = TRUE;
    break;
@@ -3634,10 +3670,10 @@ first_arg_ok:
    if (anum != 2) sf_errifn(syp, 2);
    break;
   default: 
-   if (syfp->syfnum >= BASE_VERIUSERTFS && (int) syfp->syfnum <= __last_systf)
+   if (syfp->syfnum >= BASE_VERIUSERTFS && (int32) syfp->syfnum <= __last_systf)
     {
      /* chk and bld user tf_ or systf vpi_ pli function or real function */
-     chkbld_pli_func(ndp, (int) syfp->syfnum);
+     chkbld_pli_func(ndp, (int32) syfp->syfnum);
      return;
     }
    /* fall through on built-in system function */
@@ -3663,9 +3699,9 @@ first_arg_ok:
  * do everything but call user checktf even if errors
  * will probably crash here if user pointers bad
  */
-static void chkbld_pli_func(struct expr_t *fcallx, int sfnum)
+static void chkbld_pli_func(struct expr_t *fcallx, int32 sfnum)
 {
- int sav_errcnt, anum;
+ int32 sav_errcnt, anum;
  struct tfrec_t *tfrp;
 
  sav_errcnt = __pv_err_cnt;
@@ -3705,9 +3741,9 @@ static void chkbld_pli_func(struct expr_t *fcallx, int sfnum)
  * check PLI _tf and vpi_ systf routine argument syntax  
  * notice build aux. d.s. and call checktf routine during prep for tf_
  */
-static void chk_pli_arglist(register struct expr_t *argxp, int stfnum)
+static void chk_pli_arglist(register struct expr_t *argxp, int32 stfnum)
 {
- int lhstyp;
+ int32 lhstyp;
  struct expr_t *xp;
  struct sy_t *syp;
  
@@ -3755,7 +3791,7 @@ static void chk_pli_arglist(register struct expr_t *argxp, int stfnum)
  * for user tf (task or func.) args - set tf_isrw if expr can be assigned to
  * concatenates are legal Verilog but not PLI tf_ lvalues
  */
-static int tfexpr_isrw(struct expr_t *ndp)
+static int32 tfexpr_isrw(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -3777,7 +3813,7 @@ static int tfexpr_isrw(struct expr_t *ndp)
 /*
  * return T if lhs rw expr. is declarative else F is procedural 
  */
-static int lhs_is_decl(struct expr_t *xp)
+static int32 lhs_is_decl(struct expr_t *xp)
 {
  struct net_t *np;
 
@@ -3793,10 +3829,10 @@ static int lhs_is_decl(struct expr_t *xp)
  * always set 0th arg. (for tf_ func only) to nil here
  */
 static struct tfrec_t *chkalloc_tfrec(struct expr_t *argxp,
- int anum)
+ int32 anum)
 { 
- register int i;
- int insts;
+ register int32 i;
+ int32 insts;
  struct tfrec_t *tfrp;
 
  if (__inst_mod == NULL) insts = 1;
@@ -3841,9 +3877,9 @@ static struct tfrec_t *chkalloc_tfrec(struct expr_t *argxp,
  * notice this is an array not an array of ptrs to the records
  */
 static struct tfarg_t *alloc_tfarg(register struct expr_t *argxp,
- int anump1, int insts)
+ int32 anump1, int32 insts)
 {
- register int i, pi;
+ register int32 i, pi;
  register struct expr_t *xp;
  struct tfarg_t *tfatab, *tfap;
  
@@ -3890,9 +3926,9 @@ static struct tfarg_t *alloc_tfarg(register struct expr_t *argxp,
 /*
  * count no. of function arguments
  */
-extern int __cnt_tfargs(register struct expr_t *argndp)
+extern int32 __cnt_tfargs(register struct expr_t *argndp)
 {
- int anum;
+ int32 anum;
 
  for (anum = 0; argndp != NULL; argndp = argndp->ru.x) anum++;
  return(anum);
@@ -3901,7 +3937,7 @@ extern int __cnt_tfargs(register struct expr_t *argndp)
 /*
  * check count drivers system function arguments (lhs)
  */
-static void chksf_count_drivers(struct expr_t *ndp, int anum)
+static void chksf_count_drivers(struct expr_t *ndp, int32 anum)
 {
  register struct expr_t *fandp;
 
@@ -3933,9 +3969,9 @@ static void chksf_count_drivers(struct expr_t *ndp, int anum)
  * return T if expression is a scalar wire or a bit select of scalared wire
  * also if bit select index x 
  */
-static int is_1bwire(struct expr_t *ndp)
+static int32 is_1bwire(struct expr_t *ndp)
 {
- int rv;
+ int32 rv;
  struct net_t *np;
  struct expr_t *idndp;
  struct xstk_t *xsp;
@@ -3973,7 +4009,7 @@ static int is_1bwire(struct expr_t *ndp)
  * check getpattern system function arguments - checks very limited usage
  */
 static void chksf_getpattern(struct sy_t *syp, struct expr_t *ndp,
- int anum)
+ int32 anum)
 {
  struct net_t *np;
  struct expr_t *fax;
@@ -4009,7 +4045,7 @@ gpat_err:
 /*
  * system function wrong number of arguments error
  */
-static void sf_errifn(struct sy_t *syp, int expn)
+static void sf_errifn(struct sy_t *syp, int32 expn)
 {
  __sgferr(851, "system function %s call does not have required %d arguments",
   syp->synam, expn);
@@ -4019,7 +4055,7 @@ static void sf_errifn(struct sy_t *syp, int expn)
  * check the $q_full system function
  * if final argument not needed can be left out
  */
-static void chksf_q_full( struct expr_t *ndp, int anum)
+static void chksf_q_full( struct expr_t *ndp, int32 anum)
 {
  struct expr_t *fax;
 
@@ -4039,7 +4075,7 @@ static void chksf_q_full( struct expr_t *ndp, int anum)
  *
  * know first argument if present is always seed lvalue
  */
-static void chksf_rand(struct expr_t *ndp, int maxanum, int anum)
+static void chksf_rand(struct expr_t *ndp, int32 maxanum, int32 anum)
 {
  struct sy_t *syp;
  struct expr_t *fax;
@@ -4077,7 +4113,7 @@ static void chksf_rand(struct expr_t *ndp, int maxanum, int anum)
  * convention is to mark all ID and GLBIDs that are lhs expr and top
  * expr. as lhs expr.
  */
-extern int __chk_lhsexpr(struct expr_t *ndp, int lhstyp)
+extern int32 __chk_lhsexpr(struct expr_t *ndp, int32 lhstyp)
 {
  if (ndp->optyp == LCB)
   {
@@ -4096,7 +4132,7 @@ extern int __chk_lhsexpr(struct expr_t *ndp, int lhstyp)
  * needs __sfnam_ind to be set before called
  * return FALSE on error
  */
-static int chksyn_lhsexpr(struct expr_t *ndp, int is_top, int lhstyp)
+static int32 chksyn_lhsexpr(struct expr_t *ndp, int32 is_top, int32 lhstyp)
 {
  struct expr_t *erndp;
  struct net_t *np;
@@ -4192,7 +4228,7 @@ chk_id:
    /* notice legal lhs concatenates element width self determined */
    {
     register struct expr_t *ndp2;
-    int errind, has_stren, i;
+    int32 errind, has_stren, i;
 
     errind = TRUE;
     has_stren = FALSE;
@@ -4319,7 +4355,7 @@ static void unwind_lhsconcats(struct expr_t *ndp)
  *
  * if this is a reg (error caught later) surpress this error
  */
-extern int __chk_lhsdecl_scalared(struct expr_t *idndp)
+extern int32 __chk_lhsdecl_scalared(struct expr_t *idndp)
 {
  struct net_t *np;
 
@@ -4346,7 +4382,7 @@ extern int __chk_lhsdecl_scalared(struct expr_t *idndp)
  * return T if is a variable - i.e. any SYM_N that is not a parameter
  * know object is an id
  */
-static int idnd_var(struct sy_t *syp)
+static int32 idnd_var(struct sy_t *syp)
 {
  struct net_t *np;
 
@@ -4361,7 +4397,7 @@ static int idnd_var(struct sy_t *syp)
  * this catches declarative lhs reals
  * needs __sfnam_ind to be set before called
  */
-extern int __nd_wire(struct expr_t *ndp)
+extern int32 __nd_wire(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -4383,7 +4419,7 @@ extern int __nd_wire(struct expr_t *ndp)
  * notice this must handle un converted globals since chk expressions
  * routine that replaces the global not yet called at this point
  */
-extern int __xhas_reg(struct expr_t *ndp)
+extern int32 __xhas_reg(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -4407,7 +4443,7 @@ extern int __xhas_reg(struct expr_t *ndp)
  * know node is an id
  * needs __sfnam_ind to be set before called
  */
-static int nd_reg(struct expr_t *ndp)
+static int32 nd_reg(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -4433,7 +4469,7 @@ static int nd_reg(struct expr_t *ndp)
  */
 extern void __set_lhswidth(struct expr_t *lhsx)
 {
- int r1, r2, xwid;
+ int32 r1, r2, xwid;
  struct net_t *np;
  struct sy_t *syp;
 
@@ -4456,8 +4492,8 @@ extern void __set_lhswidth(struct expr_t *lhsx)
    lhsx->lu.x->szu.xclen = __get_netwide(syp->el.enp);
    np = syp->el.enp;
    /* know these values always fit in 32 bits and never IS form */
-   r1 = (int) __contab[lhsx->ru.x->lu.x->ru.xvi];
-   r2 = (int) __contab[lhsx->ru.x->ru.x->ru.xvi];
+   r1 = (int32) __contab[lhsx->ru.x->lu.x->ru.xvi];
+   r2 = (int32) __contab[lhsx->ru.x->ru.x->ru.xvi];
    lhsx->szu.xclen = (r1 > r2) ? r1 - r2 + 1 : r2 - r1 + 1;
    break;
   case LCB:
@@ -4532,7 +4568,7 @@ chk_expr:
 /*
  * return T if expression has a function call
  */
-static int xpr_hasfcall(struct expr_t *ndp)
+static int32 xpr_hasfcall(struct expr_t *ndp)
 {
  if (ndp->optyp == FCALL) return(TRUE);
  if (__isleaf(ndp)) return(FALSE);
@@ -4546,9 +4582,9 @@ static int xpr_hasfcall(struct expr_t *ndp)
  * built-in $ starting system functions legal
  *
  */
-static int xpr_has_nonsys_fcall(struct expr_t *ndp)
+static int32 xpr_has_nonsys_fcall(struct expr_t *ndp)
 {
- int anum;
+ int32 anum;
  struct sy_t *syp; 
  struct sysfunc_t *syfp;
 
@@ -4636,7 +4672,7 @@ extern void __chk_tskenable(struct st_t *stp)
 {
  register struct expr_t *xp;
  register struct task_pin_t *tpp;
- int pwid, pi;
+ int32 pwid, pi;
  struct task_t *tskp;
  struct sy_t *syp;
  struct expr_t *tkxp;
@@ -4672,7 +4708,18 @@ extern void __chk_tskenable(struct st_t *stp)
    /* decl. argumen cannot be global - declared symbol */
    pwid = __get_netwide(tpp->tpsy->el.enp);
    /* but expression is normal either right or left sides */
-   if (tpp->trtyp == IO_IN) __chk_rhsexpr(xp->lu.x, pwid);
+   if (tpp->trtyp == IO_IN)
+    {
+     __chk_rhsexpr(xp->lu.x, pwid);
+
+     /* SJM 10/08/04 - for Ver 2001 because WBITS can be 64 - must widen */
+     /* unsized constant (unsiznum bit in expr rec on) to lhs width */
+     if (xp->lu.x->optyp == NUMBER && xp->lu.x->unsiznum
+      && xp->lu.x->szu.xclen < pwid)
+      {
+       xp->lu.x = __widen_unsiz_rhs_assign(xp->lu.x, pwid);
+      }
+    }
    else
     {
      __chk_lhsexpr(xp->lu.x, LHS_PROC);
@@ -4708,7 +4755,7 @@ extern void __chk_tskenable(struct st_t *stp)
 static void chk_systskenable(struct st_t *stp, struct tskcall_t *tkcp)
 {
  register struct expr_t *xp;
- int anum, special_syntax, is_disp_typ, is_monit_typ, nbytes, ii;
+ int32 anum, special_syntax, is_disp_typ, is_monit_typ, nbytes, ii;
  struct sy_t *syp;
  struct expr_t *tkxp, *sav_xp;
  struct systsk_t *stbp;
@@ -4993,7 +5040,7 @@ bad_scope:
    /* LOOKATME - LRM says 4th arg. is required - but now old Gateway doc. */
    /* but maybe operator empty is arg (i.e. , required? */
    if (anum != 4) st_errifn(syp, 4, anum);
-   /* first arg. is input int identifying the Q */
+   /* first arg. is input int32 identifying the Q */
    if (anum >= 1) __chk_rhsexpr(xp->lu.x, 0);
    /* 2nd arg. is q_type for initialize and job_id (user num.) for add */
    if (anum >= 2) { xp = xp->ru.x; __chk_rhsexpr(xp->lu.x, 0); }
@@ -5005,7 +5052,7 @@ bad_scope:
    break;
   case STN_Q_REMOVE:
    if (anum != 4) st_errifn(syp, 4, anum);
-   /* first arg. is input int identifying the Q */
+   /* first arg. is input int32 identifying the Q */
    if (anum >= 1) __chk_rhsexpr(xp->lu.x, 0);
    /* 2nd arg. is output job_id (user num. put in by add call) */
    if (anum >= 2) { xp = xp->ru.x; __chk_lhsexpr(xp->lu.x, LHS_PROC); }
@@ -5017,7 +5064,7 @@ bad_scope:
    break;
   case STN_Q_EXAM:
    if (anum != 4) st_errifn(syp, 4, anum);
-   /* first arg. is input int identifying the Q */
+   /* first arg. is input int32 identifying the Q */
    if (anum >= 1) __chk_rhsexpr(xp->lu.x, 0);
    /* 2nd arg. is input q_stat_code that selects information to return */
    if (anum >= 2) { xp = xp->ru.x; __chk_rhsexpr(xp->lu.x, 0); }
@@ -5047,11 +5094,11 @@ bad_scope:
   default:
    /* check pli tf user task enable and build tf rec */
    if (stbp->stsknum >= BASE_VERIUSERTFS
-    && (int) stbp->stsknum <= __last_systf)
+    && (int32) stbp->stsknum <= __last_systf)
     {
      /* tf_ checktf called during prep after aux record built */
      /* for both tf_ and vpi_ systf */
-     chkbld_pli_task(stp, (int) stbp->stsknum);
+     chkbld_pli_task(stp, (int32) stbp->stsknum);
      return;
     }
  }
@@ -5063,7 +5110,7 @@ bad_scope:
    ndp = xp->lu.x;
    __chk_rhsexpr(ndp, 0);
    /* if special syntax called if needed in that routine */
-   /* width in bytes where bit sizes rounded up to next word */
+   /* width in bytes where bit sizes rounded up to next word32 */
    /* SJM 07/24/00 - no nu.ct when elaborated from iact state */
    if (is_monit_typ && !__iact_state)
     {
@@ -5123,7 +5170,7 @@ static void mark_monit_in_src_nets(struct expr_t *xp)
 /*
  * return T if symbol can be scope 
  */
-extern int __is_scope_sym(struct sy_t *syp) 
+extern int32 __is_scope_sym(struct sy_t *syp) 
 {
  switch ((byte) syp->sytyp) { 
   case SYM_I: case SYM_M: case SYM_LB: case SYM_TSK: case SYM_F: return(TRUE);
@@ -5134,9 +5181,9 @@ extern int __is_scope_sym(struct sy_t *syp)
 /*
  * check and build vpi_ tf rec for pli task
  */
-static void chkbld_pli_task(struct st_t *stp, int tfnum)
+static void chkbld_pli_task(struct st_t *stp, int32 tfnum)
 {
- int anum;
+ int32 anum;
  struct tskcall_t *tkcp;
  struct tfrec_t *tfrp;
 
@@ -5167,7 +5214,7 @@ static void chkbld_pli_task(struct st_t *stp, int tfnum)
 /*
  * system task number of arguments outside of legal range error
  */
-static void st_errif_rng(struct sy_t *syp, int expl, int exph, int anum)
+static void st_errif_rng(struct sy_t *syp, int32 expl, int32 exph, int32 anum)
 {
  __sgferr(884, "%s system task must have from %d to %d arguments - has %d",
   syp->synam, expl, exph, anum);
@@ -5176,7 +5223,7 @@ static void st_errif_rng(struct sy_t *syp, int expl, int exph, int anum)
 /*
  * system task number of arguments not required number
  */
-static void st_errifn(struct sy_t *syp, int expn, int anum)
+static void st_errifn(struct sy_t *syp, int32 expn, int32 anum)
 {
  if (expn == 0)
   __sgferr(885, "%s system task cannot have any arguments - has %d",
@@ -5195,11 +5242,11 @@ static void st_errifn(struct sy_t *syp, int expn, int anum)
  *
  * SJM 07/15/00 - now 3. mark all all mod and one net dumpvars in src
  */
-static void chkst_dumpvars_enable(struct tskcall_t *tkcp, int anum)
+static void chkst_dumpvars_enable(struct tskcall_t *tkcp, int32 anum)
 {
  register struct expr_t *alxp;
- int levels;
- word *wp;
+ int32 levels;
+ word32 *wp;
  struct expr_t *dpthndp, *xp;
  struct gref_t *grp;
  struct net_t *np;
@@ -5233,11 +5280,11 @@ static void chkst_dumpvars_enable(struct tskcall_t *tkcp, int anum)
   {
    wp = &(__contab[dpthndp->ru.xvi]);
    if (!vval_is0_(wp, dpthndp->szu.xclen)) goto non_const_expr;
-   levels = (int) wp[0];
+   levels = (int32) wp[0];
   }
  else if (dpthndp->optyp == REALNUM)
   {
-   levels = (int) __rlcontab[dpthndp->ru.xvi];
+   levels = (int32) __rlcontab[dpthndp->ru.xvi];
    if (levels < 0.0) goto non_const_expr;
   }
  else
@@ -5336,9 +5383,9 @@ make_op_err:
  * mark all module instances up to level under as dumpvars
  * levels of 0 implies all
  */
-static void mark_mod_dvars_under(struct mod_t *mdp, int levels)
+static void mark_mod_dvars_under(struct mod_t *mdp, int32 levels)
 {
- register int ii; 
+ register int32 ii; 
  register struct inst_t *down_ip;
  if (!mdp->mod_dvars_in_src)
   {
@@ -5385,7 +5432,7 @@ static void set_iact_dmpv_all_nd_nchgstore(void)
  */
 static void set_iact_dmpvmod_nd_nchgstore(struct mod_t *mdp)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
  register struct task_t *tskp;
 
@@ -5414,7 +5461,7 @@ static void set_iact_dmpvmod_nd_nchgstore(struct mod_t *mdp)
 /*
  * check $readmemb or $readmemh arguments
  */
-static void chkst_readmem(struct sy_t *syp, int anum,
+static void chkst_readmem(struct sy_t *syp, int32 anum,
  struct tskcall_t *tkcp)
 {
  struct expr_t *alxp, *ndp;
@@ -5447,7 +5494,7 @@ static void chkst_readmem(struct sy_t *syp, int anum,
 /*
  * return if expression is an unindexed array
  */
-static int nd_unind_arr(struct expr_t *ndp)
+static int32 nd_unind_arr(struct expr_t *ndp)
 {
  struct net_t *np;
 
@@ -5463,7 +5510,7 @@ static int nd_unind_arr(struct expr_t *ndp)
 /*
  * check $sreadmemb or $sreadmemh arguments
  */
-static void chkst_sreadmem(struct sy_t *syp, int anum,
+static void chkst_sreadmem(struct sy_t *syp, int32 anum,
  struct tskcall_t *tkcp)
 {
  register struct expr_t *alxp;
@@ -5495,10 +5542,10 @@ static void chkst_sreadmem(struct sy_t *syp, int anum,
 /*
  * check $sdf_annotate system tsk arguments 
  */
-static void chkst_sdfannotate_enable(struct tskcall_t *tkcp, int anum)
+static void chkst_sdfannotate_enable(struct tskcall_t *tkcp, int32 anum)
 {
  register struct expr_t *alxp;
- register int argi;
+ register int32 argi;
  struct expr_t *ndp;
 
  if (anum < 1 || anum > 7)
@@ -5587,7 +5634,7 @@ extern void __chkfix_spfy(void)
 { 
  register struct spcpth_t *pthp;
  register struct tchk_t *tcp;
- int spec_empty, saveobj;
+ int32 spec_empty, saveobj;
  struct spfy_t *spfp;
  struct tchk_t *suptcp, *rectcp;
 
@@ -5672,14 +5719,14 @@ done:
  * it is assumed to be an undeclared specparam - this makes sure it appears
  * in a specparam statement 
  */
-static int chk_undef_specparams(struct symtab_t *sytp)
+static int32 chk_undef_specparams(struct symtab_t *sytp)
 {
- register int syi;
- int good;
+ register int32 syi;
+ int32 good;
  struct sy_t *syp;
 
  __wrkstab = sytp->stsyms;
- for (good = TRUE, syi = 0; syi < (int) sytp->numsyms; syi++)
+ for (good = TRUE, syi = 0; syi < (int32) sytp->numsyms; syi++)
   {
    syp = __wrkstab[syi];
    if (!syp->sydecl)
@@ -5701,12 +5748,12 @@ static int chk_undef_specparams(struct symtab_t *sytp)
  * check cond. expr. here than can be any rhs expression
  * eval code handles selecting low bit if needed
  */
-static int chk_1spcpth(struct spcpth_t *pthp) 
+static int32 chk_1spcpth(struct spcpth_t *pthp) 
 {
  register struct exprlst_t *pxlp;
- register int pei;
- int num_peinels, num_peoutels, pi1, pi2, dnum, sav_errcnt;
- unsigned badoptyp;
+ register int32 pei;
+ int32 num_peinels, num_peoutels, pi1, pi2, dnum, sav_errcnt;
+ word32 badoptyp;
  struct exprlst_t *pxins, *pxouts, *pxlp2;
  struct net_t *np;
  struct pathel_t *pep;
@@ -5836,7 +5883,7 @@ chk_pdels:
  * return T if expression has any illegal path cond. expr. operators
  * uses value from op info table
  */
-static int expr_has_nonpth(struct expr_t *cndx, unsigned *badop)
+static int32 expr_has_nonpth(struct expr_t *cndx, word32 *badop)
 {
  struct opinfo_t *opip;
 
@@ -5870,7 +5917,7 @@ static int expr_has_nonpth(struct expr_t *cndx, unsigned *badop)
  */
 static void chk_rep_in_fullpth(struct spcpth_t *pthp)
 {
- register int pei, pei2;
+ register int32 pei, pei2;
  struct pathel_t *pep1, *pep2;
  char s1[RECLEN], s2[RECLEN];
 
@@ -5956,9 +6003,9 @@ static char *pthel_tostr(char *s, struct pathel_t *pep)
 /*
  * return T if 2 path elements overlap - know not called if identical
  */
-static int pth_overlap( struct pathel_t *pep1, struct pathel_t *pep2)
+static int32 pth_overlap( struct pathel_t *pep1, struct pathel_t *pep2)
 {
- int i1, i2, o1, o2;
+ int32 i1, i2, o1, o2;
 
  if (pep1->pthi1 >= pep1->pthi2) { i1 = pep1->pthi1; i2 = pep1->pthi2; }
  else { i1 = pep1->pthi2; i2 = pep1->pthi1; }
@@ -5974,7 +6021,7 @@ static int pth_overlap( struct pathel_t *pep1, struct pathel_t *pep2)
 static void chk_rep_sdpds(struct spfy_t *spfp)
 {
  register struct xpnd_pthel_t *xpthp, *xpthp2;
- int numxpths, last_xpi, xpi, has_ifnone;
+ int32 numxpths, last_xpi, xpi, has_ifnone;
  struct xpnd_pthel_t *xpth_hdr, **xpth_equivs;
  struct spcpth_t *pthp, *pthp2;
  struct pathel_t *pep1s, *pep1e, *pep2s, *pep2e;
@@ -6082,10 +6129,10 @@ static void chk_rep_sdpds(struct spfy_t *spfp)
  * expand paths into list of simple (non list form) elements
  */
 static struct xpnd_pthel_t *xpnd_pths(struct spfy_t *spfp,
- int *numxpths)
+ int32 *numxpths)
 {
- register int pii, poi;
- int numxps;
+ register int32 pii, poi;
+ int32 numxps;
  struct spcpth_t *pthp;
  struct xpnd_pthel_t *xpth_hdr, *xpth_end, *xpthp; 
 
@@ -6151,7 +6198,7 @@ extern void __chk_spec_delay(struct expr_t *ndp, char *emsg)
  * do not remove since will not get to prep. code
  */
 static void chk_spterm(struct expr_t *spxp, char *spos, char *snam,
- int iodir)
+ int32 iodir)
 {
  struct net_t *np;
  struct expr_t *xp, *xp2;
@@ -6259,9 +6306,9 @@ chk_iodir:
  * limit evaluation routines must be recalled if specparams changed
  * any edges read and checking during source input but cond checked here
  */
-static int chk_1tchk(struct tchk_t *tcp)
+static int32 chk_1tchk(struct tchk_t *tcp)
 {
- int sav_errcnt;
+ int32 sav_errcnt;
  struct paramlst_t *dhdr;
  char s1[RECLEN], s2[RECLEN];
 
@@ -6382,8 +6429,8 @@ bad_const:
     }
    if (cndx->ru.x->szu.xclen != 1)
     {
-     word av, bv;
-     word *wp;
+     word32 av, bv;
+     word32 *wp;
 
      wp = &(__contab[cndx->ru.x->ru.xvi]);
      av = wp[0];
@@ -6498,7 +6545,7 @@ static struct tchk_t *bld_rec_of_recrem(struct tchk_t *otcp)
  */
 extern void __emit_param_informs(void)
 {
- register int pi;
+ register int32 pi;
  register struct net_t *np;
  register struct task_t *tskp;
  
@@ -6559,7 +6606,7 @@ extern void __free_specify(struct mod_t *mdp)
  */
 static void free_spcpths(struct spcpth_t *pthp)
 {
- register int pi;
+ register int32 pi;
  struct pathel_t *pep;
  struct spcpth_t *pthp2;
 
@@ -6628,9 +6675,9 @@ extern void __free_tchks(struct tchk_t *tcp)
 /*
  * free specify parameters - passing spec param (net) table
  */
-static void free_spcparms(struct net_t *nptab, int pnum)
+static void free_spcparms(struct net_t *nptab, int32 pnum)
 {
- register int pi;
+ register int32 pi;
  struct net_t *np;
  struct ncomp_t *ncomp;
 
@@ -6658,20 +6705,21 @@ static void free_spcparms(struct net_t *nptab, int pnum)
  */
 static void free_frozen_symtab(struct symtab_t *sytp)
 {
- register int syi;
+ register int32 syi;
  struct sy_t *syp;  
 
  /* may be dummy symbol table */
  if (sytp->numsyms == 0) return;
 
  if (sytp->stsyms == NULL) __misc_terr(__FILE__, __LINE__);
- for (syi = 0; syi < (int) sytp->numsyms; syi++)
+ for (syi = 0; syi < (int32) sytp->numsyms; syi++)
   {
    /* frozen form is array of ptrs to symbols */
    syp = sytp->stsyms[syi]; 
    /* notice must leave symbol names even though not accessible */
    __my_free((char *) syp, sizeof(struct sy_t)); 
   }
- __my_free((char *) sytp->stsyms, (int) (sytp->numsyms*sizeof(struct sy_t *)));
+ __my_free((char *) sytp->stsyms,
+  (int32) (sytp->numsyms*sizeof(struct sy_t *)));
  __my_free((char *) sytp, sizeof(struct symtab_t));
 }

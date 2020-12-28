@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -39,209 +39,209 @@
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
 #if defined(__sparc) && !defined(__SVR4)  
-extern int tolower(int);
-extern ungetc(int c, FILE *);
+extern int32 tolower(int32);
+extern ungetc(int32 c, FILE *);
 #endif
 
 #include "v.h"
 #include "cvmacros.h"
 
 /* local prototypes */
-static void prep_bld_monit_dces(struct expr_t *, int);
-static void linkon_monit_dce(struct net_t *, int, int, int, struct itree_t *);
-static int chk_monits_chged(register struct dceauxlst_t *);
-static int chk_rm_rng_legal(int, int, int, char *);
+static void prep_bld_monit_dces(struct expr_t *, int32);
+static void linkon_monit_dce(struct net_t *, int32, int32, int32, struct itree_t *);
+static int32 chk_monits_chged(register struct dceauxlst_t *);
+static int32 chk_rm_rng_legal(int32, int32, int32, char *);
 static void push_bsel(struct expr_t *);
 static void push_psel(register struct expr_t *);
-static int mdata_gettok(FILE *, int);
-static int rmrd_comment(FILE *);
-static int mdata_rdhex(FILE *, int);
-static int is_mdataxdigit(int);
-static int mdata_rdbin(FILE *, int);
-static int rm_getc(FILE *);
-static void rm_ungetc(int, FILE *);
-static int is_mdatabit(int);
-static void do_srm_xtrct(struct expr_t *, int, struct net_t *, int, int,
- int, int, int);
-static double stdnorm_dev(int *);
-static double gamma_dev(double, int *);
-static int poisson_dev(int, int *);
+static int32 mdata_gettok(FILE *, int32);
+static int32 rmrd_comment(FILE *);
+static int32 mdata_rdhex(FILE *, int32);
+static int32 is_mdataxdigit(int32);
+static int32 mdata_rdbin(FILE *, int32);
+static int32 rm_getc(FILE *);
+static void rm_ungetc(int32, FILE *);
+static int32 is_mdatabit(int32);
+static void do_srm_xtrct(struct expr_t *, int32, struct net_t *, int32, int32,
+ int32, int32, int32);
+static double stdnorm_dev(int32 *);
+static double gamma_dev(double, int32 *);
+static int32 poisson_dev(int32, int32 *);
 static double log_gamma(double);
-static void lxqcol(register struct xstk_t *, register struct xstk_t *, register struct xstk_t *, int, int, int);
+static void lxqcol(register struct xstk_t *, register struct xstk_t *, register struct xstk_t *, int32, int32, int32);
 static void eval_unary(struct expr_t *);
 static void eval_wide_unary(register struct expr_t *,
  register struct xstk_t *);
 static void eval_binary(struct expr_t *);
 static void eval_wide_binary(struct expr_t *, register struct xstk_t *,
  register struct xstk_t *);
-static void bitmwrshift(register word *, register int, register int);
-static void bitmwlshift(register word *, register int, register int);
-static void wrdmwrshift(register word *, register int, register int);
-static void wrdmwlshift(register word *, register int, register int);
-static int sgn_linc(register word *, int);
-static int accmuladd32(word *, word *, word, word *, int);
-static void mpexpr_zdiv(word *, word *, word *, int, word *, int);
-static int ztrim(word *, int);
-static void dadd(word *, word *, int, int);
-static int dsub(word *, int, word *, int, int, int);
-static void dmul(word *, int, word *, int, word64);
-static int ldiv_cmp(register word *, register word *, int);
-static void xchg_stk(int, int);
-static double uniform(int *, sword, sword);
-static sword rtl_dist_uniform(int *, sword, sword);
+static void bitmwrshift(register word32 *, register int32, register int32);
+static void bitmwlshift(register word32 *, register int32, register int32);
+static void wrdmwrshift(register word32 *, register int32, register int32);
+static void wrdmwlshift(register word32 *, register int32, register int32);
+static int32 sgn_linc(register word32 *, int32);
+static int32 accmuladd32(word32 *, word32 *, word32, word32 *, int32);
+static void mpexpr_zdiv(word32 *, word32 *, word32 *, int32, word32 *, int32);
+static int32 ztrim(word32 *, int32);
+static void dadd(word32 *, word32 *, int32, int32);
+static int32 dsub(word32 *, int32, word32 *, int32, int32, int32);
+static void dmul(word32 *, int32, word32 *, int32, word64);
+static int32 ldiv_cmp(register word32 *, register word32 *, int32);
+static void xchg_stk(int32, int32);
+static double uniform(int32 *, sword32, sword32);
+static sword32 rtl_dist_uniform(int32 *, sword32, sword32);
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_realloc(char *, int, int);
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
+extern char *__my_realloc(char *, int32, int32);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern void __ld_stval(register word *, register word *, register byte *, int);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern void __ld_stval(register word32 *, register word32 *, register byte *, int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern char __to_baselet(int);
+extern char __to_baselet(int32);
 extern struct dcevnt_t *__alloc_dcevnt(struct net_t *);
 extern FILE *__tilde_fopen(char *, char *);
-extern word __wrd_redxor(word);
-extern double __cnvt_stk_to_real(struct xstk_t *, int);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern word32 __wrd_redxor(word32);
+extern double __cnvt_stk_to_real(struct xstk_t *, int32);
+extern char *__bld_lineloc(char *, word32, int32);
 extern char *__to_timstr(char *, word64 *);
-extern char *__vval_to_vstr(word *, int, int *);
-extern char * __get_eval_cstr(struct expr_t *, int *);
-extern word __lsub(register word *, register word *, register word *, int);
-extern void __st_perinst_val(union pck_u pckv, int, register word *,
- register word *);
+extern char *__vval_to_vstr(word32 *, int32, int32 *);
+extern char * __get_eval_cstr(struct expr_t *, int32 *);
+extern word32 __lsub(register word32 *, register word32 *, register word32 *, int32);
+extern void __st_perinst_val(union pck_u pckv, int32, register word32 *,
+ register word32 *);
 
 extern void __start_monitor(struct st_t *);
 extern void __start_fmonitor(struct st_t *);
 extern void __alloc_1instdce_prevval(struct dcevnt_t *);
 extern void __init_1instdce_prevval(struct dcevnt_t *);
-extern int __get_dcewid(struct dcevnt_t *, struct net_t *);
-extern int __get_pcku_chars(int, int);
+extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
+extern int32 __get_pcku_chars(int32, int32);
 extern void __exec_strobes(void);
 extern void __exec_fmonits(void);
-extern void __exec_monit(struct dceauxlst_t *, int);
-extern void __ld_wire_sect(word *, word *, struct net_t *, register int,
- register int);
+extern void __exec_monit(struct dceauxlst_t *, int32);
+extern void __ld_wire_sect(word32 *, word32 *, struct net_t *, register int32,
+ register int32);
 extern void __grow_tevtab(void);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern void __alloc_xsval(struct xstk_t *, int);
-extern void __ld_wire_val(register word *, register word *, struct net_t *);
-extern void __ld_perinst_val(register word *, register word *, union pck_u,
- int);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
-extern void __ld_bit(register word *, register word *, register struct net_t *,
- int);
-extern void __ld_arr_val(register word *, register word *, union pck_u, int,
- int, int);
-extern void __ld_psel(register word *, register word *,
- register struct net_t *, int, int);
-extern void __rhspsel(register word *, register word *, register int,
- register int);
-extern void __exec_readmem(struct expr_t *, int);
-extern void __exec_sreadmem(struct expr_t *, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern void __alloc_xsval(struct xstk_t *, int32);
+extern void __ld_wire_val(register word32 *, register word32 *, struct net_t *);
+extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
+ int32);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
+extern void __ld_bit(register word32 *, register word32 *, register struct net_t *,
+ int32);
+extern void __ld_arr_val(register word32 *, register word32 *, union pck_u, int32,
+ int32, int32);
+extern void __ld_psel(register word32 *, register word32 *,
+ register struct net_t *, int32, int32);
+extern void __rhspsel(register word32 *, register word32 *, register int32,
+ register int32);
+extern void __exec_readmem(struct expr_t *, int32);
+extern void __exec_sreadmem(struct expr_t *, int32);
 extern void __exec_sfrand(struct expr_t *);
-extern void __ld_addr(word **, word **, register struct net_t *);
-extern void __luminus(word *, word *, int);
-extern int __is_lnegative(word *, int); 
-extern word __cp_lnegate(word *, register word *, int);
-extern word __inplace_lnegate(register word *, int);
-extern void __lunredand(int *, int *, word *, word *, int);
-extern void __lunredor(int *, int *, word *, word *, int);
-extern void __lunredxor(int *, int *, word *, word *, int);
-extern void __mwrshift(word *, unsigned, int);
-extern void __arith_mwrshift(word *, unsigned, int);
-extern void __mwlshift(word *, unsigned, int);
-extern int __cvt_lngbool(word *, word *, int); 
-extern int __do_widecmp(int *, register word *, register word *,
- register word *, register word *, int);
-extern int __do_sign_widecmp(int *, register word *, register word *,
- register word *, register word *, int);
-extern int __do_xzwidecmp(register word *, register word *, register word *,
- register word *, int);
-extern void __ladd(word *, word *, word *, int);
-extern void __lmult(register word *, register word *, register word *, int);
-extern void __sgn_lmult(register word *, register word *, register word *,
- int);
-extern void __ldivmod(word *, word *, word *, int, int);
-extern void __sgn_ldivmod(register word *, register word *, register word *,
- int, int);
-extern void __ldivmod2(word *, word *, word *, word *, int);
-extern void __by16_ldivmod(word *, word *, word *, word, int);
+extern void __ld_addr(word32 **, word32 **, register struct net_t *);
+extern void __luminus(word32 *, word32 *, int32);
+extern int32 __is_lnegative(word32 *, int32); 
+extern word32 __cp_lnegate(word32 *, register word32 *, int32);
+extern word32 __inplace_lnegate(register word32 *, int32);
+extern void __lunredand(int32 *, int32 *, word32 *, word32 *, int32);
+extern void __lunredor(int32 *, int32 *, word32 *, word32 *, int32);
+extern void __lunredxor(int32 *, int32 *, word32 *, word32 *, int32);
+extern void __mwrshift(word32 *, word32, int32);
+extern void __arith_mwrshift(word32 *, word32, int32);
+extern void __mwlshift(word32 *, word32, int32);
+extern int32 __cvt_lngbool(word32 *, word32 *, int32); 
+extern int32 __do_widecmp(int32 *, register word32 *, register word32 *,
+ register word32 *, register word32 *, int32);
+extern int32 __do_sign_widecmp(int32 *, register word32 *, register word32 *,
+ register word32 *, register word32 *, int32);
+extern int32 __do_xzwidecmp(register word32 *, register word32 *, register word32 *,
+ register word32 *, int32);
+extern void __ladd(word32 *, word32 *, word32 *, int32);
+extern void __lmult(register word32 *, register word32 *, register word32 *, int32);
+extern void __sgn_lmult(register word32 *, register word32 *, register word32 *,
+ int32);
+extern void __ldivmod(word32 *, word32 *, word32 *, int32, int32);
+extern void __sgn_ldivmod(register word32 *, register word32 *, register word32 *,
+ int32, int32);
+extern void __ldivmod2(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __by16_ldivmod(word32 *, word32 *, word32 *, word32, int32);
 
-extern void __fio_do_disp(register struct expr_t *, int, int, char *);
-extern void __do_disp(register struct expr_t *, int);
-extern void __get_cor_range(register int, union intptr_u, register int *,
- register int *);
-extern int __get_arrwide(struct net_t *);
+extern void __fio_do_disp(register struct expr_t *, int32, int32, char *);
+extern void __do_disp(register struct expr_t *, int32);
+extern void __get_cor_range(register int32, union intptr_u, register int32 *,
+ register int32 *);
+extern int32 __get_arrwide(struct net_t *);
 extern void __exec_sysfunc(register struct sy_t *, register struct expr_t *);
 extern void __exec_func(struct sy_t *, register struct expr_t *);
-extern void __lhsbsel(register word *, register int, word);
-extern void __cp_sofs_wval(register word *, register word *, register int,
- register int);
-extern void __getarr_range(struct net_t *, int *, int *, int *);
+extern void __lhsbsel(register word32 *, register int32, word32);
+extern void __cp_sofs_wval(register word32 *, register word32 *, register int32,
+ register int32);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
 extern void __my_fclose(FILE *);
-extern void __to_dhboval(int, int);
-extern void __sizchgxs(register struct xstk_t *, int);
-extern void __sgn_xtnd_widen(struct xstk_t *, int);
-extern void __sizchg_widen(register struct xstk_t *, int);
-extern void __narrow_sizchg(register struct xstk_t *, int);
+extern void __to_dhboval(int32, int32);
+extern void __sizchgxs(register struct xstk_t *, int32);
+extern void __sgn_xtnd_widen(struct xstk_t *, int32);
+extern void __sizchg_widen(register struct xstk_t *, int32);
+extern void __narrow_sizchg(register struct xstk_t *, int32);
 extern void __narrow_to1bit(register struct xstk_t *);
 
-extern int __wide_vval_is0(register word *, int);
-extern int __trim1_0val(word *, int);
-extern void __lhspsel(register word *, register int, register word *,
- register int);
-extern int __vval_is1(register word *, int);
-extern int __get_eval_word(struct expr_t *, word *);
-extern void __exec2_proc_assign(struct expr_t *, register word *,
- register word *);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern int32 __trim1_0val(word32 *, int32);
+extern void __lhspsel(register word32 *, register int32, register word32 *,
+ register int32);
+extern int32 __vval_is1(register word32 *, int32);
+extern int32 __get_eval_word(struct expr_t *, word32 *);
+extern void __exec2_proc_assign(struct expr_t *, register word32 *,
+ register word32 *);
 extern void __rhs_concat(struct expr_t *);
 extern void __eval_qcol(register struct expr_t *);
 extern void __eval_realrealqcol(register struct expr_t *);
 extern void __eval_realregqcol(register struct expr_t *);
 extern void __eval_regrealqcol(register struct expr_t *);
-extern void __lunbitnot(word *, word *, int);
-extern int __set_binxresult(word *, word *, word *, word *, int);
-extern void __lbitand(word *, word *, word *, word *, int);
-extern void __lbitor(word *, word *, word *, word *, int);
-extern void __lbitxor(word *, word *, word *, word *, int);
-extern void __lbitxnor(word *, word *, word *, word *, int);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __lunbitnot(word32 *, word32 *, int32);
+extern int32 __set_binxresult(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __lbitand(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __lbitor(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __lbitxor(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __lbitxnor(word32 *, word32 *, word32 *, word32 *, int32);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern int __omitxz_widenoteq(register word *, register word *,
- register word *, register word *, int);
+extern int32 __omitxz_widenoteq(register word32 *, register word32 *,
+ register word32 *, register word32 *, int32);
 extern void __dcelst_on(struct dceauxlst_t *);
 extern void __dcelst_off(struct dceauxlst_t *);
 extern void reinit_dcelst(struct dceauxlst_t *); 
-extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int);  
-extern void __do_rm_reading(FILE *, int, struct net_t *, int, int, int, int,
- int);
-extern void __wakeup_delay_ctrls(register struct net_t *, register int,
- register int);
-extern void __add_select_nchglst_el(register struct net_t *, register int,
- register int);
+extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
+extern void __do_rm_reading(FILE *, int32, struct net_t *, int32, int32, int32, int32,
+ int32);
+extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
+ register int32);
+extern void __add_select_nchglst_el(register struct net_t *, register int32,
+ register int32);
 extern void __add_dmpv_chglst_el(struct net_t *);
-extern void __st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
-extern void __chg_st_arr_val(union pck_u, int, int, int, register word *,
- register word *);
+extern void __st_arr_val(union pck_u, int32, int32, int32, register word32 *,
+ register word32 *);
+extern void __chg_st_arr_val(union pck_u, int32, int32, int32, register word32 *,
+ register word32 *);
 
 extern void __cvsim_msg(char *, ...);
-/* SJM - not used -extern void __pv_err(int, char *, ...); */
-extern void __pv_warn(int, char *,...);
-extern void __sgfwarn(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __sgferr(int, char *, ...);
+/* SJM - not used -extern void __pv_err(int32, char *, ...); */
+extern void __pv_warn(int32, char *,...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __inform(int, char *, ...);
+extern void __sgfinform(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __inform(int32, char *, ...);
 
-extern word __masktab[];
+extern word32 __masktab[];
 extern char __pv_ctab[];
 
 /*
@@ -259,7 +259,7 @@ extern char __pv_ctab[];
 extern void __start_monitor(struct st_t *stp)
 {
  register struct expr_t *alxp;
- int argi;
+ int32 argi;
  byte *argisvtab;
  struct tskcall_t *tkcp;
  struct mod_t *imdp;
@@ -294,7 +294,7 @@ extern void __start_monitor(struct st_t *stp)
  
  if (!mauxp->dces_blt)
   {
-   register int ii;
+   register int32 ii;
 
    for (ii = 0; ii < __inst_mod->flatinum; ii++)
     {
@@ -304,7 +304,7 @@ extern void __start_monitor(struct st_t *stp)
      alxp = tkcp->targs;
      for (argi = 0; alxp != NULL; alxp = alxp->ru.x, argi++)
       {
-       prep_bld_monit_dces(alxp->lu.x, (int) argisvtab[argi]);
+       prep_bld_monit_dces(alxp->lu.x, (int32) argisvtab[argi]);
       }
      mauxp->mon_dcehdr[ii] = __monit_dcehdr; 
 
@@ -404,7 +404,7 @@ extern void __start_fmonitor(struct st_t *stp)
 {
  register struct expr_t *alxp;
  register struct dceauxlst_t *dclp;
- int argi;
+ int32 argi;
  byte *argisvtab;
  struct tskcall_t *tkcp;
  struct fmonlst_t *fmonp;
@@ -412,7 +412,6 @@ extern void __start_fmonitor(struct st_t *stp)
  struct dceauxlst_t *sav_dclp;
  struct dcevnt_t *dcep;
  struct monaux_t *mauxp;
- struct net_t *np;  
 
  tkcp = &(stp->st.stkc);
  /* ignore first mc channel descripter since not involved in monitoring */
@@ -446,7 +445,7 @@ extern void __start_fmonitor(struct st_t *stp)
  /* works because if any vm insn gen, no interactive */
  if (!mauxp->dces_blt)
   {
-   register int ii;
+   register int32 ii;
 
    /* save $monit dce list */
    sav_dclp = __monit_dcehdr; 
@@ -457,7 +456,7 @@ extern void __start_fmonitor(struct st_t *stp)
      /* build the dces - notice build now starts each monit dce off*/
      __monit_dcehdr = NULL;
      for (argi = 1; alxp != NULL; alxp = alxp->ru.x, argi++)
-       prep_bld_monit_dces(alxp->lu.x, (int) argisvtab[argi]);
+       prep_bld_monit_dces(alxp->lu.x, (int32) argisvtab[argi]);
 
      /* SJM 08/26/02 - need to indicate monit is fmonit */ 
      for (dclp = __monit_dcehdr; dclp != NULL; dclp = dclp->dclnxt)
@@ -509,12 +508,12 @@ extern void __start_fmonitor(struct st_t *stp)
  * SJM 06/21/02 - new algorithm build dce list for all in src (f)monit
  * during prep and activate/deactive from execution
  */
-extern void __prep_insrc_monit(struct st_t *stp, int fmon_type)
+extern void __prep_insrc_monit(struct st_t *stp, int32 fmon_type)
 {
- register int ii;
+ register int32 ii;
  register struct expr_t *alxp;
  register struct dceauxlst_t *dclp;
- int argi;
+ int32 argi;
  byte *argisvtab;
  struct tskcall_t *tkcp;
  struct monaux_t *mauxp;
@@ -547,7 +546,7 @@ extern void __prep_insrc_monit(struct st_t *stp, int fmon_type)
    argi = 0;
    for (alxp = tkcp->targs; alxp != NULL; alxp = alxp->ru.x, argi++)
     {
-     prep_bld_monit_dces(alxp->lu.x, (int) argisvtab[argi]);
+     prep_bld_monit_dces(alxp->lu.x, (int32) argisvtab[argi]);
     }
    if (fmon_type)
     {
@@ -569,11 +568,11 @@ extern void __prep_insrc_monit(struct st_t *stp, int fmon_type)
  * during design preparation build monitor dces for every possible
  * instance (also non prep version for when monit added from iact mode)
  */
-static void prep_bld_monit_dces(struct expr_t *xp, int argisvfmt)  
+static void prep_bld_monit_dces(struct expr_t *xp, int32 argisvfmt)  
 {
  struct net_t *np;
- int biti, bitj;
- word *wp;
+ int32 biti, bitj;
+ word32 *wp;
  struct expr_t *idndp, *ndx;
  struct expr_t *fax;
  struct itree_t *ref_itp;
@@ -607,14 +606,14 @@ glb_dce:
    if (ndx->optyp == NUMBER)
     {
      wp = &(__contab[ndx->ru.xvi]);
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else if (ndx->optyp == ISNUMBER)
     {
      wp = &(__contab[ndx->ru.xvi]);
      wp = &(wp[2*__inum]);
      /* need length for IS number because can be wider - but get low */
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else
     {
@@ -634,9 +633,9 @@ glb_dce:
    ndx = xp->ru.x;
    /* know part select never IS */
    wp = &(__contab[ndx->lu.x->ru.xvi]);
-   biti = (int) wp[0];
+   biti = (int32) wp[0];
    wp = &(__contab[ndx->ru.x->ru.xvi]);
-   bitj = (int) wp[0];
+   bitj = (int32) wp[0];
 
    if (!np->vec_scalared) biti = bitj = -1;
    if (idndp->optyp == GLBREF) goto glb_dce;
@@ -679,8 +678,8 @@ glb_dce:
  * SJM 01/06/03 - only callable during prep since all monit dces in src
  * build here or from interactive mode
  */
-static void linkon_monit_dce(struct net_t *np, int biti, int bitj,
- int argisvfmt, struct itree_t *ref_itp)
+static void linkon_monit_dce(struct net_t *np, int32 biti, int32 bitj,
+ int32 argisvfmt, struct itree_t *ref_itp)
 {
  struct dcevnt_t *dcep;
  struct dceauxlst_t *dclp;
@@ -736,7 +735,6 @@ static void linkon_monit_dce(struct net_t *np, int biti, int bitj,
    /* SJM 02/06/03 - may have npps but not dces so must turn this on */
    /* since nchg nd chgstore on, know nchg action right */
    if (np->ntyp >= NONWIRE_ST) np->nchg_has_dces = TRUE;
-
   } 
 
  /* -- DBG REMOVE
@@ -759,7 +757,7 @@ static void linkon_monit_dce(struct net_t *np, int biti, int bitj,
 /*
  * get width in bits of a dcep range or wire
  */
-extern int __get_dcewid(struct dcevnt_t *dcep, struct net_t *np)
+extern int32 __get_dcewid(struct dcevnt_t *dcep, struct net_t *np)
 {
  if (dcep->dci1 == -2) return(1);
  if (dcep->dci1 == -1) return(np->nwid);
@@ -769,7 +767,7 @@ extern int __get_dcewid(struct dcevnt_t *dcep, struct net_t *np)
 /*
  * get number of packed bytes for ld peri and st peri access 
  */
-extern int __get_pcku_chars(int blen, int insts)
+extern int32 __get_pcku_chars(int32 blen, int32 insts)
 {
  /* SJM 10/14/99 - now storing all scalars as one byte */
  if (blen == 1) return(insts);
@@ -787,7 +785,7 @@ extern int __get_pcku_chars(int blen, int insts)
 extern void __exec_strobes(void)
 {
  register struct strblst_t *strblp;
- int base, sav_slin_cnt, sav_sfnam_ind;
+ int32 base, sav_slin_cnt, sav_sfnam_ind;
  struct st_t *stp;
  struct tskcall_t *tkcp;
  struct expr_t *tkxp;
@@ -857,7 +855,7 @@ extern void __exec_fmonits(void)
    fmonp = fmsep->fmon;
    __monit_stp = fmonp->fmon_stp; 
    __monit_itp = fmonp->fmon_itp; 
-   __exec_monit(fmonp->fmon_dcehdr, (int) (fmonp->fmon_forcewrite == 1));
+   __exec_monit(fmonp->fmon_dcehdr, (int32) (fmonp->fmon_forcewrite == 1));
    /* turn off triggered since this time slot end change processed */
    fmonp->fmse_trig = NULL;
    fmonp->fmon_forcewrite = FALSE;
@@ -883,9 +881,9 @@ extern void __exec_fmonits(void)
  * only called if at least one and like dispay not write
  * fmonp nil implies it is $monitor
  */
-extern void __exec_monit(struct dceauxlst_t *monit_hd, int force_write)
+extern void __exec_monit(struct dceauxlst_t *monit_hd, int32 force_write)
 {
- int base, sav_slin_cnt, sav_sfnam_ind;
+ int32 base, sav_slin_cnt, sav_sfnam_ind;
  struct tskcall_t *tkcp;
  struct expr_t *tkxp;
  struct systsk_t *stbp;
@@ -937,11 +935,11 @@ f_disp:
  *
  * know itree loc set
  */
-static int chk_monits_chged(register struct dceauxlst_t *dclp)
+static int32 chk_monits_chged(register struct dceauxlst_t *dclp)
 {
  register struct xstk_t *xsp, *xsp2; 
  byte *sbp, *sbp2;
- int i1, i2, i, chged, dcewid;
+ int32 i1, i2, i, chged, dcewid;
  struct dcevnt_t *dcep;
  struct net_t *np; 
 
@@ -1022,10 +1020,10 @@ static int chk_monits_chged(register struct dceauxlst_t *dclp)
  * if bit select of array load array cell
  * this is for non strength wire case
  */ 
-extern void __ld_wire_sect(word *ap, word *bp, struct net_t *np,
- register int i1, register int i2)
+extern void __ld_wire_sect(word32 *ap, word32 *bp, struct net_t *np,
+ register int32 i1, register int32 i2)
 {
- int arrwid;
+ int32 arrwid;
 
  if (i1 == -1) { __ld_wire_val(ap, bp, np); return; }
  if (i1 == i2)
@@ -1051,7 +1049,7 @@ extern void __ld_wire_sect(word *ap, word *bp, struct net_t *np,
 extern struct xstk_t *__src_rd_eval_xpr(struct expr_t *ndp)
 {
  struct xstk_t *xsp;
- int sav_slin_cnt, sav_sfnam_ind;
+ int32 sav_slin_cnt, sav_sfnam_ind;
 
  /* can assign specparam value immediately */
  /* SJM 06/17/99 - needs to run in run/fixup mode - statement loc set */
@@ -1113,8 +1111,8 @@ extern struct xstk_t *__eval_xpr(struct expr_t *ndp)
 extern struct xstk_t *__eval2_xpr(register struct expr_t *ndp)
 {
  register struct xstk_t *xsp;
- int wlen;
- register word *wp;
+ int32 wlen;
+ register word32 *wp;
  struct net_t *np;
  struct gref_t *grp;
  struct sy_t *syp;
@@ -1155,13 +1153,13 @@ extern struct xstk_t *__eval2_xpr(register struct expr_t *ndp)
   case ISNUMBER:
    push_xstk_(xsp, ndp->szu.xclen);
    wlen = wlen_(ndp->szu.xclen);
-   wp = (word *) &(__contab[ndp->ru.xvi]);
+   wp = (word32 *) &(__contab[ndp->ru.xvi]);
    memcpy(xsp->ap, &(wp[2*wlen*__inum]), 2*WRDBYTES*wlen);
    return(xsp);
   case ISREALNUM:
    push_xstk_(xsp, ndp->szu.xclen);
    wlen = wlen_(ndp->szu.xclen);
-   wp = (word *) &(__rlcontab[ndp->ru.xvi + __inum]);
+   wp = (word32 *) &(__rlcontab[ndp->ru.xvi + __inum]);
    memcpy(xsp->ap, wp, 2*WRDBYTES*wlen);
    return(xsp);
   case GLBREF:
@@ -1222,9 +1220,9 @@ done:
  */
 extern void __grow_xstk(void)
 {
- register int i;
- int old_maxxnest;
- int osize, nsize;
+ register int32 i;
+ int32 old_maxxnest;
+ int32 osize, nsize;
 
  old_maxxnest = __maxxnest;
  osize = old_maxxnest*sizeof(struct xstk_t *);
@@ -1245,7 +1243,7 @@ extern void __grow_xstk(void)
 /* 
  * routine to widen xstk element if wider than default words - rare 
  */
-extern void __chg_xstk_width(struct xstk_t *xsp, int wlen)
+extern void __chg_xstk_width(struct xstk_t *xsp, int32 wlen)
 {
  /* freeing in case of need for very wide expr. */
  __my_free((char *) xsp->ap, 2*WRDBYTES*xsp->xsawlen);
@@ -1253,7 +1251,7 @@ extern void __chg_xstk_width(struct xstk_t *xsp, int wlen)
 }
 
 /*
- * allocate stack entry value word array
+ * allocate stack entry value word32 array
  * only called after need to widen determined 
  * this allocates wide enough stack value - caller must set width and value
  * this always makes a and b parts contiguous
@@ -1261,15 +1259,15 @@ extern void __chg_xstk_width(struct xstk_t *xsp, int wlen)
  * only allocate and free here 
  * FIXME - why not use re-alloc?
  */
-extern void __alloc_xsval(struct xstk_t *xsp, int xstkwlen)
+extern void __alloc_xsval(struct xstk_t *xsp, int32 xstkwlen)
 {
- word *ap;
- int awlen;
+ word32 *ap;
+ int32 awlen;
 
  awlen = (xstkwlen < DFLTIOWORDS) ? DFLTIOWORDS : xstkwlen;
  /* notice a and b parts must be allocated once contiguously */
- /* 4 words means 128 bits at 32 bits dependent per word */
- ap = (word *) __my_malloc(2*WRDBYTES*awlen);
+ /* 4 words means 128 bits at 32 bits dependent per word32 */
+ ap = (word32 *) __my_malloc(2*WRDBYTES*awlen);
  xsp->ap = ap;
  /* this makes 2 part contiguous */
  xsp->bp = &(ap[xstkwlen]);
@@ -1285,18 +1283,18 @@ extern void __alloc_xsval(struct xstk_t *xsp, int xstkwlen)
  * rgap and rgbp assumed to have enough room
  * also for params and specparams
  */
-extern void __ld_wire_val(register word *rgap, register word *rgbp,
+extern void __ld_wire_val(register word32 *rgap, register word32 *rgbp,
  struct net_t *np)
 {
- register word uwrd, *rap, *wp;
- register int wlen;
+ register word32 uwrd, *rap, *wp;
+ register int32 wlen;
  struct expr_t *xp;
  struct expr_t **pxparr;
  struct xstk_t *xsp;
 
  switch ((byte) np->srep) {
   case SR_VEC:
-   /* rap is 2*wlen word section of vec array that stores cur. inst vec. */
+   /* rap is 2*wlen word32 section of vec array that stores cur. inst vec. */
    wlen = wlen_(np->nwid);
    /* DBG remove ---
    if (__inst_ptr == NULL) __arg_terr(__FILE__, __LINE__);
@@ -1313,7 +1311,7 @@ extern void __ld_wire_val(register word *rgap, register word *rgbp,
    return;
   case SR_SSCAL:
    /* notice accessing byte value and assign so endian ok */
-   uwrd = (word) np->nva.bp[__inum];
+   uwrd = (word32) np->nva.bp[__inum];
    rgap[0] = uwrd & 1L;
    rgbp[0] = (uwrd >> 1) & 1L;
    return;
@@ -1364,11 +1362,11 @@ extern void __ld_wire_val(register word *rgap, register word *rgbp,
  *
  * know size change never needed here 
  */
-extern void __ld_perinst_val(register word *rgap, register word *rgbp,
- union pck_u pckv, int vblen)
+extern void __ld_perinst_val(register word32 *rgap, register word32 *rgbp,
+ union pck_u pckv, int32 vblen)
 {
- word *rap;
- int wlen;
+ word32 *rap;
+ int32 wlen;
 
  if (vblen == 1) { ld_scalval_(rgap, rgbp, pckv.bp); return; }
  /* SJM - 07/15/00 - all per-inst vecs in at least 2 words */
@@ -1385,20 +1383,20 @@ extern void __ld_perinst_val(register word *rgap, register word *rgbp,
  * notice this uses lhs selects into rgap/rgbp so must 0 to start
  * and cannot assume contiguous
  */
-extern void __ld_stval(register word *rgap, register word *rgbp,
- register byte *sbp, int blen)
+extern void __ld_stval(register word32 *rgap, register word32 *rgbp,
+ register byte *sbp, int32 blen)
 {
- register int bi;
- int wlen;
- word tmpw;
+ register int32 bi;
+ int32 wlen;
+ word32 tmpw;
  
- /* zero unused high bits in high word only - rest will be selected into */
+ /* zero unused high bits in high word32 only - rest will be selected into */
  wlen = wlen_(blen);
  rgap[wlen - 1] = 0L;
  rgbp[wlen - 1] = 0L;
  for (bi = 0; bi < blen; bi++)
   {
-   tmpw = (word) sbp[bi];
+   tmpw = (word32) sbp[bi];
    __lhsbsel(rgap, bi, tmpw & 1L);
    __lhsbsel(rgbp, bi, (tmpw >> 1) & 1L);
   }
@@ -1415,8 +1413,8 @@ static void push_bsel(struct expr_t *ndp)
 {
  register struct xstk_t *xsp;
  register struct net_t *np;
- register word *rap;
- int biti, arrwid, wlen;
+ register word32 *rap;
+ int32 biti, arrwid, wlen;
  struct expr_t *idndp;
  
  idndp = ndp->lu.x;
@@ -1489,16 +1487,16 @@ static void push_bsel(struct expr_t *ndp)
  * constants are already normalized during compilation
  * reals illegal and caught before here
  */
-extern int __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
+extern int32 __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
 {
- register word *rap;
- register word *wp;
- int biti, ri1, ri2, biti2, obwid, wlen;
+ register word32 *rap;
+ register word32 *wp;
+ int32 biti, ri1, ri2, biti2, obwid;
  struct net_t *xnp;
  struct xstk_t *xsp2;
 
  /* special case 0 - simple unpacked variable */
- /* SJM 05/21/04 - can only short circuit if fits in one word */
+ /* SJM 05/21/04 - can only short circuit if fits in one word32 */
  if (ndx->optyp == ID && ndx->szu.xclen <= WBITS)
   {
    xnp = ndx->lu.sy->el.enp;
@@ -1526,7 +1524,7 @@ extern int __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
      __badind_wid = ndx->szu.xclen;
      return(-1);
     }
-   return((int) wp[0]);
+   return((int32) wp[0]);
   }
  /* case 2 IS constant */
  /* notice IS NUMBER form must be normalized at compile time */
@@ -1541,7 +1539,7 @@ extern int __comp_ndx(register struct net_t *np, register struct expr_t *ndx)
      __badind_wid = ndx->szu.xclen;
      return(-1);
     }
-   return((int) wp[0]);
+   return((int32) wp[0]);
   }
  /* case 3 expression */
  /* case 3b - other expr. */
@@ -1556,7 +1554,7 @@ nd_eval:
    __pop_xstk();
    return(-1);
   }
- biti2 = (int) xsp2->ap[0];
+ biti2 = (int32) xsp2->ap[0];
  __pop_xstk();
 
 normalize:
@@ -1577,8 +1575,8 @@ normalize:
   {
    if (np->nrngrep == NX_CT)
     {
-     ri1 = (int) __contab[np->nu.ct->nx1->ru.xvi];
-     ri2 = (int) __contab[np->nu.ct->nx2->ru.xvi];
+     ri1 = (int32) __contab[np->nu.ct->nx1->ru.xvi];
+     ri2 = (int32) __contab[np->nu.ct->nx2->ru.xvi];
     }
    else
     {
@@ -1618,7 +1616,7 @@ extern void __pop_xstk(void)
 
 /* BEWARE - a and b parts must be contiguous because often refed as only a */ 
 /* -- ??? DBG ADD --
-extern struct xstk_t *__push_xstk(int blen)
+extern struct xstk_t *__push_xstk(int32 blen)
 { 
  register struct xstk_t *xsp;
 
@@ -1656,11 +1654,11 @@ extern struct xstk_t *__push_xstk(int blen)
  * only run time SR forms possible here
  * BEWARE - this is sometimes used to load scalar so much leave scalar sreps 
  */
-extern void __ld_bit(register word *rgap, register word *rgbp,
- register struct net_t *np, int biti)
+extern void __ld_bit(register word32 *rgap, register word32 *rgbp,
+ register struct net_t *np, int32 biti)
 {
- register word uwrd, *rap;
- register int wlen;
+ register word32 uwrd, *rap;
+ register int32 wlen;
 
  /* out of range is x */
  if (biti > np->nwid) { rgap[0] = rgbp[0] = 1L; return; }
@@ -1676,7 +1674,7 @@ extern void __ld_bit(register word *rgap, register word *rgbp,
   case SR_SVEC:
    /* strength vectors normalized to h:0 which means v[0] is index 0 */
    /* since h:0 means low bit to left in radix style notation */
-   uwrd = (word) np->nva.bp[__inum*np->nwid + biti];
+   uwrd = (word32) np->nva.bp[__inum*np->nwid + biti];
 do_slb:
    rgap[0] = uwrd & 1L;
    rgbp[0] = (uwrd >> 1) & 1L;
@@ -1688,7 +1686,7 @@ do_slb:
    ld_scalval_(rgap, rgbp, np->nva.bp);
    break;
   case SR_SSCAL:
-   uwrd = (word) np->nva.bp[__inum];
+   uwrd = (word32) np->nva.bp[__inum];
    goto do_slb;
   case SR_PISNUM:
    wlen = wlen_(np->nwid);
@@ -1722,16 +1720,16 @@ do_slb:
  * arri here must be normalized to h:0 form
  * map is base of array area (np nva)
  */
-extern void __ld_arr_val(register word *rgap, register word *rgbp,
- union pck_u map, int mlen, int blen, int arri)
+extern void __ld_arr_val(register word32 *rgap, register word32 *rgbp,
+ union pck_u map, int32 mlen, int32 blen, int32 arri)
 {
- register int wlen;
- register word *rap;
- word tmpw;
- int indi;
+ register int32 wlen;
+ register word32 *rap;
+ word32 tmpw;
+ int32 indi;
 
  /* compute number of words used to store 1 array element */
- /* 17 or more bits cannot be packed with multiple elements per word */
+ /* 17 or more bits cannot be packed with multiple elements per word32 */
  if (blen > WBITS/2)
   {
    /* case 1: each vector element of array needs multiple words */
@@ -1754,7 +1752,7 @@ extern void __ld_arr_val(register word *rgap, register word *rgbp,
    rgbp[0] = (tmpw >> 1) & 1L;
    return;
   }
- /* case 3: multiple elements packed per word, half word, or byte */
+ /* case 3: multiple elements packed per word32, half word32, or byte */
  indi = __inum*mlen + arri;
  /* SJM 12/16/99 - still need to really pack memories to bytes and hwords */
  tmpw = get_packintowrd_(map, indi, blen);
@@ -1772,7 +1770,7 @@ extern void __ld_arr_val(register word *rgap, register word *rgbp,
 static void push_psel(register struct expr_t *ndp)
 {
  register struct expr_t *ndx1, *ndx2;
- int bi1, bi2;
+ int32 bi1, bi2;
  struct expr_t *idndp;
  struct xstk_t *xsp;
  struct net_t *np;
@@ -1813,12 +1811,12 @@ static void push_psel(register struct expr_t *ndp)
  *
  * notice perfectly legal to declare wire [1:1] x and psel the 1 bit
  */
-extern void __ld_psel(register word *rgap, register word *rgbp,
- register struct net_t *np, int bith, int bitl)
+extern void __ld_psel(register word32 *rgap, register word32 *rgbp,
+ register struct net_t *np, int32 bith, int32 bitl)
 {
- register word *rap;
+ register word32 *rap;
  byte *netsbp;
- int wlen, numbits;
+ int32 wlen, numbits;
  
  numbits = bith - bitl + 1;
 
@@ -1827,7 +1825,7 @@ extern void __ld_psel(register word *rgap, register word *rgbp,
    /* rap is start of current instance coded vector a b groups */
    wlen = wlen_(np->nwid);
    rap = &(np->nva.wp[2*wlen*__inum]);
-   /* this routine expects select to start from bit in 1st word */
+   /* this routine expects select to start from bit in 1st word32 */
    __rhspsel(rgap, rap, bitl, numbits);
    rap = &(rap[wlen]);
    __rhspsel(rgbp, rap, bitl, numbits);
@@ -1842,7 +1840,7 @@ extern void __ld_psel(register word *rgap, register word *rgbp,
    /* rap is start of current instance coded vector a b groups */
    wlen = wlen_(np->nwid);
    rap = np->nva.wp;
-   /* this routine expects select to start from bit in 1st word */
+   /* this routine expects select to start from bit in 1st word32 */
    __rhspsel(rgap, rap, bitl, numbits);
    rap = &(rap[wlen]);
    __rhspsel(rgbp, rap, bitl, numbits);
@@ -1851,7 +1849,7 @@ extern void __ld_psel(register word *rgap, register word *rgbp,
    /* rap is start of current instance coded vector a b groups */
    wlen = wlen_(np->nwid);
    rap = &(np->nva.wp[2*wlen*__inum]);
-   /* this routine expects select to start from bit in 1st word */
+   /* this routine expects select to start from bit in 1st word32 */
    __rhspsel(rgap, rap, bitl, numbits);
    rap = &(rap[wlen]);
    __rhspsel(rgbp, rap, bitl, numbits);
@@ -1868,12 +1866,12 @@ extern void __ld_psel(register word *rgap, register word *rgbp,
  * notice for part select, range correction done at compile time
  * also notice that 1 bits things can go through here but not lhs psel
  */
-extern void __rhspsel(register word *dwp, register word *swp,
- register int sbit1, register int numbits)
+extern void __rhspsel(register word32 *dwp, register word32 *swp,
+ register int32 sbit1, register int32 numbits)
 {
- register int wi, corsbit1;
+ register int32 wi, corsbit1;
 
- /* case 1 - select within 1st word */
+ /* case 1 - select within 1st word32 */
  if (sbit1 + numbits <= WBITS)
   {
    corsbit1 = sbit1;
@@ -1883,18 +1881,18 @@ do_inword:
    return;
   }
 
- /* normalize so swp and corsbit1 start of source with corsbit1 in 1st word */
+ /* normalize so swp and corsbit1 start of source with corsbit1 in 1st word32 */
  wi = get_wofs_(sbit1);
  swp = &(swp[wi]);
  corsbit1 = ubits_(sbit1);
 
- /* case 2 - selection does not cross word boundary */
+ /* case 2 - selection does not cross word32 boundary */
  if (corsbit1 + numbits <= WBITS) goto do_inword;
 
- /* case 3a - selection crosses word boundary but start on word boundary */
+ /* case 3a - selection crosses word32 boundary but start on word32 boundary */
  if (corsbit1 == 0) { cp_walign_(dwp, swp, numbits); return; }
 
- /* case 3a - crosses 1 word boundary and <= WBITS long */
+ /* case 3a - crosses 1 word32 boundary and <= WBITS long */
  if (numbits <= WBITS)
   {
    *dwp = (swp[0] >> corsbit1);
@@ -1914,10 +1912,10 @@ do_inword:
  * know 2nd argument array and from 2 to 4 args or will not get here
  * LOOKATME maybe a memory leak with __cur_fnam?
  */
-extern void __exec_readmem(struct expr_t *argxp, int base)
+extern void __exec_readmem(struct expr_t *argxp, int32 base)
 {
- int slen, ri1, ri2, arrwid, arr1, arr2;
- int tmpi, sav_lincnt, nd_itpop;
+ int32 slen, ri1, ri2, arrwid, arr1, arr2;
+ int32 tmpi, sav_lincnt, nd_itpop;
  FILE *f;
  struct expr_t *axp;
  struct net_t *np;
@@ -2024,7 +2022,7 @@ no_fil_done:
  * check a readmem range value to make sure in range
  * return F on error
  */
-static int chk_rm_rng_legal(int tmpi, int ri1, int ri2, char *msg)
+static int32 chk_rm_rng_legal(int32 tmpi, int32 ri1, int32 ri2, char *msg)
 {
  if (ri1 <= ri2) { if (tmpi >= ri1 && tmpi <= ri2) return(TRUE); } 
  else { if (tmpi <= ri1 && tmpi >= ri2) return(TRUE); }
@@ -2045,11 +2043,11 @@ static int chk_rm_rng_legal(int tmpi, int ri1, int ri2, char *msg)
  * this corrects each time for non h:0 form if needed
  * if readmem array is XMR itree loc changed before this call
  */
-extern void __do_rm_reading(FILE *f, int base, struct net_t *np,
- int arr1, int arr2, int ri1, int ri2, int arrwid)
+extern void __do_rm_reading(FILE *f, int32 base, struct net_t *np,
+ int32 arr1, int32 arr2, int32 ri1, int32 ri2, int32 arrwid)
 {
- register int arri, rmfr, rmto; 
- int dir, nbytes, ttyp, h0_arri, no_rngwarn;
+ register int32 arri, rmfr, rmto; 
+ int32 dir, nbytes, ttyp, h0_arri, no_rngwarn;
  struct xstk_t *xsp;
 
  /* fill the array */
@@ -2108,7 +2106,7 @@ extern void __do_rm_reading(FILE *f, int base, struct net_t *np,
        return;
       }
      /* check for within specified range */
-     arri = (int) __acwrk[0];
+     arri = (int32) __acwrk[0];
      if ((dir == 1 && (arri < rmfr || arri > rmto))
       || (dir == -1 && (arri > rmfr || arri < rmto)))
       {
@@ -2182,9 +2180,9 @@ extern void __do_rm_reading(FILE *f, int base, struct net_t *np,
  * value in token of __itoklen bits
  * array width here limited to 1023 chars 
  */
-static int mdata_gettok(FILE *f, int base)
+static int32 mdata_gettok(FILE *f, int32 base)
 {
- register int c;
+ register int32 c;
 
 again:
  while ((c = rm_getc(f)) == ' ' || c == '\t' || c == '\f' || c == '\r') ;
@@ -2211,10 +2209,10 @@ again:
 /*
  * readmem form of get a comment
  */
-static int rmrd_comment(FILE *f)
+static int32 rmrd_comment(FILE *f)
 {
- register int c;
- int c2;
+ register int32 c;
+ int32 c2;
 
  /* // to EOL comment */
  if ((c2 = rm_getc(f)) == '/')
@@ -2253,12 +2251,12 @@ got_star:
 /*
  * routine to read readmem style hex number
  */
-static int mdata_rdhex(FILE *f, int c)
+static int32 mdata_rdhex(FILE *f, int32 c)
 {
  register char *chp;
- int len, nsize;
- int has_digit = FALSE;
- int toolong = FALSE;
+ int32 len, nsize;
+ int32 has_digit = FALSE;
+ int32 toolong = FALSE;
  
  for (chp = __numtoken, len = 0;;)
   {
@@ -2322,7 +2320,7 @@ static int mdata_rdhex(FILE *f, int c)
 /*
  * return T if readmem style hex digit 
  */
-static int is_mdataxdigit(int c)
+static int32 is_mdataxdigit(int32 c)
 {
  switch ((byte) c) {
   case 'z': case 'Z': case 'x': case 'X': case '?': break;
@@ -2334,13 +2332,13 @@ static int is_mdataxdigit(int c)
 /*
  * routine to read readmem style binary number
  */
-static int mdata_rdbin(FILE *f, int c)
+static int32 mdata_rdbin(FILE *f, int32 c)
 {
  register char *chp;
- register int len;
- int nsize;
- int has_bit = FALSE;
- int toolong = FALSE;
+ register int32 len;
+ int32 nsize;
+ int32 has_bit = FALSE;
+ int32 toolong = FALSE;
 
  for (len = 0, chp = __numtoken;;)
   {
@@ -2398,10 +2396,10 @@ static int mdata_rdbin(FILE *f, int c)
 /*
  * special get that allow reading from sreadmem c style string argument
  */
-static int rm_getc(FILE *f)
+static int32 rm_getc(FILE *f)
 {
- register int c;
- int blen;
+ register int32 c;
+ int32 blen;
 
  if (f == NULL)
   {
@@ -2458,7 +2456,7 @@ static int rm_getc(FILE *f)
  * special get that allow reading from sreadmem c style string argument
  * caller's responsible to not back over front 
  */
-static void rm_ungetc(int c, FILE *f)
+static void rm_ungetc(int32 c, FILE *f)
 {
  if (f != NULL) ungetc(c, f); else __srm_strp--;
 }
@@ -2466,7 +2464,7 @@ static void rm_ungetc(int c, FILE *f)
 /*
  * return T if readmem style bin digit 
  */
-static int is_mdatabit(int c)
+static int32 is_mdatabit(int32 c)
 {
  switch ((byte) c) {
   case 'z': case 'Z': case 'x': case 'X': case '?': case '0': case '1':
@@ -2481,9 +2479,9 @@ static int is_mdatabit(int c)
  * execute the sreadmem[bh] system task
  * know 1st argument array, 2nd and 3nd range, rest strings
  */
-extern void __exec_sreadmem(struct expr_t *argxp, int base)
+extern void __exec_sreadmem(struct expr_t *argxp, int32 base)
 {
- int ri1, ri2, arrwid, arr1, arr2, tmpi, nd_itpop;
+ int32 ri1, ri2, arrwid, arr1, arr2, tmpi, nd_itpop;
  struct expr_t *axp;
  struct net_t *np;
  char s1[RECLEN];
@@ -2567,13 +2565,13 @@ done:
  *
  * string can be any expr. that evaluates to string
  */
-static void do_srm_xtrct(struct expr_t *xp, int base, struct net_t *np,
- int arr1, int arr2, int ri1, int ri2, int arrwid)
+static void do_srm_xtrct(struct expr_t *xp, int32 base, struct net_t *np,
+ int32 arr1, int32 arr2, int32 ri1, int32 ri2, int32 arrwid)
 {
- register int arri; 
+ register int32 arri; 
  FILE *f;
- int dir, ttyp, h0_arri, nbytes, no_rngwarn, blen;
- int rmfr, rmto;
+ int32 dir, ttyp, h0_arri, nbytes, no_rngwarn, blen;
+ int32 rmfr, rmto;
  struct xstk_t *xsp;
 
  no_rngwarn = FALSE;
@@ -2661,7 +2659,7 @@ static void do_srm_xtrct(struct expr_t *xp, int base, struct net_t *np,
        return;
       }
      /* check for within specified range */
-     arri = (int) __acwrk[0];
+     arri = (int32) __acwrk[0];
      if ((dir == 1 && (arri < rmfr || arri > rmto))
       || (dir == -1 && (arri > rmfr || arri < rmto)))
       {
@@ -2755,7 +2753,7 @@ static void do_srm_xtrct(struct expr_t *xp, int base, struct net_t *np,
  */
 extern void __exec_sfrand(struct expr_t *ndp)
 {
- int ranv;
+ int32 ranv;
  struct xstk_t *xsp;
  struct expr_t *fax;
 
@@ -2774,7 +2772,7 @@ extern void __exec_sfrand(struct expr_t *ndp)
       __regab_tostr(__xs, xsp->ap, xsp->bp, xsp->xslen, BHEX, FALSE));
      xsp->bp[0] = 0L;
     }
-   __seed = (int) xsp->ap[0]; 
+   __seed = (int32) xsp->ap[0]; 
    __pop_xstk();
 
    /* this sets the seed (acutally a state) - 1 to reset to defl. sequence */
@@ -2788,7 +2786,7 @@ extern void __exec_sfrand(struct expr_t *ndp)
    /* SJM 11/19/03 - I misread LRM - if seed arg passed it is inout not in */ 
    /* temp use of top of stack - removed before return that needs tos */
    push_xstk_(xsp, WBITS);
-   xsp->ap[0] = (word) __seed;
+   xsp->ap[0] = (word32) __seed;
    xsp->bp[0] = 0L;
 
    __exec2_proc_assign(fax, xsp->ap, xsp->bp);
@@ -2802,7 +2800,7 @@ extern void __exec_sfrand(struct expr_t *ndp)
  xsp->bp[0] = 0L;
  /* generator returns only 31 (signed +) bits so high bit always 0 */  
  ranv = rtl_dist_uniform(&__seed, LONG_MIN, LONG_MAX);
- xsp->ap[0] = (word) ranv;
+ xsp->ap[0] = (word32) ranv;
 }
 
 /*
@@ -2815,12 +2813,12 @@ extern void __exec_sfrand(struct expr_t *ndp)
  * uniform distribution low level routine from 2001 LRM
  *
  * this is wrapper handling edge cases and returns 32 bit signed not double
- * notice since uses double and maps back to word has good period 
+ * notice since uses double and maps back to word32 has good period 
  */
-static sword rtl_dist_uniform(int *seed, sword start, sword end)
+static sword32 rtl_dist_uniform(int32 *seed, sword32 start, sword32 end)
 {
  double r;
- sword i;
+ sword32 i;
 
  if (start >= end) return(start);
  if (end != LONG_MAX)
@@ -2829,11 +2827,11 @@ static sword rtl_dist_uniform(int *seed, sword start, sword end)
    r = uniform(seed, start, end);
    if (r >= 0)
     {
-     i = (sword) r;
+     i = (sword32) r;
     }
    else
     {
-     i = (sword) (r - 1);
+     i = (sword32) (r - 1);
     }
    if (i < start) i = start;
    if (i >= end) i = end-1;
@@ -2844,11 +2842,11 @@ static sword rtl_dist_uniform(int *seed, sword start, sword end)
    r = uniform(seed, start, end) + 1.0;
    if (r >= 0)
     {
-     i = (sword) r;
+     i = (sword32) r;
     }
    else
     {
-     i = (sword) (r - 1);
+     i = (sword32) (r - 1);
     }
    if (i <= start) i = start+1;
    if (i > end) i = end;
@@ -2859,11 +2857,11 @@ static sword rtl_dist_uniform(int *seed, sword start, sword end)
    r = r*4294967296.0 - 2147483648.0;
    if (r >= 0)
     {
-     i = (sword) r;
+     i = (sword32) r;
     }
    else
     {
-     i = (sword) (r-1);
+     i = (sword32) (r-1);
     }
   }
  return(i);
@@ -2875,12 +2873,12 @@ static sword rtl_dist_uniform(int *seed, sword start, sword end)
  *
  * BEWARE - IEEE floating point format dependent
  */
-static double uniform(int *seed, sword start, sword end)
+static double uniform(int32 *seed, sword32 start, sword32 end)
 {
  union u_s
   {
    float s;
-   word stemp;
+   word32 stemp;
   } u;
  double d = 0.00000011920928955078125;
  double a,b,c;
@@ -2924,8 +2922,8 @@ static double uniform(int *seed, sword start, sword end)
  */
 extern void __exec_dist_uniform(struct expr_t *ndp)
 {
- int start, end, u2;
- word val;
+ int32 start, end, u2;
+ word32 val;
  double rng, x;
  struct expr_t *fax, *a1xp, *a2xp, *a3xp;
  struct xstk_t *xsp, *xsp2;
@@ -2965,7 +2963,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -2975,7 +2973,7 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- start = (int) val;
+ start = (int32) val;
  if (!__get_eval_word(a3xp, &val))
   {
    __sgfwarn(588,
@@ -2983,28 +2981,28 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- end = (int) val;
+ end = (int32) val;
  x = uniform(&__seed, 0, 1); 
 
  /* LOOKATME - maybe: rng = (double) (end - start); */
  rng = (double) (end - start + 1);
  /* FIXME - does this round right? */
- u2 = start + ((int) (rng*x));
+ u2 = start + ((int32) (rng*x));
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  /* notice generator returns only 31 (signed +) bits so high bit always 0 */  
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
 }
 
 /*
- * return randomly distributed int std. normal dist - std. dev. 'standard_dev'
+ * return randomly distributed int32 std. normal dist - std. dev. 'standard_dev'
  * and mean 'mean'
  *
  * notice requiring all 3 arguments - ,, illegal
@@ -3018,8 +3016,8 @@ ret_x:
  */
 extern void __exec_dist_stdnorm(struct expr_t *ndp)
 {
- int mean, std_dev, u2;
- word val;
+ int32 mean, std_dev, u2;
+ word32 val;
  double x, u;
  struct expr_t *fax, *a1xp, *a2xp, *a3xp;
  struct xstk_t *xsp, *xsp2;
@@ -3059,7 +3057,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -3069,7 +3067,7 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- mean = (int) val;
+ mean = (int32) val;
  if (!__get_eval_word(a3xp, &val))
   {
    __sgfwarn(588,
@@ -3077,23 +3075,23 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- std_dev = (int) val;
+ std_dev = (int32) val;
 
  /* get the standard normal deviate (stddev=1.0, mean = 0.0) */
  x = stdnorm_dev(&__seed);
 
  /* map to real with passed std_dev and mean */
  u = (double) mean + x*((double) std_dev);
- /* then to int using Verilog round rules */
+ /* then to int32 using Verilog round rules */
  u2 = ver_rint_(u);
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  /* notice generator returns only 31 (signed +) bits so high bit always 0 */  
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
@@ -3104,7 +3102,7 @@ ret_x:
  *
  * from Knuth - Seminumerical algorithms - uses ratio method
  */
-static double stdnorm_dev(int *seed)
+static double stdnorm_dev(int32 *seed)
 {
  double u, v, x;
 
@@ -3131,8 +3129,8 @@ static double stdnorm_dev(int *seed)
  */
 extern void __exec_dist_exp(struct expr_t *ndp)
 {
- int mean, u2;
- word val;
+ int32 mean, u2;
+ word32 val;
  double x, u;
  struct expr_t *fax, *a1xp, *a2xp;
  struct xstk_t *xsp, *xsp2;
@@ -3168,7 +3166,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -3178,23 +3176,23 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- mean = (int) val;
+ mean = (int32) val;
 
  /* get the gamma deviate (mean = 1.0, ) */
  x = gamma_dev((double) 1, &__seed);
 
  /* map to real mean mean (expand by multiplying here */
  u = x*((double) mean);
- /* then to int (but will always be positive) using Verilog round rules */
+ /* then to int32 (but will always be positive) using Verilog round rules */
  u2 = ver_rint_(u);
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  /* notice generator returns only 31 (signed +) bits so high bit always 0 */  
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
@@ -3208,7 +3206,7 @@ ret_x:
  * again from Numerical Recipes
  * caller must have checked arguments
  */
-static double gamma_dev(double xa, int *seed)
+static double gamma_dev(double xa, int32 *seed)
 {
  double am, e, s, v1, v2, x, y;
 
@@ -3245,8 +3243,8 @@ static double gamma_dev(double xa, int *seed)
  */
 extern void __exec_dist_poisson(struct expr_t *ndp)
 {
- int mean, u2;
- word val;
+ int32 mean, u2;
+ word32 val;
  struct expr_t *fax, *a1xp, *a2xp;
  struct xstk_t *xsp, *xsp2;
 
@@ -3281,7 +3279,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -3291,17 +3289,17 @@ ret_x:
     __msgexpr_tostr(__xs, a2xp));
    goto ret_x;
   }
- mean = (int) val;
+ mean = (int32) val;
 
  /* get the gamma deviate (mean = 1.0, ) */
  u2 = poisson_dev(mean, &__seed);
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
@@ -3315,9 +3313,9 @@ ret_x:
  *
  * again from Numerical Recipes
  */
-static int poisson_dev(int ixm, int *seed)
+static int32 poisson_dev(int32 ixm, int32 *seed)
 {
- int iem;
+ int32 iem;
  double em, g, t, xm, sq, alxm, y; 
 
  /* direct method for small order */
@@ -3346,7 +3344,7 @@ static int poisson_dev(int ixm, int *seed)
    /* reject if in region of 0 probability */
   } while (em < 0.0); 
   /* maybe follow Verilog convention should be rounded? */
-  iem = (int) floor(em);
+  iem = (int32) floor(em);
   t = 0.9 + (1.0*y*y)*exp(em*alxm - log_gamma(em + 1.0) - g);
  /* rejection by probability preserving ratio step */
  } while (uniform(seed, 0, 1) > t);
@@ -3364,7 +3362,7 @@ static double gamma_powser_coeff[6] = { 76.18009172947146,
  */
 static double log_gamma(double d1)
 {
- register int j;
+ register int32 j;
  double y, x, tmp, ser;
  
  y = x = d1;
@@ -3385,8 +3383,8 @@ static double log_gamma(double d1)
  */
 extern void __exec_chi_square(struct expr_t *ndp)
 {
- int u2;
- word val;
+ int32 u2;
+ word32 val;
  double x, u;
  struct expr_t *fax, *a1xp, *a2xp;
  struct xstk_t *xsp, *xsp2;
@@ -3422,7 +3420,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -3441,16 +3439,16 @@ ret_x:
  x = gamma_dev(u, &__seed);
 
  /* map to real mean for chi-square always 1 */
- /* then to int (will always be positive) using Verilog round rules */
+ /* then to int32 (will always be positive) using Verilog round rules */
  u2 = ver_rint_(x);
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  /* notice generator returns only 31 (signed +) bits so high bit always 0 */  
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
@@ -3468,8 +3466,8 @@ ret_x:
  */
 extern void __exec_dist_t(struct expr_t *ndp)
 {
- int u2;
- word val;
+ int32 u2;
+ word32 val;
  double y1, y2, x, u, v;
  struct expr_t *fax, *a1xp, *a2xp;
  struct xstk_t *xsp, *xsp2;
@@ -3505,7 +3503,7 @@ ret_x:
    xsp->bp[0] = ALL1W;
    return;
   }
- __seed = (int) xsp->ap[0]; 
+ __seed = (int32) xsp->ap[0]; 
  __pop_xstk();
 
  if (!__get_eval_word(a2xp, &val))
@@ -3529,16 +3527,16 @@ ret_x:
  x = y1/sqrt(y2/v); 
 
  /* map to real mean for chi-square always 1 */
- /* then to int (will always be positive) using Verilog round rules */
+ /* then to int32 (will always be positive) using Verilog round rules */
  u2 = ver_rint_(x);
 
  push_xstk_(xsp, WBITS);
  xsp->bp[0] = 0L;
  /* generator returns only 31 (signed +) bits so high bit always 0 */  
- xsp->ap[0] = (word) u2;
+ xsp->ap[0] = (word32) u2;
 
  push_xstk_(xsp2, WBITS);
- xsp2->ap[0] = (word) __seed;
+ xsp2->ap[0] = (word32) __seed;
  xsp2->bp[0] = 0L;
  __exec2_proc_assign(a1xp, xsp2->ap, xsp2->bp);
  __pop_xstk();
@@ -3556,11 +3554,11 @@ ret_x:
  */
 extern void __rhs_concat(struct expr_t *lcbndp)
 {
- register int catxlen;
+ register int32 catxlen;
  register struct expr_t *catndp, *catrhsx; 
- register word *ap, *bp;
- word *wp, *sawp, *sbwp, tmpa, tmpb;
- int wlen, bi1;
+ register word32 *ap, *bp;
+ word32 *wp, *sawp, *sbwp, tmpa, tmpb;
+ int32 wlen, bi1;
  struct xstk_t *catreg, *xsp;
  struct net_t *np;
 
@@ -3611,7 +3609,7 @@ do_lhssel:
      sbwp = &(sawp[wlen]);
      goto do_lhssel;
     case ID:
-     /* optimize if fits in word case - else just use eval mechanism */
+     /* optimize if fits in word32 case - else just use eval mechanism */
      if (catxlen <= WBITS)
       {
        np = catrhsx->lu.sy->el.enp;
@@ -3661,10 +3659,10 @@ do_lhssel:
  * 
  * notice xmr must be converted to net before here 
  */
-extern void __ld_addr(word **aap, word **abp, register struct net_t *np)
+extern void __ld_addr(word32 **aap, word32 **abp, register struct net_t *np)
 {
- register word *ap, *bp;
- register int wlen;
+ register word32 *ap, *bp;
+ register int32 wlen;
 
  switch ((byte) np->srep) {
   case SR_VEC:
@@ -3890,22 +3888,22 @@ extern void __eval_regrealqcol(register struct expr_t *ndp)
  *
  * notice this overwrites conditional but works because once know any x's
  * in conditional, then value obtained purely from combination of args.
- * LOOKATME - one word form could be more efficient but used for all
+ * LOOKATME - one word32 form could be more efficient but used for all
  *
  * SJM 09/30/03 - need different widen if signed - : operand either both
  * signed or both no signed
  */
 static void lxqcol(register struct xstk_t *xspq, register struct xstk_t *xsp1,
- register struct xstk_t *xsp2, int opbits, int sel_sign, int col_sign)
+ register struct xstk_t *xsp2, int32 opbits, int32 sel_sign, int32 col_sign)
 {
- register int wi;
- word *resap, *resbp;
+ register int32 wi;
+ word32 *resap, *resbp;
  struct xstk_t *tmpq;
- int wlen, ubits;
+ int32 wlen, ubits;
 
  /* LOOKATME - LRM 2.0 is wrong to match OVIsim any 1 in value is T */ 
  /* any one implies use T */
- /* notice must use qcol word width here */
+ /* notice must use qcol word32 width here */
  wlen = wlen_(xspq->xslen);
  for (wi = 0; wi < wlen; wi++)
   { if ((xspq->ap[wi] & ~xspq->bp[wi]) != 0) goto true_has_1bit; }
@@ -3969,10 +3967,10 @@ true_has_1bit:
  */
 static void eval_unary(struct expr_t *ndp)
 {
- register word op1a, op1b;
+ register word32 op1a, op1b;
  register struct xstk_t *xsp;
- word mask;
- int ida;
+ word32 mask;
+ int32 ida;
  double d1;
 
  xsp = __eval2_xpr(ndp->lu.x);
@@ -4003,10 +4001,10 @@ static void eval_unary(struct expr_t *ndp)
        if ((op1a & (1 << (ndp->lu.x->szu.xclen - 1))) != 0) 
         op1a |= ~(__masktab[ndp->lu.x->szu.xclen]);
       } 
-     /* convert to signed 32 bit then copy back to unsigned */
+     /* convert to signed 32 bit then copy back to word32 */
      /* works because narrower than 32 signed extended already */
-     ida = (int) op1a;
-     xsp->ap[0] = ((word) -ida) & __masktab[ndp->szu.xclen];
+     ida = (int32) op1a;
+     xsp->ap[0] = ((word32) -ida) & __masktab[ndp->szu.xclen];
     }
    else xsp->ap[0] = xsp->bp[0] = __masktab[ndp->szu.xclen];
    return;
@@ -4081,7 +4079,7 @@ static void eval_unary(struct expr_t *ndp)
 static void eval_wide_unary(register struct expr_t *ndp,
  register struct xstk_t *xsp)
 {
- int rta, rtb;
+ int32 rta, rtb;
 
  switch ((byte) ndp->optyp) {
   /* both unary and binary but used as unary here */
@@ -4134,22 +4132,22 @@ static void eval_wide_unary(register struct expr_t *ndp,
    __lunredand(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
    /* SJM 09/30/03 - can use simpler narrow to 1 bit */
    __narrow_to1bit(xsp);
-   xsp->ap[0] = (word) rta; 
-   xsp->bp[0] = (word) rtb;
+   xsp->ap[0] = (word32) rta; 
+   xsp->bp[0] = (word32) rtb;
    break;
   case /* | */ BITREDOR:
    __lunredor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
    /* SJM 09/30/03 - can use simpler narrow to 1 bit */
    __narrow_to1bit(xsp);
-   xsp->ap[0] = (word) rta; 
-   xsp->bp[0] = (word) rtb;
+   xsp->ap[0] = (word32) rta; 
+   xsp->bp[0] = (word32) rtb;
    break;
   case /* ^ */ BITREDXOR:
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
    /* SJM 09/30/03 - can use simpler narrow to 1 bit */
    __narrow_to1bit(xsp);
-   xsp->ap[0] = (word) rta; 
-   xsp->bp[0] = (word) rtb;
+   xsp->ap[0] = (word32) rta; 
+   xsp->bp[0] = (word32) rtb;
    break;
   case /* ^~ */ REDXNOR:
    /* truth table is logical not of bit wire reducing */ 
@@ -4157,9 +4155,9 @@ static void eval_wide_unary(register struct expr_t *ndp,
    __lunredxor(&rta, &rtb, xsp->ap, xsp->bp, xsp->xslen);
    /* SJM 09/30/03 - can use simpler narrow to 1 bit */
    __narrow_to1bit(xsp);
-   xsp->ap[0] = (word) rta; 
-   xsp->bp[0] = (word) rtb;
-   if (rtb == 0L) xsp->ap[0] = (word) !rta;
+   xsp->ap[0] = (word32) rta; 
+   xsp->bp[0] = (word32) rtb;
+   if (rtb == 0L) xsp->ap[0] = (word32) !rta;
    /* this produces the 1 bit result */
    break;
   default: __case_terr(__FILE__, __LINE__);
@@ -4170,10 +4168,10 @@ static void eval_wide_unary(register struct expr_t *ndp,
 /*
  * unary bit not - notice this is bit for bit
  */
-extern void __lunbitnot(word *op1ap, word *op1bp, int opwid)
+extern void __lunbitnot(word32 *op1ap, word32 *op1bp, int32 opwid)
 {
- register int wi;
- int wlen;
+ register int32 wi;
+ int32 wlen;
 
  wlen = wlen_(opwid);
  for (wi = 0; wi < wlen; wi++)
@@ -4190,7 +4188,7 @@ extern void __lunbitnot(word *op1ap, word *op1bp, int opwid)
  *
  * SJM 09/30/03 - signed just works because 2's complement
  */
-extern void __luminus(word *op1ap, word *op1bp, int opbits)
+extern void __luminus(word32 *op1ap, word32 *op1bp, int32 opbits)
 {
  struct xstk_t *xsp0, *xspr;
 
@@ -4217,7 +4215,7 @@ extern void __luminus(word *op1ap, word *op1bp, int opbits)
 /*
  * exchange 2 eval. stack locations
  */
-static void xchg_stk(int xspi1, int xspi2)
+static void xchg_stk(int32 xspi1, int32 xspi2)
 {
  struct xstk_t *xstmp;
 
@@ -4225,15 +4223,15 @@ static void xchg_stk(int xspi1, int xspi2)
 }
 
 /*
- * compute reduction xor for 32 bit word (or part)
+ * compute reduction xor for 32 bit word32 (or part)
  * this returns 1 bit
- * notice this is 32 bit word dependent
+ * notice this is 32 bit word32 dependent
  * 
- * FIXME - if processor has instruction for word reducing xor should use
+ * FIXME - if processor has instruction for word32 reducing xor should use
  */
-extern word __wrd_redxor(word opa)
+extern word32 __wrd_redxor(word32 opa)
 {
- register word t, rta;
+ register word32 t, rta;
 
  t = opa;
  t = t ^ (t >> 16);
@@ -4247,9 +4245,9 @@ extern word __wrd_redxor(word opa)
 /*
  * compute reduction xor for 64 bit lword (or word64) (or part of lword)
  * this returns 1 bit
- * notice this is 64 bit word dependent
+ * notice this is 64 bit word32 dependent
  * 
- * FIXME - if processor has instruction for word reducing xor should use
+ * FIXME - if processor has instruction for word32 reducing xor should use
  */
 extern word64 __lwrd_redxor(word64 opa)
 {
@@ -4273,11 +4271,11 @@ extern word64 __lwrd_redxor(word64 opa)
  * wide bit reducing and - set tos to 1 bit result
  * if not all 1's, reduction and will turn to 0
  */
-extern void __lunredand(int *rta, int *rtb, word *op1ap, word *op1bp,
- int opwid)
+extern void __lunredand(int32 *rta, int32 *rtb, word32 *op1ap, word32 *op1bp,
+ int32 opwid)
 {
- register int wi;
- int wlen, ubits;
+ register int32 wi;
+ int32 wlen, ubits;
 
  /* handle non x/z case */
  if (vval_is0_(op1bp, opwid))
@@ -4310,11 +4308,11 @@ extern void __lunredand(int *rta, int *rtb, word *op1ap, word *op1bp,
  * wide bit reducing or - set tos to 1 bit result
  * if not all 0's, reduction and will turn to 1
  */
-extern void __lunredor(int *rta, int *rtb, word *op1ap, word *op1bp,
- int opwid)
+extern void __lunredor(int32 *rta, int32 *rtb, word32 *op1ap, word32 *op1bp,
+ int32 opwid)
 {
- register int wi;
- register word rta2, rtb2;
+ register int32 wi;
+ register word32 rta2, rtb2;
 
  /* if even 1 1 and no x/z bits, reduction and will turn to 1 */
  if (vval_is0_(op1bp, opwid))
@@ -4343,11 +4341,11 @@ done:
  * wide bit reducing xor - set tos to 1 bit result
  * counts number of 1 bits
  */
-extern void __lunredxor(int *rta, int *rtb, word *op1ap, word *op1bp,
- int opwid)
+extern void __lunredxor(int32 *rta, int32 *rtb, word32 *op1ap, word32 *op1bp,
+ int32 opwid)
 {
- register int wi;
- register word rtmp, rtmp2;
+ register int32 wi;
+ register word32 rtmp, rtmp2;
 
  /* if any x/zs, return is x */
  if (!vval_is0_(op1bp, opwid)) { *rta = *rtb = 1; return; }
@@ -4381,9 +4379,9 @@ extern void __lunredxor(int *rta, int *rtb, word *op1ap, word *op1bp,
  */
 static void eval_binary(struct expr_t *ndp)
 {
- register word rta, rtb;
- register word op1a, op1b, op2a, op2b, mask;
- int tmp1, tmp2, nd_signop, opwid, has_sign;
+ register word32 rta, rtb;
+ register word32 op1a, op1b, op2a, op2b, mask;
+ int32 tmp1, tmp2, nd_signop, opwid, has_sign;
  double d1, d2;
  struct xstk_t *xsp1, *xsp2;
  struct expr_t *lx, *rx;
@@ -4396,7 +4394,7 @@ static void eval_binary(struct expr_t *ndp)
  if (ndp->szu.xclen > WBITS || xsp1->xslen > WBITS || xsp2->xslen > WBITS)
   {
    /* this replaces tos 2 values with 1 value */
-   /* wide always unsigned */
+   /* wide always word32 */
    eval_wide_binary(ndp, xsp1, xsp2);
    return;
   }
@@ -4421,16 +4419,20 @@ static void eval_binary(struct expr_t *ndp)
      if (!nd_signop) rta = (op1a + op2a) & mask;
      else
       {
-       if (opwid !=  WBITS)
+       /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
+       if (ndp->lu.x->szu.xclen != WBITS)
         {
-         /* complex narrower than 32 bit signed case - sign extend to c int */ 
+         /* complex narrower than 32 bit signed case - sign extend to c int32 */ 
          if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
           op1a |= ~(__masktab[xsp1->xslen]);
+        } 
+       if (ndp->ru.x->szu.xclen != WBITS)
+        {
          if ((op2a & (1 << (xsp2->xslen - 1))) != 0) 
           op2a |= ~(__masktab[xsp2->xslen]);
         }
        /* mask even if 32 bits */
-       rta = (word) ((((sword) op1a) + ((sword) op2a)) & mask);    
+       rta = (word32) ((((sword32) op1a) + ((sword32) op2a)) & mask);    
       }
     }
    else rta = rtb = mask;
@@ -4465,16 +4467,19 @@ static void eval_binary(struct expr_t *ndp)
      /* since know 32 bits, no need to mask */
      else
       {
-       if (opwid != WBITS)
+       /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
+       if (ndp->lu.x->szu.xclen != WBITS)
         {
-         /* complex narrower than 32 bit signed case - sign extend to c int */ 
+         /* complex narrower than 32 bit signed case - sign extend to c int32 */ 
          if ((op1a & (1 << (xsp1->xslen - 1))) != 0) 
           op1a |= ~(__masktab[xsp1->xslen]);
-         if ((op1b & (1 << (xsp2->xslen - 1))) != 0) 
-          op1a |= ~(__masktab[xsp2->xslen]);
         }
-       /* then mask result */
-       rta = (word) ((((sword) op1a) - ((sword) op2a)) & mask);    
+       if (ndp->ru.x->szu.xclen != WBITS)
+        {
+         if ((op2a & (1 << (xsp2->xslen - 1))) != 0) 
+          op2a |= ~(__masktab[xsp2->xslen]);
+        }
+       rta = (word32) ((((sword32) op1a) - ((sword32) op2a)) & mask);    
       }
     }
    else rta = rtb = mask;
@@ -4499,7 +4504,9 @@ static void eval_binary(struct expr_t *ndp)
      /* SJM 09/30/03 - need ints for c signed op to work */
      if (!nd_signop) rta = (op1a * op2a) & mask;
      /* never need to mask for 32 bits */
-     else if (opwid == WBITS) rta = (word) (((sword) op1a) * ((sword) op2a));  
+     /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
+     else if (ndp->lu.x->szu.xclen == WBITS && ndp->ru.x->szu.xclen == WBITS)
+      rta = (word32) (((sword32) op1a) * ((sword32) op2a));  
      else
       {
        /* SJM 10/22/03 - LOOKATME - think this must use sign/magnitude */
@@ -4508,22 +4515,22 @@ static void eval_binary(struct expr_t *ndp)
        /* 2's complement makes positive if needed */
        if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
         {
-         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
+         /* since c - of cast to int32 can only handle 32 bit ints, sign xtnd */
          op1a |= ~(__masktab[xsp1->xslen]);
-         op1a = (word) (-((sword) op1a)); 
+         op1a = (word32) (-((sword32) op1a)); 
          has_sign = TRUE;
         }
        if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
         {
-         /* since c - of cast to int can only handle 32 bit ints, sign xtnd */
+         /* since c - of cast to int32 can only handle 32 bit ints, sign xtnd */
          op2a |= ~(__masktab[xsp2->xslen]);
-         op2a = (word) (-((sword) op2a));
+         op2a = (word32) (-((sword32) op2a));
          has_sign = !has_sign;
         }
 
        /* know op1a and op2a positive */
        rta = op1a * op2a;
-       if (has_sign) rta = (word) (-((sword) rta));
+       if (has_sign) rta = (word32) (-((sword32) rta));
        /* must mask so product fits in widest operand size */  
        rta &= mask;
       }
@@ -4548,22 +4555,23 @@ static void eval_binary(struct expr_t *ndp)
    if (op1b != 0L || op2b != 0L || op2a == 0L) rta = rtb = mask;
    /* case 1: unsigned */
    else if (!nd_signop) rta = op1a / op2a;
-   else if (opwid == WBITS)
+   /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
+   else if (ndp->lu.x->szu.xclen == WBITS && ndp->ru.x->szu.xclen == WBITS)
     {
-     /* case 2 signed but int so can use c casts */
-     rta = (word) ((sword) op1a / (sword) op2a);
+     /* case 2 signed but int32 so can use c casts */
+     rta = (word32) ((sword32) op1a / (sword32) op2a);
      rtb = 0L;
      /* SJM 05/13/04 - no need to mask since know WBITS */
     }
    else 
     {
      /* SJM 10/22/03 - must extract signs (sign of result from 1st) */
-     /* and do operation unsigned and then put back sign */
+     /* and do operation word32 and then put back sign */
      if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
       {
-       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op1a = op1a | ~(__masktab[xsp1->xslen]);
-       op1a = (word) (-((sword) op1a)); 
+       op1a = (word32) (-((sword32) op1a)); 
        has_sign = TRUE;
       }
      else has_sign = FALSE; 
@@ -4571,9 +4579,9 @@ static void eval_binary(struct expr_t *ndp)
      /* for mod, first operand determines sign of result */
      if ((op2a & (1 <<( xsp2->xslen - 1))) != 0)
       {
-       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op2a = op2a | ~(__masktab[xsp2->xslen]);
-       op2a = (word) (-((sword) op2a)); 
+       op2a = (word32) (-((sword32) op2a)); 
        /* sign combination rules for div same as mult */
        has_sign = !has_sign;
       }
@@ -4581,7 +4589,7 @@ static void eval_binary(struct expr_t *ndp)
      /* know op1a and op2a positive */
      rta = op1a / op2a;
      /* if result signed, first comp WBITS signed - */
-     if (has_sign) rta = (word) (-((sword) rta));
+     if (has_sign) rta = (word32) (-((sword32) rta));
      rta &= mask;
      rtb = 0L;
     }
@@ -4604,11 +4612,12 @@ static void eval_binary(struct expr_t *ndp)
    if (op1b != 0L || op2b != 0L || op2a == 0L) rta = rtb = mask;
    /* case 1: unsigned */
    else if (!nd_signop) rta = op1a % op2a;
-   else if (opwid == WBITS)
+   /* SJM 09/29/04 - but do need to mask if either operand not 32 bits */ 
+   else if (ndp->lu.x->szu.xclen == WBITS && ndp->ru.x->szu.xclen == WBITS)
     {
-     /* case 2 signed but int so can use c casts */
-     /* case 2 signed but int so can use c casts */
-     rta = (word) ((sword) op1a % (sword) op2a);
+     /* case 2 signed but int32 so can use c casts */
+     /* case 2 signed but int32 so can use c casts */
+     rta = (word32) ((sword32) op1a % (sword32) op2a);
      rtb = 0L;
      /* think value narrower but needed for signed */
      rta &= mask;
@@ -4616,10 +4625,10 @@ static void eval_binary(struct expr_t *ndp)
    else 
     {
      /* SJM 10/22/03 - must extract signs (sign of result from 1st) */
-     /* and do operation unsigned and then put back sign */
+     /* and do operation word32 and then put back sign */
      if ((op1a & (1 << (xsp1->xslen - 1))) != 0)
       {
-       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op1a = op1a | ~(__masktab[xsp1->xslen]);
        has_sign = TRUE;
       }
@@ -4628,13 +4637,13 @@ static void eval_binary(struct expr_t *ndp)
      /* for mod, first operand determines sign of result */
      if ((op2a & (1 <<( xsp2->xslen - 1))) != 0)
       {
-       /* SJM 05/13/04 - must sign extend to WBITS int size */
+       /* SJM 05/13/04 - must sign extend to WBITS int32 size */
        op2a = op2a | ~(__masktab[xsp2->xslen]);
       }
 
      /* know op1a and op2a positive */
      rta = op1a % op2a;
-     if (has_sign) rta = (word) (-((sword) rta));
+     if (has_sign) rta = (word32) (-((sword32) rta));
      rta &= mask;
      rtb = 0L;
     }
@@ -4688,7 +4697,7 @@ static void eval_binary(struct expr_t *ndp)
          if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
           op2a |= ~(__masktab[xsp2->xslen]);
         }
-       rta = (word) (((sword) op1a) >= ((sword) op2a));
+       rta = (word32) (((sword32) op1a) >= ((sword32) op2a));
       }
      else rta = op1a >= op2a;
     }
@@ -4724,7 +4733,7 @@ static void eval_binary(struct expr_t *ndp)
          if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
           op2a |= ~(__masktab[xsp2->xslen]);
         }
-       rta = (word) (((sword) op1a) > ((sword) op2a));
+       rta = (word32) (((sword32) op1a) > ((sword32) op2a));
       }
      else rta = op1a > op2a;
     }
@@ -4758,7 +4767,7 @@ static void eval_binary(struct expr_t *ndp)
          if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
           op2a |= ~(__masktab[xsp2->xslen]);
         }
-       rta = (word) (((sword) op1a) <= ((sword) op2a));
+       rta = (word32) (((sword32) op1a) <= ((sword32) op2a));
       }
      else rta = op1a <= op2a;
     }
@@ -4792,7 +4801,7 @@ static void eval_binary(struct expr_t *ndp)
          if ((op2a & (1 << (xsp2->xslen - 1))) != 0)
           op2a |= ~(__masktab[xsp2->xslen]);
         }
-       rta = (word) (((sword) op1a) < ((sword) op2a));
+       rta = (word32) (((sword32) op1a) < ((sword32) op2a));
       } 
      else rta = op1a < op2a;
     }
@@ -5041,8 +5050,8 @@ static void eval_binary(struct expr_t *ndp)
    if (op2b != 0L) rtb = rta = mask;
 
    /* if shift length wider than op1, result is 0 */
-   /* 2nd shift width operand is interpreted as range index (unsigned) */
-   else if (op2a > (unsigned) ndp->szu.xclen) rtb = rta = 0L;
+   /* 2nd shift width operand is interpreted as range index (word32) */
+   else if (op2a > (word32) ndp->szu.xclen) rtb = rta = 0L;
 
    /* op1a is context determined which is width of shift expr node */
    else { rtb = (op1b << op2a) & mask; rta = (op1a << op2a) & mask; }
@@ -5051,10 +5060,10 @@ static void eval_binary(struct expr_t *ndp)
    /* SJM 09/30/03 - logical shift right stays same even if sign bit 1 */
    /* if shift amt x/z, result is 0 */ 
    if (op2b != 0L) rtb = rta = mask;
-   else if (op2a > (unsigned) ndp->szu.xclen)
+   else if (op2a > (word32) ndp->szu.xclen)
     {
      /* if shift length wider than op1, result is 0 */
-     /* 2nd shift width operand is interpreted as range index (unsigned) */
+     /* 2nd shift width operand is interpreted as range index (word32) */
      rtb = rta = 0L;
     }
    else
@@ -5066,15 +5075,15 @@ static void eval_binary(struct expr_t *ndp)
    break;
   case /* >>> */ ASHIFTR:
    /* SJM 09/30/03 - arithmetic shift right inserts sign bit if on not 0 */
-   /* if shift amt x/z, result is 0 */ 
+   /* if shift amt x/z, result is x */ 
    if (op2b != 0L)
     {
      rtb = rta = mask;
     }
-   else if (op2a > (unsigned) ndp->szu.xclen)
+   else if (op2a > (word32) ndp->szu.xclen)
     { 
-     /* 2nd shift width operand is interpreted as range index (unsigned) */
-     /* notice if unsigned, no sign bit */
+     /* 2nd shift width operand is interpreted as range index (word32) */
+     /* notice if word32, no sign bit */
      if (nd_signop)
       {
        if ((op1a & (1 << (ndp->szu.xclen - 1))) != 0)
@@ -5094,20 +5103,20 @@ static void eval_binary(struct expr_t *ndp)
      if (nd_signop)
       {
        /* SJM 05/10/04 - could use c signed arithmetic shift for WBITS wide */
-       /* SJM for word arithmetic right shift use c arithmetic shift */
+       /* SJM for word32 arithmetic right shift use c arithmetic shift */
        if ((op1a & (1 << (ndp->szu.xclen - 1))) != 0)
         {
          /* first shift as if 0 bits then or in the bits shifted in from */
          /* injected sign bits */
-         rta = (word) (op1a >> op2a);
-         rtb = (word) (op1b >> op2a);
+         rta = (word32) (op1a >> op2a);
+         rtb = (word32) (op1b >> op2a);
          rta |= (__masktab[op2a] << (ndp->szu.xclen - op2a));
         }
        else
         {
          /* if sign bit off - same as logical right shift */
-         rta = (word) (op1a >> op2a);
-         rtb = (word) (op1b >> op2a);
+         rta = (word32) (op1a >> op2a);
+         rtb = (word32) (op1b >> op2a);
         }
       }
      else
@@ -5150,12 +5159,15 @@ static void eval_binary(struct expr_t *ndp)
 static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
  register struct xstk_t *xsp2)
 {
- register word rta, rtb;
- int isxz, cmpval, tmp1, tmp2;
- unsigned shiftamt;
+ register word32 rta, rtb;
+ int32 isxz, cmpval, tmp1, tmp2, nd_signop;
+ word32 shiftamt;
  struct xstk_t *xspr;
  struct expr_t *lx, *rx;
  double d1, d2;
+
+ if (ndp->has_sign || ndp->rel_ndssign) nd_signop = TRUE;
+ else nd_signop = FALSE;
 
  /* impossible for both operands <32 but result > 32 */
  switch ((byte) ndp->optyp) {
@@ -5258,13 +5270,13 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
    else
     {
      /* if op value is 0 or shift amount wider than op */
-     /* SJM 12/28/98 - this was wrongly checking first word of long */  
+     /* SJM 12/28/98 - this was wrongly checking first word32 of long */  
      /* SJM 03/28/03 - for shift of case with only z's in op1 was wrong */
      /* because if a part 0 but b part 1 (z in val) wrongly setting to 0 */ 
      if ((vval_is0_(xsp1->ap, xsp1->xslen)
       && vval_is0_(xsp1->bp, xsp1->xslen)) 
       || (xsp2->xslen > WBITS && !vval_is0_(&(xsp2->ap[1]),
-       xsp2->xslen - WBITS)) || xsp2->ap[0] >= (unsigned) xsp1->xslen) 
+       xsp2->xslen - WBITS)) || xsp2->ap[0] >= (word32) xsp1->xslen) 
        memset(xsp1->ap, 0, 2*WRDBYTES*wlen_(xsp1->xslen)); 
      else
       {
@@ -5287,11 +5299,11 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
     }
    __pop_xstk();
    break;
-  case /* <>> */ ASHIFTR:
+  case /* >>> */ ASHIFTR:
    /* SJM 05/11/04 - split arithmetic right shift off */ 
    /* main different is that if sign bit on, need to shift in 1's for both */
    /* a and b parts */
-   /* SJM 05/11/04 - notice that shift amount always treated as unsigned, */
+   /* SJM 05/11/04 - notice that shift amount always treated as word32, */
    /* i.e. no minus opposite direction shifts */
    if (!vval_is0_(xsp2->bp, xsp2->xslen))
     {
@@ -5306,15 +5318,16 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
      goto ashift_pop; 
     }
    if ((xsp2->xslen > WBITS && !vval_is0_(&(xsp2->ap[1]),
-    xsp2->xslen - WBITS)) || xsp2->ap[0] >= (unsigned) xsp1->xslen) 
+    xsp2->xslen - WBITS)) || xsp2->ap[0] >= (word32) xsp1->xslen) 
     {
-     int bi, wlen;
+     int32 bi, wlen;
 
      /* shift amount wider than value */
      bi = get_bofs_(xsp1->xslen);
      wlen = wlen_(xsp1->xslen);
        
-     if ((xsp1->ap[wlen - 1] & (1 << bi)) != 0)
+     /* SJM 06/20/04 - if right ashift opand word32 - no sign extend */
+     if (ndp->has_sign && (xsp1->ap[wlen - 1] & (1 << bi)) != 0)
       {
        /* since shift amount wider than var, if sign bit on */ 
        /* 1's shifted into each bit position, i.e. set all bits to 1 */
@@ -5323,25 +5336,26 @@ static void eval_wide_binary(struct expr_t *ndp, register struct xstk_t *xsp1,
      else memset(xsp1->ap, 0, 2*WRDBYTES*wlen); 
 
      /* if b part high bit on, all bits become x/z */
-     if ((xsp1->ap[2*wlen - 1] & (1 << bi)) != 0)
+     if (ndp->has_sign && (xsp1->bp[wlen - 1] & (1 << bi)) != 0)
       {
-       one_allbits_(xsp1->ap, xsp1->xslen);
+       one_allbits_(xsp1->bp, xsp1->xslen);
       }
      else memset(xsp1->ap, 0, 2*WRDBYTES*wlen); 
      goto ashift_pop; 
     }
    if ((shiftamt = xsp2->ap[0]) != 0) 
     { 
-     if (vval_is0_(xsp1->bp, xsp1->xslen)) isxz = FALSE; else isxz = TRUE;
-     
-     if (ndp->has_sign || ndp->rel_ndssign)
+     if (vval_is0_(xsp1->bp, xsp1->xslen)) isxz = FALSE;
+     else isxz = TRUE;
+
+     if (nd_signop)
       {
        __arith_mwrshift(xsp1->ap, shiftamt, xsp1->xslen);
        if (isxz) __arith_mwrshift(xsp1->bp, shiftamt, xsp1->xslen);
       }
      else
       {
-       /* arithmetic right shift for unsigned same as logical */
+       /* arithmetic right shift for word32 same as logical */
        __mwrshift(xsp1->ap, shiftamt, xsp1->xslen);
        if (isxz) __mwrshift(xsp1->bp, shiftamt, xsp1->xslen);
       }
@@ -5432,7 +5446,7 @@ ashift_pop:
    /* SJM 05/13/04 - was wrongly using the 1 bit result not other opand */
    if (xsp1->xslen > xsp2->xslen)
     {
-     /* SJM 05/13/04 - since result 1 bit unsigned but operand cmp signed */
+     /* SJM 05/13/04 - since result 1 bit word32 but operand cmp signed */
      if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp2, xsp1->xslen);
      else __sizchg_widen(xsp2, xsp1->xslen);
     }
@@ -5467,7 +5481,7 @@ ashift_pop:
    /* SJM 05/13/04 - was wrongly using the 1 bit result not other opand */
    if (xsp1->xslen > xsp2->xslen)
     {
-     /* SJM 05/13/04 - since result 1 bit unsigned but operand cmp signed */
+     /* SJM 05/13/04 - since result 1 bit word32 but operand cmp signed */
      if (ndp->rel_ndssign) __sgn_xtnd_widen(xsp2, xsp1->xslen);
      else __sizchg_widen(xsp2, xsp1->xslen);
     }
@@ -5481,7 +5495,7 @@ ashift_pop:
    /* AIV 05/27/04 - must be nd sign not res node has sign since res 1 bit */ 
    if (ndp->rel_ndssign)
     {
-     /* SJM 05/10/04 - wide sign compare casts to int on not == */
+     /* SJM 05/10/04 - wide sign compare casts to int32 on not == */
      cmpval = __do_sign_widecmp(&isxz, xsp1->ap, xsp1->bp, xsp2->ap,
       xsp2->bp, xsp1->xslen);
     }
@@ -5709,8 +5723,8 @@ make_1bit:
 /*
  * if any x in bin. operand nodes set accumulator to all x's and return T
  */
-extern int __set_binxresult(word *resap, word *resbp, word *op1bp,
- word *op2bp, int opbits)
+extern int32 __set_binxresult(word32 *resap, word32 *resbp, word32 *op1bp,
+ word32 *op2bp, int32 opbits)
 {
  if (!vval_is0_(op1bp, opbits)) goto not_zero;
  if (!vval_is0_(op2bp, opbits)) goto not_zero;
@@ -5723,13 +5737,14 @@ not_zero:
 }
 
 /*
- * right shift multiword value into new valune - shift value <1m (1 word)
+ * right shift multiword value into new valune - shift value <1m (1 word32)
  * know shiftval <= lwlen
+ *
  * notice no need to mask off high bits here;
  */
-extern void __mwrshift(word *valwp, unsigned shiftval, int blen)
+extern void __mwrshift(word32 *valwp, word32 shiftval, int32 blen)
 {
- int shwords, shbits, lwlen;
+ int32 shwords, shbits, lwlen;
 
  lwlen = wlen_(blen);
  shwords = get_wofs_(shiftval);
@@ -5748,30 +5763,23 @@ extern void __mwrshift(word *valwp, unsigned shiftval, int blen)
 }
 
 /*
- * arithmetic right shift multiword value into new valune
- * - shift value <1m (1 word)
- * know shiftval <= lwlen
+ * arithmetic right shift multiword value into new value
  * 
- * arithmetic (signed) version of multi-word right shit - if sign 1,
+ * arithmetic (signed) version of multi-word right shift - if sign 1,
  * then set area to 1's not 0
+ *
+ * SJM 10/08/04 - this shifts both a and b part
  */
-extern void __arith_mwrshift(word *valwp, unsigned shiftval, int blen)
+extern void __arith_mwrshift(word32 *valwp, word32 shiftval, int32 blen)
 {
- register int wlen, wi, bi;
- int shwords, shbits, new_signbi, apart_signed, bpart_signed;
+ register int32 wlen, wi;
+ int32 sign_bi, bi, shwords, shbits, nblen, is_signed;
 
  wlen = wlen_(blen);
- bi = get_bofs_(blen - 1);
-
- /* DBG remove --- */
- if (__debug_flg)
-  __dbg_msg("---> mw right shift of %d low word was %lx", shiftval, valwp[0]);
- /* --- */
+ sign_bi = get_bofs_(blen - 1);
   
- if ((valwp[wlen - 1] & (1 << bi)) != 0) apart_signed = TRUE;
- else apart_signed = FALSE;
- if ((valwp[2*wlen - 1] & (1 << bi)) != 0) bpart_signed = TRUE;
- else bpart_signed = FALSE;
+ if ((valwp[wlen - 1] & (1 << sign_bi)) != 0) is_signed = TRUE;
+ else is_signed = FALSE;
 
  shwords = get_wofs_(shiftval);
  /* notice ubits and get_bofs macros are the same */
@@ -5780,37 +5788,20 @@ extern void __arith_mwrshift(word *valwp, unsigned shiftval, int blen)
  if (shwords != 0) wrdmwrshift(valwp, shwords, wlen);
  if (shbits != 0) bitmwrshift(valwp, shbits, wlen);
 
- new_signbi = blen - shiftval - 1;
+ if (!is_signed) return;
 
- /* set 1 bits for wi+1 to end and high bits in wi word */
- bi = get_bofs_(new_signbi + 1);
- wi = get_wofs_(new_signbi + 1); 
-
- /* notice value here is 0-31 */
- shbits = ubits_(shiftval);
- if (apart_signed)
+ /* tricky part is making sure sign/x/z bit gets shifted in (duplicated) */
+ /* new sign bit is one less than new bit len */
+ nblen = blen - shiftval;
+ /* set 1 bits for wi+1 to end and high bits in wi word32 */
+ bi = get_bofs_(nblen);
+ wi = get_wofs_(nblen); 
+ if (bi != 0)
   {
-   if (bi == 0) one_allbits_(&(valwp[wi]), shiftval);
-   else
-    {
-     one_allbits_(&(valwp[wi + 1]), shiftval - (WBITS - bi));
-     valwp[wi] |= ~(__masktab[WBITS - bi]);
-    }
+   valwp[wi] |= (__masktab[WBITS - bi] << bi);
+   one_allbits_(&(valwp[wi + 1]), shiftval - (WBITS - bi));
   }
- if (bpart_signed)
-  {
-   wlen = wlen_(blen); 
-   if (bi == 0) one_allbits_(&(valwp[wlen + wi]), shiftval);
-   else
-    {
-     one_allbits_(&(valwp[wlen + wi + 1]), shiftval - (WBITS - bi));
-     valwp[wlen + wi] |= ~(__masktab[WBITS - bi]);
-    }
-  }
-
- /* DBG remove -- */
- if (__debug_flg) __dbg_msg("after low word is %lx\n", valwp[0]);
- /* - */
+ else one_allbits_(&(valwp[wi]), shiftval);
 }
 
 /*
@@ -5819,9 +5810,9 @@ extern void __arith_mwrshift(word *valwp, unsigned shiftval, int blen)
  *
  * SJM 10/01/03 - for wide left shift arithmetic is same
  */
-extern void __mwlshift(word *valwp, unsigned shiftval, int blen)
+extern void __mwlshift(word32 *valwp, word32 shiftval, int32 blen)
 {
- int shwords, shbits, lwlen, ubits;
+ int32 shwords, shbits, lwlen, ubits;
 
  lwlen = wlen_(blen);
  /* this and 1f for 32 mask on number of bits */
@@ -5843,73 +5834,73 @@ extern void __mwlshift(word *valwp, unsigned shiftval, int blen)
 }
 
 /*
- * partial word shift within multiword value
+ * partial word32 shift within multiword value
  * k < WBITS bits mw right shift (high bits toward low bits - divide)
- * this handles bit shifting - other part does word shifting
+ * this handles bit shifting - other part does word32 shifting
  */
-static void bitmwrshift(register word *wp, register int k, register int lwlen)
+static void bitmwrshift(register word32 *wp, register int32 k, register int32 lwlen)
 {
- register int i;
- register word cy;
+ register int32 i;
+ register word32 cy;
 
  wp[0] >>= k;
  for (i = 1; i < lwlen; i++)
   {
    cy = (wp[i] & __masktab[k]) << (WBITS - k);
    wp[i - 1] |= cy;
-   /* C language right shift of unsigned defined to shift in 0's */
+   /* C language right shift of word32 defined to shift in 0's */
    wp[i] >>= k;
   }
  /* since know wp right width with high zero's - know anwswer is right */
 }
 
 /*
- * partial word shift within multiword value
+ * partial word32 shift within multiword value
  * k < WBITS bits mw left shift (low bits toward high - mult.)
- * this handles bit shifting - other part does word shifting
+ * this handles bit shifting - other part does word32 shifting
  */
-static void bitmwlshift(register word *wp, register int k, register int lwlen)
+static void bitmwlshift(register word32 *wp, register int32 k, register int32 lwlen)
 {
- register int i;
- register word cy;
+ register int32 i;
+ register word32 cy;
 
  wp[lwlen - 1] <<= k;
  for (i = lwlen - 2; i >= 0; i--)
   {
    cy = ((wp[i] >> (WBITS - k)) & __masktab[k]);
    wp[i + 1] |= cy;
-   /* C language left logical shift of unsigned defined to shift in 0's */
+   /* C language left logical shift of word32 defined to shift in 0's */
    wp[i] <<= k;
   }
 }
 
 /*
- * whole word right shift within multiword value
+ * whole word32 right shift within multiword value
  * kwrds is number of words
  * high words toward low - divide by 2**32 units
- * this handles word shifting - other part does bit shifting
+ * this handles word32 shifting - other part does bit shifting
  * know kwrds never 0
  */
-static void wrdmwrshift(register word *wp, register int kwrds,
- register int lwlen)
+static void wrdmwrshift(register word32 *wp, register int32 kwrds,
+ register int32 lwlen)
 {
- register int wi;
+ register int32 wi;
 
  for (wi = kwrds; wi < lwlen; wi++)  wp[wi - kwrds] = wp[wi];
  for (wi = lwlen - kwrds; wi < lwlen; wi++) wp[wi] = 0L;
 }
 
 /*
- * whole word left shift within multiword value
+ * whole word32 left shift within multiword value
  * kwrds is number of words
  * low words toward high- multiply by 2**32 units
- * this handles word shifting - other part does bit shifting
+ * this handles word32 shifting - other part does bit shifting
  * know kwrds never 0
  */
-static void wrdmwlshift(register word *wp, register int kwrds,
- register int lwlen)
+static void wrdmwlshift(register word32 *wp, register int32 kwrds,
+ register int32 lwlen)
 {
- register int swi, wi;
+ register int32 swi, wi;
 
  for (swi = lwlen - 1; swi >= kwrds; swi--) wp[swi] = wp[swi - kwrds];
  for (wi = 0; wi < kwrds; wi++) wp[wi] = 0L;
@@ -5919,10 +5910,10 @@ static void wrdmwlshift(register word *wp, register int kwrds,
  * long binary bit and - in place from top to 1 down
  * know both operands correct final width
  */
-extern void __lbitand(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
- int opbits)
+extern void __lbitand(word32 *op1ap, word32 *op1bp, word32 *op2ap, word32 *op2bp,
+ int32 opbits)
 {
- register int wi;
+ register int32 wi;
 
  for (wi = 0; wi < wlen_(opbits); wi++)
   {
@@ -5940,10 +5931,10 @@ extern void __lbitand(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
  * long binary bit or - both operands on stack already widened to same size
  * no reason to mask off high since both xor and or of 0 and 0 are 0
  */
-extern void __lbitor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
- int opbits)
+extern void __lbitor(word32 *op1ap, word32 *op1bp, word32 *op2ap, word32 *op2bp,
+ int32 opbits)
 {
- register int wi;
+ register int32 wi;
 
  for (wi = 0; wi < wlen_(opbits); wi++)
   {
@@ -5962,11 +5953,11 @@ extern void __lbitor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
  * long binary bit xor - both operands on stack already widened
  * to exactly same width 
  */
-extern void __lbitxor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
- int opbits)
+extern void __lbitxor(word32 *op1ap, word32 *op1bp, word32 *op2ap, word32 *op2bp,
+ int32 opbits)
 {
- register int wi;
- int wlen;
+ register int32 wi;
+ int32 wlen;
 
  wlen = wlen_(opbits);
  for (wi = 0; wi < wlen; wi++)
@@ -5985,11 +5976,11 @@ extern void __lbitxor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
 /*
  * long binary bit xnor - both operands on stack already widened
  */
-extern void __lbitxnor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
- int opbits)
+extern void __lbitxnor(word32 *op1ap, word32 *op1bp, word32 *op2ap, word32 *op2bp,
+ int32 opbits)
 {
- register int wi;
- int wlen;
+ register int32 wi;
+ int32 wlen;
 
  wlen = wlen_(opbits);
  for (wi = 0; wi < wlen; wi++)
@@ -6010,10 +6001,10 @@ extern void __lbitxnor(word *op1ap, word *op1bp, word *op2ap, word *op2bp,
  * convert wide value on top of reg stack to boolean - any 1=1,0,x(3)
  * must be extern since invoked by macro
  */
-extern int __cvt_lngbool(word *ap, word *bp, int wlen)
+extern int32 __cvt_lngbool(word32 *ap, word32 *bp, int32 wlen)
 {
- register int wi;
- int hasxs;
+ register int32 wi;
+ int32 hasxs;
 
  for (hasxs = FALSE, wi = 0; wi < wlen; wi++)
   {
@@ -6025,7 +6016,7 @@ extern int __cvt_lngbool(word *ap, word *bp, int wlen)
 }
 
 /*
- * compare unsigned first with second - know widths the same
+ * compare word32 first with second - know widths the same
  *
  * set isx if either has x or z, else -1 <, 0 = , 1 >
  * know all wider than WBITS values in Verilog are unsigned
@@ -6033,10 +6024,10 @@ extern int __cvt_lngbool(word *ap, word *bp, int wlen)
  *
  * know size change made so both same no. words and high bits of narrow now 0 
  */
-extern int __do_widecmp(int *isx, register word *op1ap, register word *op1bp,
- register word *op2ap, register word *op2bp, int opwid)
+extern int32 __do_widecmp(int32 *isx, register word32 *op1ap, register word32 *op1bp,
+ register word32 *op2ap, register word32 *op2bp, int32 opwid)
 {
- register int i;
+ register int32 i;
 
  *isx = TRUE;
  if (!vval_is0_(op1bp, opwid)) return(0);
@@ -6060,18 +6051,18 @@ extern int __do_widecmp(int *isx, register word *op1ap, register word *op1bp,
  *
  * know size change made so both same no. words and high bits of narrow now 0 
  */
-extern int __do_sign_widecmp(int *isx, register word *op1ap,
- register word *op1bp, register word *op2ap, register word *op2bp, int opwid)
+extern int32 __do_sign_widecmp(int32 *isx, register word32 *op1ap,
+ register word32 *op1bp, register word32 *op2ap, register word32 *op2bp, int32 opwid)
 {
- register int i, i1, i2;
- int wlen;
+ register int32 i, i1, i2;
+ int32 wlen;
 
  *isx = TRUE;
  if (!vval_is0_(op1bp, opwid)) return(0);
  if (!vval_is0_(op2bp, opwid)) return(0);
 
  *isx = FALSE;
- /* wi is index of high word */
+ /* wi is index of high word32 */
  wlen = wlen_(opwid);
  
  /* if op1 is negative */
@@ -6083,14 +6074,14 @@ extern int __do_sign_widecmp(int *isx, register word *op1ap,
  /* op1 is positive and op2 is negative */
  else if ((op2ap[wlen - 1] & (1 << ubits_(opwid - 1))) != 0) return(1);
 
- /* here both will have the same sign (especially high word) */
+ /* here both will have the same sign (especially high word32) */
  /* know unused parts of high words will both be zero */
  for (i = wlen_(opwid) - 1; i >= 0; i--)
   {
    if (op1ap[i] != op2ap[i])
     {
-     i1 = (sword) op1ap[i];    
-     i2 = (sword) op2ap[i];
+     i1 = (sword32) op1ap[i];    
+     i2 = (sword32) op2ap[i];
      if (i1 < i2) return(-1);
      else return(1);
     }
@@ -6103,7 +6094,7 @@ extern int __do_sign_widecmp(int *isx, register word *op1ap,
  * ignored
  *
  * SJM 10/16/00 - routine for wide == or != return T if non x/z 
- * comparision is not equal (i.e. if for every word any x/z bits in either
+ * comparision is not equal (i.e. if for every word32 any x/z bits in either
  * 1st or 2nd operand are set to same 1 for comparison, then if value not
  * equal x/z bits do not effect outcome so result must be not equal)
  *
@@ -6112,11 +6103,11 @@ extern int __do_sign_widecmp(int *isx, register word *op1ap,
  * know size change made before calling this so both same words with narrower's
  * high bits 0 (if one was narrower)
  */
-extern int __omitxz_widenoteq(register word *op1ap, register word *op1bp,
- register word *op2ap, register word *op2bp, int opwid)
+extern int32 __omitxz_widenoteq(register word32 *op1ap, register word32 *op1bp,
+ register word32 *op2ap, register word32 *op2bp, int32 opwid)
 {
- register word xzmask;
- int i;
+ register word32 xzmask;
+ int32 i;
  
  /* know unused parts of high words will both be zero */
  /* when find first bit that makes not equal after masking all x/z in both */
@@ -6130,17 +6121,17 @@ extern int __omitxz_widenoteq(register word *op1ap, register word *op1bp,
 }
 
 /*
- * compare unsigned first with second - know widths the same
+ * compare word32 first with second - know widths the same
  * returns 1 if non equal 0 if equal
  * for === and !== compare cannot be used for greater or less 
  *
  * do not need to worry about high bits since sematics requires 0 extend
  * and 0 and 0 will match as 0 (never effect result)
  */
-extern int __do_xzwidecmp(register word *op1ap, register word *op1bp,
- register word *op2ap, register word *op2bp, int opbits)
+extern int32 __do_xzwidecmp(register word32 *op1ap, register word32 *op1bp,
+ register word32 *op2ap, register word32 *op2bp, int32 opbits)
 {
- int bytlen;
+ int32 bytlen;
 
  bytlen = WRDBYTES*wlen_(opbits);
  if (memcmp(op1ap, op2ap, bytlen) != 0 || memcmp(op1bp, op2bp, bytlen) != 0)
@@ -6173,26 +6164,26 @@ extern int __do_xzwidecmp(register word *op1ap, register word *op1bp,
  */
 
 /*
- * wide unsigned add
+ * wide word32 add
  * know u and v same width and resp wide enough and high zeroed
  * >WBITS always unsigned
  *
  * result and operands can't be same
- * LOOKATME - think not worth converting to word 64 array
+ * LOOKATME - think not worth converting to word32 64 array
  *
  * SJM 09/30/03 - for signed just works because of 2's complement  
  */
-extern void __ladd(word *res, word *u, word *v, int blen)
+extern void __ladd(word32 *res, word32 *u, word32 *v, int32 blen)
 {
- register word a2;
- register word *u_end, cy;
- int ublen, vblen, trimblen, wlen, hzwlen, verwlen;
+ register word32 a2;
+ register word32 *u_end, cy;
+ int32 ublen, vblen, trimblen, wlen, hzwlen, verwlen;
  extern void __my_fprintf(FILE *, char *, ...);
  
  ublen = __trim1_0val(u, blen);
  vblen = __trim1_0val(v, blen);
  trimblen = (ublen >= vblen) ? ublen : vblen;
- /* if trimmed max fits, need 1 more word for carry that is needed */ 
+ /* if trimmed max fits, need 1 more word32 for carry that is needed */ 
  if ((wlen = wlen_(trimblen)) < (verwlen = wlen_(blen))) wlen++;
  if ((hzwlen = verwlen - wlen) > 0)
   memset(&(res[wlen]), 0, WRDBYTES*hzwlen);
@@ -6206,7 +6197,7 @@ extern void __ladd(word *res, word *u, word *v, int blen)
    a2 = *v++;
    *res = *u++ + a2 + cy;
    /* use wrap around 32 bit test and auto incr instead of mpexpr cast */
-   /* to word 64 although current gcc does not handle auto inc/dec well */
+   /* to word32 64 although current gcc does not handle auto inc/dec well */
  
    /* notice if cy on if res and v equal, must not turn off */
    /* also if cy off if res and v equal, do not turn on */
@@ -6232,14 +6223,14 @@ extern void __ladd(word *res, word *u, word *v, int blen)
  * can get by with 32 bit arithmetic here
  * since mask any unused high bits - can borrow from unused
  *
- * LOOKATME - think not worth converting to word 64 array
+ * LOOKATME - think not worth converting to word32 64 array
  * SJM 09/28/03 - 2's complement means signed just interpretation
  * i.e. if sign bit on then negative
  */
-extern word __lsub(word *res, word *u, word *v, int blen)
+extern word32 __lsub(word32 *res, word32 *u, word32 *v, int32 blen)
 {
- register word *u_end, borrow, tmpres;
- int wlen;
+ register word32 *u_end, borrow, tmpres;
+ int32 wlen;
 
  wlen = wlen_(blen);
  borrow = 0; 
@@ -6259,17 +6250,17 @@ extern word __lsub(word *res, word *u, word *v, int blen)
 } 
 
 /*
- * multiple 2 multi-word signed numbers
+ * multiple 2 multi-word32 signed numbers
  *
- * wrapper that use normal unsigned lmult on absolute values
+ * wrapper that use normal word32 lmult on absolute values
  * since no x/z part (already handled) no x/z extension
  * BEWARE - this depends on fact that xstk ap/bp parts contiguous
  */
-extern void __sgn_lmult(register word *res, register word *u,
- register word *v, int blen)
+extern void __sgn_lmult(register word32 *res, register word32 *u,
+ register word32 *v, int32 blen)
 {
- int wlen, usign, vsign;
- word *wrku, *wrkv;
+ int32 wlen, usign, vsign;
+ word32 *wrku, *wrkv;
  struct xstk_t *uxsp, *vxsp;
 
  wlen = wlen_(blen);
@@ -6277,7 +6268,8 @@ extern void __sgn_lmult(register word *res, register word *u,
  uxsp = vxsp = NULL;
  if (__is_lnegative(u, blen))
   {
-   push_xstk_(uxsp, wlen*WBITS/2);
+   /* SJM 09/15/04 - lnegate need both a and b parts */
+   push_xstk_(uxsp, blen);
    usign = -1;
    /* ignoring carry */
    __cp_lnegate(uxsp->ap, u, blen);
@@ -6286,7 +6278,8 @@ extern void __sgn_lmult(register word *res, register word *u,
  else wrku = u;
  if (__is_lnegative(v, blen))
   {
-   push_xstk_(vxsp, wlen*WBITS/2);
+   /* SJM 09/15/04 - lnegate need both a and b parts */
+   push_xstk_(vxsp, blen);
    vsign = -1;
    /* ignoring carry */
    __cp_lnegate(vxsp->ap, v, blen);
@@ -6308,9 +6301,9 @@ extern void __sgn_lmult(register word *res, register word *u,
  * 
  * FIXME - this should be macro
  */
-extern int __is_lnegative(word *u, int blen) 
+extern int32 __is_lnegative(word32 *u, int32 blen) 
 {
- register int wi, bi;
+ register int32 wi, bi;
 
  blen--;
  wi = get_wofs_(blen);
@@ -6327,17 +6320,18 @@ extern int __is_lnegative(word *u, int blen)
  *
  * LOOKATME - copy version - maybe in place better
  */
-extern word __inplace_lnegate(register word *u, int blen)
+extern word32 __inplace_lnegate(register word32 *u, int32 blen)
 {
- register int wi, ubits;
- int wlen;
- word cy;
+ register int32 wi, ubits;
+ int32 wlen;
+ word32 cy;
  
  wlen = wlen_(blen);
  for (wi = 0; wi < wlen; wi++) u[wi] = ~(u[wi]);
  ubits = ubits_(blen); 
  u[wlen - 1] &= __masktab[ubits]; 
- cy = sgn_linc(u, ubits);
+ /* SJM 09/15/04 - was wrongly passes ubits so was not incing high words */ 
+ cy = sgn_linc(u, blen);
  return(cy);
 }
 
@@ -6349,11 +6343,11 @@ extern word __inplace_lnegate(register word *u, int blen)
  *
  * LOOKATME - copy version - maybe in place better
  */
-extern word __cp_lnegate(word *u, register word *v, int blen)
+extern word32 __cp_lnegate(word32 *u, register word32 *v, int32 blen)
 {
- register int wi, ubits;
- word cy;
- int wlen;
+ register int32 wi, ubits;
+ word32 cy;
+ int32 wlen;
  
  wlen = wlen_(blen);
  for (wi = 0; wi < wlen; wi++, v++) u[wi] = ~(*v);
@@ -6367,10 +6361,10 @@ extern word __cp_lnegate(word *u, register word *v, int blen)
 /*
  * inc (add 1) in place to wide signed value
  */
-static int sgn_linc(register word *u, int blen)
+static int32 sgn_linc(register word32 *u, int32 blen)
 {
- register int wi, ubits;
- register int wlen;
+ register int32 wi, ubits;
+ register int32 wlen;
 
  wlen = wlen_(blen);
  /* done when no carry - special case speed up attmpt */ 
@@ -6388,13 +6382,13 @@ static int sgn_linc(register word *u, int blen)
      return(1);
     }
   }
- /* value was all 1's and fills high word, no mask but return cy */
+ /* value was all 1's and fills high word32, no mask but return cy */
  /* 2's complement of 0 is 0 plus carry */
  return(1);
 }
 
 /*
- * multiply two multi-word numbers to obtain the double len product
+ * multiply two multi-word32 numbers to obtain the double len product
  *
  * notice res must not be same addr as u or v
  * original idea for this routine came from Dr. Dobbs article
@@ -6406,12 +6400,12 @@ static int sgn_linc(register word *u, int blen)
  * SJM 09/28/03 - must multply with absolute values so there is sign  
  * handling wrapper for signed wide multiply
  */
-extern void __lmult(register word *res, register word *u, register word *v,
- int blen)
+extern void __lmult(register word32 *res, register word32 *u, register word32 *v,
+ int32 blen)
 {
- register int i;
- int wlen, ublen, vblen, uwlen, vwlen, prodwlen;
- word *wp;
+ register int32 i;
+ int32 wlen, ublen, vblen, uwlen, vwlen, prodwlen;
+ word32 *wp;
  w64_u w64res;
  struct xstk_t *xsp;
  
@@ -6463,7 +6457,7 @@ extern void __lmult(register word *res, register word *u, register word *v,
   {
    wp[i + vwlen] += accmuladd32(&(wp[i]), &(wp[i]), u[i], v, vwlen);
   }
- /* SJM 04/07/03 - need to mask high bits in high word here */
+ /* SJM 04/07/03 - need to mask high bits in high word32 here */
  wp[wlen - 1] &= __masktab[ubits_(blen)];
  
  memcpy(res, wp, ((wlen < prodwlen) ? wlen : prodwlen)*WRDBYTES); 
@@ -6471,13 +6465,13 @@ extern void __lmult(register word *res, register word *u, register word *v,
 }
 
 /*
- * a[] = b[] + c*d[] - compute array per word, word product sum
+ * a[] = b[] + c*d[] - compute array per word32, word32 product sum
  * returns carry
  */
-static int accmuladd32(word *a, word *b, word c, word *d, int wlen)
+static int32 accmuladd32(word32 *a, word32 *b, word32 c, word32 *d, int32 wlen)
 {
- register int i;
- register word t0, t1, cy;
+ register int32 i;
+ register word32 t0, t1, cy;
  w64_u res;
  word64 c64;
 
@@ -6499,15 +6493,15 @@ static int accmuladd32(word *a, word *b, word c, word *d, int wlen)
 /*
  * interfact to signed long div and mod (keep rem) that select needed result
  *
- * wrapper that use normal unsigned on absolute values then adjusts signs
+ * wrapper that use normal word32 on absolute values then adjusts signs
  * since no x/z part (already handled) no x/z extension
  * BEWARE - this depends on fact that xstk ap/bp parts contiguous
  */
-extern void __sgn_ldivmod(register word *res, register word *u,
- register word *v, int blen, int nd_quot)
+extern void __sgn_ldivmod(register word32 *res, register word32 *u,
+ register word32 *v, int32 blen, int32 nd_quot)
 {
- int wlen, usign, vsign;
- word *wrku, *wrkv;
+ int32 wlen, usign, vsign;
+ word32 *wrku, *wrkv;
  struct xstk_t *uxsp, *vxsp, *tmpxsp; 
 
  /* always need unused tmp area for unused of mod/div results */
@@ -6520,7 +6514,8 @@ extern void __sgn_ldivmod(register word *res, register word *u,
  /* div/mod routine assumes both operands positive */
  if (__is_lnegative(u, blen))
   {
-   push_xstk_(uxsp, wlen*WBITS/2);
+   /* SJM 09/15/04 - lnegate need both a and b parts */
+   push_xstk_(uxsp, blen);
    usign = -1;
    /* ignoring carry */
    __cp_lnegate(uxsp->ap, u, blen);
@@ -6529,7 +6524,8 @@ extern void __sgn_ldivmod(register word *res, register word *u,
  else wrku = u;
  if (__is_lnegative(v, blen))
   {
-   push_xstk_(vxsp, wlen*WBITS/2);
+   /* SJM 09/15/04 - lnegate need both a and b parts */
+   push_xstk_(vxsp, blen);
    vsign = -1;
    /* ignoring carry */
    __cp_lnegate(vxsp->ap, v, blen);
@@ -6547,7 +6543,7 @@ extern void __sgn_ldivmod(register word *res, register word *u,
  else
   {
    __ldivmod2(tmpxsp->ap, res, wrku, wrkv, blen);
-   /* for mod sign same as sign of first but must do unsigned wide div/mod */
+   /* for mod sign same as sign of first but must do word32 wide div/mod */
    if (usign == -1) __inplace_lnegate(res, blen);
   }
  if (uxsp != NULL) __pop_xstk();
@@ -6558,9 +6554,9 @@ extern void __sgn_ldivmod(register word *res, register word *u,
 /*
  * interfact to long div and mod (keep rem) that select needed result
  */
-extern void __ldivmod(word *res, word *u, word *v, int blen, int nd_quot)
+extern void __ldivmod(word32 *res, word32 *u, word32 *v, int32 blen, int32 nd_quot)
 {
- int wlen; 
+ int32 wlen; 
  struct xstk_t *tmpxsp; 
 
  wlen = wlen_(blen);
@@ -6583,11 +6579,11 @@ extern void __ldivmod(word *res, word *u, word *v, int blen, int nd_quot)
  *
  * SJM 09/30/03 - wrapper insures operands here are positive  
  */
-extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
+extern void __ldivmod2(word32 *quot, word32 *rem, word32 *u, word32 *v, int32 blen)
 {
- register word *uwp, *vwp;
- word r0;
- int ublen, vblen, uwlen, vwlen, wlen, normdist;
+ register word32 *uwp, *vwp;
+ word32 r0;
+ int32 ublen, vblen, uwlen, vwlen, wlen, normdist, ubits;
  struct xstk_t *xsp;
 
  /* set rem and quotient to zero */
@@ -6606,7 +6602,7 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
  if (ublen <= WBITS && vblen <= WBITS) 
   { quot[0] = u[0] / v[0]; rem[0] = u[0] % v[0]; return; }
 
- /* if divisor fits in half word, use fast linear algorithm */
+ /* if divisor fits in half word32, use fast linear algorithm */
  if (vblen <= WBITS/2)
   {
    /* special divide by 1 - rem is 0 (already initialized and quot is u) */
@@ -6630,7 +6626,9 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
  /* need long division */
  /* normalizing divisor (bottom)(v) first */ 
  /* high bit of divisor (v) must be 1 - compute number of leading 0s */
- if (vblen == WBITS) normdist = 0; else normdist = WBITS - ubits_(vblen);
+ /* AIV 06/25/04 - only nomalize if not multiple of WBITS */
+ ubits = ubits_(vblen);
+ normdist = (ubits == 0) ? 0 : WBITS - ubits;
 
  /* since must shift, need copy of if stacked v (divisor) can be changed */
  /* could just shift */
@@ -6651,7 +6649,7 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
 
  /* use basic algorithm of mpexpr long div routine */
  /* notice length of dividend (u) is plus 1 because divisor (v) gets */
- /* normalized probably causing shift of part of u into 1 higher word */
+ /* normalized probably causing shift of part of u into 1 higher word32 */
  mpexpr_zdiv(quot, rem, uwp, uwlen + 1, vwp, vwlen);
  if (normdist != 0) bitmwrshift(rem, normdist, vwlen);
  __pop_xstk();
@@ -6678,10 +6676,10 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
  * routine is taken exactly from mpexpr except changed to verilog number
  * representation and special cases handled by ldiv/lmod removed
  *
- * "digit" here is unsigned 32 bit word, lengths are no. of words 
+ * "digit" here is word32 32 bit word32, lengths are no. of words 
  * uwp is top and vwp is bottom
  *
- * changed endian word64/word access to follow Cver conventions and set
+ * changed endian word64/word32 access to follow Cver conventions and set
  * 64 long long 32 long that is only supported by modern c compilers
  * know both zu and v normalized and dividend > 0 when called
  * 
@@ -6693,14 +6691,14 @@ extern void __ldivmod2(word *quot, word *rem, word *u, word *v, int blen)
  *   Slight modifications were made to speed this mess up.
  *
  */
-static void mpexpr_zdiv(word *quot, word *rem, word *ztmp1, int ztmp1_len,
- word *ztmp2, int ztmp2_len)  
+static void mpexpr_zdiv(word32 *quot, word32 *rem, word32 *ztmp1, int32 ztmp1_len,
+ word32 *ztmp2, int32 ztmp2_len)  
 {
- register word *q, *pp;
- int quot_len, y, ztmp3_len, k;
+ register word32 *q, *pp;
+ int32 quot_len, y, ztmp3_len, k;
  word64 x;
- word *ztmp3, h2, v2;
- /* pair of word values to make word64 value - uses endianess */
+ word32 *ztmp3, h2, v2;
+ /* pair of word32 values to make word64 value - uses endianess */
  w64_u pair;
  struct xstk_t *ztmp3_xsp;
 
@@ -6732,7 +6730,7 @@ static void mpexpr_zdiv(word *quot, word *rem, word *ztmp1, int ztmp1_len,
    if (ztmp1[y] == h2) x = BASE1; else x = pair.w64v/(word64) h2;
    if (x != 0ULL)
     {
-     /* this computes one word ("digit") x */
+     /* this computes one word32 ("digit") x */
      while ((pair.w64v - x*h2 < BASE) && (y > 1)
       && (v2*x > (pair.w64v - x*h2) * BASE + ztmp1[y-2]))
       {
@@ -6769,7 +6767,7 @@ static void mpexpr_zdiv(word *quot, word *rem, word *ztmp1, int ztmp1_len,
     }
    ztmp1_len = ztrim(ztmp1, ztmp1_len);
    /* each time thru set one current high digit of quotient to value */
-   *--q = (word) x;
+   *--q = (word32) x;
   }
 
  /* remainder is value now in ztmp1, caller unnormalizes rem */
@@ -6782,10 +6780,10 @@ static void mpexpr_zdiv(word *quot, word *rem, word *ztmp1, int ztmp1_len,
 /*
  * 32 bit "digit" trim - unlike mpexpr ztrim returns trimmed width 
  */
-static int ztrim(word *zp, int z_len)
+static int32 ztrim(word32 *zp, int32 z_len)
 {
- register word *h;
- register int len;
+ register word32 *h;
+ register int32 len;
  
  h = &(zp[z_len - 1]);
  len = z_len;
@@ -6799,10 +6797,10 @@ static int ztrim(word *zp, int z_len)
  * what are y and n
  * need len to save extra work for high 0s
  */
-static void dadd(word *z1p, word *z2p, int y, int n)
+static void dadd(word32 *z1p, word32 *z2p, int32 y, int32 n)
 {
- word *s1p, *s2p;
- word carry;
+ word32 *s1p, *s2p;
+ word32 carry;
  word64 sum;
 
  s1p = &(z1p[y - n]);
@@ -6813,12 +6811,12 @@ static void dadd(word *z1p, word *z2p, int y, int n)
    sum = ((word64) *s1p) + ((word64) *s2p) + ((word64) carry);
    carry = 0;
    if (sum >= BASE) { sum -= BASE; carry = 1; }
-   *s1p = (word) sum;
+   *s1p = (word32) sum;
    ++s1p;
    ++s2p;
   }
  sum = ((word64) *s1p) + ((word64) carry);
- *s1p = (word) sum;
+ *s1p = (word32) sum;
 }
 
 /*
@@ -6828,11 +6826,11 @@ static void dadd(word *z1p, word *z2p, int y, int n)
  * LOOKATME - what are y and n?
  * "digits" unsigned
  */
-static int dsub(word *z1p, int z1_len, word *z2p, int z2_len, int y, int n)
+static int32 dsub(word32 *z1p, int32 z1_len, word32 *z2p, int32 z2_len, int32 y, int32 n)
 {
- word *s1p, *s2p, *s3p;
+ word32 *s1p, *s2p, *s3p;
  word64 i1;
- int neg;
+ int32 neg;
 
  neg = FALSE;
  s1p = &(z1p[y - n]);
@@ -6846,12 +6844,12 @@ static int dsub(word *z1p, int z1_len, word *z2p, int z2_len, int y, int n)
     {
      s3p = &(s1p[1]);
      while (s3p < &(z1p[z1_len]) && !(*s3p))
-      { *s3p = (word) BASE1; ++s3p; }
+      { *s3p = (word32) BASE1; ++s3p; }
 
      if (s3p >= &(z1p[z1_len])) neg = TRUE; else --(s3p[0]);
      i1 += BASE;
     }
-  *s1p = (word) (i1 - (word64) *s2p);
+  *s1p = (word32) (i1 - (word64) *s2p);
   ++s1p;
   ++s2p;
  }
@@ -6859,16 +6857,16 @@ static int dsub(word *z1p, int z1_len, word *z2p, int z2_len, int y, int n)
 }
 
 /*
- * multiply into tmp dest zp times one word ("digit") in mul  
+ * multiply into tmp dest zp times one word32 ("digit") in mul  
  *
  * mpexpr comments:
  * Multiply a number by a single 'digit'.
  * This is meant to be used only by the divide routine, and so the
  * destination area must already be allocated and be large enough.
  */
-static void dmul(word *destp, int dest_len, word *z1p, int z1_len, word64 mul)
+static void dmul(word32 *destp, int32 dest_len, word32 *z1p, int32 z1_len, word64 mul)
 {
- register word *zp, *dp;
+ register word32 *zp, *dp;
  w64_u pair;
  word64 carry;
  long len;
@@ -6905,15 +6903,15 @@ static void dmul(word *destp, int dest_len, word *z1p, int z1_len, word64 mul)
   carry = pair.w_u.high;
  }
  /* LOOKATME - how make sure enough room in dest if there is a carry? */
- if (carry != 0) *dp = (word) carry;
+ if (carry != 0) *dp = (word32) carry;
 }
 
 /*
  * compare only a parts - know wider than WBITS bits
  */
-static int ldiv_cmp(register word *u, register word *v, int wlen) 
+static int32 ldiv_cmp(register word32 *u, register word32 *v, int32 wlen) 
 {
- register int i;
+ register int32 i;
 
  /* know unused parts of high words will both be zero */
  for (i = wlen - 1; i >= 0; i--)
@@ -6925,17 +6923,17 @@ static int ldiv_cmp(register word *u, register word *v, int wlen)
 }
 
 /*
- * divide a number by 1 half word (digit based 16 bits)
+ * divide a number by 1 half word32 (digit based 16 bits)
  * notice all values must be separate addresses
  *
  * also quot and rem assumed to be initialized to 0 before passing to here
  * also this works on words not half words
  */
-extern void __by16_ldivmod(word *quot, word *r0, word *u, word v0, int ublen)
+extern void __by16_ldivmod(word32 *quot, word32 *r0, word32 *u, word32 v0, int32 ublen)
 {
- register int i;
- int uwlen;
- word r, newn;
+ register int32 i;
+ int32 uwlen;
+ word32 r, newn;
 
  uwlen = wlen_(ublen); 
  r = 0L;
@@ -6944,7 +6942,7 @@ extern void __by16_ldivmod(word *quot, word *r0, word *u, word v0, int ublen)
    newn = r*SHORTBASE + (u[i] >> (WBITS/2));
    quot[i] = (newn / v0) << (WBITS/2);
    r = newn % v0;
-   /* notice since r < d0, newn / v0 will aways fit in half word */
+   /* notice since r < d0, newn / v0 will aways fit in half word32 */
    newn = r*SHORTBASE + (u[i] & ALL1HW); 
    quot[i] |= (newn / v0);
    r = newn % v0;

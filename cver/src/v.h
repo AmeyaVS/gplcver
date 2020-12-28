@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@
 
 #define VERS "GPLCVER_2"
 
-#define VERS2 ".00b"
+#define VERS2 ".10c"
 
-#define OFDT "06/19/04"
+#define OFDT "02/28/05"
 #define OUTLINLEN 71          /* length of output file line */
 #define DFLTIOWORDS 8         /* preallocated size for I/O and work values */
 #define MUSTFREEWORDS 64      /* for stk values wider free when done */
@@ -54,7 +54,6 @@
 #define MAXNOOPTMODS 2048     /* max. no of +optimize_off module names */
 #define MAXUPRTS 11           /* max. no. of udp ports */
 #define UALTREPIPNUM 7        /* lowest port number to use slower udp rep */
-/* #define TWHINITSIZE 100  */   /* debug size of fixed timing wheel */
 #define TWHINITSIZE 4000      /* size of fixed timing wheel */
 #define MAXVERIUSERTFS 4095   /* maximum number of pli veriusertfs tfs */
 #define SYSTFDATSIZE 256      /* starting size of vpi_ systf table (grows) */
@@ -82,16 +81,18 @@
 
 #define MY_FOPEN_MAX 1024     /* guess at OS process max open stdio.h wrong */
 
-typedef unsigned long word;
+
+typedef unsigned long word32;
+typedef long sword32;
+typedef int int32;
 typedef unsigned long long word64;
-typedef long sword;
 typedef long long sword64;
 typedef unsigned char byte;
 typedef unsigned short hword;
 typedef short hsword;
-typedef int i_tev_ndx;
+typedef int32 i_tev_ndx;
 /* needed to allow signals to use normal decls */
-typedef int sighandler();
+typedef int32 sighandler();
 
 #ifndef __sparc
 /* BEWARE - assuming all non sparc systems define BYTE_ORDER and endian.h */
@@ -102,16 +103,20 @@ typedef int sighandler();
 #  ifdef __CYGWIN32__
 #   include <sys/param.h>
 #  else
-#   include <endian.h>
+#   ifdef __FreeBSD__
+#    include <sys/endian.h>
+#   else
+#    include <endian.h>
+#   endif
 #  endif
 # endif
 
 typedef union {
  word64 w64v; 
 #if (BYTE_ORDER == BIG_ENDIAN)
- struct { word high; word low; } w_u;
+ struct { word32 high; word32 low; } w_u;
 #else
- struct { word low; word high; } w_u;
+ struct { word32 low; word32 high; } w_u;
 #endif
 } w64_u;
 #else
@@ -120,9 +125,9 @@ typedef union {
 typedef union {
  word64 w64v; 
 #if defined(_BIG_ENDIAN)
- struct { word high; word low; } w_u;
+ struct { word32 high; word32 low; } w_u;
 #else
- struct { word low; word high; } w_u;
+ struct { word32 low; word32 high; } w_u;
 #endif
 } w64_u;
 #endif
@@ -174,6 +179,7 @@ typedef union {
 #define SR_PISXPR 7           /* for # and defparams, per inst. array of x */
 #define SR_PNUM 8             /* after fix up simple parameter const. */
 #define SR_PISNUM 9           /* after fix up IS parameter const. */
+
 
 /* strength types */
 #define LOW_STREN 1
@@ -248,7 +254,7 @@ typedef union {
 #define DRVR_ICONN 2          /* one up iconn inst conn output driver */ 
 #define DRVR_MDPRT 3          /* one down mod port input driver */ 
 
-/* parmnplst net pin types - disjoint from sim time npps */
+/* parmnplst net pin types - disjoint32 from sim time npps */
 #define PNP_GATEDEL 0
 #define PNP_CONTADEL 1
 #define PNP_NETDEL 2
@@ -343,7 +349,7 @@ typedef union {
 #define SHIFTL 49             /* << */
 #define ASHIFTL 50            /* <<< - differenet operator but same as << */
 #define SHIFTR 51             /* >> */
-#define ASHIFTR 52             /* >>> */
+#define ASHIFTR 52            /* >>> */
 #define FPTHCON 53            /* *> (full path conn spfy. op.) */
 #define PPTHCON 54            /* => (parallel path conn spfy. op.) */
 #define TCHKEVAND 55          /* &&& (timing check conditional event op.) */
@@ -479,37 +485,37 @@ typedef union {
 #define PULL0 184
 #define PULL1 185
 #define REAL 186
-#define REG 187
-#define RELEASE 188
-#define REPEAT 189
-#define SCALARED 190
-#define SIGNED 191
-#define SPECIFY 192
-#define SPECPARAM 193
-#define SMALL 194
-#define Strength 195
-#define STRONG0 196
-#define STRONG1 197
-#define SUPPLY0 198
-#define SUPPLY1 199
-#define TABLE 200
-#define TASK 201
-#define TIME 202
-#define TRI 203
-#define TRI0 204
-#define TRI1 205
-#define TRIAND 206
-#define TRIOR 207
-#define TRIREG 208
-#define VECTORED 209
-#define WAIT 210
-#define WAND 211
-#define WEAK0 212
-#define WEAK1 213
-#define WHILE 214
-#define WIRE 215
-#define WOR 216
-
+#define REALTIME 187
+#define REG 188
+#define RELEASE 189
+#define REPEAT 190
+#define SCALARED 191
+#define SIGNED 192
+#define SPECIFY 193
+#define SPECPARAM 194
+#define SMALL 195
+#define Strength 196
+#define STRONG0 197
+#define STRONG1 198
+#define SUPPLY0 199
+#define SUPPLY1 200
+#define TABLE 201
+#define TASK 202
+#define TIME 203
+#define TRI 204
+#define TRI0 205
+#define TRI1 206
+#define TRIAND 207
+#define TRIOR 208
+#define TRIREG 209
+#define VECTORED 210
+#define WAIT 211
+#define WAND 212
+#define WEAK0 213
+#define WEAK1 214
+#define WHILE 215
+#define WIRE 216
+#define WOR 217
 
 /* gate nums (not tokens) for sim - now separate gatid range */
 /* now for debugging do not use low numbers */
@@ -729,7 +735,7 @@ typedef union {
 /* operater width result pattern */
 #define WIDNONE 0             /* no width result */
 #define WIDONE 1              /* result width 1 (for logicals) */
-#define WIDENONE 2            /* result one, but widen opandss to wides */
+#define WIDENONE 2            /* result one, but widen opands to wides */
 #define WIDLEFT 3             /* left operand width of binary */
 #define WIDMAX 4              /* max. of 2 operands */
 #define WIDSUM 5              /* sum of operand width for concats */
@@ -850,8 +856,8 @@ typedef union {
 
 /* slotend action masks - multiple can be on at time */
 #define SE_TCHK_VIOLATION 1
-#define SE_MONIT_CHG 0x2       /* definite chg including first time */
-#define SE_MONIT_TRIGGER 0x4   /* monit chg where val saved (chk at end) */
+#define SE_MONIT_CHG 0x2      /* definite chg including first time */
+#define SE_MONIT_TRIGGER 0x4  /* monit chg where val saved (chk at end) */
 /* FIXME - why is this never referenced */ 
 #define SE_FMONIT_TRIGGER 0x8
 #define SE_STROBE 0x10
@@ -896,15 +902,16 @@ typedef union {
 #define FATAL 3
 
 /* per inst. masks for net nchg action byte array */
-#define NCHG_DMPVARNOW 0x1     /* dumpvaring of this var inst on/off */
-#define NCHG_DMPVNOTCHGED 0x2  /* var inst. not chged during current time */
-#define NCHG_DMPVARED 0x4      /* var inst. dumpvared (setup) */
-#define NCHG_ALL_CHGED 0x08    /* all var inst. bits chged (also if no lds) */
+#define NCHG_DMPVARNOW 0x1    /* dumpvaring of this var inst on/off */
+#define NCHG_DMPVNOTCHGED 0x2 /* var inst. not chged during current time */
+#define NCHG_DMPVARED 0x4     /* var inst. dumpvared (setup) */
+#define NCHG_ALL_CHGED 0x08   /* all var inst. bits chged (also if no lds) */
 
-/* AIV 09/05/03 constants for new fileio OS file descriptor streams support */
+/* AIV 09/05/03 consts for new fileio OS file descriptor streams support */
 #define FIO_MSB 0x80000000
 #define FIO_FD 0x7fffffff
-#define FIO_STREAM_ST 3        /* first usable ver fio fd open file number */
+#define FIO_STREAM_ST 3       /* first usable ver fio fd open file number */
+#define SE_VPIROSYNC 0x400    /* have list of vpi rw sync to process */
 
 /* AIV 12/02/03 constants for cfg get token */
 /* FIXME ??? - needed here because cfg get tok in v ms but used in cver? */
@@ -938,19 +945,20 @@ struct fmonlst_t;
 
 /* data structure for keywords and command line/file options */
 struct namlst_t {
- int namid;
+ int32 namid;
  char *lnam;
 };
 
-/* SJM 06/03/01 - to prepare for 64 bits union to avoid int to ptr cast */
+/* SJM 06/03/01 - to prepare for 64 bits union to avoid int32 to ptr cast */
+/* SJM 10/12/04 - can't use p because need index into contab not addr */
 union intptr_u {
- int i;
- void *p;
+ int32 i;
+ int32 xvi;
 };
 
 /* SJM 08/22/01 - must be at top for new expr node union */
 union pck_u {
- word *wp;
+ word32 *wp;
  hword *hwp;
  byte *bp;
  double *dp;
@@ -959,7 +967,7 @@ union pck_u {
 /* data struct for help message line tables - hnum is namlst_t namid */
 struct hlplst_t {
  /* LOOKATME - why is this unused */
- int hnamid;
+ int32 hnamid;
  char **hmsgtab;
 };
 
@@ -967,19 +975,19 @@ struct sdfnamlst_t {
  char *fnam;
  char *scopnam;
  char *optfnam;
- int opt_slcnt;
+ int32 opt_slcnt;
  struct sdfnamlst_t *sdfnamnxt;
 };
 
 struct optlst_t {
  unsigned optfnam_ind : 16;
- unsigned is_bmark : 1;       /*special -f markers for vpi_ */         
+ unsigned is_bmark : 1;       /* special -f markers for vpi_ */         
  unsigned is_emark : 1;
  unsigned is_argv : 1;
  unsigned argv_done : 1;
- int optlin_cnt;
- int optnum;
- int optlev;
+ int32 optlin_cnt;
+ int32 optnum;
+ int32 optlev;
  char *opt;
  char **dargv;
  struct optlst_t *optlnxt;
@@ -988,11 +996,11 @@ struct optlst_t {
 /* data structure for input file/`define/`include stack */
 /* could be union but not too many ? */
 struct vinstk_t {
- int vilin_cnt;
- unsigned vifnam_ind;
+ int32 vilin_cnt;
+ word32 vifnam_ind;
  FILE *vi_s;
  char *vichp_beg;             /* beginning of macro string */  
- int vichplen;                /* if not -1, len + 1 must be freed */
+ int32 vichplen;              /* if not -1, len + 1 must be freed */
  char *vichp;                 /* macro string current char */
 };
 
@@ -1012,8 +1020,8 @@ struct cfgnamlst_t {
 /* describes component of path during wild card expansion */
 struct xpndfile_t {
  char *fpat;                  /* the original pattern per dir, split by '/' */
- int nmatch;                  /* the number of matched files */
- int level;                   /* current directory level */
+ int32 nmatch;                /* the number of matched files */
+ int32 level;                 /* current directory level */
  unsigned wildcard: 2;        /* T=> if it contains a wild char, *, ? or ... */
  unsigned incall : 1;         /* include the entire dir, ends in '/' */
  struct xpndfile_t *xpfnxt;   /* next part of original pattern */
@@ -1037,7 +1045,7 @@ struct cfglib_t {
  struct libel_t *lbels;       /* list of library file path spec elements */
  struct cfglib_t *lbnxt;      /* pointer to the next library */
  char *cfglb_fnam;            /* location of library in src needed */
- int cfglb_lno;
+ int32 cfglb_lno;
  struct cfg_t *cfgnxt;
 };
 
@@ -1052,17 +1060,17 @@ struct cfgrule_t {
  char *rul_use_libnam;        /* use <lib name.>[cell name][:config] */
  char *rul_use_celnam;
  char **inam_comptab;         /* table of inst clause XMR components */
- int inam_comp_lasti;         /* number of components in XMR inst path */
+ int32 inam_comp_lasti;       /* number of components in XMR inst path */
 
  struct cfgnamlst_t *rul_libs;/* liblist clause - just list of libraries */
- int rul_lno;
+ int32 rul_lno;
  struct cfgrule_t *rulnxt;
 };
 
 /* record for list of config design cell identifiers */
 struct cfgdes_t {
  char *deslbnam;          /* name of config design library */
- struct cfglib_t *deslbp;     /* ptr to config design library */
+ struct cfglib_t *deslbp; /* ptr to config design library */
  char *topmodnam;         /* name of top level cell (type) */
  struct cfgdes_t *desnxt;  
 };
@@ -1076,22 +1084,22 @@ struct cfg_t {
  struct cfgrule_t *cfgrules;  /* ordered list of config rules */
  struct cfgrule_t *cfgdflt;   /* default lib list if rules find no matches */
  char *cfg_fnam;
- int cfg_lno;
+ int32 cfg_lno;
  struct cfg_t *cfgnxt;
 };
 
 /* for debugger include file and last included place */
 struct incloc_t {
- int inc_fnind;               /* in_fils index of included file */
- int incfrom_fnind;           /* in_fils index file included from */
- int incfrom_lcnt;            /* lin cnt where included */ 
+ int32 inc_fnind;             /* in_fils index of included file */
+ int32 incfrom_fnind;         /* in_fils index file included from */
+ int32 incfrom_lcnt;          /* lin cnt where included */ 
  struct incloc_t *inclocnxt;
 };
 
 /* doubly linked list for undefined modules */
 struct undef_t {
  struct sy_t *msyp;
- int dfi;
+ int32 dfi;
  char *modnam;
  struct undef_t *undefprev;
  struct undef_t *undefnxt;
@@ -1131,8 +1139,8 @@ struct fiofd_t {
 
 /* debugger source file cache line start location rec */
 struct filpos_t {
- int nlines;
- int *lpostab;
+ int32 nlines;
+ int32 *lpostab;
 };
 
 /* formal macro argument list */
@@ -1144,14 +1152,14 @@ struct macarg_t {
 /* macro expansion templace list */
 struct macexp_t {
  char *leading_str;
- int leadlen;
- int ins_argno;
+ int32 leadlen;
+ int32 ins_argno;
  struct macexp_t *macexpnxt;
 };
 
 /* arg macro record */ 
 struct amac_t { 
- int num_formal_args;
+ int32 num_formal_args;
  struct macexp_t *amxp;
 };
 
@@ -1160,29 +1168,29 @@ struct amac_t {
 struct opinfo_t {
  unsigned opclass : 8;
  unsigned realop : 8;
- unsigned pthexpop: 8;   /* T => operator legal in SDPD condional expr. */
+ unsigned pthexpop: 8;        /* T => op legal in SDPD condional expr. */
  unsigned reswid : 8;
  char *opnam;
 };
 
 /* value in q for $q_ system tasks */
 struct q_val_t {
- int job_id;
- int inform_id;
+ int32 job_id;
+ int32 inform_id;
  word64 enter_tim;
 };
 
 /* q header record - linked list of all queues */
 struct q_hdr_t {
- unsigned q_fifo : 1;     /* T => fifo, F => lifo */
- int q_id;                /* user passed ID */
- int q_hdr;               /* index of current head */
- int q_tail;              /* index of current tail */
- int q_maxlen;            /* maximum length of queue */
- int q_size;              /* need to store size for q_exam */
- struct q_val_t *qarr;    /* table contain queue */
- word64 q_minwait;        /* shortest wait (min) of all els. ever in Q */
- int q_maxsize;           /* for entire run, max size of q */
+ unsigned q_fifo : 1;       /* T => fifo, F => lifo */
+ int32 q_id;                /* user passed ID */
+ int32 q_hdr;               /* index of current head */
+ int32 q_tail;              /* index of current tail */
+ int32 q_maxlen;            /* maximum length of queue */
+ int32 q_size;              /* need to store size for q_exam */
+ struct q_val_t *qarr;      /* table contain queue */
+ word64 q_minwait;          /* shortest wait (min) of all els. ever in Q */
+ int32 q_maxsize;           /* for entire run, max size of q */
  struct q_hdr_t *qhdrnxt; 
 };
 
@@ -1191,14 +1199,14 @@ struct hctrl_t {
  struct st_t *hc_stp;     /* initial style statement list */
  struct itree_t *hc_itp;  /* itree loc. runs in if reenabled */
  struct thread_t *hc_thp; /* associated thread */ 
- int hc_lini;             /* line loc. in history of statement */ 
- int hc_ifi; 
+ int32 hc_lini;           /* line loc. in history of statement */ 
+ int32 hc_ifi; 
  struct hctrl_t *hc_nxt;  /* list next for non history traversing */
  struct hctrl_t *hc_prev; /* and previous */
  struct iahist_t *hc_iahp;/* ptr to history element if history on */
  struct dceauxlst_t *hc_dcelst; /* aux. list of per inst iact dces to free */ 
  struct gref_t *hc_grtab; /* table of any grefs used in this statement */ 
- int hc_numglbs;          /* size of table */
+ int32 hc_numglbs;        /* size of table */
 };
 
 /* interactive history command record */
@@ -1211,31 +1219,31 @@ struct iahist_t {
 /* parallel to expr table during expr collect id name info struct */  
 struct expridtab_t {
  char *idnam;
- int idfldwid;
- int idfnam_ind;
- int idlin_cnt;
+ int32 idfldwid;
+ int32 idfnam_ind;
+ int32 idlin_cnt;
 };
 
 /* structs for expressions */
 union l_u {
  struct expr_t *x;
- int xi; /* for compile/save changed to indices */
+ int32 xi; /* for compile/save changed to indices */
  struct sy_t *sy;
- int si; /* for compile/save changed to indices */
+ int32 si; /* for compile/save changed to indices */
 };
 
 union r_u {
  struct expr_t *x;
- int xvi;                     /* wrd index into constant tab */
+ int32 xvi;                   /* wrd index into constant tab */
  union pck_u iop_ptr;         /* for special malloc iopt node ptr to area */
  struct gref_t *grp;          /* during compile/exec - ptr to gref */
- int gri;                     /* for compile/save index */
+ int32 gri;                   /* for compile/save index */
  char *qnchp;                 /* for local qual. name, pointer to name */ 
 };
 
 /* expression size or tf rec union */
 union sz_u {
- int xclen;
+ int32 xclen;
  struct tfrec_t *xfrec;
  void *vpi_sysf_datap;        /* for vpi_ sysf get/put data routine */
 };
@@ -1271,15 +1279,22 @@ struct expr_t {
 };
 
 struct xstk_t {
- int xslen;                   /* number of bits required to store */
- int xsawlen;                 /* word length of a/b half of alloced size */
- word *ap;                    /* a part of value but must be contigous */
- word *bp;                    /* b part of value */
+ int32 xslen;                 /* number of bits required to store */
+ int32 xsawlen;               /* word32 length of a/b half of alloced size */
+ word32 *ap;                  /* a part of value but must be contigous */
+ word32 *bp;                  /* b part of value */
 };
 
 struct exprlst_t {
  struct expr_t *xp;
  struct exprlst_t *xpnxt;
+};
+
+/* for new ver 2001 var (not wire) decl initialize assign list */
+struct varinitlst_t {
+ struct sy_t *init_syp;
+ struct expr_t *init_xp;
+ struct varinitlst_t *varinitnxt;
 };
 
 /* struct for storing # delays but not instance pound params */
@@ -1297,14 +1312,14 @@ struct dfparam_t {
  unsigned dfp_has_idents : 1; /* T => identical to other rooted defparam */
  unsigned dfp_checked : 1;    /* T => after fix-up check done */
  unsigned dfpfnam_ind : 16;
- int dfplin_cnt;
- int last_dfpi;               /* last element of path */
+ int32 dfplin_cnt;
+ int32 last_dfpi;             /* last element of path */
 
  struct expr_t *dfpxlhs;
  struct expr_t *dfpxrhs;
  struct mod_t *in_mdp;        /* module appeared in for non rooted */
  struct dfparam_t *dfpnxt;
- int *dfpiis;                 /* array of in its indices for path of defp */
+ int32 *dfpiis;               /* array of in its indices for path of defp */
  char *gdfpnam;               /* lhs name from gref */
  struct sy_t *targsyp;        /* target symbol from gref */
  struct dfparam_t *idntmastdfp;/* ptr to master if >1 with identical path */
@@ -1337,16 +1352,16 @@ union del_u {
 /* input instance structure before known whether gate or cell */
 struct cell_pin_t {
  struct expr_t *cpxnd;        /* connecting expression root node */
- unsigned cpfnam_ind;         /* file symbol defined in */
- int cplin_cnt;               /* def. line no. */
+ word32 cpfnam_ind;           /* file symbol defined in */
+ int32 cplin_cnt;             /* def. line no. */
  char *pnam;                  /* probably no symbol table when read */
  struct cell_pin_t *cpnxt;
 };
 
 struct namparam_t {
  struct expr_t *pxndp;        /* parameter value as expr. */
- unsigned prmfnam_ind;        /* file pound parameter appears in */
- int prmlin_cnt;              /* line pound parameter defined on */
+ word32 prmfnam_ind;          /* file pound parameter appears in */
+ int32 prmlin_cnt;            /* line pound parameter defined on */
  char *pnam;                  /* name as string - no sym table when read */
  struct namparam_t *nprmnxt;
 };
@@ -1359,14 +1374,14 @@ struct attr_t {
  unsigned attr_fnind : 16;    /* file attribute instance defined at */
  char *attrnam;               /* name but before parsed entire attr inst str */ 
  struct expr_t *attr_xp;      /* expr - nil if no value expr */
- int attrlin_cnt;             /* and line no. */
+ int32 attrlin_cnt;           /* and line no. */
  struct attr_t *attrnxt;
 };
 
 /* source location struct for saving cell port line numbers */
 struct srcloc_t {
- unsigned sl_fnam_ind;
- int sl_lin_cnt;
+ word32 sl_fnam_ind;
+ int32 sl_lin_cnt;
 };
 
 /* compile time cell or gate contents */
@@ -1420,8 +1435,8 @@ struct giarr_t {
  unsigned gia_xpnd : 1;       /* T => inst/gate arr xpnd to per bit */
  unsigned gia_rng_has_pnd : 1;/* T => range has passed pound param */
  struct expr_t *giax1, *giax2;/* src constant rng exprs from cell */
- int gia1, gia2;              /* evaluated range - expr may chg */
- int gia_bi;                  /* base mgates or minsts index */
+ int32 gia1, gia2;            /* evaluated range - expr may chg */
+ int32 gia_bi;                /* base mgates or minsts index */
  struct expr_t **giapins;     /* tab of original g/i pin expressions */
  struct sy_t *gia_base_syp;   /* original source base symbol name */
 };
@@ -1443,7 +1458,7 @@ struct inst_t {
 /* as if flattened instance structure - should use inum arrays instead ? */
 /* think this can be smaller but per mod. inst. array better ? */
 struct itree_t {
- int itinum;
+ int32 itinum;
  struct itree_t *up_it;       /* containing itree inst. */
  struct itree_t *in_its;      /* array of low itree elements */
  struct inst_t *itip;         /* corresponding inst_t info */
@@ -1468,12 +1483,13 @@ struct gate_t {
  struct expr_t **gpins;       /* ptr to table of input port expr ptrs */
 
  /* routine to eval gate on input change */
- void (*gchg_func)(register struct gate_t *, register unsigned);
+ void (*gchg_func)(register struct gate_t *, register word32);
 };
 
 union pbca_u {
  struct conta_t *pbcaps;      /* for rhs cat per bit conta tab for sim */
  struct conta_t *mast_cap;    /* for per bit element, ptr to master */
+ struct conta_t *canxt;       /* once mod's 1 bit conta rem, use table */
 };
 
 /* notice 1 bit ca's are simulated as gates */
@@ -1512,7 +1528,7 @@ struct ncomp_t {
  unsigned num_prtconns : 2;   /* count to 2 of no. of ports wire conns to */
  unsigned n_widthdet : 1;     /* T => parm is width determing - no IS form */
  unsigned n_indir_widthdet : 1; /* T => parm passed down to width det */
- unsigned p_setby_defparam : 1; /* T => can't recalc since set by defparam */
+ unsigned p_setby_defpnd : 1; /* T => can't recalc since set by def/pnd */
  unsigned p_specparam : 1;    /* T => specify parameter */
  unsigned p_rhs_has_param : 1;/* T => param def rhs contains param */
  unsigned p_locparam : 1;     /* T => local parameter (never # or def) */
@@ -1525,6 +1541,7 @@ struct ncomp_t {
  unsigned frc_assgn_in_src : 1; /* T => force or assign appears in src */
  unsigned monit_in_src : 1;   /* T => has mon/fmon in source for var */
  unsigned dmpv_in_src : 1;    /* if not all dummpvar => has mon/fmon in src */
+ unsigned n_iscompleted : 1;  /* type def completed in earlier source */ 
  
  struct expr_t *nx1, *nx2;
  struct expr_t *ax1, *ax2;
@@ -1541,20 +1558,20 @@ struct ncablk_t {
 
 /* array - LOOKATME - one dimensional only so far */
 struct rngarr_t {
- int ni1, ni2;
- int ai1, ai2;
+ int32 ni1, ni2;
+ int32 ai1, ai2;
 };
 
 /* normal wire with delay or path destination wire */
 struct rngdwir_t {
- int ni1, ni2;
+ int32 ni1, ni2;
  unsigned n_delrep : 5;
  union del_u n_du;            /* every bit has same delay for nets */ 
  i_tev_ndx *wschd_pbtevs;     /* any schd. event ndxes - indexed nwid*inst */
 };
 
 struct rngwir_t {
- int ni1, ni2;
+ int32 ni1, ni2;
 };
 
 /* various extra storage information for various stages for nets */
@@ -1592,7 +1609,7 @@ struct dvchgnets_t {
 
 union dce_u {
  struct gref_t *dcegrp;       /* xmr glb that needs normal downward proc. */
- int pnum;                    /* for pvc dce tf routine port number */     
+ int32 pnum;                  /* for pvc dce tf routine port number */     
  struct task_t *tskp;         /* for dmpv dce, task variable in */
  struct cbrec_t *dce_cbp;     /* cbrec for vpi_ val chg callback */
 };
@@ -1625,7 +1642,7 @@ struct dcevnt_t {
  unsigned dce_off : 1;        /* for byte code PLI/monitor need dce on/off */ 
  unsigned is_fmon : 1;        /* monitor is fmon */
  union pck_u prevval;         /* storage for wire or range for non dmpv */
- int dci1;                    /* for range dci2 union for IS param */ 
+ int32 dci1;                  /* for range dci2 union for IS param */ 
  union intptr_u dci2;         /* for IS param union rng ptr (dci1 = -2) */
  struct net_t *dce_np;        /* net this dce is triggerd by */
  struct delctrl_t *st_dctrl;  /* statement's delay control record */
@@ -1648,7 +1665,7 @@ struct primtab_t {
 
 /* table for system task info */
 struct systsk_t {
- unsigned stsknum;            /* systask ind or 1000+index veriusertfs[] */
+ word32 stsknum;              /* systask ind or 1000+index veriusertfs[] */
  char *stsknam;               /* name of system task or pli task */
 };
 
@@ -1683,11 +1700,11 @@ struct tfinst_t {
 
 /* table for system function info */
 struct sysfunc_t {
- unsigned syfnum;             /* sysfunc ind. or 1000+ind veriusertfs[] */
+ word32 syfnum;               /* sysfunc ind. or 1000+ind veriusertfs[] */
  unsigned retntyp : 8;
  unsigned retsigned : 1;      /* need for signed wire */
  unsigned tftyp : 8;          /* type */
- int retwid;                  /* for veriuser and vpi systf sizetf call sets */
+ int32 retwid;                /* for veriuser and vpi systf sizetf call sets */
  char *syfnam;                /* name of system function */
 };
 
@@ -1701,7 +1718,7 @@ union vsystf_u {
 struct vpisystf_t {
  unsigned is_sysfunc : 1;     /* t +> vpi_ systf func */
  unsigned vstffnam_ind : 16;
- int vstflin_cnt;
+ int32 vstflin_cnt;
  struct mod_t *curmdp;        /* ptr. to current mod source line of call in */
  struct task_t *curtskp;      /* ptr. to current task source line of call in */
  union vsystf_u vsystfu;      /* ptr to callx or sys task stmt */ 
@@ -1723,9 +1740,9 @@ struct pbexpr_t {
  unsigned rhs_const : 1;
  unsigned no_rhs_expr : 1;     /* lhs widers bits need 0/z assign */
  struct expr_t *xp;
- int bi;                       /* for bsel/psel offset in var object */
- word aval;                    /* aways 1 bit constant value (for rhs only) */
- word bval;
+ int32 bi;                     /* for bsel/psel offset in var object */
+ word32 aval;                  /* aways 1 bit constant value (for rhs only) */
+ word32 bval;
 };
 
 /* module port element */
@@ -1738,8 +1755,8 @@ struct mod_pin_t {
  unsigned has_mipd : 1;       /* T => input port has mipd delay */
  unsigned has_scalar_mpps : 1;/* T => simulated per bit */
  unsigned mpfnam_ind : 16;    /* file symbol defined in */
- int mplin_cnt;               /* def. line no. */
- int mpwide;                  /* width of port */
+ int32 mplin_cnt;             /* def. line no. */
+ int32 mpwide;                /* width of port */
  
  char *mpsnam;                /* name not symbol of port (can be NULL) */
  struct expr_t *mpref;        /* expression form port list (const.) */
@@ -1753,7 +1770,7 @@ struct mod_pin_t {
 
 /* table build per line for wild card processing */
 struct wcard_t {
- int wcinum;                  /* in port (also state) numb for wild card */
+ int32 wcinum;                /* in port (also state) numb for wild card */
  char wcchar;                 /* wild card ? or b */
 };
 
@@ -1765,16 +1782,16 @@ struct utline_t {
  unsigned utabsel : 8;        /* first edge char table select (maybe wc) */
  unsigned uledinum : 8;       /* input position number of one allowed edge */
  unsigned utlfnam_ind : 16;   /* file no. of udp line */
- int utlin_cnt;               /* line no. of udp tble line */
+ int32 utlin_cnt;             /* line no. of udp tble line */
  char *tline;                 /* table line - for edge 2nd char in line */
  struct utline_t *utlnxt;
 };
 
 /* special struct for udp tables */
 struct udptab_t {
- word *ludptab;
+ word32 *ludptab;
  /* alloced according to required size (max 27 pointers to tabs of words */
- word **eudptabs;
+ word32 **eudptabs;
 };
 
 struct udp_t {
@@ -1784,7 +1801,7 @@ struct udp_t {
  unsigned ival : 8;           /* initial value (0,1,3 - none) */
  unsigned u_used : 1;         /* T => need table, instanciated in some mod */
  unsigned u_wide : 1;         /* T => uses alt. wide representation */
- int uidnum;                  /* tmp. id number for counting */
+ int32 uidnum;                /* tmp. id number for counting */
  struct sy_t *usym;
  struct symtab_t *usymtab;    /* symbol table just for terminals */
  struct mod_pin_t *upins;     /* defined ports for order */
@@ -1855,7 +1872,7 @@ struct while_t {
 
 struct repeat_t {
  struct expr_t *repx;
- word *reptemp;               /* per inst. word current value tmp */
+ word32 *reptemp;             /* per inst. word32 current value tmp */
  struct st_t *repst;
 };
 
@@ -1869,7 +1886,7 @@ struct for_t {
 /* for Ver 2001 - implicit delay control var list in action stmt */
 struct evctlst_t {
  struct net_t *evnp; 
- int evi1, evi2;
+ int32 evi1, evi2;
 };
 
 /* normal separate delay control - but in case of rhs control contains st. */
@@ -1884,8 +1901,8 @@ struct delctrl_t {
  union del_u dc_du;           /* normal delay union (also used for ev ctrl) */
  struct expr_t *repcntx;      /* for rhs ev ctrl repeat form, rep cnt expr */
  i_tev_ndx *dceschd_tevs;     /* per inst. scheduled event ndxes */ 
- /* SJM 04/02/01 - need word down repeat counter with end when becomes 0 */ 
- word *dce_repcnts;           /* per inst. current ev rep down count val */
+ /* SJM 04/02/01 - need word32 down repeat counter with end when becomes 0 */ 
+ word32 *dce_repcnts;         /* per inst. current ev rep down count val */
  struct st_t *actionst;
 };
 
@@ -1894,10 +1911,10 @@ struct ialst_t {
  unsigned iatyp : 8;
  struct st_t *iastp; 
  
- int ia_first_lini;           /* line no. of initial/always */
- int ia_first_ifi;            /* and file index */
- int ia_last_lini;            /* line no. of end (mabye in next file) */
- int ia_last_ifi;             /* end file in case spans multiple files */
+ int32 ia_first_lini;         /* line no. of initial/always */
+ int32 ia_first_ifi;          /* and file index */
+ int32 ia_last_lini;          /* line no. of end (mabye in next file) */
+ int32 ia_last_ifi;           /* end file in case spans multiple files */
  struct ialst_t *ialnxt;   
 };
 
@@ -1908,7 +1925,7 @@ union tf_u {
 
 union tfx_u {
  struct expr_t *axp;          /* for arg the expr. */
- word *awp;                   /* for 0th return value just the value */
+ word32 *awp;                 /* for 0th return value just the value */
 };
 
 /* per parameter tfrec record */
@@ -1927,9 +1944,9 @@ struct tfrec_t {
  unsigned tf_func : 1;        /* is record for tf_ func */
  unsigned fretreal : 1;       /* func. returns real */
  unsigned tffnam_ind : 16;
- int tflin_cnt;
- int tfanump1;                /* no. of args plus 1 (included 0th func ret) */
- int fretsiz;                 /* for function return size (sizetf ret. val) */  
+ int32 tflin_cnt;
+ int32 tfanump1;              /* no. of args plus 1 (included 0th func ret) */
+ int32 fretsiz;               /* for function return size (sizetf ret. val) */  
  union tf_u tfu;              /* ptr back to tf_ task or function */
  struct mod_t *tf_inmdp;      /* module in (for inst. number) */
  struct task_t *tf_intskp;    /* task call in (nil in in init/always */
@@ -1958,7 +1975,7 @@ union h_u {
  struct expr_t *hxp;          /* representation as ptr to expr. */
  struct st_t *hstp;           /* statement handle */
  struct csitem_t *hcsip;      /* case item */
- int hpi;                     /* for port bit handle the port index */
+ int32 hpi;                   /* for port bit handle the port index */
  /* this is only contents field that is freed */
  struct pviter_t *hiterp;     /* iterator indirect element with alloc list */
  struct cbrec_t *hcbp;        /* callback handle guts record */
@@ -1993,30 +2010,30 @@ struct hrec_t {
  unsigned evnt_done : 1;      /* for vpi schd event, event happened */
  unsigned bith_ndx : 1;       /* bit handle index form (also any tab form) */ 
  union h_u hu;                /* ptr to object (could be void *) */ 
- int hi;                      /* for bit of object handle the index */
+ int32 hi;                    /* for bit of object handle the index */
  struct task_t *hin_tskp;     /* task (scope) handle in (or ialst) */
 };
 
 struct pviter_t {
  struct h_t *scanhtab;        /* table of handles built by vpi iterator */
  struct hrec_t *ihrectab;     /* table of handle content records */ 
- int nxthi;                   /* next handle to return */
- int numhs;                   /* total number of handles for iterator */
+ int32 nxthi;                 /* next handle to return */
+ int32 numhs;                 /* total number of handles for iterator */
 };
 
 struct onamvpi_t {
  char *vpiobjnam;
- unsigned vpiotyp;            /* redundant value same as obj constant ind */
+ word32 vpiotyp;              /* redundant value same as obj constant ind */
 };
 
 struct pnamvpi_t { 
  char *vpipropnam;
- int vpiproptyp;              /* redundant value same as prop constant ind */
+ int32 vpiproptyp;            /* redundant value same as prop constant ind */
 };
 
 struct opnamvpi_t { 
  char *vpiopnam;
- int vpioptyp;                /* redundant value same as op constant ind */
+ int32 vpioptyp;              /* redundant value same as op constant ind */
  char *vpiopchar;             /* operator character (such as +) */
 };
 
@@ -2042,7 +2059,7 @@ struct cbrec_t {
  unsigned cb_user_off : 1;    /* T => user turned off with sim control */
  unsigned cb_gateout : 1;     /* T => gate outut val chg type cb */ 
  struct h_t *cb_hp;           /* object */ 
- int (*cb_rtn)();             /* cb_data call back routine */
+ int32 (*cb_rtn)();           /* cb_data call back routine */
  char *cb_user_data;          /* user data field from passed cb_data rec. */
  struct dceauxlst_t *cbdcep;  /* list of dces for cb removal */ 
  i_tev_ndx cbtevpi;           /* ndx (ptr) back to event */
@@ -2084,8 +2101,8 @@ struct dsable_t {
 };
 
 struct fj_t {
- struct st_t **fjstps;         /* ptr to tab (nil ended) fork-join stmts */
- int *fjlabs;                  /* ptr to tab of fj start lab nums */
+ struct st_t **fjstps;        /* ptr to tab (nil ended) fork-join stmts */
+ int32 *fjlabs;               /* ptr to tab of fj start lab nums */
 };
 
 /* slot end stmt list for strobes with itree where execed strobe appeared */
@@ -2103,7 +2120,7 @@ struct fmselst_t {
 
 /* acctivated fmonitor list with itree location */
 struct fmonlst_t {
- unsigned fmon_forcewrite;
+ word32 fmon_forcewrite;
  struct st_t *fmon_stp;
  struct itree_t *fmon_itp;
  struct fmselst_t *fmse_trig; /* set when monitor triggered 1st time */
@@ -2141,9 +2158,11 @@ struct st_t {
  unsigned strb_seen_now : 1;  /* T => for checking strobe on list for now */
  unsigned lpend_goto : 1;     /* T => this is loopend goto */
  unsigned dctrl_goto : 1;     /* T => this is next after dctrl chain goto */ 
+ unsigned lstend_goto : 1;    /* T => list end continue goto */
  unsigned st_schd_ent : 1;    /* T => can be first stmt entered from schd */
+ unsigned lpend_goto_dest : 1; /* dest. of loop end back goto for compiler */
  unsigned stfnam_ind : 16;
- int stlin_cnt;
+ int32 stlin_cnt;
  union st_u st;
  struct st_t *stnxt;
 };
@@ -2156,9 +2175,9 @@ struct brkpt_t {
  unsigned bp_prttyp : 2;      /* type of printing when hit */
  unsigned bp_dup : 1;         /* T => multiple break points at statement */
  unsigned bp_rm_when_hit : 1; /* T => remove when hit */
- int bp_num;                  /* identifying number */
- int bp_ignore_cnt;
- int bp_hit_cnt;              /* number of times hit */
+ int32 bp_num;                /* identifying number */
+ int32 bp_ignore_cnt;
+ int32 bp_hit_cnt;            /* number of times hit */
  struct st_t *bp_stp;         /* statement this break point breaks at */
  struct itree_t *bp_itp;      /* itree loc. - any (first?) for all of type */ 
  struct task_t *bp_tskp;      /* task break point in else NULL if not */
@@ -2170,9 +2189,9 @@ struct brkpt_t {
 struct dispx_t {
  unsigned dsp_enable : 1;
  unsigned dsp_frc_unsign : 1;
- int dsp_num;
- int dsp_prtfmt;
- int dsp_prtwidth;
+ int32 dsp_num;
+ int32 dsp_prtfmt;
+ int32 dsp_prtwidth;
  struct expr_t *dsp_xp;
  struct itree_t *dsp_itp;
  struct task_t *dsp_tskp;
@@ -2192,17 +2211,17 @@ struct task_t {
  unsigned thas_outs : 1;      /* T => task has outs that must be stored */ 
  unsigned thas_tskcall : 1;   /* T => task contains other task call */
  unsigned fhas_fcall : 1;     /* T => func contains non sys fcall */
- unsigned tf_lofp_decl : 1;  /* T => t/f hdr list of port decl form */ 
+ unsigned tf_lofp_decl : 1;   /* T => t/f hdr list of port decl form */ 
  struct sy_t *tsksyp;         /* name symbol in module level table */
- int tsk_last_lini;           /* line no. of end (mabye in next file) */
- int tsk_last_ifi;            /* end file in case spans multiple files */
+ int32 tsk_last_lini;         /* line no. of end (mabye in next file) */
+ int32 tsk_last_ifi;          /* end file in case spans multiple files */
  struct symtab_t *tsksymtab;  /* symbol table for objects in task */
  struct st_t *st_namblkin;    /* stmt named block in in */
  struct task_pin_t *tskpins;  /* task ports - procedural not wires */
  struct net_t *tsk_prms;      /* parameters defined in task */
- int tprmnum;                 /* number of task parameters */
+ int32 tprmnum;               /* number of task parameters */
  struct net_t *tsk_regs;      /* list then array of nets in task */
- int trnum;                   /* number of task regs */   
+ int32 trnum;                 /* number of task regs */   
  struct st_t *tskst;          /* one task statement (usually a block) */
 
  struct task_t *tsknxt;       /* next defined task in current module */
@@ -2237,23 +2256,22 @@ union el_u {
  struct conta_t *ecap;        /* pointer to conta */
  struct spcpth_t *epthp;      /* point back to path for special id symbol */    
  struct tchk_t *etcp;         /* and back to time check */      
- int eii;                     /* index of inst. in mod inst list or ni */
+ int32 eii;                   /* index of inst. in mod inst list or ni */
  struct tchg_t *etchgp;       /* time change record */ 
  struct chktchg_t *echktchgp; /* check time change record */
  struct undef_t *eundefp;     /* for undefined temp. link to list el. */
  struct tfrec_t *etfrp;       /* ptr to tf_ func/task record */
  void *eanyp;                 /* castable void * for special cases */
  struct mipd_t *emipdbits;    /* ptr to per bit mipd record for MIPD npp */
-
 };
 
 
 /* net pin aux struct for special cases */
 struct npaux_t {
- int nbi1;                    /* range of connection (-1 for all) */
- /* convention if nbi1 is -2, nbi2 is word * union ptr to 2 ISNUM tables */
+ int32 nbi1;                  /* range of connection (-1 for all) */
+ /* convention if nbi1 is -2, nbi2 is word32 * union ptr to 2 ISNUM tables */
  union intptr_u nbi2;         /* for IS param union rng ptr (dci1 = -2) */
- int lcbi1, lcbi2;            /* if fi is lhs concat, the rhs val subrange */
+ int32 lcbi1, lcbi2;          /* if fi is lhs concat, the rhs val subrange */
  union np_u npu;
  /* for src down itree loc tab for root, must match targ. itree */
  /* SJM 05/14/03 - since only for rooted XMR npp, this is addr not peri tab */
@@ -2267,7 +2285,7 @@ struct net_pin_t {
  unsigned np_xmrtyp : 2;      /* xmr type */
  unsigned pullval : 1;        /* for pull driver 0 or 1 */
  unsigned obnum : 20;         /* port index number */
- int pbi;                     /* for per bit bit index */
+ int32 pbi;                   /* for per bit bit index */
 
  union el_u elnpp;            /* net pin connecting objects */
  struct npaux_t *npaux;       /* aux. for net pins needing special fields */
@@ -2293,7 +2311,7 @@ struct xldlnpp_t {
 /* record accessed through sorted index of net/bits with xl style drv/lds */
 struct xldlvtx_t {
  struct net_t *dlnp;
- int dlbi;
+ int32 dlbi;
  struct itree_t *dlitp;
 };
 
@@ -2317,13 +2335,13 @@ struct vtx_t {
  unsigned vtx_mark : 1;       /* mark bit used for cutting cycles */
  unsigned vtx_mark2 : 1;      /* mark bit used for turning off marks */
  struct net_t *vnp;           /* net in channel */
- int vi1;                     /* bit index for vector wire */
+ int32 vi1;                   /* bit index for vector wire */
  struct edge_t *vedges;       /* ptr to adjacency list for this node */
 };
 
 /* per bit vtx and chan. id table for this static inst. loc. */
 struct vbinfo_t {
- int chan_id;                 /* ID for channel */
+ int32 chan_id;               /* ID for channel */
  struct vtx_t *vivxp;         /* vertex */
 };
 
@@ -2345,7 +2363,7 @@ struct vtxlst_t {
 /* list of net/bits in switch channel for init and change processing */
 struct bidvtxlst_t {
  struct net_t *vnp;           /* net in channel */
- int vi1;                     /* bit index for vector wire */
+ int32 vi1;                   /* bit index for vector wire */
  struct itree_t *bidvtx_itp;
  struct bidvtxlst_t *bidvtxnxt;
 };
@@ -2358,7 +2376,7 @@ struct chanrec_t {
  struct vtx_t *chvxp;         /* for now one random vertex */ 
  struct itree_t *chvitp;      /* and its itree loc. */
  struct bidvtxlst_t *bid_vtxlp;  /* for bid only, list with itree loc */
- unsigned int numvtxs;        /* number of vertices (net-bits) in channel */
+ word32 numvtxs;              /* number of vertices (net-bits) in channel */
 };
 
 /* master dumpvar header record for module argument */
@@ -2367,23 +2385,23 @@ struct mdvmast_t {
  struct task_t *mdv_tskp;     /* task variable or scope in */
  struct net_t *mdv_np;        /* for var. form, pointer to wire */
  struct mdvmast_t *mdvnxt; 
- int mdv_levels;              /* level down from $dumpvars call */
+ int32 mdv_levels;            /* level down from $dumpvars call */
 };
 
 struct qcval_t {
  unsigned qc_active : 1;      /* T => this net(/bit) force or assign active */
  unsigned qc_overridden : 1;  /* T => reg assgn active but force overrides */
  struct st_t *qcstp;
- int qcrhsbi;                 /* if concat, rhs low bit index else -1 */
- int qclhsbi;                 /* for wire, select lhs low bit index */
+ int32 qcrhsbi;               /* if concat, rhs low bit index else -1 */
+ int32 qclhsbi;               /* for wire, select lhs low bit index */
  struct itree_t *lhsitp;
  struct dceauxlst_t *qcdcep;  /* rhs dce tab of lists */
 };
 
 /* qcval union during prep and exec but other uses earlier and for params */
 union nqc_u {
- word *wp;                    /* for params work saved param val ptr */ 
- int npi;                     /* for params fixup sorting/matching val */
+ word32 *wp;                  /* for params work saved param val ptr */ 
+ int32 npi;                   /* for params fixup sorting/matching val */
  struct net_t *nnxt;          /* during src rd and fixup, nets not yet tab */ 
  struct qcval_t *qcval;       /* per inst. (maybe per bit) qc aux records */
 };
@@ -2396,7 +2414,6 @@ struct vpi_drv_t {
  struct dltevlst_t **putv_drv_tedlst;/* per inst per bit pending ev. lists */
  struct dltevlst_t **softforce_putv_tedlst; /* per inst/bit pend ev lists */
 };
-
 
 struct net_t {
  unsigned ntyp : 4;
@@ -2427,7 +2444,7 @@ struct net_t {
  unsigned n_onrhs : 1;        /* appears on some rhs (also declarative) */ 
  unsigned n_onlhs : 1;        /* appears on some lhs */
  unsigned n_drvtyp : 3;       /* for scalar, pre elab p type chg drvr state */
- int nwid;                    /* net width */
+ int32 nwid;                  /* net width */
  union pck_u nva;             /* storage for net */
  struct sy_t *nsym;
  union nx_u nu;               /* ptr to auxiliary range and delay values */
@@ -2441,7 +2458,6 @@ struct net_t {
  struct vpi_drv_t **vpi_ndrvs;/* ptr to table of ptrs to drivers */
  union nqc_u nu2;             /* union - comp. nnxt, and qcval */  
  struct attr_t *nattrs;       /* table of net's attributes */
-
 };
 
 /* symbol table contents and avl tree link info */
@@ -2454,16 +2470,15 @@ struct sy_t {
  unsigned sy_argsmac : 1;     /* macro symbol with arguments */
  unsigned sy_giabase : 1;     /* T => symbol is g/i array base */
  unsigned syfnam_ind : 16;    /* file symbol defined in */
- int sylin_cnt;               /* def. line no. */
+ int32 sylin_cnt;             /* def. line no. */
  char *synam;
  union el_u el;
- /* this is also used by pli handles to point to tfrec for inst/loc. */
- struct sy_t *spltsy;         /* during splitting link from old to new */
+ struct sy_t *spltsy;
 };
 
 /* separate work array storage of global component names */
 struct glbncmp_t {
- int gncsiz;                  /* size of largest alloc component (reused) */
+ int32 gncsiz;                /* size of largest alloc component (reused) */
  char *gncmp;
 };
 
@@ -2484,8 +2499,8 @@ struct gref_t {
  unsigned gr_gone : 1;        /* T => for defparam processing - now gone */
  unsigned gr_err : 1;         /* T => global is incorrect */
  unsigned grfnam_ind : 16;    /* file location of ref. */
- int grflin_cnt;              /* line location of ref. */
- int last_gri;                /* last - 1 (1 before target) symbol in path */
+ int32 grflin_cnt;            /* line location of ref. */
+ int32 last_gri;              /* last - 1 (1 before target) symbol in path */
 
  char *gnam;                  /* name */
  struct expr_t *gxndp;        /* back link to expr. node containing xmr */
@@ -2510,7 +2525,7 @@ struct symtab_t {
  struct tnode_t *n_head;
  struct sy_t **stsyms;        /* non null means frozed form */
  struct symtab_t *sytpar;     /* parent is enclosing scope */
- struct symtab_t *sytsib;     /* sibling is disjoint same level scope */
+ struct symtab_t *sytsib;     /* sibling is disjoint32 same level scope */
  struct symtab_t *sytofs;     /* offspring is list hdr of enclosed scopes */
  struct sy_t *sypofsyt;       /* symbol this table is symbol table of */
 };
@@ -2549,7 +2564,7 @@ struct pthdst_t {
 
 /* one path elment */
 struct pathel_t {
- int pthi1, pthi2;            /* specparam then index number value */
+ int32 pthi1, pthi2;          /* specparam then index number value */
  struct net_t *penp;          /* path input/out wire - NULL if removed */
 }; 
 
@@ -2557,7 +2572,7 @@ struct pathel_t {
 struct xpnd_pthel_t {
  unsigned in_equiv_set : 1;
  struct spcpth_t *pthp;
- int peii, peoi; 
+ int32 peii, peoi; 
  struct xpnd_pthel_t *xpthnxt;
 };
 
@@ -2572,8 +2587,8 @@ struct spcpth_t {
  unsigned pth_ifnone : 1;     /* T => condition is ifnone and other sdpds */
  unsigned pth_0del_rem : 1;   /* T => removed from 0 delay */ 
  struct sy_t *pthsym;         /* built symbol for identifying path */
- int last_pein;
- int last_peout;
+ int32 last_pein;
+ int32 last_peout;
  struct pathel_t *peins;      /* array of path input elements */
  struct pathel_t *peouts;     /* array of path output elements */
  union del_u pth_du;          /* delay value */
@@ -2610,7 +2625,7 @@ struct spfy_t {
  struct spcpth_t *spcpths;    /* delay paths */
  struct tchk_t *tchks;        /* timing checks */
  struct net_t *msprms;        /* module's specify parameters */
- int sprmnum;                 /* number of specify parameters in table */
+ int32 sprmnum;               /* number of specify parameters in table */
 };
 
 /* SJM 07/10/01 - d.s. for new delay net load propagation algorithm */
@@ -2619,7 +2634,7 @@ struct impth_t {
  unsigned impth_delrep : 8;   /* delrep */
  union del_u impth_du;        /* for inter mod non IS del for src/dst pair */
  struct net_t *snp;           /* source net */
- int sbi;                     /* and bit */
+ int32 sbi;                   /* and bit */
  struct itree_t *sitp;        /* and itree loc */
  word64 lastchg;              /* last chg time for this 1 pth bit of inst */
  struct impth_t *impthnxt;    /* for || paths dst has >1 src with diff del */
@@ -2637,7 +2652,7 @@ struct mipd_t {
 };
 
 struct srtmp_t {
- int mppos;
+ int32 mppos;
  struct mod_pin_t *smp;
 };
 
@@ -2679,18 +2694,19 @@ struct mod_t {
  unsigned cfg_scanned : 1;    /* T => module has been scanned by config */
  unsigned mhas_frcassgn : 1;  /* T => mod contains force/assign(s) */
 
- int flatinum;                /* num. of flattened instances of module */
- int mpnum;                   /* number of module ports */
- int minum;                   /* number of instances in module */
- int mgnum;                   /* number of gates in module */
- int mnnum;                   /* number of nets in module */  
- int mtotvarnum;              /* total number of variables mod+task */
- int mprmnum;                 /* number of pound params defined */ 
- int mlpcnt;                  /* mod. inst. loop count (static level) */
+ int32 flatinum;              /* num. of flattened instances of module */
+ int32 mpnum;                 /* number of module ports */
+ int32 minum;                 /* number of instances in module */
+ int32 mgnum;                 /* number of gates in module */
+ int32 mcanum;                /* number of non 1 bit cas in module */ 
+ int32 mnnum;                 /* number of nets in module */  
+ int32 mtotvarnum;            /* total number of variables mod+task */
+ int32 mprmnum;               /* number of pound params defined */ 
+ int32 mlpcnt;                /* mod. inst. loop count (static level) */
 
  struct sy_t *msym;           /* symbol from separate module name space */
- int mod_last_lini;           /* line no. of end (mabye in next file) */
- int mod_last_ifi;            /* and file in case spans multiple */
+ int32 mod_last_lini;         /* line no. of end (mabye in next file) */
+ int32 mod_last_ifi;          /* and file in case spans multiple */
  struct symtab_t *msymtab;    /* symbol table for objects in module */
  struct cfglib_t *mod_cfglbp; /* config lib this mod's cells bound using */
  struct mod_pin_t *mpins;     /* defined ports first list then arr. */
@@ -2701,16 +2717,19 @@ struct mod_t {
  struct giarr_t **miarr;      /* parallel ptr array to minst for inst arr. */
  struct net_t *mprms;         /* local param definitions - list then tab */
  struct net_t *mnets;         /* list then array of nets in module */
+ /* SJM 12/19/04 - only fixed ones from conn npin - vpi added malloced */
+ struct net_pin_t *mnpins;    /* table of all npins in module */
  struct itree_t **moditps;    /* itnum to itree struct mapping table */
  struct mod_t *mnxt;          /* next defined module */
 
  /* new Verilog 2000 fields */
  struct attr_t *mattrs;       /* mod attrs - used only if inst has no attr */
+ struct varinitlst_t *mvarinits; /* list of var (not net) init decls */
  i_tev_ndx **mgateout_cbs;    /* per gate ptr to per inst list of vc cbs */
 
  /* LOOKATME - these are compile only and can maybe be freed after fixup */
- int mversno;                 /* version number for split modules */
- int lastinum;                /* while assigning inums - last used */
+ int32 mversno;               /* version number for split modules */
+ int32 lastinum;              /* while assigning inums - last used */
  struct mod_t *mlevnxt;       /* link to next same level module */
  struct mod_t *mspltmst;      /* pointer to defparam master if split off */
  struct mod_t *mpndspltmst;   /* pointer to pound master if split off */
@@ -2726,14 +2745,13 @@ struct mod_t {
 
  /* per module record tables - for optimized code and save/restart */
  struct expr_t *mexprtab;     /* per mod table of expr. records */    
- int mexprnum;                /* size of mod's expr tab */
+ int32 mexprnum;              /* size of mod's expr tab */
 
  struct st_t *msttab;         /* per mod table of mod stmts */
- int mstnum;                  /* size of mod's stmt tab */
+ int32 mstnum;                /* size of mod's stmt tab */
 
  struct gref_t *mgrtab;       /* list of xmr's appearing in this mod. */
- int mgrnum;                  /* number of grefs in module */
-
+ int32 mgrnum;                /* number of grefs in module */
 };
 
 /*
@@ -2760,8 +2778,8 @@ struct thread_t {
  unsigned th_postamble : 1;   /* T => pending task needs end store/trace */
  unsigned th_ialw : 1;        /* T => thread in initial/always list */
  unsigned thofscnt : 24;      /* num of still active fork-join offspring */
- unsigned thenbl_sfnam_ind;   /* file index of place thread enabled from */
- int thenbl_slin_cnt;         /* and line number */
+ word32 thenbl_sfnam_ind;     /* file index of place thread enabled from */
+ int32 thenbl_slin_cnt;       /* and line number */
 
  struct st_t *thnxtstp;       /* next st. in thread to execute (resume pc) */
  /* tree of 2 way linked sibling subthread lists */
@@ -2774,8 +2792,8 @@ struct thread_t {
  struct task_t *assoc_tsk;    /* if created from task, connection to it */
 
  struct delctrl_t *th_dctp;   /* if armed but not trig. ev ctrl, ptr to it */
- word *th_rhswp;              /* for rhs delay/event controls, rhs value */  
- int th_rhswlen;              /* word length of rhs value for disable */
+ word32 *th_rhswp;            /* for rhs delay/event controls, rhs value */  
+ int32 th_rhswlen;            /* word32 length of rhs value for disable */
  struct itree_t *th_itp;      /* itree loc. thread runs in */
  struct hctrl_t *th_hctrl;    /* for iact, pointer to control rec. */
 };
@@ -2787,13 +2805,13 @@ union ten_u {
 
 /* net bit or MIPD event storage - must be alloced and freed as used */
 struct tenp_t {
- int nbi;
+ int32 nbi;
  union ten_u tenu;
 };
 
 /* storage for scheduled but not matured non blocking assign event */ 
 struct tenbpa_t {
- word *nbawp;
+ word32 *nbawp;
  struct st_t *nbastp;
  struct expr_t *nblhsxp;      /* if var ndx expr (maybe cat) const ndx copy */
  struct delctrl_t *nbdctp;
@@ -2802,16 +2820,16 @@ struct tenbpa_t {
 /* tf strdelputp event storage - one schedule change (tev has instance) */
 struct tedputp_t {
  struct tfrec_t *tedtfrp;
- int tedpnum;
- word *tedwp;                 /* point to both half - know exact lhs word len */
+ int32 tedpnum;
+ word32 *tedwp;               /* point to both half - know exact lhs word32 len */
 };
 
 /* vpi put value event storage (for both reg net driver assign */
 struct teputv_t { 
- int nbi;
- int di;                      /* for mult. drivers the ndx no. in table */
+ int32 nbi;
+ int32 di;                    /* for mult. drivers the ndx no. in table */
  struct net_t *np;
- word *putv_wp;
+ word32 *putv_wp;
  struct h_t *evnt_hp;         /* ptr back to event for cancelling */
 };
 
@@ -2835,7 +2853,7 @@ struct tev_t {
  unsigned gev_acc : 1;        /* accelerated gate value assign */
  unsigned vpi_reschd : 1;     /* T => vpi_ time cb moves to other slot part */
  unsigned vpi_onfront : 1;    /* T => cb sim time start, add on fut. front */
- unsigned vpi_regwir_putv : 1;  /* T => putv to reg/wire soft force */
+ unsigned vpi_regwir_putv : 1;/* T => putv to reg/wire soft force */
  unsigned outv : 8;           /* for gate output value */
  word64 etime;                /* absolute time not delay */
  struct itree_t *teitp;       /* instance tree inst event executes in */
@@ -2845,13 +2863,13 @@ struct tev_t {
 
 struct telhdr_t {
  i_tev_ndx te_hdri, te_endi;
- int num_events;
+ int32 num_events;
 };
 
 /* list element for pending net changes to process after event done */
 struct nchglst_t {
- int delayed_mipd;            /* T - 2nd after schedule from ev process */
- int bi1, bi2;
+ int32 delayed_mipd;          /* T - 2nd after schedule from ev process */
+ int32 bi1, bi2;
  struct net_t *chgnp;
  struct itree_t *nchg_itp;
  struct nchglst_t *nchglnxt;
@@ -2878,11 +2896,17 @@ struct fbel_t {
 /* table of separate c funcs - usually only one unless too large */
 /* SJM ### ??? why is this not referenced? */
 struct cproc_t {
- int cpnum;                   /* number c proc name suffix */
+ int32 cpnum;                 /* number c proc name suffix */
  void (*funcptr)();           /* ptr to dlsym found c routine */ 
  void *restabptr;             /* ptr to extrn in c resume label table */
- int last_u32var;             /* highest num u32 var to decl in c proc */
+ int32 last_u32var;           /* highest num u32 var to decl in c proc */
  struct cproctab_t *cptabnxt; 
+};
+
+struct contab_info_t {
+ int32 cwid;
+ int32 xvi;
+ struct contab_info_t *cnxt;
 };
 
 /* various simulation counting variables */
@@ -2904,25 +2928,25 @@ extern time_t __end_mstime;   /* start and end wall clock times */
 
 /* various file variables and global data base flags (i/o vars) */
 extern char **__in_fils;      /* malloced input file list from args */
-extern int __siz_in_fils;     /* current size of input files */
-extern int __last_inf;        /* last input file in list */
-extern int __last_optf;       /* last option file */
-extern int __last_lbf;        /* last lib/inc file (starts last_inf + 1) */
-extern int __last_srcf;       /* last src containing file for debugger */
+extern int32 __siz_in_fils;   /* current size of input files */
+extern int32 __last_inf;      /* last input file in list */
+extern int32 __last_optf;     /* last option file */
+extern int32 __last_lbf;      /* last lib/inc file (starts last_inf + 1) */
+extern int32 __last_srcf;     /* last src containing file for debugger */
 extern struct incloc_t *__inclst_hdr; /* header of included files list */
 extern struct incloc_t *__inclst_end; /* end of included files list */
 extern struct filpos_t *__filpostab; /* in fils size tab of file line pos. */
 extern FILE *__save_log_s;    /* if $nolog executed, value to use if log */
-extern int __echo_iactcmds_tolog; /* T => echo interactive cmds to log file */
+extern int32 __echo_iactcmds_tolog; /* T => echo interactive cmds to log file */
 extern FILE *__save_key_s;    /* if $nolog executed, value to use if log */
-extern int __nokey_seen;      /* $nokey executed and no key */
+extern int32 __nokey_seen;    /* $nokey executed and no key */
 extern FILE *__in_s;
 extern FILE *__log_s;
 extern FILE *__cmd_s;         /* command file source or null for tty */ 
 extern FILE *__key_s;         /* if key_s nil but key_fnam not, must open */
 extern struct optlst_t *__opt_hdr;   /* header of expanded option list */
 extern struct optlst_t *__opt_end;   /* wrk end of expanded option list */
-extern word *__wsupptab;      /* tab (1 bit/msg) for warn and iact suppress */
+extern word32 *__wsupptab;    /* tab (1 bit/msg) for warn and iact suppress */
 extern char *__blnkline;      /* work blank line */
 extern char __pv_homedir[RECLEN]; /* home dir - . if HOME env. not set */
 extern struct mcchan_t __mulchan_tab[32];/* mc desc. tab (32 built in Ver) */ 
@@ -2931,29 +2955,29 @@ extern char *__fiolp;         /* fio file input work string ptr */
 extern char *__fiofp;         /* fio file input work fmt string ptr */
 extern long __scanf_pos;      /* byte offset position of scanf in file */
 extern sighandler *__old_int_sig;  /* value of quit (^c) signal on entry */
-extern int __force_base;      /* for output force base if not BASENONE */
+extern int32 __force_base;    /* for output force base if not BASENONE */
 extern struct vinstk_t **__vinstk;/* open file/macro list in stack form */
 extern struct vinstk_t *__visp;/* pointer to top of open input stack */
-extern int __vin_top;         /* index of top of current file stack */
+extern int32 __vin_top;       /* index of top of current file stack */
 extern char *__log_fnam;      /* log file for all terminal output */
 extern char *__sdf_opt_log_fnam; /* sdf log file if set by cmd arg */
 extern FILE *__sdf_opt_log_s; /* and open file ptr */
-extern int __sdf_no_warns;    /* T => don't print any SDF warning msgs */
-extern int __sdf_no_errs;     /* T => don't print any SDF error msgs */
-extern int __sdf_from_cmdarg; /* T => SDF annotation call from cmd option */
+extern int32 __sdf_no_warns;  /* T => don't print any SDF warning msgs */
+extern int32 __sdf_no_errs;   /* T => don't print any SDF error msgs */
+extern int32 __sdf_from_cmdarg; /* T => SDF annotation call from cmd option */
 extern char *__cmd_fnam;      /* command interact. input file name */
 extern char *__cmd_start_fnam;/* -i startup interactive input file name */
 extern char *__key_fnam;      /* key file name and stream */
 extern FILE *__tr_s;          /* trace output file - can be stdout */
 extern char *__tr_fnam;
-extern int __cmd_ifi;         /* constant command in_fils index */
+extern int32 __cmd_ifi;       /* constant command in_fils index */
 extern char *__lic_path;      /* +licpath [path] if option used */
 extern FILE *__sdf_s;         /* current SDF back annotate file/stream */
 extern struct sdfnamlst_t *__sdflst; /* list of sdf annotate option files */
-extern int __sdf_sav_enum;    /* saved error num. for annotate inhibit */
-extern int __sdf_sav_maxerrs; /* saved max errors so won't stop */
-extern int __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
-extern int __sdf_active;      /* T => annotating SDF - for PLI erro code  */
+extern int32 __sdf_sav_enum;  /* saved error num. for annotate inhibit */
+extern int32 __sdf_sav_maxerrs; /* saved max errors so won't stop */
+extern int32 __has_sdfann_calls;/* T => no sdf annotate systsk calls in src */ 
+extern int32 __sdf_active;    /* T => annotating SDF - for PLI erro code  */
 extern struct mod_t *__sdf_mdp; /* special sdf context mod */
 
 /* cfg variables */
@@ -2966,37 +2990,37 @@ extern struct cfg_t *__cfg_hd;/* head of list of cfgs */
 extern struct cfg_t *__cur_cfg;/* current cfg */
 extern struct mod_t *__cfg_mdp;/* SJM - remove me - why global */
 extern char **__bind_inam_comptab;/* during cfg binding, comp descent comps */ 
-extern int __siz_bind_comps;  /* current malloc size of table */
-extern int __last_bind_comp_ndx;/* last currently used comp end index */ 
-extern int __cfg_verbose;     /* T => emit cfg reading verbose messages */ 
+extern int32 __siz_bind_comps;/* current malloc size of table */
+extern int32 __last_bind_comp_ndx;/* last currently used comp end index */ 
+extern int32 __cfg_verbose;   /* T => emit cfg reading verbose messages */ 
 
 /* file variables */
-extern int __cur_infi;        /* index in in_fils of current file */
+extern int32 __cur_infi;      /* index in in_fils of current file */
 extern struct optlst_t *__new_opt_hdr;/* header of expanded option list */
 extern struct optlst_t *__new_opt_end;/* wrk end of expanded option list */
 extern struct optlst_t *__log_olp;   /* log option, nil if none */
 extern struct optlst_t *__help_olp;  /* help option, nil if none */
 extern struct optlst_t *__quiet_olp; /* quiet option, nil if none */
 extern struct optlst_t *__verb_olp;  /* verbose option, nil if none */  
-extern int __vpi_argc;        /* global arg count for vpi */
+extern int32 __vpi_argc;      /* global arg count for vpi */
 extern char **__vpi_argv;     /* global arg array for vpi */
 extern char *__vpi_argv0;     /* argv execed program name */
 extern char *__cur_fnam;      /* being read file name for errors */
-extern int __cur_fnam_ind;    /* index in in_fils of cur_fnam */
-extern int __sfnam_ind;       /* global file index for current stmt. */
-extern int __slin_cnt;        /* global line no. for currently check stmt */
-extern int __vpifnam_ind;     /* vpi_ global current file index */
-extern int __vpilin_cnt;      /* vpi_ global current line no. */
+extern int32 __cur_fnam_ind;  /* index in in_fils of cur_fnam */
+extern int32 __sfnam_ind;     /* global file index for current stmt. */
+extern int32 __slin_cnt;      /* global line no. for currently check stmt */
+extern int32 __vpifnam_ind;   /* vpi_ global current file index */
+extern int32 __vpilin_cnt;    /* vpi_ global current line no. */
 extern struct expr_t *__srm_xp; /* current string 'file' for sreadmem */
 extern char *__srm_strp;      /* char. pos. in sreadmem string */
 extern char *__srm_strp_beg;  /* work alloced location for sreadmem string */
-extern int __srm_strp_len;    /* alloced length */
-extern int __srm_stargi;      /* current string position number */
-extern int __in_ifdef_level;  /* current processing `ifdef level */ 
-extern int __ifdef_skipping;  /* T = skipping not included ifdef section */
+extern int32 __srm_strp_len;  /* alloced length */
+extern int32 __srm_stargi;    /* current string position number */
+extern int32 __in_ifdef_level;/* current processing `ifdef level */ 
+extern int32 __ifdef_skipping;/* T = skipping not included ifdef section */
 extern char *__langstr;       /* work string for `language */
-extern int __doing_langdir;   /* T => processing `language directive */ 
-extern int __rding_top_level; /* T => reading outside top level construct */
+extern int32 __doing_langdir; /* T => processing `language directive */ 
+extern int32 __rding_top_level; /* T => reading outside top level construct */
 
 /* variables for batch tracing */
 extern word64 __last_trtime;  /* last trace statement time */
@@ -3004,9 +3028,9 @@ extern word64 __last_evtrtime;/* last event trace time */
 extern struct itree_t *__last_tritp;/* last event traced inst. itree loc. */ 
 
 /* command processing variables and temps */
-extern int __pv_err_cnt, __pv_warn_cnt; /* error counts */
-extern int __inform_cnt;      /* number of informs */
-extern int __outlinpos;       /* current trunc. output line pos. */
+extern int32 __pv_err_cnt, __pv_warn_cnt; /* error counts */
+extern int32 __inform_cnt;    /* number of informs */
+extern int32 __outlinpos;     /* current trunc. output line pos. */
 extern long __mem_use;        /* counts allocated mem for debugging */
 extern long __mem_allocated;  /* bytes allocated */
 extern long __mem_freed;      /* bytes freed */
@@ -3014,147 +3038,148 @@ extern long __memstr_use;     /* counts allocated string mem for debugging */
 extern long __arrvmem_use;    /* allocated bytes for Verilog arrays */
 extern long __mem_udpuse;     /* number of bytes used by udp tables */
 extern word64 __tim_zero;     /* place for time of constant 0 */
-extern int __num_glbs;        /* total no. of globals in design */
-extern int __num_inmodglbs;   /* glbs thar resolve to intra module refs. */
-extern int __num_uprel_glbs;  /* number of upward relative globals */
-extern int __nets_removable;  /* flat no. of deletable nets */
-extern int __flnets_removable;/* removable static nets */
-extern int __gates_removable; /* removable static gates */
-extern int __flgates_removable; /* flat no. of deletable gates */
-extern int __contas_removable; /* removabale static cont. assigns */
-extern int __flcontas_removable; /* flat no. of deletable cont. assigns */
+extern int32 __num_glbs;      /* total no. of globals in design */
+extern int32 __num_inmodglbs; /* glbs thar resolve to intra module refs. */
+extern int32 __num_uprel_glbs;/* number of upward relative globals */
+extern int32 __nets_removable;/* flat no. of deletable nets */
+extern int32 __flnets_removable;/* removable static nets */
+extern int32 __gates_removable; /* removable static gates */
+extern int32 __flgates_removable; /* flat no. of deletable gates */
+extern int32 __contas_removable; /* removabale static cont. assigns */
+extern int32 __flcontas_removable; /* flat no. of deletable cont. assigns */
 
 /* special allocate free variables */
 extern struct ncablk_t *__hdr_ncablks; /* blocks used for ncomp recs */
-extern int __ncablk_nxti;     /* index of next free pos. */
+extern int32 __ncablk_nxti;   /* index of next free pos. */
 extern struct cpblk_t *__hdr_cpblks; /* blocks used for cell recs*/
-extern int __cpblk_nxti;      /* index of next free pos. */
+extern int32 __cpblk_nxti;    /* index of next free pos. */
 extern struct cppblk_t *__hdr_cppblks; /* blocks used for cell pin recs*/
-extern int __cppblk_nxti;     /* index of next free pos. */
+extern int32 __cppblk_nxti;   /* index of next free pos. */
 extern struct tnblk_t *__hdr_tnblks;  /* blocks of symb table tree nodes */
-extern int __tnblk_nxti;      /* index of next free pos. */ 
+extern int32 __tnblk_nxti;    /* index of next free pos. */ 
 extern struct cpnblk_t *__hdr_cpnblks;  /* blocks of explicit cell pnames */
 
 /* source processing variables */
-extern int __lin_cnt;         /* line number while reading a file */
-extern int __saverr_cnt;      /* counter to inhibit more than a err in xpr */
-extern int __max_errors;      /* maximum errors before stopping */
-extern int __rding_comment;   /* flag so comment non printable chars ok */
-extern int __total_rd_lines;  /* total number of lines read */
-extern int __total_lang_dirs; /* total num `language directives read */
+extern int32 __lin_cnt;       /* line number while reading a file */
+extern int32 __saverr_cnt;    /* counter to inhibit more than a err in xpr */
+extern int32 __max_errors;    /* maximum errors before stopping */
+extern int32 __rding_comment; /* flag so comment non printable chars ok */
+extern int32 __total_rd_lines;/* total number of lines read */
+extern int32 __total_lang_dirs; /* total num `language directives read */
 
 /* booleans for program options (flags) */
-extern int __verbose;         /* T => emit various extra messages */
-extern int __quiet_msgs;      /* T => do not emit msgs just errors */
-extern int __no_warns;        /* T => don't print warning msgs */
-extern int __no_errs;         /* T => don't print error msgs */
-extern int __no_informs;      /* T => don't print inform msgs (dflt) */
-extern int __debug_flg;       /* T => turn on debugging output */
-extern int __opt_debug_flg;   /* T => turn on vm compiler debugging output */
-extern int __st_tracing;      /* T => trace statement execution */
-extern int __ev_tracing;      /* T => trace event schedules and processes */
-extern int __pth_tracing;     /* T => trace path delays in detail */
-extern int __prt_stats;       /* T => print design statics tables */
-extern int __prt_allstats;    /* T => print design and mod content tabs */
-extern int __show_cancel_e;   /* T => chg val to x on pulse cancelled event */
-extern int __showe_onevent;   /* T => if showing cancel e, drive x on event */
-extern int __warn_cancel_e;   /* T => emit warn cancel_e (indep. of cancel) */
-extern int __rm_gate_pnd0s;   /* T => remove #0 from all gates */
-extern int __rm_path_pnd0s;   /* T => (default) remove all 0 delay paths */
-extern int __dmpvars_all;     /* T => dumpvars all variables */
+extern int32 __verbose;       /* T => emit various extra messages */
+extern int32 __quiet_msgs;    /* T => do not emit msgs just errors */
+extern int32 __no_warns;      /* T => don't print warning msgs */
+extern int32 __no_errs;       /* T => don't print error msgs */
+extern int32 __no_informs;    /* T => don't print inform msgs (dflt) */
+extern int32 __debug_flg;     /* T => turn on debugging output */
+extern int32 __opt_debug_flg; /* T => turn on vm compiler debugging output */
+extern int32 __st_tracing;    /* T => trace statement execution */
+extern int32 __ev_tracing;    /* T => trace event schedules and processes */
+extern int32 __pth_tracing;   /* T => trace path delays in detail */
+extern int32 __prt_stats;     /* T => print design statics tables */
+extern int32 __prt_allstats;  /* T => print design and mod content tabs */
+extern int32 __show_cancel_e; /* T => chg val to x on pulse cancelled event */
+extern int32 __showe_onevent; /* T => if showing cancel e, drive x on event */
+extern int32 __warn_cancel_e; /* T => emit warn cancel_e (indep. of cancel) */
+extern int32 __rm_gate_pnd0s; /* T => remove #0 from all gates */
+extern int32 __rm_path_pnd0s; /* T => (default) remove all 0 delay paths */
+extern int32 __dmpvars_all;   /* T => dumpvars all variables */
 
 /* command option booleans */
-extern int __lib_verbose;     /* T => emit src.file/lib source messages */
-extern int __sdf_verbose;     /* T => emit msgs for SDF annotated delays */
-extern int __switch_verbose;  /* T => emit msgs for switch/tran chan build */
-extern int __chg_portdir;     /* T => chg port dir to bid. for XL compat */
-extern int __decompile;       /* T => decompile and print Verilog source */
-extern int __compile_only;    /* T => check syntax (inc. lib.) no quads */
-extern int __parse_only;      /* T => first pass parse only to chk sep mod */
-extern int __dflt_ntyp;       /* Verilog wire type for normal nets */
-extern int __mintypmax_sel;   /* for (e:e:e) expressions value to use */
-extern int __sdf_mintypmax_sel; /* min:nom_max over-ride for $sdf_annotate */
-extern int __gateeater_on;    /* T => attempt to remove (disconnect) gates */ 
-extern int __no_expand;       /* T => make all wire vectors vectored */
-extern int __in_cell_region;  /* T => turn on cell bit for every module */
-extern int __unconn_drive;    /* if none TOK_NONE else PULL 0 or PULL 1 */
-extern int __no_specify;      /* T => check but no simulate with specify */
-extern int __no_tchks;        /* T => check but no simulate with tim chks */
-extern int __lib_are_cells;   /* T => if in lib, the mark as cell (dflt.) */
-extern int __design_has_cells;/* T => cells somewhere in design */
-extern int __accelerate;      /* T => use short circuits g/prt code if can */
-extern int __pli_keep_src;    /* T => keep more source stmt info for pli */
-extern int __use_impthdels;   /* T => use src-dst im path dels */
+extern int32 __lib_verbose;   /* T => emit src.file/lib source messages */
+extern int32 __sdf_verbose;   /* T => emit msgs for SDF annotated delays */
+extern int32 __switch_verbose;/* T => emit msgs for switch/tran chan build */
+extern int32 __chg_portdir;   /* T => chg port dir to bid. for XL compat */
+extern int32 __decompile;     /* T => decompile and print Verilog source */
+extern int32 __compile_only;  /* T => check syntax (inc. lib.) no quads */
+extern int32 __parse_only;    /* T => first pass parse only to chk sep mod */
+extern int32 __dflt_ntyp;     /* Verilog wire type for normal nets */
+extern int32 __mintypmax_sel; /* for (e:e:e) expressions value to use */
+extern int32 __sdf_mintypmax_sel; /* min:nom_max over-ride for $sdf_annotate */
+extern int32 __gateeater_on;  /* T => attempt to remove (disconnect) gates */ 
+extern int32 __no_expand;     /* T => make all wire vectors vectored */
+extern int32 __in_cell_region;/* T => turn on cell bit for every module */
+extern int32 __unconn_drive;  /* if none TOK_NONE else PULL 0 or PULL 1 */
+extern int32 __no_specify;    /* T => check but no simulate with specify */
+extern int32 __no_tchks;      /* T => check but no simulate with tim chks */
+extern int32 __lib_are_cells; /* T => if in lib, the mark as cell (dflt.) */
+extern int32 __design_has_cells;/* T => cells somewhere in design */
+extern int32 __accelerate;    /* T => use short circuits g/prt code if can */
+extern int32 __pli_keep_src;  /* T => keep more source stmt info for pli */
+extern int32 __use_impthdels; /* T => use src-dst im path dels */
 
 /* source input variables and temps */
 extern char __lasttoken[IDLEN];/* current last pushed back symbol name */
 extern char __token[IDLEN];   /* current symbol (in canonical (lc) form) */
-extern int __toktyp;          /* place for current toktyp value */
-extern int __lasttoktyp;      /* push back token type (= UNDEF if none) */
-extern int __last_attr_prefix;/* push back pending attr prefix state */
-extern int __itoklen;         /* current number token bit length */
-extern int __itoksized;       /* T => token is sized */
-extern int __itokbase;        /* base constant for number token */
-extern int __itoksizdflt;     /* '[base] form with width (uses dflt.) */
-extern int __itok_signed;     /* T => token is signed number */
+extern int32 __toktyp;        /* place for current toktyp value */
+extern int32 __lasttoktyp;    /* push back token type (= UNDEF if none) */
+extern int32 __last_attr_prefix;/* push back pending attr prefix state */
+extern int32 __itoklen;       /* current number token bit length */
+extern int32 __itoksized;     /* T => token is sized */
+extern int32 __itokbase;      /* base constant for number token */
+extern int32 __itoksizdflt;   /* '[base] form with width (uses dflt.) */
+extern int32 __itok_signed;   /* T => token is signed number */
 extern double __itok_realval; /* actual scannoer double val */
 extern char *__strtoken;      /* growable token to hold string */
-extern int __strtok_wid;      /* current size of string token */    
+extern int32 __strtok_wid;    /* current size of string token */    
 extern char *__numtoken;      /* growable token to hold numbers */
-extern int __numtok_wid;      /* current size of number token */    
-extern int __letendnum_state; /* T => letter can end unsized num. */
-extern int __macro_sep_width; /* T => possible beginning of macro 2 tok num */
-extern int __maybe_2tok_sized_num; /* T => seeing number after macro num */
-extern int __macro_sav_nwid;  /* value of saved first tok width */
-extern int __first_linetok;   /* T => token first on line */
-extern int __file_just_op;    /* T => new file and no token yet returned */
-extern int __first_num_eol;   /* T => first tok because number ended line */
+extern int32 __numtok_wid;    /* current size of number token */    
+extern int32 __letendnum_state; /* T => letter can end unsized num. */
+extern int32 __macro_sep_width; /* T => possible beginning of macro 2 tok num */
+extern int32 __maybe_2tok_sized_num; /* T => seeing number after macro num */
+extern int32 __macro_sav_nwid;/* value of saved first tok width */
+extern int32 __first_linetok; /* T => token first on line */
+extern int32 __file_just_op;  /* T => new file and no token yet returned */
+extern int32 __first_num_eol; /* T => first tok because number ended line */
 extern char *__macwrkstr;     /* work string for macros */ 
-extern int __mac_line_len;    /* actual length of macro line in wrk str */   
-extern int __macwrklen;       /* allocated len of mac. work string */
+extern int32 __mac_line_len;  /* actual length of macro line in wrk str */   
+extern int32 __macwrklen;     /* allocated len of mac. work string */
 extern struct macarg_t *__macarg_hdr; /* hdr of list of format mac. args */
+extern int32 __macbs_flag;    /* T=> 8'h`DEFINE catch multiple bases errors */
 extern char *__attrwrkstr;    /* work string for attributes */
-extern int __attr_line_len;   /* actual length of attribute string */ 
-extern int __attrwrklen;      /* alloced len of attr work string - grows */
+extern int32 __attr_line_len; /* actual length of attribute string */ 
+extern int32 __attrwrklen;    /* alloced len of attr work string - grows */
 extern char *__attrparsestr;  /* string to parse attr out of */
-extern int __attrparsestrlen; /* string to parse attr out of */
-extern int __attr_prefix;     /* T => token has attribute prefix */
-extern int __attr_fnam_ind;   /* location of attr inst. */
-extern int __attr_lin_cnt;    /* location of attr inst. */
+extern int32 __attrparsestrlen; /* string to parse attr out of */
+extern int32 __attr_prefix;   /* T => token has attribute prefix */
+extern int32 __attr_fnam_ind; /* location of attr inst. */
+extern int32 __attr_lin_cnt;  /* location of attr inst. */
 extern struct attr_t __wrk_attr; /* latest read attribute */
 extern char *__xs, *__xs2;    /* places to put expr to str trunc messages */
-extern int __pv_ctv;          /* tmp for white space skipping macros */
-extern int __syncto_class;    /* token class sync skipping halted at */
+extern int32 __pv_ctv;        /* tmp for white space skipping macros */
+extern int32 __syncto_class;  /* token class sync skipping halted at */
 extern char *__exprline;      /* expr. output line work string */
-extern int __exprlinelen;     /* expr. line length */
-extern int __cur_sofs;        /* ndx of next ofs (position) in expr line */
-extern word *__acwrk;         /* a value work string for scanning number */
-extern word *__bcwrk;         /* b value work string for scanning number */
-extern word __addrtmp[2];     /* up to 32 bit temp with addr. */
-extern int __abwrkwlen;       /* current acwrk a half length in words */
+extern int32 __exprlinelen;   /* expr. line length */
+extern int32 __cur_sofs;      /* ndx of next ofs (position) in expr line */
+extern word32 *__acwrk;       /* a value work string for scanning number */
+extern word32 *__bcwrk;       /* b value work string for scanning number */
+extern word32 __addrtmp[2];   /* up to 32 bit temp with addr. */
+extern int32 __abwrkwlen;     /* current acwrk a half length in words */
 extern char __portnam[IDLEN];
-extern char __pv_varnam[IDLEN];  /* variable name */
-extern int __expr_is_lval;    /* T => parsing proc. assign lhs */
-extern int __allow_scope_var; /* T => process systask arg can be scope */
+extern char __pv_varnam[IDLEN]; /* variable name */
+extern int32 __expr_is_lval;  /* T => parsing proc. assign lhs */
+extern int32 __allow_scope_var; /* T => process systask arg can be scope */
 
 /* vars needed for pushing back numbers (see var. comment) */
-extern int __lastitokbase;
-extern int __lastitoksized;
-extern int __lastitoksizdflt;
-extern int __lastitok_signed;
-extern int __lastitoklen;
-extern word *__lastacwrk;  /* special malloced push back num value */
-extern word *__lastbcwrk; 
+extern int32 __lastitokbase;
+extern int32 __lastitoksized;
+extern int32 __lastitoksizdflt;
+extern int32 __lastitok_signed;
+extern int32 __lastitoklen;
+extern word32 *__lastacwrk;   /* special malloced push back num value */
+extern word32 *__lastbcwrk; 
 extern double __lastitok_realval;
 
 /* the module and module subtask specific work variables */
 extern struct mod_t *__oinst_mod;/* ptr. to old current module for copying */
 extern struct mod_t *__end_mdp; /* end of module def. list */
 extern struct cell_t *__end_cp; /* end of module inst. list */
-extern int __cp_num;          /* counter for unnamed gate/inst pos. */ 
+extern int32 __cp_num;          /* counter for unnamed gate/inst pos. */ 
 extern struct conta_t *__end_ca; /* end of module conta list */
-extern int __conta_num;       /* counter for building symbol for conta */
-
+extern int32 __conta_num;     /* counter for building symbol for conta */
+extern struct varinitlst_t *__end_mod_varinitlst; /* end of mod var inits */
 extern struct dfparam_t *__end_dfp;/* module current end of defparam list */
 extern struct task_pin_t *__end_tpp; /* end of task port list */
 extern struct task_t *__end_tbp;/* end of top level task/functions/blocks */
@@ -3165,59 +3190,59 @@ extern struct net_t *__end_glbparamnp; /* end of ordered glb parm decl. lst */
 extern struct net_t *__end_tskparamnp; /* end of task param decl. list */
 extern struct ialst_t *__end_ialst; /* end of module initial/always list */
 extern struct gref_t *__grwrktab;  /* work table for building mod glbs */
-extern int __grwrktabsiz;          /* its size */
-extern int __grwrknum;        /* current number of glbs in work table */ 
-extern int __cur_declobj;     /* token type of declared mod or task */
-extern int __pv_stlevel;      /* tmp. for current stmt nesting level */
-extern int __design_no_strens;/* T => no strengths used in design */
-extern int __strenprop_chg;   /* during propagate pass at least one chged */
-extern int __splitting;       /* T => in process of splitting module */
-extern int __processing_pnd0s;/* T => in time unit, in end #0 region */
+extern int32 __grwrktabsiz;        /* its size */
+extern int32 __grwrknum;      /* current number of glbs in work table */ 
+extern int32 __cur_declobj;   /* token type of declared mod or task */
+extern int32 __pv_stlevel;    /* tmp. for current stmt nesting level */
+extern int32 __design_no_strens;/* T => no strengths used in design */
+extern int32 __strenprop_chg; /* during propagate pass at least one chged */
+extern int32 __splitting;     /* T => in process of splitting module */
+extern int32 __processing_pnd0s;/* T => in time unit, in end #0 region */
 extern struct dce_expr_t *__cur_dce_expr; /* glb for edge events eval expr */
-extern int __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
+extern int32 __lofp_port_decls; /* T => exclusive hdr port decls appeared */ 
 extern struct exprlst_t *__impl_evlst_hd; /* hdr of impl @(*) ev expr list */
 extern struct exprlst_t *__impl_evlst_tail; /* and its tail */
-extern int __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
+extern int32 __canbe_impl_evctrl; /* glb switch to allow @(*) as ev ctrl */
 
 /* variables for dumpvars */
-extern int __dv_seen;         /* dumpvars seen but not yet setup */
-extern int __dv_state;        /* processing state of dumpvars */
+extern int32 __dv_seen;       /* dumpvars seen but not yet setup */
+extern int32 __dv_state;      /* processing state of dumpvars */
 extern word64 __dv_calltime;  /* time dump var. first (and only) called */
-extern int __dv_dumplimit_size; /* user set limit of dv file size (0 none) */
-extern int __dv_file_size;    /* current size of dumpvars file */
-extern int __dv_time_emitted; /* flag to stop repeated same #[time] */
+extern int32 __dv_dumplimit_size; /* user set limit of dv file size (0 none) */
+extern int32 __dv_file_size;  /* current size of dumpvars file */
+extern int32 __dv_time_emitted; /* flag to stop repeated same #[time] */
 extern char *__dv_fnam;       /* name of dumpvars output file */
-extern int __dv_func;         /* global set with type of dumpvar dumping */
+extern int32 __dv_func;       /* global set with type of dumpvar dumping */
 extern struct mdvmast_t *__dv_hdr; /* hdr of mast dumpvar rec. list */
 extern struct mdvmast_t *__dv_end; /* end of dumpvar rec. list */
 extern struct dvchgnets_t *__dv_netfreelst; /* free list of time var chges */
-extern int __dv_fd;           /* file number of dmpvars fd */
+extern int32 __dv_fd;         /* file number of dmpvars fd */
 extern char *__dv_buffer;     /* buffer to speed up dumpvars output */
-extern int __dv_nxti;         /* next free location */
-extern int __dv_outlinpos;    /* line postion in dump vars file */ 
-extern int __next_dvnum;      /* highest so far used dumpvars number */
+extern int32 __dv_nxti;       /* next free location */
+extern int32 __dv_outlinpos;  /* line postion in dump vars file */ 
+extern int32 __next_dvnum;    /* highest so far used dumpvars number */
 extern struct dvchgnets_t *__dv_chgnethdr;  /* curr. time var chg list hdr */
-extern int __dv_isall_form;   /* T doing all of design dumpvar setup */
-extern int __dv_allform_insrc;/* T dumpvars all form in source */
+extern int32 __dv_isall_form; /* T doing all of design dumpvar setup */
+extern int32 __dv_allform_insrc;/* T dumpvars all form in source */
 
 /* time scale - precision variables */
-extern unsigned __cur_units;  /* current units (0 (1s) - 15 (1ft) */ 
-extern unsigned __cur_prec;   /* current digits of precision (0-15) */
-extern unsigned __des_timeprec;/* assume -, 0-15 design sim. tick prec. */
-extern unsigned __tfmt_units; /* %t output units (also interact. units) */
-extern unsigned __tfmt_precunits;/* %t number of prec. digits */
-extern int __des_has_timescales;/* T => design has at least one timescale */
+extern word32 __cur_units;    /* current units (0 (1s) - 15 (1ft) */ 
+extern word32 __cur_prec;     /* current digits of precision (0-15) */
+extern word32 __des_timeprec; /* assume -, 0-15 design sim. tick prec. */
+extern word32 __tfmt_units;   /* %t output units (also interact. units) */
+extern word32 __tfmt_precunits;/* %t number of prec. digits */
+extern int32 __des_has_timescales;/* T => design has at least one timescale */
 extern char *__tfmt_suf;      /* suffix for %t */
-extern int __tfmt_minfwid;    /* minimum field width for %t */
+extern int32 __tfmt_minfwid;  /* minimum field width for %t */
 extern word64 __itoticks_tab[16];/* table of scales amount from prec. */
 extern char __timstr_unitsuf[4];/* to_timstr units suffix if needed */
 extern word64 __timstr_mult;  /* multiplier if needed */
-extern int  __nd_timstr_suf;  /* T => need to_timstr units */
+extern int32  __nd_timstr_suf;/* T => need to_timstr units */
 
 /* veriusertfs pli user function and task work variables */ 
 /* SJM 07/16/02 - need internal veriuser tfs for new +loadpli1 option */
 extern struct t_tfcell *__shadow_veriusertfs; /* internal copy of table */
-extern int __last_veriusertf; /* last user veriusertfs tf number */
+extern int32 __last_veriusertf; /* last user veriusertfs tf number */
 extern struct tfinst_t *__tfinst;/* current tf_ inst loc. */
 extern struct tfrec_t *__tfrec;/* current tf_ record */ 
 extern struct dceauxlst_t *__pvc_dcehdr; /* header of current pvc dces */
@@ -3225,19 +3250,19 @@ extern struct tfrec_t *__tfrec_hdr; /* header of design wide tfrec list */
 extern struct tfrec_t *__tfrec_end; /* last el of design wide tfrec list */ 
 extern i_tev_ndx __tehdr_rosynci; /* hdr ndx of slot end ro sync ev lst */ 
 extern i_tev_ndx __teend_rosynci; /* end of slot end ro sync ev lst */ 
-extern int __now_resetting;   /* reset in progress - for cbs and misctf */  
-extern int __rosync_slot;     /* T => processing tf or vpi  ro synch events */
+extern int32 __now_resetting; /* reset in progress - for cbs and misctf */  
+extern int32 __rosync_slot;   /* T => processing tf or vpi  ro synch events */
 extern struct loadpli_t *__pli1_dynlib_hd; /* hd of ld pli1 dynamic lb list */
 extern struct loadpli_t *__pli1_dynlib_end; /* and its end */
 
 /* vpi_ work variables */
-extern int __last_systf;      /* last vpi_ registered sytfs number */
-extern int __num_vpi_force_cbs; /* number of registered vpi force cbs */
-extern int __vpi_force_cb_always; /* T => always call back on force */
-extern int __num_vpi_rel_cbs; /* number of registered vpi rel cbs */
-extern int __vpi_rel_cb_always; /* T => always call back on release */
-extern int __allforce_cbs_off; /* T => can't reenter any of all force cbs */
-extern int __allrel_cbs_off;   /* T => can't reenter any of all release cbs */
+extern int32 __last_systf;    /* last vpi_ registered sytfs number */
+extern int32 __num_vpi_force_cbs; /* number of registered vpi force cbs */
+extern int32 __vpi_force_cb_always; /* T => always call back on force */
+extern int32 __num_vpi_rel_cbs; /* number of registered vpi rel cbs */
+extern int32 __vpi_rel_cb_always; /* T => always call back on release */
+extern int32 __allforce_cbs_off; /* T => can't reenter any of all force cbs */
+extern int32 __allrel_cbs_off;/* T => can't reenter any of all release cbs */
 extern char *__wrks1;         /* work string - can not use xs if func */
 extern char *__wrks2;
 extern char __wrk_vpiemsg[IDLEN];/* error msg. work string */
@@ -3246,10 +3271,10 @@ extern char __wrk_vpi_product[256];/* product version */
 extern char __wrk_vpi_errcode[256];/* error codes are Cver err num as str */
 extern double __wrk_vpi_timedbl;/* time double for vpi error rec */
 extern char *__wrkvalbufp;    /* buf for vpi get value value_p contents */ 
-extern int __wrkval_buflen;   /* and current length */
-extern int __vpi_vlog_start_done;/* T => startup done, no systf registering */
+extern int32 __wrkval_buflen; /* and current length */
+extern int32 __vpi_vlog_start_done;/* T => startup done, no systf registering */
 extern struct systftab_t *__systftab; /* table of vpi_ systf records */
-extern int __size_systftab;   /* current size of systf data rec. table */
+extern int32 __size_systftab; /* current size of systf data rec. table */
 extern struct xstk_t *__cur_sysf_xsp; /* tmp stk_t for vpi sysf ret val */
 extern struct expr_t *__cur_sysf_expr;/* tmp calling expr. for vpi sysf*/
 extern struct st_t *__cur_syst_stp; /* tmp stmt for vpi syst*/
@@ -3260,23 +3285,23 @@ extern struct rfcblst_t *__force_allcb_hdr;
 extern struct rfcblst_t *__force_allcb_end;
 extern i_tev_ndx *__vpicb_tehdri; /* hdr of fixed cb tev list - 1 per class */
 extern i_tev_ndx *__vpicb_teendi; /* end of fixed cb tev list - 1 per class */
-extern int __have_vpi_actions;/* some use of __vpi actions */
-extern int __have_vpi_gateout_cbs;/* some use of gate out term cbs */
+extern int32 __have_vpi_actions;/* some use of __vpi actions */
+extern int32 __have_vpi_gateout_cbs;/* some use of gate out term cbs */
 extern struct h_t *__vpi_hfree_hdr;  /* handle free list hdr */ 
 extern struct hrec_t *__vpi_hrecfree_hdr;  /* handle record free list hdr */ 
 extern struct cbrec_t *__vpi_cbrec_hdr; /* all cbs list header */
-extern int __ithtsiz;         /* size of global work ld/drv handle table */
+extern int32 __ithtsiz;       /* size of global work ld/drv handle table */
 extern struct h_t *__ithtab;  /* and the work ld/drv handle table */
 extern struct hrec_t *__ithrectab; /* and hrec contents of it */
-extern int __ithtsiz2;        /* size of global work ld/drv handle table */
-extern struct h_t *__ithtab2;  /* 2nd work for in subtree handles */
+extern int32 __ithtsiz2;      /* size of global work ld/drv handle table */
+extern struct h_t *__ithtab2; /* 2nd work for in subtree handles */
 extern struct hrec_t *__ithrectab2; /* and hrec contents of it */
 extern struct vpisystf_t *__vpi_sysf_hdr; /* hdr sys func call src locs */
 extern struct vpisystf_t *__vpi_syst_hdr; /* hdr sys task enable src locs */
-extern int __in_vpi_errorcb;  /* T => if sim ctrl, suppress error msg error */
-extern int __vpierr_cb_active; /* T => at least one cbError reged */
-extern int __acc_vpi_erroff;  /* acc_ flag to stop internal acc_ error cbs */
-extern int __errorcb_suppress_msg; /* T => sim control suppress error msg */
+extern int32 __in_vpi_errorcb;/* T => if sim ctrl, suppress error msg error */
+extern int32 __vpierr_cb_active; /* T => at least one cbError reged */
+extern int32 __acc_vpi_erroff;/* acc_ flag to stop internal acc_ error cbs */
+extern int32 __errorcb_suppress_msg; /* T => sim control suppress error msg */
 extern struct h_t *__cur_vpi_inst;
 extern struct hrec_t *__cur_vpi_obj;
 extern struct loadpli_t *__vpi_dynlib_hd; /* hd of ld vpi dynamic lib list */
@@ -3285,90 +3310,92 @@ extern struct loadpli_t *__vpi_dynlib_end; /* and its end */
 /* specify work variables */
 extern struct spfy_t *__cur_spfy;/* current specify block */
 extern struct spcpth_t *__end_spcpths; /* end of specify path st. list */
-extern int __path_num;        /* counter for unnamed paths */
+extern int32 __path_num;      /* counter for unnamed paths */
 extern struct tchk_t *__end_tchks;/* end of specify time check st. list */
 extern struct net_t *__end_msprms;/* end of specify specparam net list */
 extern struct tchk_t *__cur_tchk;
-extern int __tchk_num;        /* counter for unnamed paths */
+extern int32 __tchk_num;      /* counter for unnamed paths */
 extern struct symtab_t *__sav_spsytp;/* save loc. of sym tab in spfy sect. */
 
 /* work compile global variables accessed by routines */
-extern int __v1stren;         /* wire/inst. Ver. 1 strength */
-extern int __v0stren;         /* wire/inst. Ver. 0 strength */
-extern unsigned __pr_iodir;   /* glb. for port ref. expr. I/O direction */
-extern int __pr_wid;          /* global for total port ref. expr. width */
-extern int __mpref_explicit;  /* T => mod def header port ref explicit */
-extern int __sym_is_new;      /* set when new symbol added */
+extern int32 __v1stren;       /* wire/inst. Ver. 1 strength */
+extern int32 __v0stren;       /* wire/inst. Ver. 0 strength */
+extern word32 __pr_iodir;     /* glb. for port ref. expr. I/O direction */
+extern int32 __pr_wid;        /* global for total port ref. expr. width */
+extern int32 __mpref_explicit;/* T => mod def header port ref explicit */
+extern int32 __sym_is_new;    /* set when new symbol added */
 extern struct sy_t **__wrkstab;/* malloced work symbol table area */
-extern int __last_sy;         /* last symbol in work area */
-extern int __mod_specparams;  /* number of declared specparams in mod */
-extern int __name_assigned_to;/* glb set if func. def. name assigned to */
+extern int32 __last_sy;       /* last symbol in work area */
+extern int32 __mod_specparams;/* number of declared specparams in mod */
+extern int32 __name_assigned_to;/* glb set if func. def. name assigned to */
 extern struct sy_t *__locfnamsyp; /* place for func. def. chk func. symbol */
-extern int __processing_func; /* T => prep or exec of function occuring */
+extern int32 __processing_func; /* T => prep or exec of function occuring */
 extern struct st_t **__nbstk; /* func. nest nblock stack (nxt for exec) */
-extern int __nbsti;      
+extern int32 __nbsti;      
 extern struct sy_t *__ca1bit_syp; /* gmsym for 1 bit conta converted gate */
-extern int __chking_conta;    /* T => checking a continuous assignment */
-extern int __rhs_isgetpat;    /* T => flag for checking stylized getpat */
-extern int __lhs_changed;     /* T => assignment changed lhs */
-extern word __badind_a;       /* place for a part of in error index value */
-extern word __badind_b;       /* and for b part */
-extern int __badind_wid;      /* width for bad ind (<32 expr can eval to x) */
-extern int __expr_has_real;   /* T => know some real in expr. */
-extern word *__isform_biwp;   /* global for IS net pin bit index word arr. */
-extern int __lhsxpr_has_ndel; /* T => component wire of lhs has wire del */
-extern int __checking_only;   /* T => no error msg, looking for something */ 
-extern int __task_has_tskcall;/* T => task calls other task (not name blk) */
-extern int __task_has_delay;  /* T => task call has del. needs thread */
-extern int __func_has_fcall;  /* T => func contains has non sys fcall */
-extern int __iact_must_sched; /* T => iact stmt(s) have $stop or loop */
-extern int __expr_rhs_decl;   /* T current expr. is decl. not proc. rhs */ 
-extern int __chg_rng_direct;  /* T => change rng dir. for implicitly decl */
-extern int __has_top_mtm;     /* T => for parameter rhs non () m:t:m */
-extern int __nd_0width_catel_remove; /* fx3 file 0 width concat glb */
+extern int32 __chking_conta;  /* T => checking a continuous assignment */
+extern int32 __rhs_isgetpat;  /* T => flag for checking stylized getpat */
+extern int32 __lhs_changed;   /* T => assignment changed lhs */
+extern word32 __badind_a;     /* place for a part of in error index value */
+extern word32 __badind_b;     /* and for b part */
+extern int32 __badind_wid;    /* width for bad ind (<32 expr can eval to x) */
+extern int32 __expr_has_real; /* T => know some real in expr. */
+extern int32 __isform_bi_xvi; /* glbl for IS net pin bit index in contab */
+extern int32 __lhsxpr_has_ndel; /* T => component wire of lhs has wire del */
+extern int32 __checking_only; /* T => no error msg, looking for something */ 
+extern int32 __task_has_tskcall;/* T => task calls other task (not name blk) */
+extern int32 __task_has_delay;/* T => task call has del. needs thread */
+extern int32 __func_has_fcall;/* T => func contains has non sys fcall */
+extern int32 __iact_must_sched; /* T => iact stmt(s) have $stop or loop */
+extern int32 __expr_rhs_decl; /* T current expr. is decl. not proc. rhs */ 
+extern int32 __chg_rng_direct;/* T => change rng dir. for implicitly decl */
+extern int32 __has_top_mtm;   /* T => for parameter rhs non () m:t:m */
+extern int32 __nd_0width_catel_remove; /* fx3 file 0 width concat glb */
 
 /* current Verilog module/task/block symbol environment */
 extern struct symtab_t **__venviron;
-extern int __top_sti;
+extern int32 __top_sti;
 extern struct symtab_t *__modsyms;/* separate symbol table for type names */
 extern struct symtab_t *__pv_defsyms;/* global table for `defines */
 extern struct symtab_t *__syssyms;/* global tab for system tasks and funcs */
 extern struct sy_t **__glbsycmps; /* work global name symbols */
 extern struct expr_t **__glbxcmps;/* work glbal exprs */
-extern int __last_gsc;
+extern int32 __last_gsc;
 
 /* n.l. access headers and tables */
-extern struct mod_t *__modhdr;  /* header of top level module list */
+extern struct mod_t *__modhdr;/* header of top level module list */
 extern struct udp_t *__udphead; /* header udps */
 extern struct udp_t *__udp_last;/* end udp list */
 extern struct inst_t **__top_itab; /* tab of virt inst ptrs of top mods */
-extern int *__top_ipind;      /* binary searchable top insts index */
-extern int __numtopm;         /* number of uninstanciated top modules */
+extern int32 *__top_ipind;    /* binary searchable top insts index */
+extern int32 __numtopm;       /* number of uninstanciated top modules */
 extern struct itree_t **__it_roots; /* table of root itree entries */
-extern int __ualtrepipnum;    /* udp rep. change threshold */
+extern int32 __ualtrepipnum;  /* udp rep. change threshold */
 extern struct thread_t *__initalw_thrd_hdr; /* list hd of per inst in/al thds */
 extern struct tev_t *__tevtab;/* reallocable tab of events and free evs */
-extern int __numused_tevtab;  /* num used at least once in tev tab */
-extern int __size_tevtab;     /* num tev's allocated in tev tab */ 
-extern word *__contab;        /* design wide constant table */
-extern int __contabwsiz;      /* currrent size of const tab in words */
-extern int __contabwi;        /* next free word slot in const tab */
-extern int __opempty_contabi; /* special contab index for opempty expr leaf */
+extern int32 __numused_tevtab;/* num used at least once in tev tab */
+extern int32 __size_tevtab;   /* num tev's allocated in tev tab */ 
+extern word32 *__contab;      /* design wide constant table */
+extern int32 __contabwsiz;    /* currrent size of const tab in words */
+extern int32 __contabwi;      /* next free word32 slot in const tab */
+extern int32 __opempty_contabi; /* special contab index for opempty expr leaf */
+extern int32 __b32_minus1;    /* special contab ndx for 32 bit -1 */
 extern double *__rlcontab;    /* design wide constant table for reals*/
-extern int __rlcontabdsiz;    /* currrent size of const tab in no. of dbls */
-extern int __rlcontabdi;      /* next free double slot in real const tab */
+extern int32 __rlcontabdsiz;  /* currrent size of const tab in no. of dbls */
+extern int32 __rlcontabdi;    /* next free double slot in real const tab */
+extern struct contab_info_t **__contab_hash; /* contab hash information */
 
 /* n.l. access routines */  
 extern struct dfparam_t *__dfphdr; /* design wide defparam list header */
-extern int __num_dfps;        /* number of defparams in source */
-extern int __num_glbdfps;     /* number of defparams in design */
-extern int __num_locdfps;     /* number of local defparams */
-extern int __num_inst_pndparams;/* static number of inst. pound params */
-extern int __design_gia_pndparams;/* T => at least one gia range pnd params */
-extern int __design_gi_arrays;  /* T => design has arrays of g/i */ 
-extern int __pndparam_splits; /* T => at least one split from pound params */
-extern int __defparam_splits; /* T => at least one split from def params */
-extern int __dagmaxdist;      /* max. nested mod. inst. level */
+extern int32 __num_dfps;      /* number of defparams in source */
+extern int32 __num_glbdfps;   /* number of defparams in design */
+extern int32 __num_locdfps;   /* number of local defparams */
+extern int32 __num_inst_pndparams;/* static number of inst. pound params */
+extern int32 __design_gia_pndparams;/* T => at least one gia range pnd params */
+extern int32 __design_gi_arrays;  /* T => design has arrays of g/i */ 
+extern int32 __pndparam_splits; /* T => at least one split from pound params */
+extern int32 __defparam_splits; /* T => at least one split from def params */
+extern int32 __dagmaxdist;    /* max. nested mod. inst. level */
 extern struct mod_t **__mdlevhdr; /* array of ptrs to ith lev linked mods */ 
 extern struct cell_pin_t *__cphdr;   /* header of temp. cell pin list */
 extern struct cell_pin_t *__cpp_last;/* current last cell pin*/
@@ -3377,143 +3404,144 @@ extern struct tnode_t *__tmp_head;
 extern struct xldlnpp_t *__xldl_hdr; /* other side unproc. xl drv/ld npps */
 extern struct xldlnpp_t *__last_xldl;/* end of list - place to add after */
 extern struct xldlvtx_t **__xldlvtxind; /* table of xl drv/ld net/bit vtx */
-extern int __num_xldlvtxs;    /* number of lements in table */
-extern int __siz_xldlvtxtab;  /* current size of table */
+extern int32 __num_xldlvtxs;  /* number of lements in table */
+extern int32 __siz_xldlvtxtab;/* current size of table */
 
 /* udp table building variables */
 extern struct wcard_t *__wcardtab; /* level wildcard table */
-extern int __last_wci;        /* last wild card index for line */
-extern word *__cur_utab;      /* current udp table */
+extern int32 __last_wci;      /* last wild card index for line */
+extern word32 *__cur_utab;    /* current udp table */
 extern struct utline_t *__cur_utlp; /* current line info struct */
-extern word __cur_uoval;      /* current udp line output value */
-extern int __cur_unochange;   /* T => cur line has '-' no change output */
+extern word32 __cur_uoval;    /* current udp line output value */
+extern int32 __cur_unochange; /* T => cur line has '-' no change output */
 extern struct udp_t *__cur_udp; /* current udp struct */
-extern word __cur_upstate;    /* current last input (state) for wide */
-extern int __cur_ueipnum;     /* cur. input pos. num of edge (NO_VAL none) */
-extern int __cur_utabsel;     /* current edge 1st char - 2nd in state line */
+extern word32 __cur_upstate;  /* current last input (state) for wide */
+extern int32 __cur_ueipnum;   /* cur. input pos. num of edge (NO_VAL none) */
+extern int32 __cur_utabsel;   /* current edge 1st char - 2nd in state line */
 
 /* expression and function processing variables */
-extern int __xndi;            /* next place in collected expression list */
+extern int32 __xndi;          /* next place in collected expression list */
 extern struct expr_t **__exprtab;/* table to collect expressions into */
 extern struct expridtab_t **__expr_idtab; /* expr parse id name info */ 
-extern int __exprtabsiz;      /* current operator precedence expr tab siz */
-extern int __last_xtk;
+extern int32 __exprtabsiz;    /* current operator precedence expr tab siz */
+extern int32 __last_xtk;
 extern struct expr_t *__root_ndp;/* root of built and alloced expression */
 extern struct xstk_t **__xstk;/* expr work vals */
-extern int __xspi;            /* expr. pointer */
-extern int __maxxnest;        /* current size of expr. stack - must grow */ 
-extern int __maxfcnest;       /* size of func. call task stk - must grow */
+extern int32 __xspi;          /* expr. pointer */
+extern int32 __maxxnest;      /* current size of expr. stack - must grow */ 
+extern int32 __maxfcnest;     /* size of func. call task stk - must grow */
 extern struct task_t **__fcstk; /* function call nesting stack */
-extern int __fcspi;           /* fcall tos index */
+extern int32 __fcspi;           /* fcall tos index */
 
 /* -y and -v library variables */
 extern struct vylib_t *__vyhdr; /* header of lib. file list */
 extern struct vylib_t *__end_vy;/* last entry on vy lib. list */
-extern int __num_ylibs;       /* number of ylibs in options */
-extern int __num_vlibs;       /* number of vlibs in options */
+extern int32 __num_ylibs;     /* number of ylibs in options */
+extern int32 __num_vlibs;     /* number of vlibs in options */
 
 extern struct undef_t *__undefhd;/* head of undefined mod/udp list */   
 extern struct undef_t *__undeftail; /* tail of undefined mod/udp list */
-extern int __undef_mods;      /* count of undefined modules */
+extern int32 __undef_mods;    /* count of undefined modules */
 
-extern int __lib_rescan;      /* T => rescan from start after each */
-extern int __cur_passres;     /* num mods resolved in current pass */
-extern int __rescanning_lib;  /* T => for `language exclude after 1st pass */ 
-extern int __num_ys;          /* number of -y options in lib. */
+extern int32 __lib_rescan;    /* T => rescan from start after each */
+extern int32 __cur_passres;   /* num mods resolved in current pass */
+extern int32 __rescanning_lib;/* T => for `language exclude after 1st pass */ 
+extern int32 __num_ys;        /* number of -y options in lib. */
 extern char **__lbexts;       /* tab of -y library extension suffixes */
-extern int __last_lbx;
+extern int32 __last_lbx;
 extern char **__incdirs;      /* tab of +incdir paths (always / end) */
-extern int __last_incdir;
+extern int32 __last_incdir;
 
 /* simulation preparation variables */
-extern int __cur_npii;        /* current index of inst. in cur. mod */
+extern int32 __cur_npii;      /* current index of inst. in cur. mod */
 extern struct gate_t *__cur_npgp;/* current net-pin processing gate */
 extern struct mod_t *__cur_npmdp;/* current net-pin processing module */
 extern struct conta_t *__cur_npcap; /* current net pin proc. conta */
 extern struct tfrec_t *__cur_nptfrp; /* current net pin tf arg drvr rec */
 extern struct net_t *__cur_npnp; /* current net pin net for vpi putv driver */
-extern int __cur_npnum;       /* current port number (from 0) */
-extern int __cur_pbi;         /* current bit number for PB ICONN npp */
-extern int num_optim_cats;    /* number of optimized concats */
-extern int num_optim_catels;  /* number of all elements in optim concats */
-extern int __cur_lhscati1;    /* if lhs concat, high rhs psel index */
-extern int __cur_lhscati2;    /* if lhs concat, low rhs psel index */
+extern int32 __cur_npnum;     /* current port number (from 0) */
+extern int32 __cur_pbi;       /* current bit number for PB ICONN npp */
+extern int32 num_optim_cats;  /* number of optimized concats */
+extern int32 num_optim_catels;/* number of all elements in optim concats */
+extern int32 __cur_lhscati1;  /* if lhs concat, high rhs psel index */
+extern int32 __cur_lhscati2;  /* if lhs concat, low rhs psel index */
 extern struct st_t **__prpstk;/* during prep., continue stp */
-extern int __prpsti;          /* top of nested stmt. stack */
-extern int __nd_parmpnp_free; /* T => after 1st parmnpp need copy not orig */
-extern int __num_rem_gate_pnd0s; /* number of removed source #0 gates */
-extern int __num_flat_rem_gate_pnd0s; /* and flat number */
-extern int __num_rem_mipds;   /* number of per bit flat MIPDs 0 delays rmed */
-extern int __last_modxi;      /* global counter used by n.l expr xform code */
-extern int __last_modsti;     /* and counter for statements */
-extern int __optimized_sim;   /* generate c code - compile and dl link */
+extern int32 __prpsti;        /* top of nested stmt. stack */
+extern int32 __nd_parmpnp_free; /* T => after 1st parmnpp need copy not orig */
+extern int32 __num_rem_gate_pnd0s; /* number of removed source #0 gates */
+extern int32 __num_flat_rem_gate_pnd0s; /* and flat number */
+extern int32 __num_rem_mipds; /* number of per bit flat MIPDs 0 delays rmed */
+extern int32 __last_modxi;    /* global counter used by n.l expr xform code */
+extern int32 __last_modsti;   /* and counter for statements */
+extern int32 __optimized_sim; /* generate c code - compile and dl link */
+extern int32 __dump_flowg;    /* dump flow graph for debugging */
 
 /* timing queue scheduling variables */
 extern word64 __whetime;      /* current timing wheel end time */
 extern word64 __simtime;      /* current simulaton time (make 64 bits ?) */
-extern unsigned __num_execstmts;   /* total number of executed statements */
-extern unsigned __num_addedexec;   /* number of executed added statements */
-extern unsigned __num_proc_tevents;/* total num simulation events processed */
-extern unsigned __nxtstmt_freq_update; /* next ev count for xbig freq upd. */ 
-extern unsigned __num_cancel_tevents; /* total num sim events processed */
-extern int __num_twhevents;   /* num of evs currently in timing wheel */
-extern int __num_ovflqevents; /* num of events currently in ovflow q */
-extern unsigned __inertial_cancels; /* num resched form later inertial del */
-extern unsigned __newval_rescheds; /* num rescheduled for same time */
-extern unsigned __num_netchges;   /* num of processed net change records */
-extern unsigned __immed_assigns;  /* num immed assign (not scheduled) */ 
-extern unsigned __proc_thrd_tevents;/* number of processed thread events */
+extern word32 __num_execstmts;/* total number of executed statements */
+extern word32 __num_addedexec;/* number of executed added statements */
+extern word32 __num_proc_tevents;/* total num simulation events processed */
+extern word32 __nxtstmt_freq_update; /* next ev count for xbig freq upd. */ 
+extern word32 __num_cancel_tevents; /* total num sim events processed */
+extern int32 __num_twhevents; /* num of evs currently in timing wheel */
+extern int32 __num_ovflqevents; /* num of events currently in ovflow q */
+extern word32 __inertial_cancels; /* num resched form later inertial del */
+extern word32 __newval_rescheds; /* num rescheduled for same time */
+extern word32 __num_netchges; /* num of processed net change records */
+extern word32 __immed_assigns;/* num immed assign (not scheduled) */ 
+extern word32 __proc_thrd_tevents;/* number of processed thread events */
 extern struct q_hdr_t *__qlist_hdr; /* for $q_ system task q list header */
-extern int __num_switch_vtxs_processed; /* total num tranif chan vtx done */
-extern int __num_switch_chans; /* total num tranif channels in design */ 
+extern int32 __num_switch_vtxs_processed; /* total num tranif chan vtx done */
+extern int32 __num_switch_chans; /* total num tranif channels in design */ 
 
 /* storage tables variables */
 extern byte *__btab;          /* design wide scalar (byte) storage table */
-extern int __btabbsiz;        /* scalar storage byte table size in bytes */
-extern int __btabbi;          /* during var init next word index to use */ 
-extern word *__wtab;          /* design wide var but not mem storage area */
-extern int __wtabwsiz;        /* precomputed size (need ptrs into) in words */
-extern int __wtabwi;          /* during var init next word index to use */ 
+extern int32 __btabbsiz;      /* scalar storage byte table size in bytes */
+extern int32 __btabbi;        /* during var init next word32 index to use */ 
+extern word32 *__wtab;        /* design wide var but not mem storage area */
+extern int32 __wtabwsiz;      /* precomputed size (need ptrs into) in words */
+extern int32 __wtabwi;        /* during var init next word32 index to use */ 
 extern word64 *__lwtab;       /* design wide long long var storage area */
-extern int __lwtabwsiz;       /* precomputed size (need ptrs into) in lwords */
-extern int __lwtabwi;         /* during var init next lword index to use */ 
+extern int32 __lwtabwsiz;     /* precomputed size (need ptrs into) in lwords */
+extern int32 __lwtabwi;       /* during var init next lword index to use */ 
 extern double *__rltab;       /* design wide real var storage area */
-extern int __rltabdsiz;       /* precomputed size in doubles (nd ptr into)  */
-extern int __rltabdi;         /* during var init next double index to use */ 
+extern int32 __rltabdsiz;     /* precomputed size in doubles (nd ptr into)  */
+extern int32 __rltabdi;       /* during var init next double index to use */ 
 
 /* simulation control and state values */
-extern int __stmt_suspend;    /* set when behavioral code suspends */
-extern int __run_state;       /* state of current simulation run */
-extern int __can_exec;        /* T => for vpi sim ctrl - can now exec */
-extern int __wire_init;       /* T => initializing wires */
-extern int __no_tmove_levels; /* T => infinite 0 delay loop warn path dist */
+extern int32 __stmt_suspend;  /* set when behavioral code suspends */
+extern int32 __run_state;     /* state of current simulation run */
+extern int32 __can_exec;      /* T => for vpi sim ctrl - can now exec */
+extern int32 __wire_init;     /* T => initializing wires */
+extern int32 __no_tmove_levels; /* T => infinite 0 delay loop warn path dist */
 extern struct thread_t *__cur_thd;  /* currently executing thread addr. */
 extern struct thread_t *__suspended_thd; /* cur thread before suspend */
 extern struct itree_t *__suspended_itp; /* cur inst ptr before suspend */
 extern struct itree_t *__inst_ptr; /* current if flattened itree place */ 
 extern struct mod_t *__inst_mod;   /* module of current itree inst */
-extern int __inum;            /* iti num  of current inst (always set) */
+extern int32 __inum;          /* iti num  of current inst (always set) */
 extern struct itree_t **__itstk; /* stack of saved itrees */
-extern int __itspi;           /* top of itree stack */
+extern int32 __itspi;         /* top of itree stack */
 extern i_tev_ndx __fsusp_tevpi;/* in func. step, event to undo(cancel) */
 extern struct itree_t *__tmpitp_freelst; /* free list of wrk itps */
 extern struct inst_t *__tmpip_freelst; /* free list of wrk ips */
 extern struct mod_t *__last_libmdp; /* libary module just read */
-extern int __seed;            /* SJM 01/27/04 - glb seed needed if no arg */
+extern int32 __seed;          /* SJM 01/27/04 - glb seed needed if no arg */
 
 /* execution state variables */
-extern unsigned __new_gateval; /* new gate out val (st. possible) */
-extern unsigned __old_gateval; /* before gate change (st. possible) */
-extern unsigned __new_inputval;/* new input value for tracing message */
-extern unsigned __old_inputval;/* prev. value of input for wide udp eval */
+extern word32 __new_gateval;  /* new gate out val (st. possible) */
+extern word32 __old_gateval;  /* before gate change (st. possible) */
+extern word32 __new_inputval; /* new input value for tracing message */
+extern word32 __old_inputval; /* prev. value of input for wide udp eval */
 extern word64 __pdlatechgtim; /* for path tracing latest path chg time */
 extern word64 __pdmindel;     /* for path minimum path delay */
-extern int __nd_neg_del_warn; /* T => must emit warn (or err) for <0 del */ 
-extern int __force_active;    /* T => for trace deassign while force */ 
-extern int __assign_active;   /* T => for trace release activates assgn */
+extern int32 __nd_neg_del_warn; /* T => must emit warn (or err) for <0 del */ 
+extern int32 __force_active;  /* T => for trace deassign while force */ 
+extern int32 __assign_active; /* T => for trace release activates assgn */
 extern struct dceauxlst_t *__qcaf_dcehdr; /* header of current qcaf dces */
-extern int __nxt_chan_id;     /* cnter and size for assigning chan ids */
-extern int __chanallocsize;   /* size of allocated chan tables */
+extern int32 __nxt_chan_id;   /* cnter and size for assigning chan ids */
+extern int32 __chanallocsize; /* size of allocated chan tables */
 extern struct chanrec_t *__chantab;/* tab of channel records (one per id) */
 extern struct vtxlst_t *__stvtxtab[8]; /* per stren value vertex list */ 
 extern struct vtxlst_t *__stvtxtabend[8]; /* and ptr to last el on each */
@@ -3525,9 +3553,9 @@ extern struct vtxlst_t *__vtxlst_freelst; /* free list for vtx lists */
 extern struct vtx_t *__vtx_freelst;  /* free list for re-using vtxs */   
 extern struct edge_t *__edge_freelst; /* free list for re-using edges */
 
-extern word __acum_sb;        /* accumulator for stren tran chan combined */
-extern word __acum_a;         /* accumulator for tran chan non stren */
-extern word __acum_b;
+extern word32 __acum_sb;      /* accumulator for stren tran chan combined */
+extern word32 __acum_a;       /* accumulator for tran chan non stren */
+extern word32 __acum_b;
 extern byte *__acum_sbp;      /* ptr to stacked strength byte */
 extern struct xstk_t *__acum_xsp; /* ptr to stacked strength byte */
 
@@ -3537,8 +3565,8 @@ extern struct strblst_t *__strobe_end; /* end of strobe display list */
 extern struct strblst_t *__strb_freelst; /* head of free strobe elements */
 extern struct st_t *__monit_stp;/* monit if chg display at slot end stmt */
 extern struct itree_t *__monit_itp; /* current monitor itree element */
-extern unsigned __slotend_action; /* word of 1 bit switches set for action */
-extern int __monit_active;    /* T => monitor can trigger (default) */
+extern word32 __slotend_action; /* word32 of 1 bit switches set for action */
+extern int32 __monit_active;  /* T => monitor can trigger (default) */
 extern struct dceauxlst_t *__monit_dcehdr; /* header of current dces */
 extern struct fmonlst_t *__fmon_hdr; /* list of execed (enabled) fmonitors */
 extern struct fmonlst_t *__fmon_end;
@@ -3552,66 +3580,66 @@ extern struct itree_t *__scope_ptr; /* from $scope itree place */
 extern struct task_t *__scope_tskp; /* from $scope task if present */ 
 extern struct symtab_t *__last_iasytp; /* last found symbol symbol table */
 extern struct iahist_t *__iahtab;/* table of history commands */
-extern int __iahsiz;          /* current size of history cmd table */
-extern int __iah_lasti;       /* current (latest) command */
+extern int32 __iahsiz;        /* current size of history cmd table */
+extern int32 __iah_lasti;     /* current (latest) command */
 extern struct hctrl_t *__hctrl_hd; /* head of active iact stmts */
 extern struct hctrl_t *__hctrl_end;/* and end */
-extern int __history_on;      /* collecting and saving history is on */
-extern int __hist_cur_listnum;/* number to list for :history command */
-extern int __iasetup;         /* F until interactive entered */
-extern int __ia_entered;      /* F (also for reset) until iact entered */
-extern int __iact_state;      /* T => in interactive processing */
-extern int __iact_can_free;   /* T => non monitor/strobe, can free */
-extern int __no_iact;         /* T => no interactive processing for run */
-extern int __intsig_prt_snapshot; /* T => on no iact end, print shapshot */
-extern int __reset_count;     /* count of the number of rests ($reset) */
-extern int __reset_value;     /* 2nd $reset value preserved after reset */ 
-extern int __list_cur_ifi;    /* index in in fils of current source file */
-extern int __list_cur_fd;     /* current opened file no. (-1 if none) */
-extern int __list_cur_lini;   /* current line no. in current dbg file */
-extern int __list_cur_listnum;/* number of lines to list at once */
-extern int __list_arg_lini;   /* for :b (:ib), user list argument */
-extern int __iact_scope_chg;  /* T => always move scope to cur on iact st. */
+extern int32 __history_on;    /* collecting and saving history is on */
+extern int32 __hist_cur_listnum;/* number to list for :history command */
+extern int32 __iasetup;       /* F until interactive entered */
+extern int32 __ia_entered;    /* F (also for reset) until iact entered */
+extern int32 __iact_state;    /* T => in interactive processing */
+extern int32 __iact_can_free; /* T => non monitor/strobe, can free */
+extern int32 __no_iact;       /* T => no interactive processing for run */
+extern int32 __intsig_prt_snapshot; /* T => on no iact end, print shapshot */
+extern int32 __reset_count;   /* count of the number of rests ($reset) */
+extern int32 __reset_value;   /* 2nd $reset value preserved after reset */ 
+extern int32 __list_cur_ifi;  /* index in in fils of current source file */
+extern int32 __list_cur_fd;   /* current opened file no. (-1 if none) */
+extern int32 __list_cur_lini; /* current line no. in current dbg file */
+extern int32 __list_cur_listnum;/* number of lines to list at once */
+extern int32 __list_arg_lini; /* for :b (:ib), user list argument */
+extern int32 __iact_scope_chg;/* T => always move scope to cur on iact st. */
 extern struct brkpt_t *__bphdr;/* header of breakpoint list */ 
-extern int __nxt_bpnum;       /* next breakpoint number to use */
+extern int32 __nxt_bpnum;     /* next breakpoint number to use */
 extern struct dispx_t *__dispxhdr;/* header of display list */ 
-extern int __nxt_dispxnum;    /* next display number to use */
+extern int32 __nxt_dispxnum;  /* next display number to use */
 extern struct itree_t *__last_stepitp;/* last step inst. itree loc. */ 
 extern struct task_t *__last_steptskp;/* last step task */
-extern int __last_stepifi;    /* last step in fils index */
+extern int32 __last_stepifi;  /* last step in fils index */
 extern word64 __last_brktime; /* last break or step time */
-extern int __dbg_dflt_base;   /* :print debugger default base */ 
-extern int __iact_stmt_err;   /* T => syntax error for iact stmt */
+extern int32 __dbg_dflt_base; /* :print debugger default base */ 
+extern int32 __iact_stmt_err; /* T => syntax error for iact stmt */
 extern struct mod_t *__iact_mdp; /* current iact dummy module */
-extern int __sav_mtime_units; /* prep of iact statements needs tfmt units */
+extern int32 __sav_mtime_units; /* prep of iact statements needs tfmt units */
 
 /* interactive variables */
 extern char *__iahwrkline;    /* interactive command line work area */
-extern int __iahwrklen;       /* allocated len of iah work string */
-extern int __pending_enter_iact;/* T => enter iact as soon as can */
-extern int __iact_reason;     /* reason for entering interactive state */
-extern int __single_step;     /* T => need to single step */
-extern int __step_rep_cnt;    /* number of times to repeat step */
-extern int __step_from_thread;/* T step from non thread loc. (^c?) */
+extern int32 __iahwrklen;     /* allocated len of iah work string */
+extern int32 __pending_enter_iact;/* T => enter iact as soon as can */
+extern int32 __iact_reason;   /* reason for entering interactive state */
+extern int32 __single_step;   /* T => need to single step */
+extern int32 __step_rep_cnt;  /* number of times to repeat step */
+extern int32 __step_from_thread;/* T step from non thread loc. (^c?) */
 extern struct itree_t *__step_match_itp; /* for istep, exec itp must match */
-extern int __step_lini;       /* line stepping from (must step to next) */  
-extern int __step_ifi;        /* and file */ 
-extern int __verbose_step;    /* T => emit location each step */
-extern int __stop_before_sim; /* T => enter interactive before sim */
-extern int __dbg_stop_before; /* if >100, T (-100) stop before sim */ 
+extern int32 __step_lini;     /* line stepping from (must step to next) */  
+extern int32 __step_ifi;      /* and file */ 
+extern int32 __verbose_step;  /* T => emit location each step */
+extern int32 __stop_before_sim; /* T => enter interactive before sim */
+extern int32 __dbg_stop_before; /* if >100, T (-100) stop before sim */ 
 extern struct st_t *__blklast_stp; /* stmt loc. saved last stmt in block */
 extern struct dceauxlst_t *__iact_dcehdr; /* header of current iact dces */
 
 /* event list variables */
 extern struct telhdr_t **__twheel;
-extern int __twhsize;         /* current size for timing wheel */   
-extern int __cur_twi;
-extern i_tev_ndx __p0_te_hdri; /* pound 0 event list header */
-extern i_tev_ndx __p0_te_endi; /* pound 0 event list end */
+extern int32 __twhsize;       /* current size for timing wheel */   
+extern int32 __cur_twi;
+extern i_tev_ndx __p0_te_hdri;/* pound 0 event list header */
+extern i_tev_ndx __p0_te_endi;/* pound 0 event list end */
 extern i_tev_ndx __cur_te_hdri;
-extern i_tev_ndx __cur_tevpi;  /* ptr to event list for adding to front */
+extern i_tev_ndx __cur_tevpi; /* ptr to event list for adding to front */
 extern i_tev_ndx __cur_te_endi;
-extern i_tev_ndx __tefreelsti; /* free list for events */
+extern i_tev_ndx __tefreelsti;/* free list for events */
 extern struct tedputp_t *__tedpfreelst; /* tf_ putp rec free list header */
 extern struct teputv_t *__teputvfreelst; /* vpi_ put value free list hdr */ 
 extern struct nchglst_t *__nchgfreelst; /* change element free list */
@@ -3625,8 +3653,8 @@ extern struct nchglst_t *__nchg_futend; /* end (for add) of future net chgs */
 extern struct tc_pendlst_t *__tcpendlst_hdr; /* header of pending */ 
 extern struct tc_pendlst_t *__tcpendlst_end; /* end of pending */
 extern i_tev_ndx *__wrkevtab; /* for exit, trace of pending events */
-extern int __last_wevti;      /* last filled */
-extern int __size_wrkevtab;   /* and current allocated size */ 
+extern int32 __last_wevti;    /* last filled */
+extern int32 __size_wrkevtab; /* and current allocated size */ 
 
 /* b tree variables */
 extern struct bt_t *__btqroot;/* root of timing overflow q */
@@ -3634,9 +3662,9 @@ extern struct bt_t *__btqroot;/* root of timing overflow q */
 /* storage for path to fringe - node passed thru if not fringe */
 extern struct bt_t **__btndstk; /* nodes with node list length */
 extern struct bt_t **__btndhdrstk;
-extern int __topi;
-extern int __max_level;
-extern int __nd_level;
+extern int32 __topi;
+extern int32 __max_level;
+extern int32 __nd_level;
 
 
 #include "systsks.h"

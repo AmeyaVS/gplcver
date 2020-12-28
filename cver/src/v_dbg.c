@@ -1,4 +1,4 @@
-/* Copyrght (c) 1993-2004 Pragmatic C Software Corp. */
+/* Copyrght (c) 1993-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -54,30 +54,30 @@ static void rem_escape_newlines(register char *);
 static void snap_finish(void);
 static void setup_interactive(void);
 static void add_iahist(void);
-static int get_iahcmdnum(void);
+static int32 get_iahcmdnum(void);
 static void grow_iahtab(void);
-static void rd_exec_iact_stmt(int);
-static void chk_iact_grefs(int);
+static void rd_exec_iact_stmt(int32);
+static void chk_iact_grefs(int32);
 static void init_iahctrl(struct hctrl_t *);
 static void init_sched_iathd(struct hctrl_t *);
 static struct thread_t *bld_immed_iathrd(struct st_t *);
-static void free_iact_glbs(struct gref_t *, int);
-static void renumber_1stmt(struct st_t *, int, int);
-static void renumber_csitemlst(register struct csitem_t *, int, int);
-static void renumber_stlst(register struct st_t *, int, int);
-static int prt1_iahist_cmd(int);
-static void free_done_iact_control(struct hctrl_t *, int);
-static int do_dbg_cmd(void);
+static void free_iact_glbs(struct gref_t *, int32);
+static void renumber_1stmt(struct st_t *, int32, int32);
+static void renumber_csitemlst(register struct csitem_t *, int32, int32);
+static void renumber_stlst(register struct st_t *, int32, int32);
+static int32 prt1_iahist_cmd(int32);
+static void free_done_iact_control(struct hctrl_t *, int32);
+static int32 do_dbg_cmd(void);
 static void cmd_illegal_msg(char *);
-static int dbcmd_prefix_rep(register int, char *, int, struct namlst_t *, int);
+static int32 dbcmd_prefix_rep(register int32, char *, int32, struct namlst_t *, int32);
 static void do_dbg_help(void);
 static void wr_dbg_hlpmsg(char **);
-static void wr_dbg_lstofcmds(struct namlst_t *, int);
+static void wr_dbg_lstofcmds(struct namlst_t *, int32);
 static void dbg_print(void);
-static char *dbg_bld_expr_val(char *, struct expr_t *, int, int, int);
+static char *dbg_bld_expr_val(char *, struct expr_t *, int32, int32, int32);
 static void dbg_display(void);
 static void prt_all_disp_exprs(void);
-static char *bld_prtbasecode(char *, int, int, int);
+static char *bld_prtbasecode(char *, int32, int32, int32);
 static void do_dbg_expris(void);
 static char *bld_expr_telltale(char *, struct expr_t *);
 static void do_dbg_varis(void);
@@ -85,7 +85,7 @@ static void print_iddecl_ref(struct sy_t *, struct sy_t *);
 static void do_dbg_whatis(void);
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_malloc(int);
+extern char *__my_malloc(int32);
 extern FILE *__tilde_fopen(char *, char *);
 extern char *__pv_stralloc(char *);
 extern struct task_t *__find_thrdtsk(struct thread_t *);
@@ -94,110 +94,110 @@ extern void __call_misctfs_iact(void);
 extern void __vpi_enteriact_trycall(void);
 extern void __call_misctfs_scope(void);
 extern void __vpi_iactscopechg_trycall(void);
-extern int __rd_ialine(void);
+extern int32 __rd_ialine(void);
 extern void __my_fclose(FILE *);
 extern void __call_misctfs_finish(void);
 extern void __vpi_endsim_trycall(void);
 extern void __get_vtok(void);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern void __vpi_exitiact_trycall(void);
-extern int __chk_extra_atend(int);
+extern int32 __chk_extra_atend(int32);
 extern char *__prt_vtok(void);
-extern void __do_iact_disable(struct hctrl_t *, int);
+extern void __do_iact_disable(struct hctrl_t *, int32);
 extern char *__to_timstr(char *, word64 *);
-extern void __write_snapshot(int);
+extern void __write_snapshot(int32);
 extern void __my_ftime(time_t *, time_t *);
 extern void __prt_end_msg(void);
 extern void __add_infil(char *);
-extern int __wide_vval_is0(register word *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
-extern char *__my_realloc(char *, int, int);
+extern int32 __wide_vval_is0(register word32 *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
+extern char *__my_realloc(char *, int32, int32);
 extern void __grow_tevtab(void);
 extern struct st_t *__rd_stmt(void);
 extern void __chk_lstofsts(struct st_t *);
 extern void __chk_nodel_lstofsts(struct st_t *);
-extern struct st_t *__prep_lstofsts(struct st_t *, int, int);
+extern struct st_t *__prep_lstofsts(struct st_t *, int32, int32);
 extern void __free_1stmt(struct st_t *);
-extern void __free_dceauxlst(struct dceauxlst_t *, int);
+extern void __free_dceauxlst(struct dceauxlst_t *, int32);
 extern void __free_dceauxs_only(struct dceauxlst_t *);
 extern struct st_t *__brktr_exec_1stmt(struct st_t *);
-extern void __my_free(char *, int);
-extern void __ia_warn(int, char *, ...);
+extern void __my_free(char *, int32);
+extern void __ia_warn(int32, char *, ...);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern struct thread_t *__alloc_thrd(void);
 extern void __add_ev_to_front(register i_tev_ndx);
 extern void __free_1glb_flds(struct gref_t *);
-extern char *__get_eval_cstr(struct expr_t *, int *);
+extern char *__get_eval_cstr(struct expr_t *, int32 *);
 extern void __free_thd_list(struct thread_t *);
 extern void __free_1thd(struct thread_t *);
-extern int __get_dbcmdnum(char *, struct namlst_t *, int);
-extern char *__bld_ambiguous_list(char *, char *, struct namlst_t *, int);
+extern int32 __get_dbcmdnum(char *, struct namlst_t *, int32);
+extern char *__bld_ambiguous_list(char *, char *, struct namlst_t *, int32);
 extern void __prt_where_msg(register struct thread_t *);
 extern void __do_dbg_list(void);
 extern void __do_dbg_set(void);
 extern void __do_dbg_info(void);
-extern void __do_dbg_dis_enable(int);
+extern void __do_dbg_dis_enable(int32);
 extern void __dbg_undisplay(void);
-extern int __get_dbg_val(void);
+extern int32 __get_dbg_val(void);
 extern void __do_dbg_history(void);
 extern void __do_dbg_emptyhistory(void);
-extern void __do_dbg_brkpt(int);
-extern void __do_dbg_ibrkpt(int);
-extern int __do_dbg_nextb(void);
+extern void __do_dbg_brkpt(int32);
+extern void __do_dbg_ibrkpt(int32);
+extern int32 __do_dbg_nextb(void);
 extern void __do_dbg_delbrkdis(void);
 extern void __do_dbg_scope(void);
 extern void __dbg_brk_ignore(void);
 extern void __dbg_brk_cond(void);
 extern void __wrap_puts(char *, FILE *);
-extern void __wrap_putc(int, FILE *);
+extern void __wrap_putc(int32, FILE *);
 extern struct expr_t *__rd_iact_expr(void);
-extern int __colto_eol(void);
+extern int32 __colto_eol(void);
 extern void __free_xtree(struct expr_t *);
 extern char *__strenexpr_tostr(char *, struct expr_t *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern int __trim1_0val(word *, int);
-extern char *__strab_tostr(char *, word *, int, int, int);
-extern char *__regab2_tostr(char *, word *, word *, int, int, int, int);
-extern void __bld_xtree(int);
-extern int __chk_rhsexpr(struct expr_t *, int);
-extern int __bld_expnode(void);
+extern int32 __trim1_0val(word32 *, int32);
+extern char *__strab_tostr(char *, word32 *, int32, int32, int32);
+extern char *__regab2_tostr(char *, word32 *, word32 *, int32, int32, int32, int32);
+extern void __bld_xtree(int32);
+extern int32 __chk_rhsexpr(struct expr_t *, int32);
+extern int32 __bld_expnode(void);
 extern void __set_xtab_errval(void);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern char *__to_opname(unsigned);
-extern char *__to_sytyp(char *, unsigned);
+extern char *__to_opname(word32);
+extern char *__to_sytyp(char *, word32);
 extern char *__bld_showvars_prefix(char *, struct net_t *,
  struct gref_t *grp);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern int __do_vpi_stop(int);
-extern void __do_vpi_reset(int, int, int);
+extern int32 __do_vpi_stop(int32);
+extern void __do_vpi_reset(int32, int32, int32);
 extern void __emit_vpi_noiact_warn(void);
 extern void __emit_vpi_iniact_warn(void);
 extern void __emit_stsk_endmsg(void);
-extern struct gref_t *__alloc_grtab(struct gref_t *, int);
+extern struct gref_t *__alloc_grtab(struct gref_t *, int32);
 extern void __init_mod(struct mod_t *, struct sy_t *);
 extern void __my_dv_flush(void);
 extern void __wr_dvtimstr(void);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern void __free_dce_prevval(struct dcevnt_t *, int, int);
-extern int __get_dcewid(struct dcevnt_t *, struct net_t *);
-extern int __get_pcku_chars(int, int);
+extern void __free_dce_prevval(struct dcevnt_t *, int32, int32);
+extern int32 __get_dcewid(struct dcevnt_t *, struct net_t *);
+extern int32 __get_pcku_chars(int32, int32);
 
 
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
 extern void __cvsim2_msg(char *, ...);
 extern void __cvsim3_msg(char *, ...);
-extern void __pv_warn(int, char *,...);
-extern void __sgfwarn(int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __my_exit(int, int);
-extern void __ia_err(int id_num, char *s, ...);
+extern void __pv_warn(int32, char *,...);
+extern void __sgfwarn(int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __my_exit(int32, int32);
+extern void __ia_err(int32 id_num, char *s, ...);
 
 extern char __pv_ctab[];
 
@@ -276,9 +276,9 @@ extern void __sim_sigint_handler(void)
  *
  * normally do_exit true but to return to caller called with do exit F 
  */
-extern void __my_exit(int rc, int do_exit)
+extern void __my_exit(int32 rc, int32 do_exit)
 {
- int i;
+ int32 i;
 
 
  /* put back entry signal */
@@ -320,7 +320,7 @@ extern void __my_exit(int rc, int do_exit)
  */
 extern void __init_interactive(void)
 { 
- register int i;
+ register int32 i;
  struct sy_t *syp;
 
  /* set up listing file - nothing open and no line pos. file cached */
@@ -415,15 +415,15 @@ extern void __init_interactive(void)
  * commands executed from here return to here
  *
  * debugger commands are not added to the history list 
- * this runs with ctrl-c (int) disabled
+ * this runs with ctrl-c (int32) disabled
  * upon entry, interrupt signal is SIGIGN
  * also no current thread - run between processed events
  * if entry from interactive non immediate $stop, no scope or file change
  */
 extern void __do_interactive_loop(void)
 {
- int histcmd_num, hist_rexec, rv, sav_lin_cnt, sav_cur_fnam_ind;
- int chg_scope, still_stepping;
+ int32 histcmd_num, hist_rexec, rv, sav_lin_cnt, sav_cur_fnam_ind;
+ int32 chg_scope, still_stepping;
  FILE *sav_cmd_s, *f;
  char *sav_cmd_fnam;
  struct iahist_t *iahp;
@@ -594,7 +594,7 @@ num_reenable:
      __cvsim_msg("scope: %s (at %s and :list at %s)\n",
       __msg_blditree(__xs, __scope_ptr, __scope_tskp),
       __bld_lineloc(s1, syp->syfnam_ind, syp->sylin_cnt),
-      __bld_lineloc(s2, (unsigned) __list_cur_ifi, __list_arg_lini));
+      __bld_lineloc(s2, (word32) __list_cur_ifi, __list_arg_lini));
      goto again;
     }
    /* : debugger commands always go on history list unless hist re-exec */
@@ -629,7 +629,7 @@ do_ret:
    /* this is needed to stop, from immediate statement dbg enter */
    /* on entry always push a scope, but must pop away before running again */
    __pop_itstk();
-  /* need to enable sim sigint handler since turned off in iact loop */
+  /* need to enable sim sigint32 handler since turned off in iact loop */
 #if defined(INTSIGS)
    signal(SIGINT, __sim_sigint_handler);
 #else
@@ -734,7 +734,7 @@ static void rem_escape_newlines(register char *lp)
  * emit error if extra characters at end of line
  * return F if more on line
  */
-extern int __chk_extra_atend(int emit_err)
+extern int32 __chk_extra_atend(int32 emit_err)
 {
  register char *chp; 
 
@@ -867,9 +867,9 @@ static void add_iahist(void)
  * cannot use nd_ndxnum because no IS forms here and just need value
  * notice both iahtab and command number start at 1 (0 unused)
  */
-static int get_iahcmdnum(void)
+static int32 get_iahcmdnum(void)
 {
- int base, cno;
+ int32 base, cno;
 
  if (__itoklen > WBITS)
   {
@@ -887,7 +887,7 @@ prt_err:
   {
     if (!vval_is0_(__bcwrk, __itoklen)) { base = BHEX; goto prt_err; } 
   }
- cno = (int) __acwrk[0];
+ cno = (int32) __acwrk[0];
  if (cno < 1 || cno - 1 > __iah_lasti) { base = BDEC; goto prt_err; }
  return(cno);
 }
@@ -897,8 +897,8 @@ prt_err:
  */
 static void grow_iahtab(void)
 {
- register int i;
- int old_iahsiz, osize, nsize;
+ register int32 i;
+ int32 old_iahsiz, osize, nsize;
 
  old_iahsiz = __iahsiz;
  osize = old_iahsiz*sizeof(struct iahist_t);
@@ -923,10 +923,10 @@ jmp_buf __reset_jmpbuf;
  *
  * must execute statement with delay as named block with no vars
  */
-static void rd_exec_iact_stmt(int hist_rexec)
+static void rd_exec_iact_stmt(int32 hist_rexec)
 {
- int sav_err_cnt, sav_sfnam_ind, sav_slin_cnt, immed_exec;
- int sav_itspi, sav_st_trace, sfnind, slcnt, first_stmt;
+ int32 sav_err_cnt, sav_sfnam_ind, sav_slin_cnt, immed_exec;
+ int32 sav_itspi, sav_st_trace, sfnind, slcnt, first_stmt;
  struct st_t *stp, *stp2, *stp3;
  struct iahist_t *iahp;
  struct hctrl_t *hcp;
@@ -1020,8 +1020,8 @@ free_ds:
 
    if (__grwrknum > 0)
     {
-     register int gri;
-     int osize, nsize;
+     register int32 gri;
+     int32 osize, nsize;
      struct gref_t *grp; 
 
      /* for monitor/strobe must add globals to iact mod table */
@@ -1176,9 +1176,9 @@ done:;
 /*
  * check all xmr's from this statement
  */
-static void chk_iact_grefs(int hist_rexec)
+static void chk_iact_grefs(int32 hist_rexec)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *grp;
 
  grp = &(__grwrktab[0]);
@@ -1261,9 +1261,9 @@ static struct thread_t *bld_immed_iathrd(struct st_t *stp)
  * free iact globals
  * notice caller sets iact gref table to empty
  */
-static void free_iact_glbs(struct gref_t *grtab, int grnum)
+static void free_iact_glbs(struct gref_t *grtab, int32 grnum)
 {
- register int gri;
+ register int32 gri;
  register struct gref_t *grp; 
  
  for (gri = 0, grp = &(grtab[0]); gri < grnum; gri++, grp++)
@@ -1289,7 +1289,7 @@ static void free_iact_glbs(struct gref_t *grtab, int grnum)
  * LOOKATME - here removing monit dce's because only freed if added
  * from interactive mode
  */
-extern void __free_dceauxlst(struct dceauxlst_t *dcehdr, int numinsts)
+extern void __free_dceauxlst(struct dceauxlst_t *dcehdr, int32 numinsts)
 {
  register struct dceauxlst_t *dclp;
  register struct dcevnt_t *dcep2;
@@ -1370,9 +1370,9 @@ extern void __free_dceauxs_only(struct dceauxlst_t *dcehdr)
  * free a dce previous value field 
  * if none, does nothing
  */
-extern void __free_dce_prevval(struct dcevnt_t * dcep, int insts, int dcewid)
+extern void __free_dce_prevval(struct dcevnt_t * dcep, int32 insts, int32 dcewid)
 {
- int totchars;
+ int32 totchars;
  struct net_t *np;
 
  /* SJM 05/05/03 - for rooted XMR dce - only 1 inst allocated */
@@ -1402,16 +1402,16 @@ extern void __free_dce_prevval(struct dcevnt_t * dcep, int insts, int dcewid)
  * renumber a statement - for use when adding to commnd history
  * statement can be head of compound
  */
-static void renumber_1stmt(struct st_t *stp, int sfnind, int slcnt)
+static void renumber_1stmt(struct st_t *stp, int32 sfnind, int32 slcnt)
 {
- int fji;
+ int32 fji;
  struct for_t *frp;
  struct st_t *fjstp;
 
  if (stp == NULL) return;
 
  /* always set statement body line */
- stp->stfnam_ind = (unsigned) sfnind;
+ stp->stfnam_ind = (word32) sfnind;
  stp->stlin_cnt = slcnt;
 
  switch ((byte) stp->stmttyp) {
@@ -1472,8 +1472,8 @@ static void renumber_1stmt(struct st_t *stp, int sfnind, int slcnt)
 /*
  * renumber case item list statements
  */
-static void renumber_csitemlst(register struct csitem_t *csip, int sfnind,
- int slcnt)
+static void renumber_csitemlst(register struct csitem_t *csip, int32 sfnind,
+ int32 slcnt)
 {
  for (;csip != NULL; csip = csip->csinxt)
   { renumber_stlst(csip->csist, sfnind, slcnt); }
@@ -1482,7 +1482,7 @@ static void renumber_csitemlst(register struct csitem_t *csip, int sfnind,
 /*
  * renumber each statement of a list to same history statement list number
  */
-static void renumber_stlst(register struct st_t *stp, int sfnind, int slcnt)
+static void renumber_stlst(register struct st_t *stp, int32 sfnind, int32 slcnt)
 {
  for (; stp != NULL; stp = stp->stnxt) renumber_1stmt(stp, sfnind, slcnt);
 }
@@ -1500,7 +1500,7 @@ static void renumber_stlst(register struct st_t *stp, int sfnind, int slcnt)
  */
 extern void __escape_to_shell(char *argchp)
 {
- int rc, status, pid;
+ int32 rc, status, pid;
  char *chp, *usersh;
 
  /* signal(SIGINT, SIG_DFL); */ 
@@ -1525,7 +1525,7 @@ extern void __escape_to_shell(char *argchp)
    else __sgferr(983,
     "OS Failure - user shell escape fork system call failed");
   }
-/* need to enable sim sigint handler even if called from :shell */  
+/* need to enable sim sigint32 handler even if called from :shell */  
 /* ---
 #if defined(INTSIGS)
  signal(SIGINT, __sim_sigint_handler);
@@ -1542,7 +1542,7 @@ extern void __escape_to_shell(char *argchp)
  */
 extern void __exec_input_fnamchg(struct expr_t *axp)
 {
- int slen;
+ int32 slen;
  FILE *tmp_s;
  char *chp;
 
@@ -1582,10 +1582,10 @@ done:
  * extension allows optional number (how many to list) arg
  * prompt after 20 lines (including embedded new lines) except finish 
  */
-extern void __exec_history_list(int num)
+extern void __exec_history_list(int32 num)
 {
- register int i;
- int h_start, nlines;
+ register int32 i;
+ int32 h_start, nlines;
  char s1[RECLEN];
 
  if (num == 0) h_start = 1;
@@ -1606,9 +1606,9 @@ extern void __exec_history_list(int num)
  * print one history entry - may be muliple line (with embedded new lines)  
  * returns number of lines listed (for mulitple line)
  */
-static int prt1_iahist_cmd(int iahi)
+static int32 prt1_iahist_cmd(int32 iahi)
 {
- int first_time, prmplen, numlines;
+ int32 first_time, prmplen, numlines;
  struct iahist_t *iahp;
  char c, save_ch, *chp, *chp2, s1[RECLEN];
 
@@ -1657,7 +1657,7 @@ static int prt1_iahist_cmd(int iahi)
  * exec disable of interactive thread
  * this disables and free entire statement 
  */
-extern void __do_iact_disable(struct hctrl_t *hcp, int lv_ctrl)
+extern void __do_iact_disable(struct hctrl_t *hcp, int32 lv_ctrl)
 {
  struct thread_t *thp;
 
@@ -1675,7 +1675,7 @@ extern void __do_iact_disable(struct hctrl_t *hcp, int lv_ctrl)
  *
  * also removes any globals associated with statement
  */
-static void free_done_iact_control(struct hctrl_t *hcp, int lv_ctrl)
+static void free_done_iact_control(struct hctrl_t *hcp, int32 lv_ctrl)
 {
  register struct st_t *stp;
  struct st_t *stp2;
@@ -1799,9 +1799,9 @@ static struct namlst_t dbcmds[] = {
  * this must handle history updating - returns F on exit interactive 
  * know : followed by non white space to get here and command token read 
  */
-static int do_dbg_cmd(void)
+static int32 do_dbg_cmd(void)
 {
- int rv, tmp;
+ int32 rv, tmp;
  char s1[IDLEN];
 
  if (__toktyp != ID)
@@ -2038,10 +2038,10 @@ chk_end:
  *
  * this needs alias mechanism ala gdb
  */
-extern int __get_dbcmdnum(char *aval, struct namlst_t *cmdtab, int cmdnum)
+extern int32 __get_dbcmdnum(char *aval, struct namlst_t *cmdtab, int32 cmdnum)
 {
- register int i;
- int alen, alen2;
+ register int32 i;
+ int32 alen, alen2;
 
  /* first search for normal option (if arg white space separated) */ 
  alen = strlen(aval); 
@@ -2061,8 +2061,8 @@ extern int __get_dbcmdnum(char *aval, struct namlst_t *cmdtab, int cmdnum)
 /*
  * return T if find match in remaining part of db command table
  */
-static int dbcmd_prefix_rep(register int i, char *aval, int alen,
- struct namlst_t *cmdtab, int cmdnum)
+static int32 dbcmd_prefix_rep(register int32 i, char *aval, int32 alen,
+ struct namlst_t *cmdtab, int32 cmdnum)
 {
  for (; i < cmdnum; i++)
   { if (strncmp(aval, cmdtab[i].lnam, alen) == 0) return(TRUE); }
@@ -2073,10 +2073,10 @@ static int dbcmd_prefix_rep(register int i, char *aval, int alen,
  * given a comman prefix where know ambiguous, built table of all possibilities
  */
 extern char *__bld_ambiguous_list(char *s, char *aval, struct namlst_t *cmdtab,
- int cmdnum)
+ int32 cmdnum)
 {
- register int i; 
- int first_time, alen;
+ register int32 i; 
+ int32 first_time, alen;
 
  alen = strlen(aval);
  for (first_time = TRUE, i = 0; i < cmdnum; i++)
@@ -2878,7 +2878,7 @@ static struct hlplst_t hlpcmds[] = {
  */
 static void do_dbg_help(void)
 {
- int rv;
+ int32 rv;
  char s1[RECLEN];
 
  /* number error here, but make sure not allocated */
@@ -2940,7 +2940,7 @@ done:
  */
 static void wr_dbg_hlpmsg(char **dbgmsg)
 {
- register int i; 
+ register int32 i; 
 
  for (i = 0; *dbgmsg[i] != '\0'; i++) __cvsim_msg("%s\n", dbgmsg[i]); 
 }
@@ -2948,9 +2948,9 @@ static void wr_dbg_hlpmsg(char **dbgmsg)
 /*
  * write the list of debugger commands
  */
-static void wr_dbg_lstofcmds(struct namlst_t *cmdtab, int cmdnum)
+static void wr_dbg_lstofcmds(struct namlst_t *cmdtab, int32 cmdnum)
 {
- register int i;
+ register int32 i;
 
  if (__outlinpos != 0) __misc_terr(__FILE__, __LINE__);
  __pv_stlevel = 0;
@@ -2977,7 +2977,7 @@ static void wr_dbg_lstofcmds(struct namlst_t *cmdtab, int cmdnum)
  */
 static void dbg_print(void)
 {
- int prtfmt, prtwidth, force_unsign;
+ int32 prtfmt, prtwidth, force_unsign;
  struct expr_t *prtx;
 
  prtfmt = BNONE;
@@ -3025,7 +3025,7 @@ bad_prt_typ:
      __ia_err(1427, ":print width override # not followed by legal number");
      return;
     }
-   prtwidth = (int) __acwrk[0];
+   prtwidth = (int32) __acwrk[0];
    __get_vtok();
   }
  /* if collect returns F, if NULL, know error emitted in routine */
@@ -3044,11 +3044,11 @@ bad_prt_typ:
 /*
  * print an expression value for :print or :display commands
  */
-static char *dbg_bld_expr_val(char *s, struct expr_t *prtx, int prtfmt,
- int prtwidth, int force_unsign)
+static char *dbg_bld_expr_val(char *s, struct expr_t *prtx, int32 prtfmt,
+ int32 prtwidth, int32 force_unsign)
 {
- int blen;
- word av, bv;
+ int32 blen;
+ word32 av, bv;
  double d1;
  struct xstk_t *xsp;
  char s1[IDLEN];
@@ -3081,7 +3081,7 @@ static char *dbg_bld_expr_val(char *s, struct expr_t *prtx, int prtfmt,
    /* SJM 09/19/03 - must also print new line and tab - isprint does */
    /* not include new line and tab etc. */
    else if (isprint(av) || av == '\n' || av == '\r' || av == '\t')
-    sprintf(s, "\\%x", (int) av);
+    sprintf(s, "\\%x", (int32) av);
    else sprintf(s, "%c", (char) av);
    goto do_prt;
   }
@@ -3113,7 +3113,7 @@ do_prt:
  */
 extern struct expr_t *__rd_iact_expr(void)
 {
- int sav_err_cnt;
+ int32 sav_err_cnt;
  struct expr_t *xp;
 
  if (!__colto_eol()) return(NULL); 
@@ -3136,7 +3136,7 @@ extern struct expr_t *__rd_iact_expr(void)
  * expects 1st token to have been read
  * if in file or interactive tty, same eof on end of line
  */
-extern int __colto_eol(void)
+extern int32 __colto_eol(void)
 {
  for (__last_xtk = -1;;)
   {
@@ -3167,7 +3167,7 @@ bad_end:
  */
 static void dbg_display(void)
 {
- int prtfmt, prtwidth, force_unsign;
+ int32 prtfmt, prtwidth, force_unsign;
  struct expr_t *prtx;
  struct dispx_t *dxp;
 
@@ -3222,7 +3222,7 @@ bad_prt_typ:
      __ia_err(1427, ":display width override # not followed by legal number");
      return;
     }
-   prtwidth = (int) __acwrk[0];
+   prtwidth = (int32) __acwrk[0];
    __get_vtok();
   }
  /* if collect returns F, if NULL, know error emitted in routine */
@@ -3272,7 +3272,7 @@ static void prt_all_disp_exprs(void)
 /*
  * convert debug base code and width to string or empty string if none
  */
-static char *bld_prtbasecode(char *s, int bcod, int force_unsign, int prtwidth)
+static char *bld_prtbasecode(char *s, int32 bcod, int32 force_unsign, int32 prtwidth)
 {
  char s1[RECLEN];
 
@@ -3371,7 +3371,7 @@ static void do_dbg_varis(void)
  */
 static void print_iddecl_ref(struct sy_t *syp, struct sy_t *scope_syp)
 {
- int nd_inst;
+ int32 nd_inst;
  struct net_t *np;
  struct mod_t *mdp;
  struct symtab_t *sytp;
@@ -3463,7 +3463,7 @@ static void do_dbg_whatis(void)
 { 
  register struct mod_t *mdp;  
  register struct task_t *tskp;
- int not_defed;
+ int32 not_defed;
  struct sy_t *syp;
 
  not_defed = TRUE;
@@ -3514,7 +3514,7 @@ static void do_dbg_whatis(void)
 /*
  * execute $stop (schedule it) from user vpi_ code 
  */
-extern int __do_vpi_stop(int diag_level)
+extern int32 __do_vpi_stop(int32 diag_level)
 {
  if (__no_iact)
   {
@@ -3544,9 +3544,9 @@ extern int __do_vpi_stop(int diag_level)
 /*
  * do a reset from user vpi_ code (it's immediate)
  */
-extern void __do_vpi_reset(int stop_val, int reset_val, int diag_level)
+extern void __do_vpi_reset(int32 stop_val, int32 reset_val, int32 diag_level)
 {
- int enter_iact;
+ int32 enter_iact;
 
  if (diag_level >= 1)
   {

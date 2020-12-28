@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #endif
 
-#if defined(__SVR4) || defined(__hpux) || defined(__CYGWIN32__)
+#if defined(__CYGWIN32__) || defined(__SVR4) || defined(__hpux)
 #include <dirent.h>
 #else
 #include <sys/dir.h>
@@ -49,8 +49,8 @@
 #endif
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
-#if defined(__SVR4) || defined(__hpux)
-extern int tolower(int);
+#if defined(__sparc) && !defined(__SVR4)  
+extern int32 tolower(int32);
 #endif
 
 #include "v.h"
@@ -58,99 +58,99 @@ extern int tolower(int);
 
 /* local prototypes */
 static struct udp_t *alloc_udp(struct sy_t *);
-static int rd_udp_hdr(struct udp_t *);
-static int rd_udp_decls(void);
-static int rd_udp_init(struct udp_t *);
-static int chkcnt_uports(struct udp_t *);
-static int rd_udp_table(struct udp_t *);
+static int32 rd_udp_hdr(struct udp_t *);
+static int32 rd_udp_decls(void);
+static int32 rd_udp_init(struct udp_t *);
+static int32 chkcnt_uports(struct udp_t *);
+static int32 rd_udp_table(struct udp_t *);
 static void str_tolower(char *, char *);
-static int cvrt_udpedges(char *, char *);
-static int to_udp_levsym(char);
-static int chk_comb_udpline(char *, struct udp_t *, int *);
-static int chk_sequdpline(char *, struct udp_t *, int *);
-static char to_edgech(int);
-static int is_edgesym(char);
+static int32 cvrt_udpedges(char *, char *);
+static int32 to_udp_levsym(char);
+static int32 chk_comb_udpline(char *, struct udp_t *, int32 *);
+static int32 chk_sequdpline(char *, struct udp_t *, int32 *);
+static char to_edgech(int32);
+static int32 is_edgesym(char);
 static char *to_codedge_line(char *, char *);
 static void extra_chk_edgeudp(struct udp_t *);
-static char *to_udp_prtnam(struct udp_t *, int);
+static char *to_udp_prtnam(struct udp_t *, int32);
 static void dmp_udp_lines(FILE *, struct udp_t *);
 static struct spfy_t *alloc_spfy(void);
-static int rd_specparamdecl(void);
-static void assign_1specparam(struct net_t *, struct expr_t *, int, int);
-static int rd_delay_pth(void);
+static int32 rd_specparamdecl(void);
+static void assign_1specparam(struct net_t *, struct expr_t *, int32, int32);
+static int32 rd_delay_pth(void);
 static struct exprlst_t *rd_pthtermlst(void);
-static int col_pthexpr(void);
-static int rd_pathdelaylist(struct paramlst_t **);
+static int32 col_pthexpr(void);
+static int32 rd_pathdelaylist(struct paramlst_t **);
 static void init_spcpth(struct spcpth_t *);
-static int rd_setup_or_hold_tchk(unsigned);
-static int rd_tchk_part(unsigned, struct tchk_t *, struct expr_t **);
-static int rd_setuphold_tchk(void);
-static int rd_recrem_tchk(void);
-static int rd_width_tchk(void);
-static int rd_period_tchk(void);
-static int rd_skew_recov_rem_tchk(unsigned);
-static int rd_nochg_tchk(void);
-static int rd_tchk_selector(int *, struct expr_t **, struct expr_t **);
-static int rd_edges(int *);
+static int32 rd_setup_or_hold_tchk(word32);
+static int32 rd_tchk_part(word32, struct tchk_t *, struct expr_t **);
+static int32 rd_setuphold_tchk(void);
+static int32 rd_recrem_tchk(void);
+static int32 rd_width_tchk(void);
+static int32 rd_period_tchk(void);
+static int32 rd_skew_recov_rem_tchk(word32);
+static int32 rd_nochg_tchk(void);
+static int32 rd_tchk_selector(int32 *, struct expr_t **, struct expr_t **);
+static int32 rd_edges(int32 *);
 static struct sy_t *rd_notifier(void);
 static struct attr_t *chk_dup_attrs(struct attr_t *);
 static void rd1_cfg_file(FILE *);
 static void rd_cfg_library(FILE *);
-static struct libel_t *rd_cfg_fspec_list(FILE *, int);
+static struct libel_t *rd_cfg_fspec_list(FILE *, int32);
 static void rd_cfg_cfg(FILE *);
-static int chk_libid(char *);
-static int chk_escid(char *);
+static int32 chk_libid(char *);
+static int32 chk_escid(char *);
 static void init_rule(struct cfgrule_t *);
-static int extract_design_nam(char *, char *, char *);
-static int bld_inst_xmr_comptab(char *);
+static int32 extract_design_nam(char *, char *, char *);
+static int32 bld_inst_xmr_comptab(char *);
 static void grow_bind_comps(void);
-static int extract_libcell_nam(char *, char *, char *);
-static int rd_use_clause(FILE *, char *, char *, int *);
-static int extract_use_nam(char *, char *, int *, char *);
+static int32 extract_libcell_nam(char *, char *, char *);
+static int32 rd_use_clause(FILE *, char *, char *, int32 *);
+static int32 extract_use_nam(char *, char *, int32 *, char *);
 static struct cfgnamlst_t *rd_liblist(FILE *);
 
 static void init_cfglib(struct cfglib_t *);
 static void init_cfg(struct cfg_t *);
-static int cfg_skipto_semi(int, FILE *);
-static int cfg_skipto_comma_semi(int, FILE *);
-static int cfg_skipto_semi_endconfig(int, FILE *);
-static int cfg_skipto_eof(int, FILE *);
+static int32 cfg_skipto_semi(int32, FILE *);
+static int32 cfg_skipto_comma_semi(int32, FILE *);
+static int32 cfg_skipto_semi_endconfig(int32, FILE *);
+static int32 cfg_skipto_eof(int32, FILE *);
 
 static void expand_dir_pats(struct cfglib_t *, struct libel_t *, char *);
 static void expand_hier_files(struct cfglib_t *, struct libel_t *, 
  struct xpndfile_t *);
 static void match_dir_pats(struct libel_t *, struct xpndfile_t *, char *, 
- char *, int, int);
+ char *, int32, int32);
 static void movedir_match_dir_pats(struct libel_t *, struct xpndfile_t *); 
 static void find_hier(struct libel_t *, struct xpndfile_t *, char *, char *);
-static int match_hier_name(struct xpndfile_t *, char *);
-static int match_wildcard_str(char *, struct xpndfile_t *);
+static int32 match_hier_name(struct xpndfile_t *, char *);
+static int32 match_wildcard_str(char *, struct xpndfile_t *);
 static void expand_libel(struct libel_t *, char *);
-static int expand_single_hier(struct cfglib_t *, struct libel_t *, char *);
-static int has_wildcard(char *);
+static int32 expand_single_hier(struct cfglib_t *, struct libel_t *, char *);
+static int32 has_wildcard(char *);
 static void prep_cfg_vflist(void);
 static void dump_config_info(void);
 static void dump_lib_expand(void);
-static int bind_cfg_design(struct cfg_t *, int);
+static int32 bind_cfg_design(struct cfg_t *, int32);
 static struct cfglib_t *find_cfglib(char *);
 static void free_undef_list(void);
 static void bind_cells_in1mod(struct cfg_t *, struct cfglib_t *,
  struct mod_t *);
-static int try_match_rule(struct cfglib_t *, struct cell_t *,
+static int32 try_match_rule(struct cfglib_t *, struct cell_t *,
  struct cfgrule_t *);
 static void build_rule_error(struct cfg_t *, struct cfglib_t *, 
 struct cfgrule_t *);
-static int bind_liblist_rule(struct cfg_t *, struct cell_t *,
+static int32 bind_liblist_rule(struct cfg_t *, struct cell_t *,
  struct cfgrule_t *);
-static int bind_use_rule(struct cfg_t *, struct cfglib_t *, struct cell_t *,
+static int32 bind_use_rule(struct cfg_t *, struct cfglib_t *, struct cell_t *,
  struct cfgrule_t *);
 static struct cfg_t *fnd_cfg_by_name(char *);
 static void bind_cells_inside(struct cfg_t *, struct cell_t *,
  struct mod_t *, struct cfglib_t *);
 static struct mod_t *find_cell_in_cfglib(char *, struct cfglib_t *);
-static int open_cfg_lbfil(char *);
+static int32 open_cfg_lbfil(char *);
 static void rd_cfg_srcfil(struct libel_t *);
-static int init_chk_cfg_sytab(struct libel_t *, char *);
+static int32 init_chk_cfg_sytab(struct libel_t *, char *);
 static void free_unused_cfgmods(void);
 static void partially_free_mod(struct mod_t *);
 static void add_cfg_libsyms(struct cfglib_t *);
@@ -158,110 +158,111 @@ static void add_cfgsym(char *, struct tnode_t *);
 
 /* extern prototypes (maybe defined in this module) */
 extern char *__pv_stralloc(char *);
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int , int);
-extern void __my_free(char *, int);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32 , int32);
+extern void __my_free(char *, int32);
 extern char *__prt_vtok(void);
 extern char *__prt_kywrd_vtok(void);
-extern char *__to_uvvnam(char *, word);
-extern char *__to_tcnam(char *, unsigned);
-extern char *__to_sytyp(char *, unsigned);
+extern char *__to_uvvnam(char *, word32);
+extern char *__to_tcnam(char *, word32);
+extern char *__to_sytyp(char *, word32);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct sy_t *__decl_sym(char *, struct symtab_t *);
-extern struct sy_t *__bld_loc_symbol(int, struct symtab_t *, char *, char *);
+extern struct sy_t *__bld_loc_symbol(int32, struct symtab_t *, char *, char *);
 extern struct exprlst_t *__alloc_xprlst(void);
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
-extern struct symtab_t *__alloc_symtab(int);
+extern struct symtab_t *__alloc_symtab(int32);
 extern struct expr_t *__alloc_newxnd(void);
 extern struct mod_pin_t *__alloc_modpin(void);
 extern struct paramlst_t *__alloc_pval(void);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
-extern int __vskipto_modend(int);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
+extern int32 __vskipto_modend(int32);
 extern void __add_sym(char *, struct tnode_t *);
-extern int __chk_redef_err(char *, struct sy_t *, char *, unsigned);
+extern int32 __chk_redef_err(char *, struct sy_t *, char *, word32);
 extern void __remove_undef_mod(struct sy_t *);
 extern void __get_vtok(void);
 extern void __unget_vtok(void);
 extern void __dmp_udp(FILE *, struct udp_t *);
-extern int __udp_vskipto_any(int);
-extern int __udp_vskipto2_any(int, int);
-extern int __udp_vskipto3_any(int, int, int);
-extern int __wide_vval_is0(register word *, int);
+extern int32 __udp_vskipto_any(int32);
+extern int32 __udp_vskipto2_any(int32, int32);
+extern int32 __udp_vskipto3_any(int32, int32, int32);
+extern int32 __wide_vval_is0(register word32 *, int32);
 extern void __wrap_puts(char *, FILE *);
-extern void __wrap_putc(int, FILE *);
+extern void __wrap_putc(int32, FILE *);
 extern void __nl_wrap_puts(char *, FILE *);
-extern int __fr_tcnam(char *);
-extern int __spec_vskipto_any(int);
-extern int __spec_vskipto2_any(int, int);
-extern int __spec_vskipto3_any(int, int, int);
-extern int __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **, int);
-extern int __col_paramrhsexpr(void);
-extern int __col_connexpr(int);
-extern int __col_comsemi(int);
-extern void __bld_xtree(int);
-extern int __src_rd_chk_paramexpr(struct expr_t *, int);
-extern void __set_numval(struct expr_t *, word, word, int);
+extern int32 __fr_tcnam(char *);
+extern int32 __spec_vskipto_any(int32);
+extern int32 __spec_vskipto2_any(int32, int32);
+extern int32 __spec_vskipto3_any(int32, int32, int32);
+extern int32 __rd_opt_param_vec_rng(struct expr_t **, struct expr_t **, int32);
+extern int32 __col_paramrhsexpr(void);
+extern int32 __col_connexpr(int32);
+extern int32 __col_comsemi(int32);
+extern void __bld_xtree(int32);
+extern int32 __src_rd_chk_paramexpr(struct expr_t *, int32);
+extern void __set_numval(struct expr_t *, word32, word32, int32);
 extern struct net_t *__add_param(char *, struct expr_t *, struct expr_t *);
-extern int __col_parenexpr(int);
-extern int __bld_expnode(void);
+extern int32 __col_parenexpr(int32);
+extern int32 __bld_expnode(void);
 extern void __set_xtab_errval(void);
-extern int __col_delexpr(void);
-extern int __vskipto3_modend(int, int, int);
-extern void __init_tchk(struct tchk_t *, unsigned);
+extern int32 __col_delexpr(void);
+extern int32 __vskipto3_modend(int32, int32, int32);
+extern void __init_tchk(struct tchk_t *, word32);
 extern void __set_0tab_errval(void);
 extern void __free_xtree(struct expr_t *);
 extern void __free2_xtree(struct expr_t *);
 extern void __skipover_line(void);
-extern int __my_getlin(register char *);
-extern int __pop_vifstk(void);
-extern int __open_sfil(void);
+extern int32 __my_getlin(register char *);
+extern int32 __pop_vifstk(void);
+extern int32 __open_sfil(void);
 extern void __do_include(void);
 extern void __do_foreign_lang(void);
-extern void __exec_vpi_langlinecbs(char *, char *, int);
-extern int __notokenize_skiplines(char *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern void __exec_vpi_langlinecbs(char *, char *, int32);
+extern int32 __notokenize_skiplines(char *);
+extern char *__bld_lineloc(char *, word32, int32);
 extern char *__match_cdir(char *, char *);
-extern int __exec_rdinserted_src(char *);
+extern int32 __exec_rdinserted_src(char *);
 extern void __push_vinfil(void);
 extern void __rd_ver_mod(void);
-extern int __expr_has_glb(struct expr_t *);
+extern int32 __expr_has_glb(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(struct expr_t *);
-extern void __sizchgxs(struct xstk_t *, int);
+extern void __sizchgxs(struct xstk_t *, int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern void __cnv_stk_fromreal_toreg32(struct xstk_t *);
 extern void __eval_param_rhs_tonum(struct expr_t *);
-extern int __cmp_xpr(struct expr_t *, struct expr_t *);
+extern int32 __cmp_xpr(struct expr_t *, struct expr_t *);
 extern FILE *__tilde_fopen(char *, char *);
-extern int __get_cfgtok(FILE *);
-extern int __vskipto_modend(int);
-extern void __grow_infils(int);
-extern int __rd_cfg(void);
-extern char *__to_cfgtoknam(char *, int);
+extern int32 __get_cfgtok(FILE *);
+extern int32 __vskipto_modend(int32);
+extern void __grow_infils(int32);
+extern int32 __rd_cfg(void);
+extern char *__to_cfgtoknam(char *, int32);
 extern void __my_fclose(FILE *);
 extern void __expand_lib_wildcards(void);
 extern void __process_cdir(void);
-extern int __rd_moddef(struct symtab_t *, int);
-extern int __vskipto2_modend(int, int);
-extern char *__cfg_lineloc(char *s, char *, int);
+extern int32 __rd_moddef(struct symtab_t *, int32);
+extern int32 __vskipto2_modend(int32, int32);
+extern char *__cfg_lineloc(char *s, char *, int32);
 extern char *__schop(char *, char *);
 extern void __sym_addprims(void);
 
 extern void __cv_msg(char *s, ...);
-extern void __finform(int, char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __pv_fwarn(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __ia_err(int, char *, ...);
+extern void __finform(int32, char *, ...);
+extern void __pv_ferr(int32, char *, ...);
+extern void __pv_fwarn(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __ia_err(int32, char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __pv_terr(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __misc_fterr(char *, int);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *, ...);
+extern void __pv_terr(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __fterr(int32, char *, ...);
+extern void __misc_terr(char *, int32);
+extern void __misc_fterr(char *, int32);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *, ...);
 
 /*
  * UDP PROCESSING ROUTINES
@@ -275,9 +276,9 @@ extern void __pv_warn(int, char *, ...);
  *
  * primitive keyword read and reads endprimitive
  */
-extern int __rd_udpdef(struct symtab_t *cfg_sytab)
+extern int32 __rd_udpdef(struct symtab_t *cfg_sytab)
 {
- int retval, initlcnt, initsfnind;
+ int32 retval, initlcnt, initsfnind;
  struct udp_t *udpp;
  struct tnode_t *tnp;
  struct sy_t *syp;
@@ -292,9 +293,7 @@ extern int __rd_udpdef(struct symtab_t *cfg_sytab)
   {
    __pv_ferr(1155, "udp name expected - %s read", __prt_kywrd_vtok());
 skip_end:
-   __letendnum_state = TRUE;
    retval = __vskipto_modend(ENDPRIMITIVE);
-   __letendnum_state = FALSE;
    return(retval);
   }
  cp = __token;
@@ -361,7 +360,7 @@ skip_end:
   }
  /* sets type to U_LEVEL if not combinatorial - edge type detected later */
  if (!chkcnt_uports(udpp)) retval = FALSE;
- if ((int) udpp->numstates >= __ualtrepipnum) udpp->u_wide = TRUE;
+ if ((int32) udpp->numstates >= __ualtrepipnum) udpp->u_wide = TRUE;
  else udpp->u_wide = FALSE;
 
  /* this reads the endprimitive */
@@ -428,7 +427,7 @@ static struct udp_t *alloc_udp(struct sy_t *syp)
  * reads ending ;
  * handles skipping - 
  */
-static int rd_udp_hdr(struct udp_t *udpp)
+static int32 rd_udp_hdr(struct udp_t *udpp)
 {
  struct mod_pin_t *upp, *last_upp;
  struct sy_t *syp;
@@ -533,11 +532,11 @@ nxt_port:
  * must read first port type and reads following initial or table
  * eliminates illegal vector ports by not parsing
  */
-static int rd_udp_decls(void)
+static int32 rd_udp_decls(void)
 {
  struct mod_pin_t *mpp;
  struct sy_t *syp;
- int outdecl_seen, regdecl_seen;
+ int32 outdecl_seen, regdecl_seen;
 
  regdecl_seen = outdecl_seen = FALSE;
  for (;;)
@@ -699,9 +698,9 @@ end_reg:
  * know initial read - format is intial [output term] = [1 bit const]
  * complicated because no mechanism for conversion from 32 1 bit vals
  */
-static int rd_udp_init(struct udp_t *udpp)
+static int32 rd_udp_init(struct udp_t *udpp)
 {
- int blen;
+ int32 blen;
 
  __get_vtok();
  if (__toktyp != ID) goto bad_init;
@@ -750,11 +749,11 @@ bad_init:
  * error if header port not declared
  * return FALSE on error
  */
-static int chkcnt_uports(struct udp_t *udpp)
+static int32 chkcnt_uports(struct udp_t *udpp)
 {
  register struct mod_pin_t *mpp;
- int retval;
- int unumins, unumstates;
+ int32 retval;
+ int32 unumins, unumstates;
 
  mpp = udpp->upins;
  retval = TRUE;
@@ -799,9 +798,9 @@ static int chkcnt_uports(struct udp_t *udpp)
  * if edge, 1 allowed edge, char in line is 2nd plus uledinum index of edge
  * and ultabsel is 1st (maybe wildcard) - need to convert back to r/f abbrev.
  */
-static int rd_udp_table(struct udp_t *udpp)
+static int32 rd_udp_table(struct udp_t *udpp)
 {
- int ulcnt, has_wcard, ulfnam_ind;
+ int32 ulcnt, has_wcard, ulfnam_ind;
  struct utline_t *utlp, *last_utlp;
  char uline[RECLEN], coduline[RECLEN], s1[RECLEN];
 
@@ -867,7 +866,7 @@ end_line:
     }
    utlp = (struct utline_t *) __my_malloc(sizeof(struct utline_t));
    utlp->tline = __pv_stralloc(coduline);
-   utlp->ullen = (unsigned) strlen(coduline);
+   utlp->ullen = (word32) strlen(coduline);
    utlp->ulhas_wcard = (has_wcard) ? TRUE : FALSE;
    utlp->uledinum = __cur_ueipnum;
    utlp->utabsel = __cur_utabsel;
@@ -900,11 +899,11 @@ static void str_tolower(char *to, char *from)
  * know all legal upper case edges converted to lower case before called
  * first step in udp table line checking - edge abbreviation not seen here
  */
-static int cvrt_udpedges(char *culine, char *uline)
+static int32 cvrt_udpedges(char *culine, char *uline)
 {
  register char *culp, *ulp;
  char *chp, ech1, ech2;
- int ie1, ie2, no_err;
+ int32 ie1, ie2, no_err;
  char s1[RECLEN];
 
  no_err = FALSE;
@@ -957,7 +956,7 @@ done:
 /*
  * return value of level symbol (-1 if not level symbol)
  */
-static int to_udp_levsym(char ch)
+static int32 to_udp_levsym(char ch)
 {
  switch (ch) {
   case '0': return(UV_0);
@@ -972,11 +971,11 @@ static int to_udp_levsym(char ch)
 /*
  * check coded combinatorial udp uline
  */
-static int chk_comb_udpline(char *uline, struct udp_t *udpp,
- int *has_wcard)
+static int32 chk_comb_udpline(char *uline, struct udp_t *udpp,
+ int32 *has_wcard)
 {
  register char *chp;
- int ins;
+ int32 ins;
  char ch;
 
  *has_wcard = FALSE;
@@ -1051,12 +1050,12 @@ static int chk_comb_udpline(char *uline, struct udp_t *udpp,
  * old 0x80 bit on form edge converted to 1st as __cur_utabsel, 2nd as char 
  * unless edge wildcard (i.e. r,f,n, etc.) in which case has edge wildcard
  */
-static int chk_sequdpline(char *uline, struct udp_t *udpp,
- int *has_wcard)
+static int32 chk_sequdpline(char *uline, struct udp_t *udpp,
+ int32 *has_wcard)
 {
  register char *chp;
  char ch1, ch2;
- int ins, t1;
+ int32 ins, t1;
 
  *has_wcard = FALSE;
  /* separate off : before previous state :[prev. state]:[output] */
@@ -1165,7 +1164,7 @@ static int chk_sequdpline(char *uline, struct udp_t *udpp,
 /*
  * convert edge 4 bit encoding to normal level edge symbol
  */
-static char to_edgech(int encodee)
+static char to_edgech(int32 encodee)
 {
  switch ((byte) encodee) {
   case UV_0: return('0');
@@ -1181,7 +1180,7 @@ static char to_edgech(int encodee)
 /*
  * return T if symbol is an edge symbol (code 0x80 or edge letter)
  */
-static int is_edgesym(char ch)
+static int32 is_edgesym(char ch)
 {
  if ((ch & 0x80) != 0) return(TRUE);
  switch (ch) {
@@ -1198,7 +1197,7 @@ static int is_edgesym(char ch)
 static char *to_codedge_line(char *s, char *culine)
 {
  register char *cpi, *cpo;
- int uch;
+ int32 uch;
 
  for (cpi = culine, cpo = s; *cpi != '\0'; cpi++)
   {
@@ -1206,7 +1205,7 @@ static char *to_codedge_line(char *s, char *culine)
     {
      *cpo++ = '(';
      /* notice 5-3 are e1 and 2-0 are e2 */
-     uch = (int) *cpi;
+     uch = (int32) *cpi;
      *cpo++ = to_edgech((uch >> 3) & 0x7);
      *cpo++ = to_edgech(uch & 0x7);
      *cpo++ = ')'; 
@@ -1224,11 +1223,11 @@ static char *to_codedge_line(char *s, char *culine)
  */
 static void extra_chk_edgeudp(struct udp_t *udpp)
 {
- register int i;
- int out_hasbar;
+ register int32 i;
+ int32 out_hasbar;
  struct utline_t *utlp;
 
- for (i = 0; i < (int) udpp->numins; i++)
+ for (i = 0; i < (int32) udpp->numins; i++)
   {
    for (utlp = udpp->utlines; utlp != NULL; utlp = utlp->utlnxt)
     {
@@ -1258,10 +1257,10 @@ next:;
  * find input position %d (first is output)
  * know position number legal and starts at 1
  */
-static char *to_udp_prtnam(struct udp_t *udpp, int inum)
+static char *to_udp_prtnam(struct udp_t *udpp, int32 inum)
 {
  register struct mod_pin_t *mpp;
- int nins;
+ int32 nins;
 
  nins = 1;
  mpp = udpp->upins->mpnxt;
@@ -1285,7 +1284,7 @@ done:
 extern void __dmp_udp(FILE *f, struct udp_t *udpp)
 {
  register struct mod_pin_t *mpp;
- int first_time;
+ int32 first_time;
  char s1[RECLEN], s2[RECLEN];
 
  if (f == NULL) __arg_terr(__FILE__, __LINE__);
@@ -1334,7 +1333,7 @@ extern void __dmp_udp(FILE *f, struct udp_t *udpp)
   {
    __wrap_puts("initial ", f);
    __wrap_puts(udpp->upins->mpsnam, f);
-   sprintf(s1, " = 1'b%s", __to_uvvnam(s2, (word) udpp->ival));
+   sprintf(s1, " = 1'b%s", __to_uvvnam(s2, (word32) udpp->ival));
    __wrap_puts(s1, f);
    __nl_wrap_puts(";", f);
   }
@@ -1352,9 +1351,9 @@ extern void __dmp_udp(FILE *f, struct udp_t *udpp)
  */
 static void dmp_udp_lines(FILE *f, struct udp_t *udpp)
 {
- register int i;
+ register int32 i;
  register struct utline_t *utlp;
- int numins, sav_stlevel;
+ int32 numins, sav_stlevel;
  char *chp, s1[RECLEN];
 
  sav_stlevel = __pv_stlevel;
@@ -1401,10 +1400,10 @@ static void dmp_udp_lines(FILE *f, struct udp_t *udpp)
  * expects specify to have been read and reads endspecify
  * current approach concatenates all specify sections in one mod.
  */
-extern int __rd_spfy(struct mod_t *mdp)
+extern int32 __rd_spfy(struct mod_t *mdp)
 {
- int tmpi, sav_decl_obj;
- unsigned tchktyp;
+ int32 tmpi, sav_decl_obj;
+ word32 tchktyp;
  char s1[RECLEN];
  
  __path_num = __tchk_num = 1;
@@ -1546,12 +1545,12 @@ static struct spfy_t *alloc_spfy(void)
  * no  # and () around delay is optional in parameter decl.
  * reads parameter name through ending ;
  *
- * here width actual bit width - later converted to int or real
+ * here width actual bit width - later converted to int32 or real
  * and then usually to 64 bit delay
  */
-static int rd_specparamdecl(void)
+static int32 rd_specparamdecl(void)
 {
- int good, sav_slin_cnt, sav_sfnam_ind, prng_decl, pwid, rwid, r1, r2;
+ int32 good, sav_slin_cnt, sav_sfnam_ind, prng_decl, pwid, rwid, r1, r2;
  struct net_t *np;
  struct expr_t *dx1, *dx2, *x1, *x2;
  char paramnam[IDLEN];
@@ -1566,8 +1565,8 @@ static int rd_specparamdecl(void)
    if (!__rd_opt_param_vec_rng(&dx1, &dx2, FALSE)) return(FALSE);
    if (dx1 == NULL || dx2 == NULL) goto rd_param_list;
 
-   r1 = (int) __contab[dx1->ru.xvi];
-   r2 = (int) __contab[dx2->ru.xvi];
+   r1 = (int32) __contab[dx1->ru.xvi];
+   r2 = (int32) __contab[dx2->ru.xvi];
    pwid = (r1 >= r2) ? r1 - r2 + 1 : r2 - r1 + 1; 
    x1 = dx1; x2 = dx2;
    prng_decl = TRUE;
@@ -1659,7 +1658,7 @@ bad_end:
      if (pwid == 1) x1 = x2 = NULL;
      else
       {
-       /* for specparam - assume int/unsigned, convert to real if needed */
+       /* for specparam - assume int/word32, convert to real if needed */
        x1 = __bld_rng_numxpr(pwid - 1L, 0L, WBITS);
        x2 = __bld_rng_numxpr(0L, 0L, WBITS);
       }
@@ -1692,7 +1691,7 @@ bad_end:
    /* SJM 06/17/99 - needs to run in run/fixup mode - statement loc set */
    sav_slin_cnt = __slin_cnt;
    sav_sfnam_ind = __sfnam_ind;
-   __sfnam_ind = (int) np->nsym->syfnam_ind;
+   __sfnam_ind = (int32) np->nsym->syfnam_ind;
    __slin_cnt = np->nsym->sylin_cnt;
 
    assign_1specparam(np, __root_ndp, prng_decl, pwid);
@@ -1727,10 +1726,10 @@ nxt_sparam:
  * unless real
  */
 static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
- int prng_decl, int pwid)
+ int32 prng_decl, int32 pwid)
 {
- int wlen;
- word *wp;
+ int32 wlen;
+ word32 *wp;
  struct xstk_t *xsp;
 
  /* need dummy itree place on itree stack for eval */
@@ -1761,7 +1760,7 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
     }
 
    wlen = wlen_(np->nwid);
-   wp = (word *) __my_malloc(2*WRDBYTES*wlen); 
+   wp = (word32 *) __my_malloc(2*WRDBYTES*wlen); 
    memcpy(wp, xsp->ap, 2*WRDBYTES*wlen);
    __pop_xstk();
    np->nva.wp = wp;
@@ -1769,7 +1768,7 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
    return;
   }
 
- /* SJM 10/06/03 - since specparams never signed, interpret as unsigned */
+ /* SJM 10/06/03 - since specparams never signed, interpret as word32 */
  /* even if rhs signed with sign bit on */
 
  /* case 2: type determined from constant expr */
@@ -1781,7 +1780,7 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
    np->n_signed = TRUE;
    np->n_isavec = TRUE;
    np->nu.ct->pbase = BDBLE;
-   wp = (word *) __my_malloc(2*WRDBYTES); 
+   wp = (word32 *) __my_malloc(2*WRDBYTES); 
    memcpy(wp, xsp->ap, 2*WRDBYTES);
   }
  else
@@ -1793,7 +1792,7 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
 
    np->nu.ct->pbase = ndp->ibase;
    wlen = wlen_(np->nwid);
-   wp = (word *) __my_malloc(2*WRDBYTES*wlen); 
+   wp = (word32 *) __my_malloc(2*WRDBYTES*wlen); 
    memcpy(wp, xsp->ap, 2*WRDBYTES*wlen);
   }
  __pop_xstk();
@@ -1814,10 +1813,10 @@ static void assign_1specparam(struct net_t *np, struct expr_t *ndp,
  * here when collecting expressions both specparams and top module symbol
  * table accessible for wires but only local specparams for delay
  */
-static int rd_delay_pth(void)
+static int32 rd_delay_pth(void)
 {
- int good;
- int pdtyp, pth_edge, pthpolar, datasrcpolar, is_ifnone;
+ int32 good;
+ int32 pdtyp, pth_edge, pthpolar, datasrcpolar, is_ifnone;
  struct sy_t *pthsyp;
  struct exprlst_t *ilstx, *olstx;
  struct paramlst_t *pmphdr;
@@ -2101,9 +2100,9 @@ static struct exprlst_t *rd_pthtermlst(void)
  * notice this is lhs element not delay constants
  * maybe should be empty on error
  */
-static int col_pthexpr(void)
+static int32 col_pthexpr(void)
 {
- int parlevel, sqblevel;
+ int32 parlevel, sqblevel;
 
  for (__last_xtk = -1, parlevel = 0, sqblevel = 0;;)
   {
@@ -2152,9 +2151,9 @@ bad_end:
  * returns F on sync error - caller must resync
  * but in places with known delimiter attempt to resync to delim 
  */
-static int rd_pathdelaylist(struct paramlst_t **pmphdr)
+static int32 rd_pathdelaylist(struct paramlst_t **pmphdr)
 {
- int rv;
+ int32 rv;
  struct paramlst_t *pmp, *last_pmp;
 
  *pmphdr = NULL;
@@ -2268,9 +2267,9 @@ static void init_spcpth(struct spcpth_t *pthp)
  *
  * read and parse timing checks as is - during prep changed to needed form
  */
-static int rd_setup_or_hold_tchk(unsigned ttyp)
+static int32 rd_setup_or_hold_tchk(word32 ttyp)
 {
- int fnum, lnum;
+ int32 fnum, lnum;
  struct sy_t *syp, *tcsyp;
  struct paramlst_t *pmp;
  struct tchk_t tmptchk;
@@ -2324,7 +2323,7 @@ noparsemi:
  * common case first used in $set[it]delay expr. and added to symbol table
  * as wire then here changed to delay object
  */
-extern struct sy_t *__bld_loc_symbol(int num, struct symtab_t *sytp,
+extern struct sy_t *__bld_loc_symbol(int32 num, struct symtab_t *sytp,
  char *pref, char *emsgnam)
 {
  char s1[RECLEN];
@@ -2358,11 +2357,11 @@ extern struct sy_t *__bld_loc_symbol(int num, struct symtab_t *sytp,
  * on T reads ) or , after first (maybe only) limit
  * notice 1 limit always required
  */
-static int rd_tchk_part(unsigned ttyp, struct tchk_t *tcp,
+static int32 rd_tchk_part(word32 ttyp, struct tchk_t *tcp,
  struct expr_t **limx)
 {
  struct expr_t *xp, *condx;
- int edgval;
+ int32 edgval;
 
  /* notice ref. always first */
  __get_vtok();
@@ -2422,7 +2421,7 @@ got_semi:
 /*
  * initialize a timing check record
  */
-extern void __init_tchk(struct tchk_t *tcp, unsigned ttyp)
+extern void __init_tchk(struct tchk_t *tcp, word32 ttyp)
 {
  tcp->tchktyp = ttyp; 
  /* notice del rep applies to both limits if present */
@@ -2450,10 +2449,10 @@ extern void __init_tchk(struct tchk_t *tcp, unsigned ttyp)
  * read setuphold timing check (both with 2 limits)
  * know system task keyword read
  */
-static int rd_setuphold_tchk(void)
+static int32 rd_setuphold_tchk(void)
 {
- unsigned ttyp;
- int fnum, lnum;
+ word32 ttyp;
+ int32 fnum, lnum;
  struct tchk_t tmptchk;
  struct expr_t *limx, *lim2x;
  struct sy_t *syp, *tcsyp;
@@ -2544,10 +2543,10 @@ noparsemi:
  * SJM 01/16/04 - almost same as setup hold but 2001 LRM has extra stuff
  * that is not yet added
  */
-static int rd_recrem_tchk(void)
+static int32 rd_recrem_tchk(void)
 {
- unsigned ttyp;
- int fnum, lnum;
+ word32 ttyp;
+ int32 fnum, lnum;
  struct tchk_t tmptchk;
  struct expr_t *limx, *lim2x;
  struct sy_t *syp, *tcsyp;
@@ -2652,10 +2651,10 @@ noparsemi:
  * know system task keyword read
  * width has 2 limits (but 2nd can be omitted), period has 1
  */
-static int rd_width_tchk(void)
+static int32 rd_width_tchk(void)
 {
- unsigned ttyp;
- int fnum, lnum;
+ word32 ttyp;
+ int32 fnum, lnum;
  struct tchk_t tmptchk;
  struct expr_t *limx, *lim2x;
  struct sy_t *syp, *tcsyp;
@@ -2754,10 +2753,10 @@ noparsemi:
  * know system task keyword read
  * period has 1 limit (required), width has 2
  */
-static int rd_period_tchk(void)
+static int32 rd_period_tchk(void)
 {
- unsigned ttyp;
- int fnum, lnum;
+ word32 ttyp;
+ int32 fnum, lnum;
  struct tchk_t tmptchk;
  struct expr_t *limx;
  struct sy_t *syp, *tcsyp;
@@ -2814,9 +2813,9 @@ noparsemi:
  * SJM 01/16/04 - added removal first terminal is the ref events that
  * needs to be an edge for both
  */
-static int rd_skew_recov_rem_tchk(unsigned ttyp)
+static int32 rd_skew_recov_rem_tchk(word32 ttyp)
 {
- int fnum, lnum;
+ int32 fnum, lnum;
  struct tchk_t tmptchk;
  struct expr_t *limx;
  struct sy_t *syp, *tcsyp;
@@ -2872,9 +2871,9 @@ noparsemi:
  * must correctly parse $nochange but ignore with warning
  * this does not build and data structure
  */
-static int rd_nochg_tchk(void)
+static int32 rd_nochg_tchk(void)
 {
- unsigned ttyp;
+ word32 ttyp;
  struct tchk_t tmptchk;
  struct expr_t *limx;
  char s1[RECLEN];
@@ -2941,7 +2940,7 @@ noparsemi:
  * returns NULL on error, caller must skip to ;
  * caller syncs - returns NULL if syntax error (will need syncing)
  */
-static int rd_tchk_selector(int *edgval, struct expr_t **xp,
+static int32 rd_tchk_selector(int32 *edgval, struct expr_t **xp,
  struct expr_t **condx)
 {
  *edgval = NOEDGE;
@@ -3001,7 +3000,7 @@ no_edge:
  * know [ read and reads trailing ]
  * if error tries to sync to , ], ), ;
  */
-static int rd_edges(int *edge)
+static int32 rd_edges(int32 *edge)
 {
  char s1[RECLEN];
  byte etmp, e1;
@@ -3104,7 +3103,7 @@ extern char __pv_ctab[];
 extern void __do_foreign_lang(void)
 {
  register char *chp, *chp2;
- int first_time, done, savfnam_ind, sav_lin_cnt;
+ int32 first_time, done, savfnam_ind, sav_lin_cnt;
 
  if (!__rding_top_level || __rescanning_lib)
   {
@@ -3119,7 +3118,7 @@ extern void __do_foreign_lang(void)
     {
      __pv_terr(327,
       "skipped `language line %s no matching `endlanguage before **EOF**",
-      __bld_lineloc(__xs, (unsigned) savfnam_ind, sav_lin_cnt));  
+      __bld_lineloc(__xs, (word32) savfnam_ind, sav_lin_cnt));  
     }
    if (__langstr != NULL) strcpy(__langstr, "");
    return;
@@ -3235,7 +3234,7 @@ try_callback:
  * this must read and expand `include files because `endlanguage can be
  * in included file
  */
-extern int __notokenize_skiplines(char *match_prefix)
+extern int32 __notokenize_skiplines(char *match_prefix)
 {
  if (__langstr == NULL) __langstr = __my_malloc(IDLEN + 1);
  for (;;)
@@ -3287,7 +3286,7 @@ eof_error:
 extern char *__match_cdir(char *lp, char *match_prefix)
 {
  register char *chp;
- int slen;
+ int32 slen;
 
  /* possible lang str not yet allocated */ 
  if (lp == NULL) return(NULL);
@@ -3304,10 +3303,10 @@ extern char *__match_cdir(char *lp, char *match_prefix)
  *
  * BEWARE - this works because no longjmp in source reading
  */
-extern int __exec_rdinserted_src(char *buf)
+extern int32 __exec_rdinserted_src(char *buf)
 {
- register int vi;
- int sav_ecnt, retv, sav_vin_top, sav_lincnt, sav_cur_fnamind, len;
+ register int32 vi;
+ int32 sav_ecnt, retv, sav_vin_top, sav_lincnt, sav_cur_fnamind, len;
  struct vinstk_t **sav_vinstk;
 
  /* save lin_cnt to restore after buffer parsed */ 
@@ -3389,7 +3388,7 @@ extern int __exec_rdinserted_src(char *buf)
 extern struct attr_t *__rd_parse_attribute(struct attr_t *rd_attrp)
 {
  register char *chp; 
- int sav_ecnt, sav_tot_lines, sav_fnam_ind, attllen;
+ int32 sav_ecnt, sav_tot_lines, sav_fnam_ind, attllen;
  struct attr_t *attrp, *attr_hd, *last_attrp;
  char *attlin, attnam[IDLEN];
 
@@ -3599,9 +3598,9 @@ chk_nxt_attr:;
  * SJM 11/29/03 - contrary to LRM but following NC, cfg can't appear in src
  * but allowing list of lib.map files
  */
-extern int __rd_cfg(void)
+extern int32 __rd_cfg(void)
 {
- int i, sav_ecnt, sav_lin_cnt;
+ int32 i, sav_ecnt, sav_lin_cnt;
  FILE *fp;
  struct mapfiles_t *mapfp;
  char *sav_cur_fnam;
@@ -3652,8 +3651,8 @@ extern int __rd_cfg(void)
  */
 static void rd1_cfg_file(FILE *fp)
 { 
- register int ttyp;
- int ttyp2, sav_lin_cnt;
+ register int32 ttyp;
+ int32 ttyp2, sav_lin_cnt;
  FILE *incfp ;
  char *sav_cur_fnam;
 
@@ -3730,7 +3729,7 @@ skipto_semi:
  */
 static void rd_cfg_library(FILE *fp)
 {
- int ttyp;
+ int32 ttyp;
  struct cfglib_t *lbp;
  struct libel_t *lbep;
 
@@ -3774,9 +3773,9 @@ static void rd_cfg_library(FILE *fp)
  *
  * LOOKATME - maybe should return nil on error
  */
-static struct libel_t *rd_cfg_fspec_list(FILE *fp, int in_incdir)
+static struct libel_t *rd_cfg_fspec_list(FILE *fp, int32 in_incdir)
 {
- int ttyp, ttyp2, sav_lin_cnt;
+ int32 ttyp, ttyp2, sav_lin_cnt;
  struct libel_t *lbep, *lbep2, *lbep_hd, *last_lbep;
  FILE *incfp;
  char *sav_cur_fnam;
@@ -3897,7 +3896,7 @@ inc_err_skip:
  */
 static void rd_cfg_cfg(FILE *fp)
 {
- int ttyp, len, cfg_beg_lno, nbytes, expl_config;
+ int32 ttyp, len, cfg_beg_lno, nbytes, expl_config;
  struct cfgdes_t *desp, *des_hd, *des_tail;
  struct cfg_t *cfgp;
  struct cfgrule_t *rulp, *rule_beg, *rule_end;
@@ -4271,10 +4270,10 @@ static void init_rule(struct cfgrule_t *rulp)
  *
  * SJM 01/12/04 - library identifiers (names) can't be escaped
  */
-static int extract_design_nam(char *libnam, char *celnam, char *desnam)
+static int32 extract_design_nam(char *libnam, char *celnam, char *desnam)
 {
  register char *chp;
- int len;
+ int32 len;
  char s1[IDLEN], s2[IDLEN];
 
  strcpy(libnam, "");
@@ -4312,7 +4311,7 @@ static int extract_design_nam(char *libnam, char *celnam, char *desnam)
 /*
  * check and return T if library name is legal unescaped ID
  */
-static int chk_libid(char *lbnam)
+static int32 chk_libid(char *lbnam)
 {
  register char *chp;
 
@@ -4328,9 +4327,9 @@ static int chk_libid(char *lbnam)
 /*
  * check and return T if path component or cell type name is legal escaped ID
  */
-static int chk_escid(char *nam)
+static int32 chk_escid(char *nam)
 {
- int len;
+ int32 len;
  char *chp;
 
  chp = nam;
@@ -4346,11 +4345,11 @@ static int chk_escid(char *nam)
  *
  * grows global table - caller will copy to malloced memory
  */
-static int bld_inst_xmr_comptab(char *inam)
+static int32 bld_inst_xmr_comptab(char *inam)
 {
- register int ci;
+ register int32 ci;
  register char *chp, *chp2;
- int len;
+ int32 len;
  char s1[IDLEN], s2[IDLEN];
 
  /* AIV need to reset the global, after it is copied */
@@ -4411,7 +4410,7 @@ bad_end:
  */
 static void grow_bind_comps(void)
 {
- int osize, nsize;
+ int32 osize, nsize;
      
  osize = __siz_bind_comps*sizeof(char *);
  /* SJM 01/13/04 - maybe growing too fast */
@@ -4427,7 +4426,7 @@ static void grow_bind_comps(void)
  *
  * almost same as extracting design [lib].[cell] but there lib name required
  */
-static int extract_libcell_nam(char *libnam, char *celnam, char *nam)
+static int32 extract_libcell_nam(char *libnam, char *celnam, char *nam)
 {
  register char *chp;
  char s1[IDLEN], s2[IDLEN];
@@ -4480,10 +4479,10 @@ do_cell_tail:
  * know use keyword read and reads ending SEMI unless error where resync 
  * on error return F and set libnam and cell name to empty
  */
-static int rd_use_clause(FILE *fp, char *libnam, char *celnam,
- int *expl_config)
+static int32 rd_use_clause(FILE *fp, char *libnam, char *celnam,
+ int32 *expl_config)
 {
- int ttyp, ttyp2, has_cfg_suffix;
+ int32 ttyp, ttyp2, has_cfg_suffix;
 
  strcpy(libnam, "");
  strcpy(celnam, "");
@@ -4523,7 +4522,7 @@ static int rd_use_clause(FILE *fp, char *libnam, char *celnam,
  * if lib name is omitted parent (current) cell's lib used
  * if :config used, the use config matching [cell type name] for binding
  */
-static int extract_use_nam(char *libnam, char *celnam, int *has_config,
+static int32 extract_use_nam(char *libnam, char *celnam, int32 *has_config,
  char *use_spec)
 {
  register char *chp;
@@ -4612,7 +4611,7 @@ do_cell_tail:
  */
 static struct cfgnamlst_t *rd_liblist(FILE *fp)
 {
- int ttyp;
+ int32 ttyp;
  struct cfgnamlst_t *lbp, *lbp_hd, *lbp_tail;
 
  lbp_hd = lbp_tail = NULL;
@@ -4678,7 +4677,7 @@ static void init_cfg(struct cfg_t *cfgp)
  * notice config token number not related to source reading numbers
  * but using __token global for names still
  */
-static int cfg_skipto_semi(int ttyp, FILE *fp)
+static int32 cfg_skipto_semi(int32 ttyp, FILE *fp)
 {
  for (;;) 
   {
@@ -4694,7 +4693,7 @@ static int cfg_skipto_semi(int ttyp, FILE *fp)
  * notice config token number not related to source reading numbers
  * but using __token global for names still
  */
-static int cfg_skipto_comma_semi(int ttyp, FILE *fp)
+static int32 cfg_skipto_comma_semi(int32 ttyp, FILE *fp)
 {
  for (;;) 
   {
@@ -4710,7 +4709,7 @@ static int cfg_skipto_comma_semi(int ttyp, FILE *fp)
  * notice config token number not related to source reading numbers
  * but using __token global for names still
  */
-static int cfg_skipto_semi_endconfig(int ttyp, FILE *fp)
+static int32 cfg_skipto_semi_endconfig(int32 ttyp, FILE *fp)
 {
  for (;;) 
   {
@@ -4726,7 +4725,7 @@ static int cfg_skipto_semi_endconfig(int ttyp, FILE *fp)
  *
  * notice config token number not related to source reading numbers
  */
-static int cfg_skipto_eof(int ttyp, FILE *fp)
+static int32 cfg_skipto_eof(int32 ttyp, FILE *fp)
 {
  for (;;) 
   {
@@ -4749,9 +4748,9 @@ static int cfg_skipto_eof(int ttyp, FILE *fp)
  * return TRUE if the string contains a wildcard
  * '*', '?', '...', or ending in a / => TRUE
  */
-static int has_wildcard(char *cp)
+static int32 has_wildcard(char *cp)
 {
- int i, slen;
+ int32 i, slen;
 
  slen = strlen(cp);
  /* if it ends in a slash return TRUE - include all case */
@@ -4774,7 +4773,7 @@ extern void __expand_lib_wildcards(void)
 {
  register struct cfglib_t *lbp;
  register struct libel_t *lbep;
- int sav_lin_cnt;
+ int32 sav_lin_cnt;
  char *sav_cur_fnam, *cp;
  FILE *fp;
 
@@ -4833,7 +4832,7 @@ extern void __expand_lib_wildcards(void)
 /*
  * match a hier name with the given pattern name
  */
-static int match_hier_name(struct xpndfile_t *xfp_hd, char *name) 
+static int32 match_hier_name(struct xpndfile_t *xfp_hd, char *name) 
 {
  char *cp, *last;
  char str[RECLEN]; 
@@ -5003,7 +5002,7 @@ static void expand_hier_files(struct cfglib_t *lbp, struct libel_t *lbep,
  char dirstr[RECLEN];
  char bpath[RECLEN];
  char tmp[RECLEN];
- int first;
+ int32 first;
  
  /* if the first xfp has a wildcard do the search do search with current xfp */ 
  if (xfp_hd->wildcard) 
@@ -5057,8 +5056,8 @@ static void expand_hier_files(struct cfglib_t *lbp, struct libel_t *lbep,
 static void expand_dir_pats(struct cfglib_t *lbp, struct libel_t *lbep,
  char *pat)
 {
- int slen, i, ndx, clevel, last_star;
- int  wildcard, hier, cur_hier, last_hier, back_dir;
+ int32 slen, i, ndx, clevel, last_star;
+ int32  wildcard, hier, cur_hier, last_hier, back_dir;
  char str[RECLEN]; 
  char *last, *cp;
  struct xpndfile_t *xfp, *xfp2, *xfp_hd, *xfp_tail;
@@ -5112,8 +5111,7 @@ static void expand_dir_pats(struct cfglib_t *lbp, struct libel_t *lbep,
             back_dir = TRUE;
 
      xfp = (struct xpndfile_t *) __my_malloc(sizeof(struct xpndfile_t)); 
-     xfp->fpat = (char *) __my_malloc(strlen(str) + 1);
-     strcpy(xfp->fpat, str);
+     xfp->fpat = __pv_stralloc(str);
      if (cur_hier) 
       {
        /* set the wildcar to hierarch */
@@ -5175,8 +5173,7 @@ static void expand_dir_pats(struct cfglib_t *lbp, struct libel_t *lbep,
      if (last_hier) goto done; cur_hier = hier = TRUE;
     }
    xfp = (struct xpndfile_t *) __my_malloc(sizeof(struct xpndfile_t)); 
-   xfp->fpat = (char *)  __my_malloc(strlen(str) + 1);
-   strcpy(xfp->fpat, str);
+   xfp->fpat = __pv_stralloc(str);
    if (cur_hier) xfp->wildcard = HIER;
    else xfp->wildcard = wildcard;
    xfp->nmatch = 0; 
@@ -5220,7 +5217,7 @@ done:
 static void movedir_match_dir_pats(struct libel_t *lbep, 
  struct xpndfile_t *xfp_hd) 
 {
- int level;
+ int32 level;
  char dirstr[RECLEN]; 
  char bpath[RECLEN]; 
 
@@ -5267,7 +5264,7 @@ static void movedir_match_dir_pats(struct libel_t *lbep,
  * incall - is the flag to include all the files in the dir, end in '/'
  */
 static void match_dir_pats(struct libel_t *lbep, struct xpndfile_t *xfp_hd,
-char *path, char *bpath, int incall, int level) 
+char *path, char *bpath, int32 incall, int32 level) 
 {
  char dirstr[RECLEN]; 
  char str[RECLEN]; 
@@ -5300,7 +5297,6 @@ char *path, char *bpath, int incall, int level)
     {
      if (dir->d_ino == 0) continue;
      if (strcmp(dir->d_name, ".") == 0) continue;
-     if (strcmp(dir->d_name, "..") == 0) continue;
      /* handle directories */
 #if defined(__CYGWIN32__) || defined(__SVR4)
      if (stat(dir->d_name, &sbuf) == -1) continue;
@@ -5365,10 +5361,10 @@ char *path, char *bpath, int incall, int level)
  * matches '...', '*', '?'
  * or file name with any of the wild chars
  */
-static int match_wildcard_str(char *file, struct xpndfile_t *xfp) 
+static int32 match_wildcard_str(char *file, struct xpndfile_t *xfp) 
 {
- int fndx, pndx, flen, plen; 
- int ondx, wildcard;
+ int32 fndx, pndx, flen, plen; 
+ int32 ondx, wildcard;
  char *opat, *patp, *filep;
 
  patp = xfp->fpat;
@@ -5497,10 +5493,10 @@ static void expand_libel(struct libel_t *lbep, char *file)
  * if pattern is only '...' return all files below the current path
  * recursively calls itself returning all files
  */
-static int expand_single_hier(struct cfglib_t *lbp, struct libel_t *lbep,
+static int32 expand_single_hier(struct cfglib_t *lbp, struct libel_t *lbep,
  char *path)
 {
- int count;
+ int32 count;
  char str[RECLEN];
  char dirstr[RECLEN];
  char *cp;
@@ -5669,7 +5665,7 @@ static void dump_config_info(void)
  */
 static void prep_cfg_vflist(void)
 {
- register int fi;
+ register int32 fi;
 
  __last_lbf = __last_inf;
  /* set open file/macro exp./include stack to empty */
@@ -5715,7 +5711,7 @@ static void build_rule_error(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
  *
  * SJM 01/09/04 FIXME ??? - must allow more than one top level design mod 
  */
-static int bind_cfg_design(struct cfg_t *cfgp, int is_hier)
+static int32 bind_cfg_design(struct cfg_t *cfgp, int32 is_hier)
 {
  register struct cfgdes_t *desp;
  register struct cfgrule_t *rulp;
@@ -5833,7 +5829,7 @@ static int bind_cfg_design(struct cfg_t *cfgp, int is_hier)
  * this chops file name so know will fit
  * s must be at least RECLEN wide
  */
-extern char *__cfg_lineloc(char *s, char *fnam, int fnlcnt)
+extern char *__cfg_lineloc(char *s, char *fnam, int32 fnlcnt)
 {
  char s1[RECLEN];
 
@@ -5873,7 +5869,8 @@ static void free_undef_list(void)
    __my_free((char *) undefp, sizeof(struct undef_t)); 
    undefp = undefp2;
   }
- __undefhd = NULL;
+ /* SJM 02/24/05 - must set tail to nil too */
+ __undefhd = __undeftail = NULL;
 }
 
 /*
@@ -5888,9 +5885,9 @@ static void bind_cells_in1mod(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
 {
  register struct cfgrule_t *rulp;
  register struct libel_t *lbep;
- int cell_matched;
+ int32 cell_matched;
  struct cell_t *cp;
- struct sy_t *msyp, *lbsyp;
+ struct sy_t *lbsyp;
  char *mnp;
  
  mdp->cfg_scanned = TRUE;
@@ -5957,13 +5954,6 @@ static void bind_cells_in1mod(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
        /* find the symbol to be bound in the library symbol table */
        if ((lbsyp = __get_sym(cp->cmsym->synam, lbep->lbel_sytab)) != NULL) 
         {
-         /* SJM 05/28/04 - WRONG ??? ### ---
-         if ((msyp = __get_sym(lbsyp->synam, __modsyms)) != NULL)
-          {
-           __misc_terr(__FILE__, __LINE__);
-          }
-          ---*/
-
          /* bind the cell symbols */
          cp->cmsym = lbsyp;
          cp->cmsym->cfg_needed = TRUE;
@@ -6026,10 +6016,10 @@ static void bind_cells_in1mod(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
  * routine to attempt to match one rule and return T if matches
  * does not bind
  */
-static int try_match_rule(struct cfglib_t *cntxt_lbp, struct cell_t *cp,
+static int32 try_match_rule(struct cfglib_t *cntxt_lbp, struct cell_t *cp,
  struct cfgrule_t *rulp)
 {
- register int ci;
+ register int32 ci;
      
  if (rulp->rultyp == CFG_INSTANCE)
   {
@@ -6064,7 +6054,7 @@ static int try_match_rule(struct cfglib_t *cntxt_lbp, struct cell_t *cp,
 /*
  * bind instance rule with liblist clause - return T if succeeds else F
  */
-static int bind_liblist_rule(struct cfg_t *cfgp, struct cell_t *cp,
+static int32 bind_liblist_rule(struct cfg_t *cfgp, struct cell_t *cp,
  struct cfgrule_t *rulp)
 {
  struct cfgnamlst_t *cnlp;
@@ -6126,7 +6116,7 @@ static int bind_liblist_rule(struct cfg_t *cfgp, struct cell_t *cp,
  * use clause - easy because [lib].cell explicitly given
  * SJM 01/14/03 - WRITEME - handle different cfg (:config)
  */
-static int bind_use_rule(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
+static int32 bind_use_rule(struct cfg_t *cfgp, struct cfglib_t *cntxt_lbp,
  struct cell_t *cp, struct cfgrule_t *rulp)
 {
  struct cfg_t *use_replace_cfgp;
@@ -6298,7 +6288,7 @@ static struct mod_t *find_cell_in_cfglib(char *celnam, struct cfglib_t *lbp)
  * in fils of last lbf must be filled with file name
  * since know last_lbf > last_inf - on EOF get_vtok will resturn to caller
  */
-static int open_cfg_lbfil(char *lbnam)
+static int32 open_cfg_lbfil(char *lbnam)
 {
  char dirstr[RECLEN]; 
 
@@ -6405,9 +6395,7 @@ chk_name:
         "config library file udp primitive name expected - %s read",
         __prt_vtok());
        /* since err, just try to skip to end primitive */
-       __letendnum_state = TRUE;
        __vskipto_modend(ENDPRIMITIVE);
-       __letendnum_state = FALSE;
        goto nxt_tok;
       }
      if (!init_chk_cfg_sytab(lbep, "udp primitive"))
@@ -6446,7 +6434,7 @@ chk_ifdef:
  * check module/udp name and alloc lib el symbol table if needed
  * returns F on error
  */
-static int init_chk_cfg_sytab(struct libel_t *lbep, char *celtyp)
+static int32 init_chk_cfg_sytab(struct libel_t *lbep, char *celtyp)
 {
  struct sy_t *syp;
 
@@ -6511,9 +6499,8 @@ static void add_cfg_libsyms(struct cfglib_t *cfgp)
  struct libel_t *lbp;
  struct symtab_t *symt;
  struct tnode_t *tnp;
- struct tnode_t *cur;
  char *cp;
- int i;
+ int32 i;
 
 
  for (lbp = cfgp->lbels; lbp != NULL; lbp = lbp->lbenxt)
@@ -6608,8 +6595,6 @@ static void free_unused_cfgmods(void)
 static void partially_free_mod(struct mod_t *mdp)
 {
  register struct cell_t *cp, *cp2;
- struct ialst_t *ialp;
- struct task_t *tskp;
 
  for (cp = mdp->mcells; cp != NULL; )
   {
@@ -6619,6 +6604,8 @@ static void partially_free_mod(struct mod_t *mdp)
   }
 
  /* SJM 05/26/04 - LOOKATME ??? ### can't free stmt until fixup ---
+ struct ialst_t *ialp;
+ struct task_t *tskp;
  for (ialp = mdp->ialst; ialp != NULL; ialp = ialp->ialnxt) 
   {
    __free_stlst(ialp->iastp);

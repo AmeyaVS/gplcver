@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -171,7 +171,7 @@
 /* sdf annotate system task */
 #define STN_SDF_ANNOTATE 175
 
-/* new P1364 2001 special signed/unsigned conversion system functions */
+/* new P1364 2001 special signed/word32 conversion system functions */
 #define STN_SIGNED 176
 #define STN_UNSIGNED 177
 

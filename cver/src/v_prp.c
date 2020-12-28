@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -45,25 +45,25 @@ static void rem_inc_dupes(void);
 static void prep_udps(void);
 static void prep1_udp(struct udp_t *);
 static void prep_comb_udptab(struct udp_t *);
-static void xpnd_1wcard(int, word);
-static void init_utab(word *, int);
-static void chg_unfilled_tox(word *, int);
-static void bld_wcardtab(register char *, unsigned, unsigned);
-static word bld_uinitndx(char *, unsigned, int);
-static void setchk_uval(word);
-static char *bld_udploc(char *, word, word, unsigned);
+static void xpnd_1wcard(int32, word32);
+static void init_utab(word32 *, int32);
+static void chg_unfilled_tox(word32 *, int32);
+static void bld_wcardtab(register char *, word32, word32);
+static word32 bld_uinitndx(char *, word32, int32);
+static void setchk_uval(word32);
+static char *bld_udploc(char *, word32, word32, word32);
 static char *udploc_to_line(char *, char *);
 static void dmp_comb_udptab(struct udp_t *);
-static void dmp_udp3v_tab(word *, unsigned);
-static char *bld3vndx_str(char *, word, unsigned);
-static void dmp_udp2b_tab(word *, unsigned);
-static int udmp_impossible_value(word, unsigned);
-static char *bldndx_str(char *, word, unsigned);
+static void dmp_udp3v_tab(word32 *, word32);
+static char *bld3vndx_str(char *, word32, word32);
+static void dmp_udp2b_tab(word32 *, word32);
+static int32 udmp_impossible_value(word32, word32);
+static char *bldndx_str(char *, word32, word32);
 static void dmp_edge_udptab(struct udp_t *);
-static void dmp_udp3v_etab(word *, unsigned, int, int);
-static void dmp_udp2b_etab(word *, unsigned, int, int);
+static void dmp_udp3v_etab(word32 *, word32, int32, int32);
+static void dmp_udp2b_etab(word32 *, word32, int32, int32);
 static void prep_edge_udptab(struct udp_t *);
-static void xpnd_edge_wcard(word, int, int, unsigned);
+static void xpnd_edge_wcard(word32, int32, int32, word32);
 static void free_udp_lines(struct udp_t *);
 static void change_all_rngreps(void);
 static void set_optim_nflds(struct net_t *);
@@ -71,65 +71,69 @@ static void free_ncablks(void);
 static void emit_varunused_informs(struct net_t *, struct task_t *);
 static void rt_change_rngrep(struct net_t *);
 static void bld_gstate(void);
-static void alloc_gstate(struct gate_t *, int);
-static word cmp_udpind(word, unsigned);
+static void alloc_gstate(struct gate_t *, int32);
+static word32 cmp_udpind(word32, word32);
 static void prep_conta_dels(void);
-static int rhs_cat_separable(struct expr_t *);
-static int rhs_modpin_separable(struct expr_t *);
+static int32 rhs_cat_separable(struct expr_t *);
+static int32 rhs_modpin_separable(struct expr_t *);
 static void bld_pbsep_input_mpps(void);
 static void bld_pbsep_output_mpps(void);
-static int output_pb_separable(void);
+static int32 output_pb_separable(void);
 static void bld_pb_mpps(struct mod_pin_t *);
 static void bld_pb_contas(void);
-static struct pbexpr_t *bld_pb_expr_map(struct expr_t *, int);
+static struct pbexpr_t *bld_pb_expr_map(struct expr_t *, int32);
 static void init_pbexpr_el(struct pbexpr_t *);
-static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *, int);
-static struct expr_t *cnvt_to_bsel_expr(struct expr_t *, int);
+static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *, int32);
+static struct expr_t *cnvt_to_bsel_expr(struct expr_t *, int32);
 static void bld_nplist(void);
-static void bld_lhsexpr_npins(struct expr_t *, int);
-static void bld2_lhsexpr_npins(struct expr_t *, int);
-static void bld_rhsexpr_npins(struct expr_t *, int);
-static void conn_rtxmr_npin(struct net_t *, int, int, int, int,
- struct gref_t *, int, char *);
-static void conn_xmr_npin(struct net_t *, int, int, int, int, struct gref_t *,
- int, char *);
-static struct net_pin_t *conn2_npin(struct net_t *, int, int, int, int);
-static void set_chgsubfld(struct net_pin_t *, int, char *);
+static void bld_lhsexpr_npins(struct expr_t *, int32);
+static void bld2_lhsexpr_npins(struct expr_t *, int32);
+static void bld_rhsexpr_npins(struct expr_t *, int32);
+static void conn_rtxmr_npin(struct net_t *, int32, int32, int32, int32,
+ struct gref_t *, int32, char *);
+static void conn_xmr_npin(struct net_t *, int32, int32, int32, int32, struct gref_t *,
+ int32, char *);
+static struct net_pin_t *conn2_npin(struct net_t *, int32, int32, int32, int32);
+static void set_chgsubfld(struct net_pin_t *, int32, char *);
 static void add_netdel_pnp(struct net_t *, struct paramlst_t *);
 static void init_pnp(struct parmnet_pin_t *);
 static void addto_parmnplst(struct expr_t *, struct parmnet_pin_t *);
 static void add_gatedel_pnp(struct gate_t *, struct paramlst_t *);
 static void add_contadel_pnp(struct conta_t *, struct paramlst_t *);
 static void free_1parm_pnps(struct net_t *);
+static void realloc_npplist_to_tab(void);  
+static void realloc_1net_npplist(struct net_t *);
+static int32 cnt_npps(struct net_pin_t *);
+static int32 cnt_dces(struct dcevnt_t *);
 static void eat_gates(void);
-static int has_muststay_npp(register struct net_pin_t *);
+static int32 has_muststay_npp(register struct net_pin_t *);
 static void mark_muststay_wires(struct expr_t *);
-static void eat_nets(int);
+static void eat_nets(int32);
 static void rem_del_npps(void);
 static void remove_all_npps(struct net_t *);
 static void bld1vec_fifo(struct net_t *);
-static void update_vec_fifo(struct net_t *, word *, int *, int *, int *);
-static int wire_implied_driver(struct net_t *);
-static void eat_cells(int *);
-static int conn_expr_gone(struct expr_t *);
+static void update_vec_fifo(struct net_t *, word32 *, int32 *, int32 *, int32 *);
+static int32 wire_implied_driver(struct net_t *);
+static void eat_cells(int32 *);
+static int32 conn_expr_gone(struct expr_t *);
 static void mark_maybe_gone_nets(struct expr_t *);
-static void getbit_fifo(struct net_t *, int, int *, int *);
+static void getbit_fifo(struct net_t *, int32, int32 *, int32 *);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __prep_sim(void);
-extern void __set_init_gstate(struct gate_t *, int, int);
-extern void __set_init_udpstate(struct gate_t *, int, int);
-extern void __conn_npin(struct net_t *, int, int, int, int, struct gref_t *,
- int, char *);
-extern struct net_pin_t *__alloc_npin(int, int, int);
+extern void __set_init_gstate(struct gate_t *, int32, int32);
+extern void __set_init_udpstate(struct gate_t *, int32, int32);
+extern void __conn_npin(struct net_t *, int32, int32, int32, int32, struct gref_t *,
+ int32, char *);
+extern struct net_pin_t *__alloc_npin(int32, int32, int32);
 extern struct npaux_t *__alloc_npaux(void);
 extern void __add_dctldel_pnp(struct st_t *);
-extern void __add_tchkdel_pnp(struct tchk_t *, int);
+extern void __add_tchkdel_pnp(struct tchk_t *, int32);
 extern void __add_pathdel_pnp(struct spcpth_t *);
 extern void __free_design_pnps(void);
-extern int __get_acc_class(struct gate_t *);
-extern int __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
-extern int __add_conta_pnd0del(struct conta_t *, struct mod_t *, char *);
+extern int32 __get_acc_class(struct gate_t *);
+extern int32 __add_gate_pnd0del(struct gate_t *, struct mod_t *, char *);
+extern int32 __add_conta_pnd0del(struct conta_t *, struct mod_t *, char *);
 
 extern void __prep_xmrs(void);
 extern void __alloc_sim_storage(void);
@@ -143,55 +147,55 @@ extern void __set_optimtab_bits(void);
 extern void __set_mpp_assign_routines(void);
 extern void __set_pb_mpp_assign_routines(void);
 extern void __set_mpp_aoff_routines(void);
-extern void __dmpmod_nplst(struct mod_t *, int);
+extern void __dmpmod_nplst(struct mod_t *, int32);
 extern void __do_decompile(void);
 extern void __prep_specify(void);
 extern void __show_allvars(void);
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
-extern char *__to_uvvnam(char *, word);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
+extern char *__to_uvvnam(char *, word32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern char *__to_ptnam(char *, unsigned);
-extern void __prep_delay(struct gate_t *, struct paramlst_t *, int, int,
- char *, int, struct sy_t *, int);
+extern char *__to_ptnam(char *, word32);
+extern void __prep_delay(struct gate_t *, struct paramlst_t *, int32, int32,
+ char *, int32, struct sy_t *, int32);
 extern void __free_xtree(struct expr_t *);
-extern void __init_vec_var(register word *, int, int, int, word, word);
+extern void __init_vec_var(register word32 *, int32, int32, int32, word32, word32);
 extern char *__to_mpnam(char *, char *);
-extern int __isleaf(struct expr_t *);
+extern int32 __isleaf(struct expr_t *);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern void __free_dellst(struct paramlst_t *);
-extern void __free_del(union del_u, unsigned, int);
-extern void __bld_pb_fifo(struct net_t *, int *, int *, int *, int);
-extern int __gate_is_acc(struct gate_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern void __allocinit_perival(union pck_u *, int, int, int);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
+extern void __free_del(union del_u, word32, int32);
+extern void __bld_pb_fifo(struct net_t *, int32 *, int32 *, int32 *, int32);
+extern int32 __gate_is_acc(struct gate_t *);
+extern char *__bld_lineloc(char *, word32, int32);
+extern void __allocinit_perival(union pck_u *, int32, int32, int32);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
 extern void __rem_0path_dels(void);
-extern int __chk_0del(unsigned, union del_u, struct mod_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern int32 __chk_0del(word32, union del_u, struct mod_t *);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
 extern struct expr_t *__copy_expr(struct expr_t *);
-extern int __cnt_cat_size(struct expr_t *);
+extern int32 __cnt_cat_size(struct expr_t *);
 extern struct expr_t *__alloc_newxnd(void);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
-extern int __get_const_bselndx(register struct expr_t *);
-extern void __getwir_range(struct net_t *, int *, int *);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
+extern int32 __get_const_bselndx(register struct expr_t *);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
 
 extern void __cv_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __pv_ferr(int, char *, ...);
-extern void __gfinform(int, unsigned, int, char *, ...);
-extern void __gfwarn(int, unsigned, int, char *, ...);
-extern void __gferr(int, unsigned, int, char *, ...);
-extern void __sgferr(int, char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
+extern void __pv_ferr(int32, char *, ...);
+extern void __gfinform(int32, word32, int32, char *, ...);
+extern void __gfwarn(int32, word32, int32, char *, ...);
+extern void __gferr(int32, word32, int32, char *, ...);
+extern void __sgferr(int32, char *, ...);
+extern void __sgfinform(int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
 
-extern void __vpi_err(int, int, char *, ...);
+extern void __vpi_err(int32, int32, char *, ...);
 
-extern word __masktab[];
+extern word32 __masktab[];
 
 /*
  * SIMULATION PREPARATION ROUTINES
@@ -203,7 +207,7 @@ extern word __masktab[];
 extern void __prep_sim(void)
 {
  register struct mod_t *mdp; 
- int sav_declobj;
+ int32 sav_declobj;
 
  /* because checking delay expressions need object type global set */
  sav_declobj = __cur_declobj;
@@ -240,6 +244,10 @@ extern void __prep_sim(void)
 
  /* build inout tran and tran channel connection graphs */
  __bld_bidandtran_graph();
+
+ /* SJM 12/19/04 - after tran chans built, tran npps removed so can convert */
+ /* npp list to a table - but still set npnxt since add/rem during sim */ 
+ realloc_npplist_to_tab();  
 
  if (__gateeater_on) eat_gates();
 
@@ -388,10 +396,10 @@ static void prep1_udp(struct udp_t *udpp)
 
 /* table of combinatorial table output sizes in bits (2 per entry) */
 /* constant must be <= 7 since 7 inputs is 4k bytes per table */
-static int combtabsiz[] = { 0, 8, 32, 128, 512, 2048, 8192, 32768 };
+static int32 combtabsiz[] = { 0, 8, 32, 128, 512, 2048, 8192, 32768 };
 
 /* table of slower encoding scheme sizes in bits (standard <= 10 ins) */
-static int comb2tabsiz[] = { 0, 6, 18, 54, 162, 486, 1458, 4374, 13122,
+static int32 comb2tabsiz[] = { 0, 6, 18, 54, 162, 486, 1458, 4374, 13122,
  39366, 118098, 354294, 1062882, 3188646, 9565938, 28697814 };
 
 /*
@@ -405,9 +413,9 @@ static int comb2tabsiz[] = { 0, 6, 18, 54, 162, 486, 1458, 4374, 13122,
 static void prep_comb_udptab(struct udp_t *udpp)
 {
  register struct utline_t *utlp;
- unsigned nstates;
- int blen, bytsiz;
- word ndx;
+ word32 nstates;
+ int32 blen, bytsiz;
+ word32 ndx;
  char out_ch;
 
  /* for comb. errors must indicate no edge */
@@ -419,14 +427,14 @@ static void prep_comb_udptab(struct udp_t *udpp)
  if (udpp->u_wide) blen = comb2tabsiz[nstates];
  else blen = combtabsiz[nstates];
  /* notice Verilog assumes 8 bit bytes */
- /* SJM 05/19/01 - since fill using word ptr need to round to wrd bytes */
+ /* SJM 05/19/01 - since fill using word32 ptr need to round to wrd bytes */
  bytsiz = WRDBYTES*wlen_(blen);
  /* RELEASE remove --
  if (__debug_flg)
   __dbg_msg("## comb (part?) udp %s - %u states with table size %d bytes\n",
    udpp->usym->synam, nstates, bytsiz); 
  --- */
- __cur_utab = (word *) __my_malloc(bytsiz);
+ __cur_utab = (word32 *) __my_malloc(bytsiz);
  /* initialize to unfilled (3) - maps table x (2) to real 3 as last step */
  init_utab(__cur_utab, blen);
  __cur_udp = udpp;
@@ -456,7 +464,7 @@ static void prep_comb_udptab(struct udp_t *udpp)
      /* else can set it immediately */
      __cur_unochange = FALSE;
      /* must be for checking so will match x */
-     __cur_uoval = (word) ((out_ch == '0') ? 0 : ((out_ch == '1') ? 1 : 2));  
+     __cur_uoval = (word32) ((out_ch == '0') ? 0 : ((out_ch == '1') ? 1 : 2));  
     }
    /* this sets 1st to each and recursives call self to expand others */
    if (utlp->ulhas_wcard) xpnd_1wcard(0, ndx);
@@ -468,17 +476,17 @@ static void prep_comb_udptab(struct udp_t *udpp)
  chg_unfilled_tox(__cur_utab, blen);
 }
 
-extern word __pow3tab[];
+extern word32 __pow3tab[];
 
 /*
  * recursively expand 1 wild card
  * if wildcard, must be used to set all o states (even 1st)
  * notice recursion depends on fact that passed ndx is by value
  */
-static void xpnd_1wcard(int wci, word ndx)
+static void xpnd_1wcard(int32 wci, word32 ndx)
 {
- int wcvi, wchval, i;
- word ndx2;
+ int32 wcvi, wchval, i;
+ word32 ndx2;
  
  wchval = (__wcardtab[wci].wcchar == '?') ? 2 : 1;
  i = __wcardtab[wci].wcinum;
@@ -495,7 +503,7 @@ static void xpnd_1wcard(int wci, word ndx)
        /* index must be 3 which will be the value after table prepared */
        /* for non wide table entry */
        if (wcvi == 2) wcvi = 3;
-       ndx2 = ndx | (word) (wcvi << (2*i));
+       ndx2 = ndx | (word32) (wcvi << (2*i));
       }
     }
    else
@@ -504,7 +512,7 @@ static void xpnd_1wcard(int wci, word ndx)
      if (wcvi != 0) ndx2 = ndx + wcvi*__pow3tab[i];
      else ndx2 = ndx;
      /* know if this is true, will always be rightmost wild card */
-     if (i == __cur_udp->numstates - 1) __cur_upstate = (word) wcvi;
+     if (i == __cur_udp->numstates - 1) __cur_upstate = (word32) wcvi;
      if (ndx2 >= __pow3tab[__cur_udp->numstates])
       __misc_terr(__FILE__, __LINE__);
     }
@@ -521,13 +529,13 @@ static void xpnd_1wcard(int wci, word ndx)
  *
  * when done here all 2's changed to 3's (real x's stored in output gstate)
  * radix form uses 3's in vector but changed to 2 in signature update
- * notice any unused in high word just set to unfilled
+ * notice any unused in high word32 just set to unfilled
  */
-static void init_utab(word *taddr, int blen)
+static void init_utab(word32 *taddr, int32 blen)
 {
- register int i;
- register word *wp;
- int wlen;
+ register int32 i;
+ register word32 *wp;
+ int32 wlen;
 
  wlen = wlen_(blen);
  /* initialize to real x's - during table building x's are 2 that are then */
@@ -540,11 +548,11 @@ static void init_utab(word *taddr, int blen)
 /*
  * convert 1 unfilled (defaults to x) from unfill 2 to x (3)
  */
-static void chg_unfilled_tox(word *taddr, int blen)
+static void chg_unfilled_tox(word32 *taddr, int32 blen)
 {
- register word tmp;
- register int wi, bi;
- int wlen, ubits;
+ register word32 tmp;
+ register int32 wi, bi;
+ int32 wlen, ubits;
 
  wlen = wlen_(blen);
  for (wi = 0; wi < wlen - 1; wi++) 
@@ -560,10 +568,10 @@ static void chg_unfilled_tox(word *taddr, int blen)
     }
    taddr[wi] = tmp;
   }
- /* if by accident high word full and already all x's - done */
+ /* if by accident high word32 full and already all x's - done */
  if ((tmp = taddr[wlen - 1]) == ALL1W) return; 
 
- /* high word needs special handling */
+ /* high word32 needs special handling */
  if ((ubits = ubits_(blen)) == 0) ubits = WBITS;
  for (bi = 0; bi < ubits; bi += 2) 
   {
@@ -579,9 +587,9 @@ static void chg_unfilled_tox(word *taddr, int blen)
  * even if edge (\?\?) form (really *) do not include in wild card table
  * for combinatorial table pass one past last input
  */
-static void bld_wcardtab(register char *chp, unsigned nstates, unsigned einum)
+static void bld_wcardtab(register char *chp, word32 nstates, word32 einum)
 {
- register unsigned i;
+ register word32 i;
  struct wcard_t *wcp;
 
  for (__last_wci = -1, i = 0; i < nstates; i++, chp++)
@@ -601,11 +609,11 @@ static void bld_wcardtab(register char *chp, unsigned nstates, unsigned einum)
  * build the initial udp table index - 
  * either 2 bit per input with x as 3 or signature with x as 2 contribution
  */
-static word bld_uinitndx(char *tlp, unsigned nstates, int einum)
+static word32 bld_uinitndx(char *tlp, word32 nstates, int32 einum)
 {
- register unsigned i;
+ register word32 i;
  register char *chp;
- word ndx;
+ word32 ndx;
 
  /* ? (01x) and b (01) are only that later require loops */
  ndx = 0;
@@ -615,7 +623,7 @@ static word bld_uinitndx(char *tlp, unsigned nstates, int einum)
  for (i = 0, chp = tlp; i < nstates; i++, chp++)
   {
    /* for edge tab, if wildcard table select do not include, added in xpnd */
-   if (i == (int) einum) continue;
+   if (i == (int32) einum) continue;
    switch (*chp) {
     /* make edge wildcards 0 here also - r/f just (01) and (10) by here */
     case '0': case 'b': case '?': case '*': case 'n': case 'p':
@@ -643,16 +651,16 @@ static word bld_uinitndx(char *tlp, unsigned nstates, int einum)
  * uninitialized is 3 here that statys as real x (3) before exec
  * set to x is 2 here that is changed to 3, real x  
  */
-static void setchk_uval(word init_ndx)
+static void setchk_uval(word32 init_ndx)
 {
- register word tw, tw2;
- word ndx;
- int wi, bi;
+ register word32 tw, tw2;
+ word32 ndx;
+ int32 wi, bi;
  char s1[RECLEN], s2[RECLEN];
 
  /* by here init_ndx is correct for this wildcard */ 
  if (__cur_udp->u_wide) ndx = init_ndx;
- else ndx = init_ndx & (int) __masktab[2*__cur_udp->numstates];
+ else ndx = init_ndx & (int32) __masktab[2*__cur_udp->numstates];
 
  /* set 2: get old value */
  wi = get_wofs_(2*ndx);
@@ -712,7 +720,7 @@ done:;
  * build a udp location entry - for error messages
  * notice for wide signature form index must be wp[1] actual table index
  */
-static char *bld_udploc(char *s, word ndx, word val, unsigned nstates)
+static char *bld_udploc(char *s, word32 ndx, word32 val, word32 nstates)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -720,7 +728,7 @@ static char *bld_udploc(char *s, word ndx, word val, unsigned nstates)
  else bldndx_str(s1, ndx, nstates);
  udploc_to_line(s2, s1);
 
- sprintf(s, "%s : %s", s2, __to_uvvnam(s1, (word) val));
+ sprintf(s, "%s : %s", s2, __to_uvvnam(s1, (word32) val));
  return(s);
 }
 
@@ -729,8 +737,8 @@ static char *bld_udploc(char *s, word ndx, word val, unsigned nstates)
  */
 static char *udploc_to_line(char *s, char *line)
 {
- register int i;
- int slen;
+ register int32 i;
+ int32 slen;
  char *chp, *lchp;
 
  /* first add edge */
@@ -768,8 +776,8 @@ static char *udploc_to_line(char *s, char *line)
  */
 static void dmp_comb_udptab(struct udp_t *udpp)
 {
- word *utabp;
- unsigned nstates;
+ word32 *utabp;
+ word32 nstates;
 
  utabp = udpp->utab->ludptab;
  nstates = udpp->numstates;
@@ -787,11 +795,11 @@ static void dmp_comb_udptab(struct udp_t *udpp)
  * input is array of words and number of inputs 
  * need more sophisticated version
  */
-static void dmp_udp3v_tab(word *tabp, unsigned nstates) 
+static void dmp_udp3v_tab(word32 *tabp, word32 nstates) 
 {
- register unsigned i;
- int bi, wi;
- word val, ndx;
+ register word32 i;
+ int32 bi, wi;
+ word32 val, ndx;
  char s1[RECLEN], s2[RECLEN];
 
  ndx = 0;
@@ -813,10 +821,10 @@ static void dmp_udp3v_tab(word *tabp, unsigned nstates)
 /*
  * build the input string with high value (rightmost on left)
  */
-static char *bld3vndx_str(char *s, word ndx, unsigned nstates)
+static char *bld3vndx_str(char *s, word32 ndx, word32 nstates)
 {
- register unsigned i;
- word val;
+ register word32 i;
+ word32 val;
  char s1[10];
 
  for (i = 0; i < nstates; i++)
@@ -829,17 +837,17 @@ static char *bld3vndx_str(char *s, word ndx, unsigned nstates)
  * dump a non superposition 2b per element form udp table
  * input is array of words and number of inputs 
  */
-static void dmp_udp2b_tab(word *tabp, unsigned nstates)
+static void dmp_udp2b_tab(word32 *tabp, word32 nstates)
 {
- register unsigned i;
- int bi, wi;
- word val, ndx;
+ register word32 i;
+ int32 bi, wi;
+ word32 val, ndx;
  char s1[RECLEN], s2[RECLEN];
 
  ndx = 0;
  for (i = 0; i < (1 << (2*nstates)); i++)
   { 
-   ndx = (word) i;
+   ndx = (word32) i;
    /* for narrow case, z's in signature but never used */
    if (udmp_impossible_value(ndx, nstates)) continue;
 
@@ -862,9 +870,9 @@ static void dmp_udp2b_tab(word *tabp, unsigned nstates)
  * return T if somewhere there is a 2 bit 10 pattern in word
  * since for narrow know 10 index never used just 00, 01, 11
  */
-static int udmp_impossible_value(word ndx, unsigned nstates)
+static int32 udmp_impossible_value(word32 ndx, word32 nstates)
 {
- register unsigned i;
+ register word32 i;
 
  for (i = 0; i < nstates; i++)
   { if (((ndx >> (2*i)) & 3L) == 2L) return(TRUE); }
@@ -874,10 +882,10 @@ static int udmp_impossible_value(word ndx, unsigned nstates)
 /*
  * build the input string with high value (rightmost on left)
  */
-static char *bldndx_str(char *s, word ndx, unsigned nstates)
+static char *bldndx_str(char *s, word32 ndx, word32 nstates)
 {
- register unsigned i;
- word val;
+ register word32 i;
+ word32 val;
  char vs1[10];
 
  for (i = 0; i < nstates; i++)
@@ -891,8 +899,8 @@ static char *bldndx_str(char *s, word ndx, unsigned nstates)
  */
 static void dmp_edge_udptab(struct udp_t *udpp)
 {
- word *utabp;
- int nins, i, v;
+ word32 *utabp;
+ int32 nins, i, v;
 
  nins = udpp->numins;
  if (nins > 5) return;
@@ -924,11 +932,11 @@ static void dmp_edge_udptab(struct udp_t *udpp)
  * leave out lines where edge input and edge new value are same
  * know eipnum never state value
  */
-static void dmp_udp3v_etab(word *tabp, unsigned nstates, int eipnum, int e1val) 
+static void dmp_udp3v_etab(word32 *tabp, word32 nstates, int32 eipnum, int32 e1val) 
 {
- register unsigned i;
- int bi, wi, ndxev;
- word val, ndx;
+ register word32 i;
+ int32 bi, wi, ndxev;
+ word32 val, ndx;
  char s1[RECLEN], s2[RECLEN];
 
  ndx = 0;
@@ -955,17 +963,17 @@ static void dmp_udp3v_etab(word *tabp, unsigned nstates, int eipnum, int e1val)
  * input is array of words and number of inputs 
   * notice for 11 states size will be 1 million lines
  */
-static void dmp_udp2b_etab(word *tabp, unsigned nstates, int eipnum, int e1val) 
+static void dmp_udp2b_etab(word32 *tabp, word32 nstates, int32 eipnum, int32 e1val) 
 {
- register unsigned i;
- int bi, wi, ndxev;
- word val, ndx;
+ register word32 i;
+ int32 bi, wi, ndxev;
+ word32 val, ndx;
  char s1[RECLEN], s2[RECLEN];
 
  ndx = 0L;
  for (i = 0; i < (1 << (2*nstates)); i++)
   { 
-   ndx = (word) i;
+   ndx = (word32) i;
    /* for narrow case, z's in signature but never used */
    if (udmp_impossible_value(ndx, nstates)) continue;
 
@@ -990,11 +998,11 @@ static void dmp_udp2b_etab(word *tabp, unsigned nstates, int eipnum, int e1val)
  */
 static void prep_edge_udptab(struct udp_t *udpp)
 {
- register int i;
+ register int32 i;
  register struct utline_t *utlp;
- int nins, eutabels, blen, bytsiz, tabi, e1val, e2val;
- unsigned nstates;
- word ustate;
+ int32 nins, eutabels, blen, bytsiz, tabi, e1val, e2val;
+ word32 nstates;
+ word32 ustate;
  char ech, out_ch, ech2;
 
  nstates = udpp->numstates;
@@ -1002,7 +1010,7 @@ static void prep_edge_udptab(struct udp_t *udpp)
  /* these are size for 1 table in bits */
  if (udpp->u_wide) blen = comb2tabsiz[nstates];
  else blen = combtabsiz[nstates];
- /* SJM 05/19/01 - since fill using word ptr need to round to wrd bytes */
+ /* SJM 05/19/01 - since fill using word32 ptr need to round to wrd bytes */
  bytsiz = WRDBYTES*wlen_(blen);
 
  /* idea is that old input value selects table, new is index in table */
@@ -1019,7 +1027,7 @@ static void prep_edge_udptab(struct udp_t *udpp)
  /* 3 is possible values and extra 1 is for level lines without edges */
  udpp->utab = (struct udptab_t *) __my_malloc(sizeof(struct udptab_t));
  udpp->utab->ludptab = NULL;
- udpp->utab->eudptabs = (word **) __my_malloc(eutabels*4);
+ udpp->utab->eudptabs = (word32 **) __my_malloc(eutabels*4);
  /* build the level tab - for now always build even if no level entries */
  prep_comb_udptab(udpp);
  udpp->utab->ludptab = __cur_utab;
@@ -1027,7 +1035,7 @@ static void prep_edge_udptab(struct udp_t *udpp)
  /* initialize all edge tables to */
  for (i = 0; i < eutabels; i++)
   {
-   __cur_utab = (word *) __my_malloc(bytsiz);
+   __cur_utab = (word32 *) __my_malloc(bytsiz);
    init_utab(__cur_utab, blen);
    udpp->utab->eudptabs[i] = __cur_utab;
   }
@@ -1048,7 +1056,7 @@ static void prep_edge_udptab(struct udp_t *udpp)
 
    /* sets any wild cards including edge 1st values will be 00 */
    /* gets converted if wide form */
-   ustate = bld_uinitndx(utlp->tline, nstates, (int) utlp->uledinum);
+   ustate = bld_uinitndx(utlp->tline, nstates, (int32) utlp->uledinum);
 
    /* use the previuos state - if wildcard just */
    if ((out_ch = utlp->tline[nstates]) == '-') __cur_unochange = TRUE;
@@ -1219,10 +1227,10 @@ do_star:
  * process edge wildcard entry - passed fixed edge generated from iteration
  * e1 val selects table and e2 val is table value (changed to)  
  */
-static void xpnd_edge_wcard(word ustate, int e1val, int e2val,
- unsigned einpnum)
+static void xpnd_edge_wcard(word32 ustate, int32 e1val, int32 e2val,
+ word32 einpnum)
 {
- int tabi;
+ int32 tabi;
 
  /* first select the table */
  tabi = 3*einpnum + e1val;
@@ -1243,7 +1251,7 @@ static void xpnd_edge_wcard(word ustate, int e1val, int e2val,
   {
    /* ustate is index which for narrow must be 3 - value is 2 */
    if (e2val == 2) e2val = 3;
-   ustate |= (((word) e2val) << (2*einpnum));
+   ustate |= (((word32) e2val) << (2*einpnum));
   }
 
  /* need some global to be set for errors */
@@ -1268,7 +1276,7 @@ static void free_udp_lines(struct udp_t *udpp)
   {
    utlp2 = utlp->utlnxt;
    /* notice this is not 0 terminated string */
-   __my_free(utlp->tline, (int) utlp->ullen);
+   __my_free(utlp->tline, (int32) utlp->ullen);
    __my_free((char *) utlp, sizeof(struct utline_t));
    utlp = utlp2;
   }
@@ -1290,11 +1298,11 @@ static void free_udp_lines(struct udp_t *udpp)
  */
 static void change_all_rngreps(void)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
  register struct ncomp_t *oncomp, *nncomp;
  struct mod_t *mdp;
- int pi, sav_declobj;
+ int32 pi, sav_declobj;
  struct task_t *tskp;
 
  sav_declobj = __cur_declobj;
@@ -1423,7 +1431,7 @@ static void free_ncablks(void)
 static void emit_varunused_informs(struct net_t *np, struct task_t *tskp)
 {
  struct ncomp_t *ncmp;
- int infnum;
+ int32 infnum;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN];
 
  ncmp = np->nu.ct;
@@ -1489,8 +1497,8 @@ static void emit_varunused_informs(struct net_t *np, struct task_t *tskp)
  */
 static void rt_change_rngrep(struct net_t *np)
 {
- register int bi;
- int nni1, nni2, nai1, nai2, bits;
+ register int32 bi;
+ int32 nni1, nni2, nai1, nai2, bits;
  struct ncomp_t *ncmp;
  struct rngarr_t *rap;
  struct rngdwir_t *rdwp;
@@ -1510,8 +1518,8 @@ static void rt_change_rngrep(struct net_t *np)
  /* know this is number since range */
  if (np->n_isavec)
   {
-   nni1 = (int) __contab[ncmp->nx1->ru.xvi];
-   nni2 = (int) __contab[ncmp->nx2->ru.xvi];
+   nni1 = (int32) __contab[ncmp->nx1->ru.xvi];
+   nni2 = (int32) __contab[ncmp->nx2->ru.xvi];
 
    if (nni1 == -1 || nni2 == -2) __arg_terr(__FILE__, __LINE__);
    np->nwid = ((nni1 >= nni2) ? (nni1 - nni2 + 1) : (nni2 - nni1 + 1));
@@ -1541,8 +1549,8 @@ static void rt_change_rngrep(struct net_t *np)
 
  if (np->n_isarr)
   {
-   nai1 = (int) __contab[ncmp->ax1->ru.xvi];
-   nai2 = (int) __contab[ncmp->ax2->ru.xvi];
+   nai1 = (int32) __contab[ncmp->ax1->ru.xvi];
+   nai2 = (int32) __contab[ncmp->ax2->ru.xvi];
 
    rap = (struct rngarr_t *) __my_malloc(sizeof(struct rngarr_t));
    rap->ni1 = nni1;
@@ -1623,7 +1631,7 @@ static void rt_change_rngrep(struct net_t *np)
  */
 static void bld_gstate(void)
 {
- register int gi;
+ register int32 gi;
  struct mod_t *mdp;
  struct gate_t *gp;
 
@@ -1680,10 +1688,10 @@ static void bld_gstate(void)
 /*
  * allocate per instance gstate or usate and intialize to x
  */
-static void alloc_gstate(struct gate_t *gp, int insts)
+static void alloc_gstate(struct gate_t *gp, int32 insts)
 {
- register int gsi;
- int nbytes;
+ register int32 gsi;
+ int32 nbytes;
 
  /* first allocate and NULL per instantiating module schedule event ptrs */
  /* only allocate inertial schedule array if has delay (includes #0) */
@@ -1703,19 +1711,19 @@ static void alloc_gstate(struct gate_t *gp, int insts)
 /* mask table for <= 16 bit wide pck elements (1,z,x) - 0 just all 0's */
 /* 0 width impossible and never used for scalar */ 
 /* SJM 07/15/00- only for gates since variables no longer packed */
-word __pack_imaskx[17] = {
+word32 __pack_imaskx[17] = {
  0L, 0x3L, 0xfL, 0x3fL, 0xffL, 0x03ff, 0x0fffL, 0x3fffL, 0xffffL,
  0x3ffffL, 0xfffffL, 0x3fffffL, 0xffffffL, 0x3ffffffL, 0xfffffffL,
  0x3fffffffL, ALL1W
 };
 
 /* what is this value of 16 bit should 1 not 8 1's ? */
-word __pack_imask1[17] = {
+word32 __pack_imask1[17] = {
  0L, 0x1L, 0x3L, 0x07L, 0x0fL, 0x001fL, 0x003fL, 0x007fL, 0x00ffL,
  0x01ffL, 0x03ffL, 0x07ffL, 0x0fffL, 0x1fffL, 0x03fffL, 0x7fffL, 0xffffL
 };
 
-word __pack_imaskz[17] = {
+word32 __pack_imaskz[17] = {
  0L, 0x2L, 0xcL, 0x38L, 0xf0L, 0x03e0L, 0x0fc0L ,0x3f80L, 0xff00L,
  0x3fe00L, 0xffc00L, 0x3ff800L, 0xfff000L, 0x3ffe000L, 0xfffc000L,
  0x3fff8000L, 0xffff0000L
@@ -1724,17 +1732,17 @@ word __pack_imaskz[17] = {
 /*
  * set initial state for builtin gate
  * 
- * LOOKATME - SJM 12/19/99 maybe should also only pck into word here but
+ * LOOKATME - SJM 12/19/99 maybe should also only pck into word32 here but
  * wastes lotsof storage for 4 state gates
  */
-extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
+extern void __set_init_gstate(struct gate_t *gp, int32 insts, int32 nd_alloc)
 {
- register int i;
- register word *wp;
+ register int32 i;
+ register word32 *wp;
  register hword *hwp;
  register byte *bp;
- int pnum, wlen;
- word maska;
+ int32 pnum, wlen;
+ word32 maska;
 
  switch ((byte) gp->g_class) {
   case GC_LOGIC:
@@ -1743,7 +1751,7 @@ extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
     {
      wlen = wlen_(pnum);
      if (nd_alloc)
-      gp->gstate.wp = (word *) __my_malloc(2*WRDBYTES*insts*wlen);
+      gp->gstate.wp = (word32 *) __my_malloc(2*WRDBYTES*insts*wlen);
      __init_vec_var(gp->gstate.wp, insts, wlen, pnum, ALL1W, ALL1W);
      break;
     }
@@ -1763,7 +1771,7 @@ extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
     }
    else 
     {
-     if (nd_alloc) gp->gstate.wp = (word *) __my_malloc(WRDBYTES*insts);
+     if (nd_alloc) gp->gstate.wp = (word32 *) __my_malloc(WRDBYTES*insts);
      wp = gp->gstate.wp;
      for (i = 0; i < insts; i++) wp[i] = maska;
     }
@@ -1775,13 +1783,13 @@ extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
    for (i = 0; i < insts; i++) hwp[i] = (hword) (0x3f | (gp->g_stval << 6));
    break;
   case GC_MOS:
-   if (nd_alloc) gp->gstate.wp = (word *) __my_malloc(WRDBYTES*insts);
+   if (nd_alloc) gp->gstate.wp = (word32 *) __my_malloc(WRDBYTES*insts);
    wp = gp->gstate.wp;
    /* pattern here in highz in, control x, and high z out */
    for (i = 0; i < insts; i++) wp[i] = 0x00020302L;
    break;
   case GC_CMOS:
-   if (nd_alloc) gp->gstate.wp = (word *) __my_malloc(WRDBYTES*insts);
+   if (nd_alloc) gp->gstate.wp = (word32 *) __my_malloc(WRDBYTES*insts);
    /* pattern here in highz in, controls both x, and high z out */
    wp = gp->gstate.wp;
    for (i = 0; i < insts; i++) wp[i] = 0x02030302L;
@@ -1790,7 +1798,7 @@ extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
    /* tranif states are 2 bit - 1 conducting, 0 no conducting, 3 unknown */
    /* notice for delay case, schedule in tev */
    wlen = wlen_(2*insts);
-   if (nd_alloc) gp->gstate.wp = (word *) __my_malloc(WRDBYTES*wlen);
+   if (nd_alloc) gp->gstate.wp = (word32 *) __my_malloc(WRDBYTES*wlen);
    wp = gp->gstate.wp;
    /* start with tranif gates in unknown conducting state */
    for (i = 0; i < wlen; i++) wp[i] = 0xffffffffL;
@@ -1802,21 +1810,21 @@ extern void __set_init_gstate(struct gate_t *gp, int insts, int nd_alloc)
 
 /*
  * set initial state for udp
- * for udps >6 also need 1 word per inst. for current table index value
+ * for udps >6 also need 1 word32 per inst. for current table index value
  *
  * notice value is stored as x (3) - but indexing uses 2 for nins > 6
  * conversions from normal 4 value to 3 value made when indexing
  *
  * ustate values are stored as n 2 bit scalars not separate a and b parts
- * since no need for reduction word evaluation operations
+ * since no need for reduction word32 evaluation operations
  */
-extern void __set_init_udpstate(struct gate_t *gp, int insts, int nd_alloc)
+extern void __set_init_udpstate(struct gate_t *gp, int32 insts, int32 nd_alloc)
 {
- register int gsi;
- register word *wp;
+ register int32 gsi;
+ register word32 *wp;
  register hword *hwp;
- int nins;
- word iwval, indval;
+ int32 nins;
+ word32 iwval, indval;
  struct udp_t *udpp;
 
  udpp = gp->gmsym->el.eudpp;
@@ -1828,7 +1836,7 @@ extern void __set_init_udpstate(struct gate_t *gp, int insts, int nd_alloc)
  if (udpp->u_wide)
   {
    /* 2 words for each superposition form udp */
-   if (nd_alloc) gp->gstate.wp = (word *) __my_malloc(2*WRDBYTES*insts);
+   if (nd_alloc) gp->gstate.wp = (word32 *) __my_malloc(2*WRDBYTES*insts);
    wp = gp->gstate.wp;
    for (gsi = 0; gsi < insts; gsi++)
     {
@@ -1844,7 +1852,7 @@ extern void __set_init_udpstate(struct gate_t *gp, int insts, int nd_alloc)
   }
  else
   {
-   /* also store signature form udp in half word - 2 bit udp pointless */
+   /* also store signature form udp in half word32 - 2 bit udp pointless */
    if (nd_alloc) gp->gstate.hwp = (hword *) __my_malloc(2*insts);
    hwp = gp->gstate.hwp;
    /* -- RELEASE remove
@@ -1861,12 +1869,12 @@ extern void __set_init_udpstate(struct gate_t *gp, int insts, int nd_alloc)
  *
  * assuming here that 30 bit and 2 bit shifts take same time
  */
-static word cmp_udpind(word ustate, unsigned nstates)
+static word32 cmp_udpind(word32 ustate, word32 nstates)
 {
- register unsigned ui;
+ register word32 ui;
 
- unsigned ind;
- word ival;
+ word32 ind;
+ word32 ival;
 
  /* know ustate has proper initialized state */
  /* notice here need to use state that may have been initialized */ 
@@ -1888,13 +1896,14 @@ static void prep_conta_dels(void)
 {
  register struct mod_t *mdp;
  register struct conta_t *cap;
+ int32 cai;
  struct gate_t gwrk;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
    __push_wrkitstk(mdp, 0);
 
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cap = &(mdp->mcas[0]), cai = 0; cai < mdp->mcanum; cai++, cap++)
     {
      /* 1 bit lhs conta delays like gate delays - 3rd arg determines */
      if (cap->ca_du.pdels == NULL)
@@ -1932,9 +1941,9 @@ static void prep_conta_dels(void)
  */
 static void bld_pbsep_input_mpps(void)
 {
- register int pi, bi;
+ register int32 pi, bi;
  register struct mod_t *mdp;
- int ii, pi2, numpins, ptyp;
+ int32 ii, pi2, numpins, ptyp;
  struct mod_t *imdp;
  struct mod_pin_t *mpp;
  struct inst_t *ip;
@@ -2017,9 +2026,9 @@ static void bld_pbsep_input_mpps(void)
  */
 static void bld_pbsep_output_mpps(void)
 {
- register int pi, bi;
+ register int32 pi, bi;
  register struct mod_t *mdp;
- int ii, pi2, numpins, ptyp;
+ int32 ii, pi2, numpins, ptyp;
  struct mod_t *imdp;
  struct mod_pin_t *mpp;
  struct inst_t *ip;
@@ -2094,12 +2103,12 @@ static void bld_pbsep_output_mpps(void)
  * separable only if more than half total highconn inst connections separble
  * and concats not too narrow only counted
  */
-static int output_pb_separable(void)
+static int32 output_pb_separable(void)
 {
- register int pi, ii;
+ register int32 pi, ii;
  register struct mod_t *mdp;
  register struct mod_pin_t *mpp;
- int numpins, nels, num_cat_insts, not_pbsep, some_pbsep;
+ int32 numpins, nels, num_cat_insts, not_pbsep, some_pbsep;
  struct itree_t *down_itp;
  struct expr_t *up_lhsx;
 
@@ -2158,7 +2167,7 @@ static int output_pb_separable(void)
  */
 static void bld_pb_mpps(struct mod_pin_t *mpp)
 {
- register int bi;
+ register int32 bi;
  register struct mod_pin_t *mpp2;
  struct expr_t *xp;
  struct pbexpr_t *pbexpr;
@@ -2187,9 +2196,9 @@ static void bld_pb_mpps(struct mod_pin_t *mpp)
  */
 static void bld_pb_contas(void)
 {
- register int bi;
+ register int32 bi;
  register struct mod_t *mdp;
- int cawid;
+ int32 cawid, cai;
  struct conta_t *cap, *pbcap;
  struct expr_t *lhsx, *xp2, *xp3;
  struct pbexpr_t *rhs_pbexpr, *lhs_pbexpr;
@@ -2198,7 +2207,7 @@ static void bld_pb_contas(void)
   {
    __push_wrkitstk(mdp, 0);
 
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cap = &(mdp->mcas[0]), cai = 0; cai < mdp->mcanum; cai++, cap++)
     {
      /* if not concat expr, should not separate so this returns F */
      if (!rhs_cat_separable(cap->rhsx)) continue;
@@ -2221,7 +2230,6 @@ static void bld_pb_contas(void)
        pbcap->ca_pb_sim = FALSE;
        pbcap->ca_pb_el = TRUE;
        pbcap->pbcau.mast_cap = cap;
-       pbcap->canxt = NULL; 
       }
 
      rhs_pbexpr = bld_pb_expr_map(cap->rhsx, cawid);
@@ -2251,7 +2259,7 @@ static void bld_pb_contas(void)
  * all elements must be simple
  * think width self determined exps legal in cats but can't per bit separate
  */
-static int rhs_cat_separable(struct expr_t *rhsx)
+static int32 rhs_cat_separable(struct expr_t *rhsx)
 {
  register struct expr_t *catndp;
  struct net_t *np;
@@ -2288,7 +2296,7 @@ static int rhs_cat_separable(struct expr_t *rhsx)
 /*
  * return T if rhs mod pin separable (can be cat or not)
  */
-static int rhs_modpin_separable(struct expr_t *rhsx)
+static int32 rhs_modpin_separable(struct expr_t *rhsx)
 {
  struct expr_t *catndp;
 
@@ -2318,12 +2326,12 @@ static int rhs_modpin_separable(struct expr_t *rhsx)
 /*
  * decompose expr into per bit expr record 
  */
-static struct pbexpr_t *bld_pb_expr_map(struct expr_t *xp, int xwid)
+static struct pbexpr_t *bld_pb_expr_map(struct expr_t *xp, int32 xwid)
 {
- register int bi, bi2;
+ register int32 bi, bi2;
  register struct expr_t *catndp;
- int nels, xi, xofs, biti, bitj, wi, wlen;
- word av, bv;
+ int32 nels, xi, xofs, biti, bitj, wi, wlen;
+ word32 av, bv;
  struct expr_t **xtab, *cur_xp, *idndp;
  struct pbexpr_t *pbexpr, *pbxp;
  struct net_t *np;
@@ -2469,7 +2477,7 @@ static void init_pbexpr_el(struct pbexpr_t *pbxp)
 /*
  * fill separated per bit assign expr pair table
  */
-static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp, int is_stren)
+static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp, int32 is_stren)
 {
  struct expr_t *xp;
 
@@ -2518,9 +2526,9 @@ static struct expr_t *bld_1sep_pbit_expr(struct pbexpr_t *pbxp, int is_stren)
  * LOOKATME - for bsel just copying expression - ignoring various IS
  * and out of range conditions - could get rid of flags
  */
-static struct expr_t *cnvt_to_bsel_expr(struct expr_t *xp, int i1)
+static struct expr_t *cnvt_to_bsel_expr(struct expr_t *xp, int32 i1)
 {
- int ri1, ri2;
+ int32 ri1, ri2;
  struct expr_t *new_xp, *new_xp2, *idndp, *selxp;
  struct net_t *np;
 
@@ -2533,7 +2541,7 @@ static struct expr_t *cnvt_to_bsel_expr(struct expr_t *xp, int i1)
  new_xp2->optyp = LSB;
  new_xp2->szu.xclen = 1;
  new_xp2->lu.x = new_xp;
- selxp = __bld_rng_numxpr((word) i1, 0L, WBITS);
+ selxp = __bld_rng_numxpr((word32) i1, 0L, WBITS);
  selxp->ibase = BDEC;
  
  __getwir_range(np, &ri1, &ri2); 
@@ -2545,10 +2553,10 @@ static struct expr_t *cnvt_to_bsel_expr(struct expr_t *xp, int i1)
 /*
  * compute number of elements in concat (passed LSB expr node)
  */
-extern int __cnt_cat_size(struct expr_t *xp)
+extern int32 __cnt_cat_size(struct expr_t *xp)
 {
  register struct expr_t *catndp;
- int nels;
+ int32 nels;
 
  for (nels = 0, catndp = xp->ru.x; catndp != NULL; catndp = catndp->ru.x)
   nels++;
@@ -2571,9 +2579,9 @@ extern int __cnt_cat_size(struct expr_t *xp)
  */
 static void bld_nplist(void)
 {
- register int pi, pbi;
+ register int32 pi, pbi, cai;
  register struct mod_pin_t *mpp;
- int ii, gi, ptyp, pnum;
+ int32 ii, gi, ptyp, pnum;
  struct inst_t *ip;
  struct mod_t *mdp, *imdp;
  struct gate_t *gp;
@@ -2664,7 +2672,7 @@ static void bld_nplist(void)
      switch ((byte) gp->g_class) {
       case GC_PULL:
        /* one gate all drivers can have multiple pins */
-       for (pi = 0; pi < (int) gp->gpnum; pi++)
+       for (pi = 0; pi < (int32) gp->gpnum; pi++)
         {
          xp = gp->gpins[pi];
          __cur_npnum = pi;
@@ -2703,7 +2711,7 @@ bld_tran_ports:
        __cur_npnum = 0;
        bld_lhsexpr_npins(gp->gpins[0], NP_GATE);
        /* notice pnum is only input pins */
-       for (pi = 1; pi < (int) gp->gpnum; pi++)
+       for (pi = 1; pi < (int32) gp->gpnum; pi++)
         {
          xp = gp->gpins[pi];
          __cur_npnum = pi;
@@ -2712,7 +2720,7 @@ bld_tran_ports:
      }
     }
    __cur_npnum = 0;
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cap = &(mdp->mcas[0]), cai = 0; cai < mdp->mcanum; cai++, cap++)
     {
      if (cap->ca_pb_sim)
       { 
@@ -2831,7 +2839,7 @@ nxt_mod:
  *
  * this also sets has delay bit in top level noded if any element has delay
  */
-static void bld_lhsexpr_npins(struct expr_t *xp, int npctyp)
+static void bld_lhsexpr_npins(struct expr_t *xp, int32 npctyp)
 {
  __cur_lhscati1 = __cur_lhscati2 = -1;
  __lhsxpr_has_ndel = FALSE;
@@ -2845,10 +2853,9 @@ static void bld_lhsexpr_npins(struct expr_t *xp, int npctyp)
  * in target inst. or eval. drivers using target inst. where needed
  * propagation after assignment in cur. itp of destination is wire by wire
  */
-static void bld2_lhsexpr_npins(struct expr_t *xp, int npctyp)
+static void bld2_lhsexpr_npins(struct expr_t *xp, int32 npctyp)
 {
- int biti, bitj;
- word *wp;
+ int32 biti, bitj;
  struct expr_t *idndp;
  struct net_t *np;
  struct expr_t *catxp;
@@ -2883,13 +2890,13 @@ static void bld2_lhsexpr_npins(struct expr_t *xp, int npctyp)
    if (idndp->optyp == GLBREF) grp = idndp->ru.grp;
    if (xp->ru.x->optyp == ISNUMBER)
     {
-     wp = &(__contab[xp->ru.x->ru.xvi]);
-     __isform_biwp = wp;
+     /* SJM 10/12/04 - IS const must be contab ndx since contab realloced */
+     __isform_bi_xvi = xp->ru.x->ru.xvi;
      __conn_npin(np, -2, 0, TRUE, npctyp, grp, NPCHG_NONE, (char *) NULL);
     }
    else
     {
-     biti = (int ) __contab[xp->ru.x->ru.xvi];
+     biti = (int32 ) __contab[xp->ru.x->ru.xvi];
      __conn_npin(np, biti, biti, TRUE, npctyp, grp, NPCHG_NONE,
       (char *) NULL);
     }
@@ -2907,8 +2914,8 @@ static void bld2_lhsexpr_npins(struct expr_t *xp, int npctyp)
    if (np->nrngrep == NX_DWIR) __lhsxpr_has_ndel = TRUE;
    /* array stored from 0 to size even though bits go high to 0 */
    /* never IS form */
-   biti = (int) (__contab[xp->ru.x->lu.x->ru.xvi]);
-   bitj = (int) (__contab[xp->ru.x->ru.x->ru.xvi]);
+   biti = (int32) (__contab[xp->ru.x->lu.x->ru.xvi]);
+   bitj = (int32) (__contab[xp->ru.x->ru.x->ru.xvi]);
 
    __conn_npin(np, biti, bitj, TRUE, npctyp, grp, NPCHG_NONE, (char *) NULL);
    break;
@@ -2934,10 +2941,9 @@ static void bld2_lhsexpr_npins(struct expr_t *xp, int npctyp)
  * for any global needed because when wire changes in target (eval itp),
  * must propagate cross module to place used
  */
-static void bld_rhsexpr_npins(struct expr_t *xp, int npctyp)
+static void bld_rhsexpr_npins(struct expr_t *xp, int32 npctyp)
 {
- int biti, bitj;
- word *wp;
+ int32 biti, bitj;
  struct net_t *np;
  struct expr_t *idndp, *selxp;
  struct gref_t *grp;
@@ -2974,14 +2980,14 @@ static void bld_rhsexpr_npins(struct expr_t *xp, int npctyp)
     }
    else if (selxp->optyp == NUMBER)
     {
-     biti = (int) (__contab[selxp->ru.xvi]);
+     biti = (int32) (__contab[selxp->ru.xvi]);
      __conn_npin(np, biti, biti, FALSE, npctyp, grp, NPCHG_NONE,
       (char *) NULL);
     }
    else if (selxp->optyp == ISNUMBER)
     {
-     wp = &(__contab[selxp->ru.xvi]);
-     __isform_biwp = wp;
+     /* SJM 10/12/04 - IS const must be contab ndx since contab realloced */
+     __isform_bi_xvi = selxp->ru.xvi;
      __conn_npin(np, -2, 0, FALSE, npctyp, grp, NPCHG_NONE, (char *) NULL);
     }
    else
@@ -3003,8 +3009,8 @@ static void bld_rhsexpr_npins(struct expr_t *xp, int npctyp)
      /* array stored from 0 to size even though bits go high to 0 */
      selxp = xp->ru.x;
      /* never IS form */
-     biti = (int) (__contab[selxp->lu.x->ru.xvi]);
-     bitj = (int) (__contab[selxp->ru.x->ru.xvi]);
+     biti = (int32) (__contab[selxp->lu.x->ru.xvi]);
+     bitj = (int32) (__contab[selxp->ru.x->ru.xvi]);
      __conn_npin(np, biti, bitj, FALSE, npctyp, grp, NPCHG_NONE,
       (char *) NULL);
     }
@@ -3047,8 +3053,8 @@ static void bld_rhsexpr_npins(struct expr_t *xp, int npctyp)
  * LOOKATME - here do matching to find identical static tree upward inst_t
  * path but have static tree so maybe could traverse to not need to match?
  */
-extern void __conn_npin(struct net_t *np, int ni1, int ni2, int islhs,
- int npctyp, struct gref_t *grp, int chgtyp, char *chgp)
+extern void __conn_npin(struct net_t *np, int32 ni1, int32 ni2, int32 islhs,
+ int32 npctyp, struct gref_t *grp, int32 chgtyp, char *chgp)
 {
  struct net_pin_t *npp;
 
@@ -3077,10 +3083,10 @@ extern void __conn_npin(struct net_t *np, int ni1, int ni2, int islhs,
  *  when wire changes must match npauxp npdownitp inst or not load or driver
  *  to move from target (wire that changes) to ref. one loc. is npdownitp
  */
-static void conn_rtxmr_npin(struct net_t *np, int ni1, int ni2, int islhs,
- int npctyp, struct gref_t *grp, int chgtyp, char *chgp)
+static void conn_rtxmr_npin(struct net_t *np, int32 ni1, int32 ni2, int32 islhs,
+ int32 npctyp, struct gref_t *grp, int32 chgtyp, char *chgp)
 {
- register int ii;
+ register int32 ii;
  struct net_pin_t *npp; 
  struct itree_t *targitp;
 
@@ -3108,8 +3114,8 @@ static void conn_rtxmr_npin(struct net_t *np, int ni1, int ni2, int islhs,
  * for upwards or downwards relative search using normal routines
  * no filtering since one npp where all refs have different target
  */
-static void conn_xmr_npin(struct net_t *np, int ni1, int ni2, int islhs,
- int npctyp, struct gref_t *grp, int chgtyp, char *chgp)
+static void conn_xmr_npin(struct net_t *np, int32 ni1, int32 ni2, int32 islhs,
+ int32 npctyp, struct gref_t *grp, int32 chgtyp, char *chgp)
 {
  struct net_pin_t *npp;
 
@@ -3130,8 +3136,8 @@ static void conn_xmr_npin(struct net_t *np, int ni1, int ni2, int islhs,
  *
  * the xmr fields must be set by caller if needed
  */
-static struct net_pin_t *conn2_npin(struct net_t *np, int ni1, int ni2,
- int islhs, int npctyp)
+static struct net_pin_t *conn2_npin(struct net_t *np, int32 ni1, int32 ni2,
+ int32 islhs, int32 npctyp)
 {
  struct net_pin_t *npp;
  
@@ -3140,9 +3146,10 @@ static struct net_pin_t *conn2_npin(struct net_t *np, int ni1, int ni2,
   ni1 = ni2 = -1; 
 
  npp = __alloc_npin(npctyp, ni1, ni2);
- /* notice 32 bit dependent since assumes ptr and int both 4 bytes */
- /* also __isform_biwp is constant so can just point to it */ 
- if (ni1 == -2) npp->npaux->nbi2.p = (void *) __isform_biwp;
+ /* notice 32 bit dependent since assumes ptr and int32 both 4 bytes */
+ /* also __isform_bi xvi is contab index so can just use it */
+ if (ni1 == -2)
+  npp->npaux->nbi2.xvi = __isform_bi_xvi;
 
  /* link on front */
  if (islhs)
@@ -3192,13 +3199,13 @@ static struct net_pin_t *conn2_npin(struct net_t *np, int ni1, int ni2,
  * notice [i1:i2] are corrected to h:0 form by here
  * also notice some globals such as obnum (port) must be set before calling
  */
-extern struct net_pin_t *__alloc_npin(int nptyp, int i1, int i2)
+extern struct net_pin_t *__alloc_npin(int32 nptyp, int32 i1, int32 i2)
 {
  struct net_pin_t *npp;
  struct primtab_t *ptp;
 
  npp = (struct net_pin_t *) __my_malloc(sizeof(struct net_pin_t));
- npp->npntyp = (unsigned) nptyp;
+ npp->npntyp = (word32) nptyp;
  npp->npproctyp = NP_PROC_INMOD;
  /* value explicitly set if needed */
  npp->chgsubtyp = 0; 
@@ -3283,7 +3290,7 @@ extern struct npaux_t *__alloc_npaux(void)
 /*
  * set change subtype fields for a npp
  */
-static void set_chgsubfld(struct net_pin_t *npp, int chgtyp, char *chgp) 
+static void set_chgsubfld(struct net_pin_t *npp, int32 chgtyp, char *chgp) 
 {
  npp->chgsubtyp = chgtyp;
  switch (chgtyp) {
@@ -3304,7 +3311,7 @@ static void set_chgsubfld(struct net_pin_t *npp, int chgtyp, char *chgp)
 static void add_netdel_pnp(struct net_t *np, struct paramlst_t *pdels)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct expr_t *dxp;
  struct parmnet_pin_t tmpl_pnp;
 
@@ -3317,7 +3324,7 @@ static void add_netdel_pnp(struct net_t *np, struct paramlst_t *pdels)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) np->nsym->syfnam_ind;
+ __sfnam_ind = (int32) np->nsym->syfnam_ind;
  __slin_cnt = np->nsym->sylin_cnt;
 
  /* only free first one */
@@ -3388,7 +3395,7 @@ static void addto_parmnplst(struct expr_t *xp,
 static void add_gatedel_pnp(struct gate_t *gp, struct paramlst_t *pdels)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct expr_t *dxp;
  struct parmnet_pin_t tmpl_pnp;
 
@@ -3401,7 +3408,7 @@ static void add_gatedel_pnp(struct gate_t *gp, struct paramlst_t *pdels)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) gp->gsym->syfnam_ind;
+ __sfnam_ind = (int32) gp->gsym->syfnam_ind;
  __slin_cnt = gp->gsym->sylin_cnt;
 
  /* only free first use - all other uses point to same parm npp */
@@ -3419,7 +3426,7 @@ static void add_gatedel_pnp(struct gate_t *gp, struct paramlst_t *pdels)
 static void add_contadel_pnp(struct conta_t *cap, struct paramlst_t *pdels)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct expr_t *dxp;
  struct parmnet_pin_t tmpl_pnp;
 
@@ -3432,7 +3439,7 @@ static void add_contadel_pnp(struct conta_t *cap, struct paramlst_t *pdels)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) cap->casym->syfnam_ind;
+ __sfnam_ind = (int32) cap->casym->syfnam_ind;
  __slin_cnt = cap->casym->sylin_cnt;
 
  /* only free first one */
@@ -3452,7 +3459,7 @@ static void add_contadel_pnp(struct conta_t *cap, struct paramlst_t *pdels)
 extern void __add_dctldel_pnp(struct st_t *stp)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct delctrl_t *dctp;
  struct paramlst_t *pdels;
  struct expr_t *dxp;
@@ -3469,7 +3476,7 @@ extern void __add_dctldel_pnp(struct st_t *stp)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) stp->stfnam_ind;
+ __sfnam_ind = (int32) stp->stfnam_ind;
  __slin_cnt = stp->stlin_cnt;
 
  /* only free first one */
@@ -3489,10 +3496,10 @@ extern void __add_dctldel_pnp(struct st_t *stp)
  *
  * know will only be one delay
  */
-extern void __add_tchkdel_pnp(struct tchk_t *tcp, int is_1st)
+extern void __add_tchkdel_pnp(struct tchk_t *tcp, int32 is_1st)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct paramlst_t *pdels;
  struct expr_t *dxp;
  struct parmnet_pin_t tmpl_pnp;
@@ -3507,7 +3514,7 @@ extern void __add_tchkdel_pnp(struct tchk_t *tcp, int is_1st)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) tcp->tcsym->syfnam_ind;
+ __sfnam_ind = (int32) tcp->tcsym->syfnam_ind;
  __slin_cnt = tcp->tcsym->sylin_cnt;
 
  /* only free first one */
@@ -3528,7 +3535,7 @@ extern void __add_tchkdel_pnp(struct tchk_t *tcp, int is_1st)
 extern void __add_pathdel_pnp(struct spcpth_t *pthp)
 {
  register struct paramlst_t *pmp;
- int sav_fnam_ind, sav_slin_cnt;
+ int32 sav_fnam_ind, sav_slin_cnt;
  struct paramlst_t *pdels;
  struct expr_t *dxp;
  struct parmnet_pin_t tmpl_pnp;
@@ -3542,7 +3549,7 @@ extern void __add_pathdel_pnp(struct spcpth_t *pthp)
 
  sav_fnam_ind = __sfnam_ind;
  sav_slin_cnt = __slin_cnt; 
- __sfnam_ind = (int) pthp->pthsym->syfnam_ind;
+ __sfnam_ind = (int32) pthp->pthsym->syfnam_ind;
  __slin_cnt = pthp->pthsym->sylin_cnt;
 
  /* only free first one */
@@ -3562,7 +3569,7 @@ extern void __add_pathdel_pnp(struct spcpth_t *pthp)
  */
 extern void __free_design_pnps(void)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *prmp;
  struct mod_t *mdp;
  struct task_t *tskp;
@@ -3620,6 +3627,138 @@ static void free_1parm_pnps(struct net_t *prmp)
 }
 
 /*
+ * ROUTINES TO CONVERT KNOWN AT COMPILE TIME NPPS TO TABLE (ARRAY)
+ */
+
+/*
+ * re allocate npp list into indexable table
+ *
+ * only for the in src (non bid/tran npps that are in tran channels
+ * edges so removed) - keep as linked list since during sim will add
+ * and remove - table allows generation of .s that does not change
+ * from malloc differences - MIPD and vpi added npps can't be accessed
+ * by index
+ *
+ * since bid tran npps pointed to by edges, can't realloc to table
+ * but know that all tran channel npps (BID and TRAN) removed so
+ * list can be converted to indexable table but only for in src npps
+ */
+static void realloc_npplist_to_tab(void)  
+{
+ register struct mod_t *mdp;
+ register struct net_t *np;
+ int32 ni;
+ struct task_t *tskp;
+
+ for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
+  {
+   for (ni = 0, np = &(mdp->mnets[0]); ni < mdp->mnnum; ni++, np++)
+    {
+     realloc_1net_npplist(np);
+    }
+   for (tskp = mdp->mtasks; tskp != NULL; tskp = tskp->tsknxt)
+    {
+     for (ni = 0, np = &(tskp->tsk_regs[0]); ni < tskp->trnum; ni++, np++)
+      {
+       realloc_1net_npplist(np);
+      }
+    }
+  }
+}
+
+/*
+ * realloc npp list into table (only for npps and dces in src) 
+ *
+ * nothing points at dce and the tran channel edges that point to npps
+ * linked out by here
+ *
+ * fields pointed to from npps and dces can just be copied
+ */
+static void realloc_1net_npplist(struct net_t *np)
+{
+ register int32 i;
+ int32 num_dces, num_npps;
+ struct dcevnt_t *dcetab, *dcep, *dcep2;
+ struct net_pin_t *npptab, *npp, *npp2;
+
+ if (np->dcelst != NULL) 
+  {
+   num_dces = cnt_dces(np->dcelst);
+   dcetab = (struct dcevnt_t *) __my_malloc(num_dces*sizeof(struct dcevnt_t)); 
+   for (i = 0, dcep = np->dcelst; i < num_dces; i++)
+    {
+     dcep2 = dcep->dcenxt;
+
+     dcetab[i] = *dcep;
+     if (i > 0) dcetab[i - 1].dcenxt = &(dcetab[i]);
+
+     __my_free((char *) dcep, sizeof(struct dcevnt_t));
+     dcep = dcep2;
+    }
+   /* last one's nil, copied right */ 
+   np->dcelst = dcetab;
+  }
+ if (np->nlds != NULL)
+  {
+   num_npps = cnt_npps(np->nlds);
+   npptab = (struct net_pin_t *)
+    __my_malloc(num_npps*sizeof(struct net_pin_t)); 
+   for (i = 0, npp = np->nlds; i < num_npps; i++)
+    {
+     npp2 = npp->npnxt;
+
+     npptab[i] = *npp;
+     if (i > 0) npptab[i - 1].npnxt = &(npptab[i]);
+
+     __my_free((char *) npp, sizeof(struct net_pin_t));
+     npp = npp2;
+    }
+   /* last one's nil, copied right */ 
+   np->nlds = npptab;
+  }
+ if (np->ndrvs != NULL)
+  {
+   num_npps = cnt_npps(np->ndrvs);
+   npptab = (struct net_pin_t *)
+    __my_malloc(num_npps*sizeof(struct net_pin_t)); 
+   for (i = 0, npp = np->ndrvs; i < num_npps; i++)
+    {
+     npp2 = npp->npnxt;
+
+     npptab[i] = *npp;
+     if (i > 0) npptab[i - 1].npnxt = &(npptab[i]);
+
+     __my_free((char *) npp, sizeof(struct net_pin_t));
+     npp = npp2;
+    }
+   /* last one's nil, copied right */ 
+   np->ndrvs = npptab;
+  }
+}
+
+/*
+ * count number of npps
+ */
+static int32 cnt_npps(struct net_pin_t *npp)
+{
+ int32 num_npps;
+
+ for (num_npps = 0; npp != NULL; npp = npp->npnxt) num_npps++;
+ return(num_npps);
+}
+
+/*
+ * count number of dces
+ */
+static int32 cnt_dces(struct dcevnt_t *dcep)
+{
+ int32 num_dces;
+
+ for (num_dces = 0; dcep != NULL; dcep = dcep->dcenxt) num_dces++;
+ return(num_dces);
+}
+
+/*
  * ROUTINES TO IMPLEMENT GATE EATER
  */
 
@@ -3638,10 +3777,10 @@ static void free_1parm_pnps(struct net_t *prmp)
 static void eat_gates(void)
 {
  register struct net_t *np;
- register int pi, ni;
+ register int32 pi, ni;
  register struct tfrec_t *tfrp;
- int some_eaten, first_time, wlen;
- word *wp;
+ int32 some_eaten, first_time, wlen;
+ word32 *wp;
  struct mod_t *mdp;
  struct tfarg_t *tfap;
 
@@ -3727,7 +3866,7 @@ static void eat_gates(void)
  *
  * also) if has I/O port connection, but should never see here
  */
-static int has_muststay_npp(register struct net_pin_t *npp)
+static int32 has_muststay_npp(register struct net_pin_t *npp)
 {
  struct npaux_t *npauxp;
 
@@ -3768,12 +3907,12 @@ static void mark_muststay_wires(struct expr_t *xp)
  * tri0/tri1 implied driver nets always have fi = 1
  * 
  */
-static void eat_nets(int first_time)
+static void eat_nets(int32 first_time)
 {
- register int ni, wi;
+ register int32 ni, wi;
  register struct net_t *np;
- int nfi, nfo, impl_drv, wlen;
- word *wpfi, *wpfo; 
+ int32 nfi, nfo, impl_drv, wlen;
+ word32 *wpfi, *wpfo; 
 
  if (__inst_mod->mnnum == 0) return;
  if (!first_time) rem_del_npps();
@@ -3831,7 +3970,7 @@ del_done:
      bld1vec_fifo(np);
      np->n_isapthsrc = FALSE;
      /* make sure wpfi set from nu2 wp union member */
-     wpfi = (word *) np->nu2.wp;
+     wpfi = (word32 *) np->nu2.wp;
     }
 
    /* if at least one driver and used on rhs cannot delete */
@@ -3864,11 +4003,11 @@ nxt_net:;
  */
 static void rem_del_npps(void)
 {
- register int ni;
+ register int32 ni;
  register struct net_t *np;
  register struct net_pin_t *npp;
  struct net_pin_t *npp2, *last_npp;
- int net_chged;
+ int32 net_chged;
 
  for (ni = 0, np = &(__inst_mod->mnets[0]); ni < __inst_mod->mnnum; ni++, np++)
   {
@@ -3954,27 +4093,27 @@ static void remove_all_npps(struct net_t *np)
  */
 static void bld1vec_fifo(struct net_t *np)
 {
- int *pbfi, *pbfo, *pbtcfo, wlen;
- word *wp;
+ int32 *pbfi, *pbfo, *pbtcfo, wlen;
+ word32 *wp;
 
  /* first try simple case */
- pbfi = (int *) __my_malloc(sizeof(int)*np->nwid);
- pbfo = (int *) __my_malloc(sizeof(int)*np->nwid);
- pbtcfo = (int *) __my_malloc(sizeof(int)*np->nwid);
+ pbfi = (int32 *) __my_malloc(sizeof(int32)*np->nwid);
+ pbfo = (int32 *) __my_malloc(sizeof(int32)*np->nwid);
+ pbtcfo = (int32 *) __my_malloc(sizeof(int32)*np->nwid);
  /* inst. number not used here since never remove net iwth IS form */
  __bld_pb_fifo(np, pbfi, pbfo, pbtcfo, 0);
  wp = np->nu2.wp;
  if (wp == NULL)
   {
    wlen = 2*wlen_(np->nwid);
-   wp = (word *) __my_malloc(wlen*WRDBYTES);
+   wp = (word32 *) __my_malloc(wlen*WRDBYTES);
    memset(wp, 0, wlen*WRDBYTES);
    np->nu2.wp = wp;
   }
  update_vec_fifo(np, wp, pbfi, pbfo, pbtcfo);
- __my_free((char *) pbfi, sizeof(int)*np->nwid);
- __my_free((char *) pbfo, sizeof(int)*np->nwid);
- __my_free((char *) pbtcfo, sizeof(int)*np->nwid);
+ __my_free((char *) pbfi, sizeof(int32)*np->nwid);
+ __my_free((char *) pbfo, sizeof(int32)*np->nwid);
+ __my_free((char *) pbtcfo, sizeof(int32)*np->nwid);
 }
 
 /*
@@ -3982,13 +4121,13 @@ static void bld1vec_fifo(struct net_t *np)
  * tri0/tri1 implied driver net has has fi 1
  * if wire bit drivers timing check then still has driver and must stay
  */
-static void update_vec_fifo(struct net_t *np, word *wpfi, int *pbfi, 
- int *pbfo, int *pbtcfo)
+static void update_vec_fifo(struct net_t *np, word32 *wpfi, int32 *pbfi, 
+ int32 *pbfo, int32 *pbtcfo)
 {
- register int bi;
- register int wi, biti;
- int wlen, implied_drv;
- word *wpfo;
+ register int32 bi;
+ register int32 wi, biti;
+ int32 wlen, implied_drv;
+ word32 *wpfo;
 
  wlen = wlen_(np->nwid);
  wpfo = &(wpfi[wlen]);
@@ -3999,7 +4138,7 @@ static void update_vec_fifo(struct net_t *np, word *wpfi, int *pbfi,
    biti = get_bofs_(bi);
    if (pbfi[bi] == 0 && !implied_drv) wpfi[wi] &= ~(1L << biti);
    else wpfi[wi] |= (1L << biti);
-   /* know 2 bits never cross word boundary */
+   /* know 2 bits never cross word32 boundary */
    if (pbfo[bi] == 0 && pbtcfo[bi] == 0) wpfo[wi] &= ~(1L << biti);
    else wpfo[wi] |= (1L << biti);
   }
@@ -4008,7 +4147,7 @@ static void update_vec_fifo(struct net_t *np, word *wpfi, int *pbfi,
 /*
  * return T if wire is implied driver type
  */
-static int wire_implied_driver(struct net_t *np) 
+static int32 wire_implied_driver(struct net_t *np) 
 {
  switch ((byte) np->ntyp) {
   case N_TRI0: case N_TRI1: case N_TRIREG: case N_SUPPLY0: case N_SUPPLY1:
@@ -4021,12 +4160,12 @@ static int wire_implied_driver(struct net_t *np)
  * delete cells (gate and non xmr source/destination module instances
  * only gate and continuous assignments are removed
  */
-static void eat_cells(int *some_eaten)
+static void eat_cells(int32 *some_eaten)
 {
- register int i, gi;
+ register int32 i, gi;
  register struct gate_t *gp;
  register struct conta_t *cap;
- int out_unconn, ins_unconn;
+ int32 cai, out_unconn, ins_unconn;
 
  /* go through module gates tryng to remove (disconnect) */
  *some_eaten = FALSE;
@@ -4043,7 +4182,7 @@ static void eat_cells(int *some_eaten)
 
    /* if output not gone, see if all inputs gone */
    if (conn_expr_gone(gp->gpins[0])) out_unconn = TRUE;
-   for (i = 1; i < (int) gp->gpnum; i++)
+   for (i = 1; i < (int32) gp->gpnum; i++)
     { if (!conn_expr_gone(gp->gpins[i])) goto try_delete; }
    ins_unconn = TRUE;
    /* mark the gate deleted */
@@ -4064,7 +4203,7 @@ try_delete:
        gp->gmsym->synam, gp->gsym->synam);
      gp->g_gone = TRUE;
      /* gate is gone - mark all nets not already deleted for fi-fo re-eval */
-     for (i = 1; i < (int) gp->gpnum; i++)
+     for (i = 1; i < (int32) gp->gpnum; i++)
       mark_maybe_gone_nets(gp->gpins[i]);
      *some_eaten = TRUE;
      __flgates_removable += __inst_mod->flatinum;
@@ -4076,7 +4215,7 @@ try_delete:
 
  /* try to remove (disconnect) continuous assigns */ 
  /* go through module gates tryng to remove (disconnect) */
- for (cap = __inst_mod->mcas; cap != NULL; cap = cap->canxt)
+ for (cap = __inst_mod->mcas, cai = 0; cai < __inst_mod->mcanum; cai++, cap++)
   {
    if (cap->ca_gone) continue;
 
@@ -4113,10 +4252,10 @@ try_delete:
  * also n_mark set for undeletable nets that do not have fi-fo table
  * know if n_mark off and not already deleted, know fi-fo table exists
  */
-static int conn_expr_gone(struct expr_t *xp)
+static int32 conn_expr_gone(struct expr_t *xp)
 {
- register int bi;
- int bi2, nfi, nfo;
+ register int32 bi;
+ int32 bi2, nfi, nfo;
  struct net_t *np;
  struct expr_t *ndx, *ndx2; 
 
@@ -4203,16 +4342,16 @@ static void mark_maybe_gone_nets(struct expr_t *xp)
 /*
  * the the fi and fo for 1 bit
  */
-static void getbit_fifo(struct net_t *np, int bi, int *nfi, int *nfo)
+static void getbit_fifo(struct net_t *np, int32 bi, int32 *nfi, int32 *nfo)
 {
- int wi, biti, wlen;
- word *wpfi, *wpfo;
+ int32 wi, biti, wlen;
+ word32 *wpfi, *wpfo;
 
  /* must check the bit if constant */
  wi = get_wofs_(bi);
  biti = get_bofs_(bi);
  /* DBG remove */
- if ((wpfi = (word *) np->nu2.wp) == NULL) __misc_terr(__FILE__, __LINE__);
+ if ((wpfi = (word32 *) np->nu2.wp) == NULL) __misc_terr(__FILE__, __LINE__);
  wlen = wlen_(np->nwid);
  wpfo = &(wpfi[wlen]);
  *nfi = ((wpfi[wi] & (1L << biti)) != 0L) ? 1 : 0;
@@ -4233,11 +4372,11 @@ static void getbit_fifo(struct net_t *np, int bi, int *nfi, int *nfo)
  *
  * notice whether or not has delay does effect acc class
  */
-extern int __get_acc_class(struct gate_t *gp)
+extern int32 __get_acc_class(struct gate_t *gp)
 {
- register int gi;
- int acc_class, st_on_input, wire_pthdel;
- unsigned gatid;
+ register int32 gi;
+ int32 acc_class, st_on_input, wire_pthdel;
+ word32 gatid;
  struct expr_t *xp;
  struct net_t *np;
 
@@ -4279,7 +4418,7 @@ extern int __get_acc_class(struct gate_t *gp)
  if (np->nrngrep == NX_DWIR) wire_pthdel = TRUE; else wire_pthdel = FALSE;
 
  /* all inputs must be XL accelerateable */
- for (st_on_input = FALSE, gi = 0; gi < (int) gp->gpnum; gi++)
+ for (st_on_input = FALSE, gi = 0; gi < (int32) gp->gpnum; gi++)
   {
    xp = gp->gpins[gi];
    if (xp->optyp == ID)
@@ -4315,11 +4454,11 @@ extern int __get_acc_class(struct gate_t *gp)
  *
  * know called after prep
  */
-extern int __add_gate_pnd0del(struct gate_t *gp, struct mod_t *mdp,
+extern int32 __add_gate_pnd0del(struct gate_t *gp, struct mod_t *mdp,
  char *sdfmsg)
 {
- register int gsi;
- int nbytes;
+ register int32 gsi;
+ int32 nbytes;
  struct net_t *np;
  struct primtab_t *ptp;
  struct expr_t *xp;
@@ -4366,10 +4505,10 @@ extern int __add_gate_pnd0del(struct gate_t *gp, struct mod_t *mdp,
  * know called after prep and know no delay 
  * SJM 09/29/02 - if per bit this must set master delay and PB drv/schd
  */
-extern int __add_conta_pnd0del(struct conta_t *cap, struct mod_t *mdp,
+extern int32 __add_conta_pnd0del(struct conta_t *cap, struct mod_t *mdp,
  char *sdfmsg)
 {
- register int i, bi;
+ register int32 i, bi;
  struct conta_t *pbcap;
 
  /* make sure gate can have delay */
@@ -4461,12 +4600,12 @@ extern int __add_conta_pnd0del(struct conta_t *cap, struct mod_t *mdp,
  */
 extern void __rem_0path_dels(void)
 {
- register int pi;
+ register int32 pi;
  register struct net_pin_t *npp;
  struct spcpth_t *pthp; 
- int has_0del, dbi, dbi2, ni;
- int num_pthrem_mods, num_pthrems, num_flat_pthrems;
- int num_pthrem_nets, num_flat_pthrem_nets;
+ int32 has_0del, dbi, dbi2, ni;
+ int32 num_pthrem_mods, num_pthrems, num_flat_pthrems;
+ int32 num_pthrem_nets, num_flat_pthrem_nets;
  struct mod_t *mdp;
  struct pathel_t *spep, *dpep;
  struct npaux_t *npauxp;

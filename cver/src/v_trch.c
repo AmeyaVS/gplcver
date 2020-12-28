@@ -1,4 +1,4 @@
-/* Copyright (c) 1991-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1991-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -47,14 +47,14 @@ static void bld_trauxs(void);
 static void alloc_traux(struct mod_t *, struct net_t *);
 static void bld_trgraph(struct mod_t *, struct traux_t *, struct net_t *);
 static void init_chanrec(struct chanrec_t *);
-static struct vbinfo_t *add_vtxtraux(struct net_t *, int, int);
-static void add_1chan_vtxes_and_edges(int);
-static struct vtx_t *alloc_vtx(struct net_t *, int);
+static struct vbinfo_t *add_vtxtraux(struct net_t *, int32, int32);
+static void add_1chan_vtxes_and_edges(int32);
+static struct vtx_t *alloc_vtx(struct net_t *, int32);
 static void add_vtx_to_future_q(struct vtx_t *, struct itree_t *itp);
-static void add_edges_from_npps(struct vtx_t *, int, struct itree_t *);
-static int add1_oside_edge(struct vtx_t *, struct net_pin_t *, struct net_t *,
- int, int, struct itree_t *, struct itree_t *);
-static unsigned cnvt_tobase_ntyp(unsigned);
+static void add_edges_from_npps(struct vtx_t *, int32, struct itree_t *);
+static int32 add1_oside_edge(struct vtx_t *, struct net_pin_t *, struct net_t *,
+ int32, int32, struct itree_t *, struct itree_t *);
+static word32 cnvt_tobase_ntyp(word32);
 static void chg_bidchan_to_vtxlist(struct chanrec_t *);
 static void process_bid_vertices(struct chanrec_t *, struct vtx_t *,
  struct itree_t *);
@@ -73,156 +73,157 @@ static void off_stvtxtab_marks(void);
 static void stren_schd_bidpthdrvrs(struct net_t *, byte *, byte *);
 static void schd_bidpthdrvrs(struct net_t *, struct xstk_t *,
  struct xstk_t *);
-static int schd_1bitpthdrvr(struct net_t *, register int, i_tev_ndx *);
-static int evtr_schd_1bitpthdrvr(struct net_t *, register int,
+static int32 schd_1bitpthdrvr(struct net_t *, register int32, i_tev_ndx *);
+static int32 evtr_schd_1bitpthdrvr(struct net_t *, register int32,
  i_tev_ndx *);
 static void eval_assign_bid_chan(struct chanrec_t *);
 static void eval_assign_stbid_chan(struct chanrec_t *);
-static void ld_vtx_netbit(word *, word *, struct net_t *, int);
-static void st_vtx_netbit(struct net_t *, int, word, word);
-static void trmsg_frc_inhibit(struct net_t *, int);
-static void transtore_trmsg(struct net_t *, int, int, word, word);
-static void stassign_1tranbit(struct net_t *, register int, register word);
-static void assign_1tranbit(struct net_t *, register int, register word,
- register word);
+static void ld_vtx_netbit(word32 *, word32 *, struct net_t *, int32);
+static void st_vtx_netbit(struct net_t *, int32, word32, word32);
+static void trmsg_frc_inhibit(struct net_t *, int32);
+static void transtore_trmsg(struct net_t *, int32, int32, word32, word32);
+static void stassign_1tranbit(struct net_t *, register int32, register word32);
+static void assign_1tranbit(struct net_t *, register int32, register word32,
+ register word32);
 static void eval_update_1w_tranchan(struct vtx_t *);
 static struct vtxlst_t *add_stchan_chged_vtx(struct vtx_t *, struct itree_t *);
 static void assign_chged_vtxs(void);
 static void find_chgvtx_vicinity(struct vtxlst_t *);
 static void stchan_trif_relax(void);
-static void add_to_chg_vtx_list(struct vtxlst_t *, int);
+static void add_to_chg_vtx_list(struct vtxlst_t *, int32);
 static void dmp_perturb_list(void);
 static char *to_vtx_info(char *, struct vtx_t *, struct itree_t *);
-static int try_reduce_tranif_stren(word *, struct gate_t *);
-static void try_reduce_tran_stren(word *, int);
-static int get_switch_tranif_onoff(struct gate_t *, int);
-static int get_bidchan_val(struct chanrec_t *, register struct net_t *,
- int, int);
+static int32 try_reduce_tranif_stren(word32 *, struct gate_t *);
+static void try_reduce_tran_stren(word32 *, int32);
+static int32 get_switch_tranif_onoff(struct gate_t *, int32);
+static int32 get_bidchan_val(struct chanrec_t *, register struct net_t *,
+ int32, int32);
 static void dmp_vtx_edges(struct vtx_t *, struct itree_t *);
 static void dmp_vtx_and_out_edges(struct vtx_t *, struct itree_t *);
-static void prt_edge(struct vtx_t *, struct edge_t *, int);
+static void prt_edge(struct vtx_t *, struct edge_t *, int32);
+static struct net_t *xldrvld_to_netbit(struct expr_t *, int32, int32 *,
+ struct itree_t *);
 static void getv2_itp(struct edge_t *, struct itree_t *, struct itree_t **,
  struct itree_t **);
 static char *to_vtx(char *, struct vtx_t *);
-static struct itree_t *trchan_get_oside_itp(register struct net_pin_t *, int,
- int *, struct expr_t **, struct itree_t *);
-static struct expr_t *find_cat_oside_xp(struct expr_t *, int, int *);
-static void fill_port_npps(struct net_t *, int, struct itree_t *);
-static void add_match_vtxs(struct net_t *, struct net_pin_t *, int);
-static int get_xldl_vtx(struct itree_t *, struct net_t *, int, int *);
-static int add_xldl_vtx(struct itree_t *, struct net_t *, int, int);
+static struct itree_t *trchan_get_oside_itp(register struct net_pin_t *, int32,
+ int32 *, struct expr_t **, struct itree_t *);
+static struct expr_t *find_cat_oside_xp(struct expr_t *, int32, int32 *);
+static void fill_port_npps(struct net_t *, int32, struct itree_t *);
+static void add_match_vtxs(struct net_t *, struct net_pin_t *, int32);
+static int32 get_xldl_vtx(struct itree_t *, struct net_t *, int32, int32 *);
+static int32 add_xldl_vtx(struct itree_t *, struct net_t *, int32, int32);
 
-static void do_qc_wire_intran_force(struct net_t *, int, word, word,
+static void do_qc_wire_intran_force(struct net_t *, int32, word32, word32,
  struct itree_t *);
-static void do_qc_wire_intran_release(struct net_t *, int, struct expr_t *,
+static void do_qc_wire_intran_release(struct net_t *, int32, struct expr_t *,
  struct itree_t *);
-static void do_vpi_wire_intran_force(struct net_t *, int, word *, word *);
-static void do_vpi_wire_intran_release(struct net_t *, int);
-static void do_putv_wire_intran_softforce(struct net_t *, int, word *, word *);
+static void do_vpi_wire_intran_force(struct net_t *, int32, word32 *, word32 *);
+static void do_vpi_wire_intran_release(struct net_t *, int32);
+static void do_putv_wire_intran_softforce(struct net_t *, int32, word32 *, word32 *);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __dmp_modtrans(struct mod_t *);
 extern struct net_t *__find_tran_conn_np(struct expr_t *);
-extern void __allocinit_stperival(union pck_u *, int, struct net_t *, int);
-extern void __allocinit_perival(union pck_u *, int, int, int);
+extern void __allocinit_stperival(union pck_u *, int32, struct net_t *, int32);
+extern void __allocinit_perival(union pck_u *, int32, int32, int32);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern char *__my_realloc(char *, int, int);
-extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int *,
- int *);
-extern struct net_t *__tranx_to_netbit(register struct expr_t *, int, int *,
+extern char *__my_realloc(char *, int32, int32);
+extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int32 *,
+ int32 *);
+extern struct net_t *__tranx_to_netbit(register struct expr_t *, int32, int32 *,
  struct itree_t *);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
-extern int __get_const_bselndx(register struct expr_t *);
+extern int32 __get_const_bselndx(register struct expr_t *);
 extern void __eval_tran_bits(register struct net_t *);
-extern void __eval_tran_1bit(register struct net_t *, register int);
-extern char *__my_malloc(int);
-extern void __my_free(char *, int);
+extern void __eval_tran_1bit(register struct net_t *, register int32);
+extern char *__my_malloc(int32);
+extern void __my_free(char *, int32);
 extern struct xstk_t *__stload_mdrwire(struct net_t *);
 extern struct xstk_t *__load_mdrwire(register struct net_t *);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern void __ld_perinst_val(register word *, register word *, union pck_u,
- int);
-extern void __st_perinst_val(union pck_u, int, register word *,
- register word *);
-extern char *__st_regab_tostr(char *, byte *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
+ int32);
+extern void __st_perinst_val(union pck_u, int32, register word32 *,
+ register word32 *);
+extern char *__st_regab_tostr(char *, byte *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern char *__to_wtnam(char *, struct net_t *);
-extern void __lhsbsel(register word *, register int, word);
-extern struct pthdst_t *__get_path_del(struct rngdwir_t *, int, word64 *);
+extern void __lhsbsel(register word32 *, register int32, word32);
+extern struct pthdst_t *__get_path_del(struct rngdwir_t *, int32, word64 *);
 extern void __emit_path_distinform(struct net_t *, struct pthdst_t *,
  word64 *);
-extern int __em_suppr(int);
+extern int32 __em_suppr(int32);
 extern void __emit_path_pulsewarn(struct pthdst_t *, struct tev_t *, word64 *,
- word64 *, char *, unsigned);
-extern void __emit_path_samewarn(struct net_t *, int, struct tev_t *,
- word64 *, char *, unsigned);
-extern void __schedule_1wev(struct net_t *, int, int, word64, word64,
- word, i_tev_ndx *, int);
-extern void __reschedule_1wev(i_tev_ndx, word, word64, word64, i_tev_ndx *);
+ word64 *, char *, word32);
+extern void __emit_path_samewarn(struct net_t *, int32, struct tev_t *,
+ word64 *, char *, word32);
+extern void __schedule_1wev(struct net_t *, int32, int32, word64, word64,
+ word32, i_tev_ndx *, int32);
+extern void __reschedule_1wev(i_tev_ndx, word32, word64, word64, i_tev_ndx *);
 extern void __cancel_1wev(struct tev_t *t);
-extern char *__to_evtrwnam(char *, struct net_t *, int, int,
+extern char *__to_evtrwnam(char *, struct net_t *, int32, int32,
  struct itree_t *);
 extern char *__to_timstr(char *, word64 *);
-extern char *__to_vnam(char *, unsigned, word);
-extern char *__bld_lineloc(char *, unsigned, int);
-extern int __move_to_npprefloc(struct net_pin_t *);
-extern word __comb_1bitsts(unsigned, register word, register word);
-extern void __eval_1w_nonstren(register word *, register word *,
- register word, register word, unsigned);
-extern void __chg_st_val(struct net_t *, register word *, register word *);
-extern void __st_val(struct net_t *, register word *, register word *);
-extern void __chg_st_bit(struct net_t *, int, register word, register word);
-extern void __st_bit(struct net_t *, int, register word, register word);
-extern char *__to_vvstnam(char *, word);
+extern char *__to_vnam(char *, word32, word32);
+extern char *__bld_lineloc(char *, word32, int32);
+extern int32 __move_to_npprefloc(struct net_pin_t *);
+extern word32 __comb_1bitsts(word32, register word32, register word32);
+extern void __eval_1w_nonstren(register word32 *, register word32 *,
+ register word32, register word32, word32);
+extern void __chg_st_val(struct net_t *, register word32 *, register word32 *);
+extern void __st_val(struct net_t *, register word32 *, register word32 *);
+extern void __chg_st_bit(struct net_t *, int32, register word32, register word32);
+extern void __st_bit(struct net_t *, int32, register word32, register word32);
+extern char *__to_vvstnam(char *, word32);
 extern void __dmp_trchan(struct vtx_t *);
 extern void __dmp_bidchan(struct chanrec_t *);
 extern void __dmp1_nplstel(struct mod_t *, struct net_t *,
  struct net_pin_t *);
 extern void __dmp_bidnet_drvs(struct net_t *, struct mod_t *);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
 extern void __add_dmpv_chglst_el(struct net_t *);
 extern void __add_nchglst_el(register struct net_t *);
-extern void __add_select_nchglst_el(register struct net_t *, register int,
- register int);
-extern void __wakeup_delay_ctrls(register struct net_t *, register int,
- register int);
+extern void __add_select_nchglst_el(register struct net_t *, register int32,
+ register int32);
+extern void __wakeup_delay_ctrls(register struct net_t *, register int32,
+ register int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
-extern void __ld_bit(register word *, register word *,
- register struct net_t *, int);
-extern void __qc_tran_wireforce(struct net_t *, int, int, int,
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
+extern void __qc_tran_wireforce(struct net_t *, int32, int32, int32,
  struct itree_t *, struct st_t *);
-extern void __qc_tran_wirerelease(struct net_t *, int, int, struct itree_t *,
+extern void __qc_tran_wirerelease(struct net_t *, int32, int32, struct itree_t *,
  struct expr_t *);
-extern void __tran_wire_vpi_force(struct net_t *, word *, word *, int); 
-extern void __tran_wire_vpi_release(struct net_t *, int); 
-extern void __tran_exec_putv_wire_softforce(struct net_t *, word *, word *,
- int); 
+extern void __tran_wire_vpi_force(struct net_t *, word32 *, word32 *, int32); 
+extern void __tran_wire_vpi_release(struct net_t *, int32); 
+extern void __tran_exec_putv_wire_softforce(struct net_t *, word32 *, word32 *,
+ int32); 
 extern void __alloc_qcval(struct net_t *);
-extern void __bit1_vpi_or_tran_wireforce(struct net_t *, word *, word *,
- int, int, int, char *);
-extern int __correct_forced_newwireval(struct net_t *, word *, word *);
-extern void __find_call_force_cbs(struct net_t *, int);
-extern void __cb_all_rfs(struct net_t *, int, int);
-extern void __find_call_rel_cbs(struct net_t *, int);
+extern void __bit1_vpi_or_tran_wireforce(struct net_t *, word32 *, word32 *,
+ int32, int32, int32, char *);
+extern int32 __correct_forced_newwireval(struct net_t *, word32 *, word32 *);
+extern void __find_call_force_cbs(struct net_t *, int32);
+extern void __cb_all_rfs(struct net_t *, int32, int32);
+extern void __find_call_rel_cbs(struct net_t *, int32);
 extern void __assign_1mdrwire(register struct net_t *);
-extern int __unnormalize_ndx(struct net_t *, int);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
 extern struct xstk_t *__eval_assign_rhsexpr(register struct expr_t *,
  register struct expr_t *);
 
 extern void __cv_msg(char *, ...);
 extern void __tr_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __sgfinform(int, char *, ...);
-extern void __vpi_err(int, int, char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __vpi_terr(char *, int);
+extern void __sgfinform(int32, char *, ...);
+extern void __vpi_err(int32, int32, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __vpi_terr(char *, int32);
 
-extern word __mos_stmap[];
-extern word __rmos_stmap[];
-extern unsigned __cap_to_stren[];
+extern word32 __mos_stmap[];
+extern word32 __rmos_stmap[];
+extern word32 __cap_to_stren[];
 
 /*
  * ROUTINES TO BUILD TRAN AND UNCOLLAPSED INOUT TRAN CHANNEL CONN. GRAPHS
@@ -239,10 +240,10 @@ extern unsigned __cap_to_stren[];
  */
 extern void __bld_bidandtran_graph(void)
 {
- register int ni, chi;
+ register int32 ni, chi;
  register struct net_t *np;
  register struct chanrec_t *chanp;
- int si, design_has_trans, start_chanid;
+ int32 si, design_has_trans, start_chanid;
  struct mod_t *mdp;
  struct traux_t *trap;
 
@@ -385,9 +386,9 @@ static void free_vtx_and_edge_freelsts(void)
 static void emit_chan_size_table(void)
 {
  register struct chanrec_t *chanp;
- register int chi;
- int size1_5, size5_10, size10_20, size20_50, size50_100, size100_200;
- int size200_500, size500_1000, more1000, i1;
+ register int32 chi;
+ int32 size1_5, size5_10, size10_20, size20_50, size50_100, size100_200;
+ int32 size200_500, size500_1000, more1000, i1;
  struct net_t *np;
  struct itree_t *itp;
  char s1[RECLEN], s2[RECLEN];
@@ -471,9 +472,9 @@ static void emit_chan_size_table(void)
 static void bld_trauxs(void) 
 {
  register struct net_pin_t *npp;
- register int ni, gi, gri;
+ register int32 ni, gi, gri;
  register struct net_t *np;
- int chg;
+ int32 chg;
  struct gref_t *grp;
  struct gate_t *gp;
  struct mod_t *mdp, *refmdp;
@@ -595,7 +596,7 @@ static void bld_trauxs(void)
 static void alloc_traux(struct mod_t *mdp, struct net_t *np)
 {
  struct traux_t *trap; 
- int nbytes;
+ int32 nbytes;
 
  /* DBG remove --
  __dbg_msg("allocating traux for net %s in module %s\n",
@@ -628,8 +629,8 @@ static void alloc_traux(struct mod_t *mdp, struct net_t *np)
 static void bld_trgraph(struct mod_t *mdp, struct traux_t *trap,
  struct net_t *np)
 {
- register int ii, bi2;
- int bi, insts, osize;
+ register int32 ii, bi2;
+ int32 bi, insts, osize;
  struct vbinfo_t *vbip;
  struct chanrec_t *chanp;
 
@@ -685,7 +686,7 @@ static void bld_trgraph(struct mod_t *mdp, struct traux_t *trap,
        __chanallocsize += (3*osize)/2;
        __chantab = (struct chanrec_t *)
         __my_realloc((char *) __chantab, osize*sizeof(struct chanrec_t),
-         (int) (__chanallocsize*sizeof(struct chanrec_t)));
+         (int32) (__chanallocsize*sizeof(struct chanrec_t)));
       }
      chanp = &(__chantab[__nxt_chan_id - 1]);
      init_chanrec(chanp);
@@ -750,7 +751,7 @@ static void init_chanrec(struct chanrec_t *chanp)
  * add a new vertex and add net to link vertex
  * vertices are net and edges are gates or cross port assigns (npps) 
  */
-static struct vbinfo_t *add_vtxtraux(struct net_t *np, int bi, int chanid) 
+static struct vbinfo_t *add_vtxtraux(struct net_t *np, int32 bi, int32 chanid) 
 {
  struct vtx_t *vtxp;
  struct vbinfo_t *vbip;
@@ -769,7 +770,7 @@ static struct vbinfo_t *add_vtxtraux(struct net_t *np, int bi, int chanid)
  * LOOKATME - using chg vtxlst list to build tran graph and same list
  * used later to build perturb list 
  */
-static void add_1chan_vtxes_and_edges(int chanid)
+static void add_1chan_vtxes_and_edges(int32 chanid)
 {
  register struct vtxlst_t *vtxlp;
  register struct vtx_t *vtxp;
@@ -801,7 +802,7 @@ static void add_1chan_vtxes_and_edges(int chanid)
 /*
  * allocate a tran graph vertex (wire-bit)
  */
-static struct vtx_t *alloc_vtx(struct net_t *np, int bi)
+static struct vtx_t *alloc_vtx(struct net_t *np, int32 bi)
 {
  struct vtx_t *vtxp;
 
@@ -859,12 +860,12 @@ static void add_vtx_to_future_q(struct vtx_t *vtxp, struct itree_t *itp)
  * 05/21/01 SJM - now passing vertex itree loc (for edge it is vtx 1)
  * 07/27/01 SJM - now add all vertices breadth first
  */
-static void add_edges_from_npps(struct vtx_t *vtxp, int chanid,
+static void add_edges_from_npps(struct vtx_t *vtxp, int32 chanid,
  struct itree_t *vt1_itp)
 {
  register struct net_pin_t *npp;
- int ri1, ri2, bi, bi2, osbi, fromr_bi, catel_bi;
- int cat_oside_bi, oside_vtxndx;
+ int32 ri1, ri2, bi, bi2, osbi, fromr_bi, catel_bi;
+ int32 cat_oside_bi, oside_vtxndx;
  struct net_t *np, *osnp;
  struct expr_t *xp;
  struct itree_t *vt2_itp, *oside_itp;
@@ -970,7 +971,7 @@ static void add_edges_from_npps(struct vtx_t *vtxp, int chanid,
    /* DBG remove --
    if (__debug_flg)
     { 
-     int ei;
+     int32 ei;
      struct edge_t *ep;
 
      -* this must run in itree loc. of this side edge *-
@@ -991,7 +992,7 @@ static void add_edges_from_npps(struct vtx_t *vtxp, int chanid,
  * convert npp into range - uses current instance 
  */ 
 extern void __get_bidnpp_sect(struct net_t *np, struct net_pin_t *npp,
- int *bi1, int *bi2)
+ int32 *bi1, int32 *bi2)
 {
  struct npaux_t *auxp;
 
@@ -1017,7 +1018,7 @@ extern void __get_bidnpp_sect(struct net_t *np, struct net_pin_t *npp,
  * LOOKATME - think this code may be wrong?
  */
 static struct itree_t *trchan_get_oside_itp(register struct net_pin_t *npp,
- int bi2, int *catel_bi, struct expr_t **xp2, struct itree_t *vt1_itp)
+ int32 bi2, int32 *catel_bi, struct expr_t **xp2, struct itree_t *vt1_itp)
 {
  register struct itree_t *vt2_itp, *itp2;
  register struct expr_t *xp;
@@ -1026,7 +1027,7 @@ static struct itree_t *trchan_get_oside_itp(register struct net_pin_t *npp,
  struct gate_t *gp;
  struct npaux_t *auxp;
  struct mod_t *vt2_mdp;
- int netbi;
+ int32 netbi;
 
  *catel_bi = -1;
  vt2_itp = NULL; 
@@ -1129,11 +1130,11 @@ static struct itree_t *trchan_get_oside_itp(register struct net_pin_t *npp,
  * returns bit index in xp net if bit or part select or vectored net
  * returns -1 for scalar
  */
-static struct expr_t *find_cat_oside_xp(struct expr_t *xp, int catbi,
- int *catel_bi)
+static struct expr_t *find_cat_oside_xp(struct expr_t *xp, int32 catbi,
+ int32 *catel_bi)
 {
  register struct expr_t *catxp;
- register int catxlen, bi1;
+ register int32 catxlen, bi1;
 
  for (catxp = xp->ru.x; catxp != NULL; catxp = catxp->ru.x)
   {
@@ -1179,10 +1180,10 @@ static struct expr_t *find_cat_oside_xp(struct expr_t *xp, int catbi,
  * this uses itree loc to get module for constant table
  */
 extern struct net_t *__tranx_to_netbit(register struct expr_t *xp,
- int fromr_bi, int *bi, struct itree_t *oside_itp)
+ int32 fromr_bi, int32 *bi, struct itree_t *oside_itp)
 {
  register struct net_t *np;
- int ri1, ri2;
+ int32 ri1, ri2;
 
  np = __find_tran_conn_np(xp);
  if (xp->optyp == LSB)
@@ -1221,13 +1222,13 @@ extern struct net_t *__tranx_to_netbit(register struct expr_t *xp,
  * npp is one that other side of need to have edges added
  * vt1 itp always set, vt2 itp itree loc for other edge only if different
  */
-static int add1_oside_edge(struct vtx_t *vtxp, struct net_pin_t *npp,
- struct net_t *osnp, int osbi, int chanid, struct itree_t *vt1_itp,
+static int32 add1_oside_edge(struct vtx_t *vtxp, struct net_pin_t *npp,
+ struct net_t *osnp, int32 osbi, int32 chanid, struct itree_t *vt1_itp,
  struct itree_t *vt2_itp)
 {
  register struct edge_t *ep1;
  register struct vbinfo_t *osvbip;
- int osbi2;
+ int32 osbi2;
  struct vtx_t *osvtxp;
  struct traux_t *ostrap;
  struct itree_t *itp;
@@ -1286,7 +1287,7 @@ static int add1_oside_edge(struct vtx_t *vtxp, struct net_pin_t *npp,
  *
  * used for finding mixed wire type chans that require relax
  */
-static unsigned cnvt_tobase_ntyp(unsigned ntyp)
+static word32 cnvt_tobase_ntyp(word32 ntyp)
 {
  switch (ntyp) {
   case N_TRI: return(N_WIRE);
@@ -1324,7 +1325,7 @@ extern struct net_t *__find_tran_conn_np(struct expr_t *xp)
 static void chg_bidchan_to_vtxlist(struct chanrec_t *chanp)
 {
  register struct edge_t *ep, *ep2;
- /* DBG remove - int sav_mem_use; */
+ /* DBG remove - int32 sav_mem_use; */
  struct vtx_t *vtxp;
  struct vtxlst_t *vtxlp;
 
@@ -1354,7 +1355,7 @@ static void chg_bidchan_to_vtxlist(struct chanrec_t *chanp)
  if (__switch_verbose)
   {
    register struct bidvtxlst_t *bvtxlp;
-   int chanid;
+   int32 chanid;
 
    chanid = chanp - __chantab;
    __cv_msg("-- chan %d (%d vertices): conversion freed %d bytes\n",
@@ -1446,7 +1447,7 @@ static struct edge_t *alloc_edge(struct net_pin_t *npp)
 static void chkchannel(struct chanrec_t *chanp)
 {
  register struct edge_t *ep;
- int bi, chanid, base;
+ int32 bi, chanid, base;
  struct vtx_t *vtxp;
  struct traux_t *trap;
  struct net_t *np;
@@ -1582,7 +1583,7 @@ static void chkchan_edge(struct chanrec_t *chanp, struct edge_t *ep)
 static void save_bidandtran_npps(void)
 {
  register struct net_pin_t *npp;
- register int ni;
+ register int32 ni;
  register struct mod_t *mdp;
  register struct net_t *np;
  struct net_pin_t *last_npp, *npp2;
@@ -1637,8 +1638,8 @@ static void save_bidandtran_npps(void)
  */
 extern void __init_all_trchans(void) 
 {
- register int ii;
- int tot_tran_vtxs, tot_bid_vtxs, num_tran_done, num_bid_done;
+ register int32 ii;
+ int32 tot_tran_vtxs, tot_bid_vtxs, num_tran_done, num_bid_done;
  struct chanrec_t *chanp;
  struct vtxlst_t *vtxlp, *vtxlp2;
 
@@ -1749,8 +1750,8 @@ static void init_add_vtx_and_subtree(struct vtx_t *vtxp,
  struct itree_t *vt1_itp)
 {
  register struct edge_t *ep;
- int bi, inum;
- word vtxval, lowst, st0, st1;
+ int32 bi, inum;
+ word32 vtxval, lowst, st0, st1;
  struct vtxlst_t *vtxlp;
  struct net_t *np; 
  struct itree_t *oside_itp;
@@ -1764,7 +1765,7 @@ static void init_add_vtx_and_subtree(struct vtx_t *vtxp,
  vtxp->old_vtxval = np->nva.bp[inum*np->nwid + bi];
 
  /* get switch contribution from hard driver's value */
- vtxval = (word) np->ntraux->trnva.bp[inum*np->nwid + bi];
+ vtxval = (word32) np->ntraux->trnva.bp[inum*np->nwid + bi];
 
  /* and use as first new channel value guess */
  vtxp->new_vtxval = (byte) vtxval;
@@ -1773,7 +1774,7 @@ static void init_add_vtx_and_subtree(struct vtx_t *vtxp,
  /* get low strength */
  st1 = (vtxval >> 2) & 0x7;
  st0 = (vtxval >> 5) & 0x7;
- lowst = (int) ((st1 < st0) ? st1 : st0);
+ lowst = (int32) ((st1 < st0) ? st1 : st0);
 
  if (__vtxlst_freelst == NULL)
   vtxlp = (struct vtxlst_t *) __my_malloc(sizeof(struct vtxlst_t));
@@ -1823,7 +1824,7 @@ static void init_add_vtx_and_subtree(struct vtx_t *vtxp,
  */
 static void off_stvtxtab_marks(void)
 {
- register int si;
+ register int32 si;
  register struct vtxlst_t *vtxlp;
  
  for (si = 7; si >= 0; si--)
@@ -1852,9 +1853,9 @@ static void off_stvtxtab_marks(void)
  */
 extern void __eval_tran_bits(register struct net_t *np)
 {
- register int bi;
- int base;
- word nav, nbv;
+ register int32 bi;
+ int32 base;
+ word32 nav, nbv;
  struct traux_t *trap;
  struct vbinfo_t *vbip;
  struct chanrec_t *chanp;
@@ -1877,7 +1878,7 @@ extern void __eval_tran_bits(register struct net_t *np)
      /* actual assign */
      if (np->n_stren)
       {
-       nav = (word) trap->trnva.bp[__inum*np->nwid + bi];
+       nav = (word32) trap->trnva.bp[__inum*np->nwid + bi];
        /* really unused but passing it */
        nbv = 0;
       }
@@ -1905,10 +1906,10 @@ extern void __eval_tran_bits(register struct net_t *np)
  * so know always per inst form
  * just one bit part of all bits routine
  */
-extern void __eval_tran_1bit(register struct net_t *np, register int bi)
+extern void __eval_tran_1bit(register struct net_t *np, register int32 bi)
 {
- int base;
- word nav, nbv;
+ int32 base;
+ word32 nav, nbv;
  struct chanrec_t *chanp;
  struct traux_t *trap;
  struct vbinfo_t *vbip;
@@ -1929,7 +1930,7 @@ extern void __eval_tran_1bit(register struct net_t *np, register int bi)
    /* actual assign */
    if (np->n_stren)
     {
-     nav = (word) trap->trnva.bp[__inum*np->nwid + bi];
+     nav = (word32) trap->trnva.bp[__inum*np->nwid + bi];
      /* really unused but passing it */
      nbv = 0;
     }
@@ -1972,7 +1973,7 @@ extern void __eval_tran_1bit(register struct net_t *np, register int bi)
  * trnva value - since must eval. entire wire drivers will have those bits
  * i.e. this is not bit by bit
  */
-extern int __update_tran_harddrvs(struct net_t *np)
+extern int32 __update_tran_harddrvs(struct net_t *np)
 {
  register byte *sbp, *sbp2;
  register struct xstk_t *xsp, *xsp2;
@@ -2097,8 +2098,8 @@ no_chg:
 static void stren_schd_bidpthdrvrs(struct net_t *np, byte *drv_sbp, 
  byte *trnva_sbp)
 {
- register int bi; 
- int nd_chan_upd;
+ register int32 bi; 
+ int32 nd_chan_upd;
  i_tev_ndx *itevpi;
  struct rngdwir_t *dwirp; 
 
@@ -2106,8 +2107,8 @@ static void stren_schd_bidpthdrvrs(struct net_t *np, byte *drv_sbp,
  itevpi = &(dwirp->wschd_pbtevs[__inum*np->nwid]);
  for (bi = 0; bi < np->nwid; bi++)
   {
-   __new_gateval = (word) drv_sbp[bi];
-   __old_gateval = (word) trnva_sbp[bi];
+   __new_gateval = (word32) drv_sbp[bi];
+   __old_gateval = (word32) trnva_sbp[bi];
 
    if (__ev_tracing) nd_chan_upd = evtr_schd_1bitpthdrvr(np, bi, itevpi);
    else nd_chan_upd = schd_1bitpthdrvr(np, bi, itevpi);
@@ -2128,9 +2129,9 @@ static void stren_schd_bidpthdrvrs(struct net_t *np, byte *drv_sbp,
 static void schd_bidpthdrvrs(struct net_t *np, struct xstk_t *drv_xsp,
  struct xstk_t *trnva_xsp)
 {
- register int bi; 
- register word tmp;
- int nd_chan_upd;
+ register int32 bi; 
+ register word32 tmp;
+ int32 nd_chan_upd;
  i_tev_ndx *itevpi;
  struct rngdwir_t *dwirp; 
 
@@ -2169,11 +2170,11 @@ static void schd_bidpthdrvrs(struct net_t *np, struct xstk_t *drv_xsp,
  *
  * old and new gate values in globals - maybe changed since caller saves
  */
-static int schd_1bitpthdrvr(struct net_t *np, register int biti,
+static int32 schd_1bitpthdrvr(struct net_t *np, register int32 biti,
  i_tev_ndx *itevpi)
 {
- register word nval, oval;
- unsigned is_stren;
+ register word32 nval, oval;
+ word32 is_stren;
  word64 schtim;
  i_tev_ndx tevpi;
  struct rngdwir_t *dwirp; 
@@ -2235,8 +2236,8 @@ static int schd_1bitpthdrvr(struct net_t *np, register int biti,
        /* and cancel future event that can be scheduled for now */
 set_on_detect_x:
        /* set global causes use in tran channel re-eval */
-       if (is_stren) __new_gateval = (word) ST_STRONGX;
-       else __new_gateval = (word) 3;
+       if (is_stren) __new_gateval = (word32) ST_STRONGX;
+       else __new_gateval = (word32) 3;
        return(TRUE);
       }
      /* if no show canceled e, just assign later */  
@@ -2323,13 +2324,13 @@ set_on_detect_x:
  *
  * old and new gate values in globals - maybe changed since caller saves
  */
-static int evtr_schd_1bitpthdrvr(struct net_t *np, register int biti,
+static int32 evtr_schd_1bitpthdrvr(struct net_t *np, register int32 biti,
  i_tev_ndx *itevpi)
 {
- register word nval, oval;
+ register word32 nval, oval;
  i_tev_ndx tevpi;
- unsigned is_stren;
- word outval;
+ word32 is_stren;
+ word32 outval;
  word64 schtim, distdel, tevptim;
  struct rngdwir_t *dwirp; 
  struct pthdst_t *pdp;
@@ -2400,7 +2401,7 @@ static int evtr_schd_1bitpthdrvr(struct net_t *np, register int biti,
        "distributed longer or no path delay", is_stren);
 
      /* always cancel pending */
-     outval = (word) tevp->outv;
+     outval = (word32) tevp->outv;
      tevptim = tevp->etime;
      /* always cancel pending */
      __cancel_1wev(tevp);
@@ -2416,14 +2417,14 @@ static int evtr_schd_1bitpthdrvr(struct net_t *np, register int biti,
         __to_vnam(vs1, is_stren, oval), __to_vnam(vs2, is_stren, outval),
         __to_timstr(s1, &tevptim), __to_vnam(vs3, is_stren, nval));
 set_on_detect_x:
-       if (is_stren) __new_gateval = (word) ST_STRONGX;
-       else __new_gateval = (word) 3;
+       if (is_stren) __new_gateval = (word32) ST_STRONGX;
+       else __new_gateval = (word32) 3;
        return(TRUE);
       }
      __tr_msg(
       " INOUT PATH, DIST DELAY PULSE <OV=%s, OSV=%s at %s - NV=%s ASSIGN AND CANCEL>\n",
       __to_vnam(vs1, is_stren, oval), __to_vnam(vs2, is_stren,
-      (word) tevp->outv), __to_timstr(s1, &(tevp->etime)),
+      (word32) tevp->outv), __to_timstr(s1, &(tevp->etime)),
       __to_vnam(vs3, is_stren, nval));
      /* no schedule, distributed delay longer - new gate val used for chan. */
      return(TRUE); 
@@ -2478,7 +2479,7 @@ set_on_detect_x:
      __tr_msg(
       " INOUT PATH DEL, PEND AT %s, PULSE <OV=NSV=%s, OSV=%s SHOWING X FROM %s>\n",
       __to_timstr(__xs, &(tevp->etime)), __to_vnam(vs1, is_stren, oval),
-      __to_vnam(vs2, is_stren, (word) tevp->outv), s1);
+      __to_vnam(vs2, is_stren, (word32) tevp->outv), s1);
 
      if (__showe_onevent)
       { tevp->outv = (is_stren) ? ST_STRONGX : 3; return(FALSE); }
@@ -2491,7 +2492,7 @@ set_on_detect_x:
    __tr_msg(
     " INOUT PATH DEL, PEND, PULSE, INERTIAL CANCEL AT %s <OV=%s, OSV=%s>\n",
     __to_timstr(s1, &(tevp->etime)), __to_vnam(vs1, is_stren, oval),
-    __to_vnam(vs2, is_stren, (word) tevp->outv));
+    __to_vnam(vs2, is_stren, (word32) tevp->outv));
    /* no spike, but newly scheduled to same so no event */
    __cancel_1wev(tevp);
    itevpi[biti] = -1;
@@ -2526,7 +2527,7 @@ set_on_detect_x:
    __tr_msg(
     " INOUT PATH DEL, PEND AT %s, UNSTABLE <OV=%s, OSV=%s, NSV=%s SHOWING X FROM %s>\n",
     __to_timstr(s1, &(tevp->etime)), __to_vnam(vs1, is_stren, oval),
-    __to_vnam(vs2, is_stren, (word) tevp->outv), __to_vnam(vs3, is_stren,
+    __to_vnam(vs2, is_stren, (word32) tevp->outv), __to_vnam(vs3, is_stren,
     nval), s2);
    if (__showe_onevent)
     { tevp->outv = (is_stren) ? ST_STRONGX : 3; return(FALSE); }
@@ -2539,7 +2540,7 @@ set_on_detect_x:
  /* inertial reschedule, this handles cancel if needed */ 
  __tr_msg(
   " INOUT PATH DEL, PEND, UNSTABLE, INERTIAL RESCHD <OV=%s, OSV=%s AT %s, NSV=%s AT %s>\n",
-  __to_vnam(vs1, is_stren, oval), __to_vnam(vs2, is_stren, (word) tevp->outv),
+  __to_vnam(vs1, is_stren, oval), __to_vnam(vs2, is_stren, (word32) tevp->outv),
   __to_timstr(s1, &(tevp->etime)), __to_vnam(vs3, is_stren, nval),
   __to_timstr(s2, &schtim)); 
 
@@ -2565,9 +2566,9 @@ set_on_detect_x:
 static void eval_assign_stbid_chan(struct chanrec_t *chanp)
 {
  register struct bidvtxlst_t *bidvtxlp; 
- register word sb2;
+ register word32 sb2;
  register struct net_t *np;
- register int bi;
+ register int32 bi;
 
  /* first eval all contributors to the one universal new value */
  __acum_sb = ST_HIZ;
@@ -2586,7 +2587,7 @@ static void eval_assign_stbid_chan(struct chanrec_t *chanp)
      sb2 = np->nva.bp[__inum*np->nwid + bi];
     }
    else sb2 = np->ntraux->trnva.bp[__inum*np->nwid + bi];
-   __acum_sb = (word) __comb_1bitsts(np->ntyp, __acum_sb, sb2);
+   __acum_sb = (word32) __comb_1bitsts(np->ntyp, __acum_sb, sb2);
    __pop_itstk();
   }
 
@@ -2616,8 +2617,8 @@ static void eval_assign_bid_chan(struct chanrec_t *chanp)
 {
  register struct bidvtxlst_t *bidvtxlp; 
  register struct net_t *np;
- word nav, nbv; 
- int bi, bi2;
+ word32 nav, nbv; 
+ int32 bi, bi2;
  
  /* initialize to 2 (hiz) */
  __acum_a = 0;
@@ -2659,7 +2660,7 @@ static void eval_assign_bid_chan(struct chanrec_t *chanp)
  * load the bit value of one non strength vertex 
  * called from itree location of wire 
  */
-static void ld_vtx_netbit(word *ap, word *bp, struct net_t *np, int bi)
+static void ld_vtx_netbit(word32 *ap, word32 *bp, struct net_t *np, int32 bi)
 {
  struct xstk_t *xsp;
 
@@ -2678,7 +2679,7 @@ static void ld_vtx_netbit(word *ap, word *bp, struct net_t *np, int bi)
 /*
  * routine to assign 1 non stren bid only channel tran bit
  */
-static void assign_1tranbit(struct net_t *np, int bi, word nav, word nbv)
+static void assign_1tranbit(struct net_t *np, int32 bi, word32 nav, word32 nbv)
 {
  /* non stren case */ 
  if (bi == -1) bi = 0;
@@ -2715,7 +2716,7 @@ static void assign_1tranbit(struct net_t *np, int bi, word nav, word nbv)
  * store one vertex net bit from passed a and b values
  * called from itree location of np definition
  */
-static void st_vtx_netbit(struct net_t *np, int bi, word nav, word nbv)
+static void st_vtx_netbit(struct net_t *np, int32 bi, word32 nav, word32 nbv)
 {
  /* this does not use lhs changed */
  if (np->n_stren) stassign_1tranbit(np, bi, nav);
@@ -2725,7 +2726,7 @@ static void st_vtx_netbit(struct net_t *np, int bi, word nav, word nbv)
 /*
  * emit a tran channel force inhibit of tran channel store
  */
-static void trmsg_frc_inhibit(struct net_t *np, int bi)
+static void trmsg_frc_inhibit(struct net_t *np, int32 bi)
 {
  char s1[RECLEN], s2[RECLEN];
 
@@ -2739,8 +2740,8 @@ static void trmsg_frc_inhibit(struct net_t *np, int bi)
 /*
  * emit a tran channel store trace message
  */
-static void transtore_trmsg(struct net_t *np, int bi, int chg, word nav,
- word nbv)
+static void transtore_trmsg(struct net_t *np, int32 bi, int32 chg, word32 nav,
+ word32 nbv)
 {
  char s1[RECLEN], s2[RECLEN], s3[RECLEN], s4[RECLEN];
  byte sb2;
@@ -2774,11 +2775,11 @@ static void transtore_trmsg(struct net_t *np, int bi, int chg, word nav,
  *
  * routine does not traverse edge graph
  */
-static void stassign_1tranbit(struct net_t *np, register int bi,
- register word sbv)
+static void stassign_1tranbit(struct net_t *np, register int32 bi,
+ register word32 sbv)
 {
  register byte *sbp2;
- register int bind;
+ register int32 bind;
 
  bind = (bi == -1) ? 0 : bi;
 
@@ -2815,12 +2816,12 @@ static void stassign_1tranbit(struct net_t *np, register int bi,
  /* --- */
  if (__debug_flg && __ev_tracing)
   {
-   int chg;
+   int32 chg;
 
-   if (sbv != (word) sbp2[bind]) chg = TRUE; else chg = FALSE;
+   if (sbv != (word32) sbp2[bind]) chg = TRUE; else chg = FALSE;
    transtore_trmsg(np, bi, chg, sbv, sbv);
   } 
- if (sbv != (word) sbp2[bind])
+ if (sbv != (word32) sbp2[bind])
   {
    sbp2[bind] = (byte) sbv;
    /* notice needs to be bi since need -1 if scalar */
@@ -2880,8 +2881,8 @@ static void eval_update_1w_tranchan(struct vtx_t *vtxp)
 static struct vtxlst_t *add_stchan_chged_vtx(struct vtx_t *vtxp,
  struct itree_t *vt1_itp)
 {
- int bi, inum;
- word vtxval, st0, st1, lowst;
+ int32 bi, inum;
+ word32 vtxval, st0, st1, lowst;
  struct net_t *np;
  struct vtxlst_t *vtxlp;
 
@@ -2901,13 +2902,13 @@ static struct vtxlst_t *add_stchan_chged_vtx(struct vtx_t *vtxp,
   && np->nu2.qcval[__inum*np->nwid + bi].qc_active)
   {
    vtxp->vtx_forced = TRUE; 
-   vtxval = (word) np->nva.bp[inum*np->nwid + bi];
+   vtxval = (word32) np->nva.bp[inum*np->nwid + bi];
    vtxp->new_vtxval = vtxval;
   }
  else
   {
    /* when released tran channel relaxed again - this turns off force */
-   vtxval = (word) np->ntraux->trnva.bp[inum*np->nwid + bi];
+   vtxval = (word32) np->ntraux->trnva.bp[inum*np->nwid + bi];
    /* 04/25/01 - SJM - must turn off forcing each time since some releases */
    /* may have happened but release not connectd to tran vertices */
    vtxp->vtx_forced = FALSE; 
@@ -2957,9 +2958,9 @@ static struct vtxlst_t *add_stchan_chged_vtx(struct vtx_t *vtxp,
 static void assign_chged_vtxs(void)
 {
  register struct vtxlst_t *vtxlp;
- register int bi, bi2;
+ register int32 bi, bi2;
  register struct vtx_t *vtxp;
- word sbv;
+ word32 sbv;
  byte *sbp2;
  struct net_t *np;
 
@@ -2974,7 +2975,7 @@ static void assign_chged_vtxs(void)
    /* sbp2 of index is addr to store new net value into */
    get_stwire_addr_(sbp2, np);
    /* sbv is new value to store */
-   sbv = (word) vtxp->new_vtxval;
+   sbv = (word32) vtxp->new_vtxval;
    /* for next relax old value is current node val, old val no longer need */
    vtxp->old_vtxval = vtxp->new_vtxval;
 
@@ -2995,12 +2996,12 @@ static void assign_chged_vtxs(void)
    /* DBG remove --- */
    if (__debug_flg && __ev_tracing)
     {
-     int chg;
+     int32 chg;
 
-     if (sbv != (word) sbp2[bi2]) chg = TRUE; else chg = FALSE;
+     if (sbv != (word32) sbp2[bi2]) chg = TRUE; else chg = FALSE;
      transtore_trmsg(np, bi, chg, sbv, sbv);
     } 
-   if (sbv != (word) sbp2[bi2])
+   if (sbv != (word32) sbp2[bi2])
     {
      sbp2[bi2] = (byte) sbv;
 
@@ -3032,8 +3033,8 @@ static void assign_chged_vtxs(void)
 static void find_chgvtx_vicinity(struct vtxlst_t *vtxlp)
 {
  register struct edge_t *ep;
- int bi, bi2, gid;
- word conducting;
+ int32 bi, bi2, gid;
+ word32 conducting;
  struct vtx_t *vtxp, *vtxp2;
  struct vtxlst_t *vtxlp2;
  struct gate_t *gp;
@@ -3118,10 +3119,10 @@ static void find_chgvtx_vicinity(struct vtxlst_t *vtxlp)
  */
 static void stchan_trif_relax(void)
 {
- register int si;
+ register int32 si;
  register struct edge_t *ep;
- word cur_vtxval, oside_val, st0, st1, lowst, conducting;
- int bi, bi2, nd_itpop, chged, gid, stable;
+ word32 cur_vtxval, oside_val, st0, st1, lowst, conducting;
+ int32 bi, bi2, nd_itpop, chged, gid, stable;
  struct vtx_t *vtxp, *vtxp2;
  struct vtxlst_t *vtxlp, *vtxlp2, *last_vtxlp;
  struct gate_t *gp;
@@ -3175,7 +3176,7 @@ static void stchan_trif_relax(void)
         }
   
        /* first quess is hard driver val for current changed vtx */
-       cur_vtxval = (word) vtxp->new_vtxval;
+       cur_vtxval = (word32) vtxp->new_vtxval;
        /* add in all contributing edges - only exit is fall thru bottom */
        for (chged = FALSE, ep = vtxp->vedges; ep != NULL; ep = ep->enxt)
         { 
@@ -3222,7 +3223,7 @@ static void stchan_trif_relax(void)
           {
            /* do stren competition with vtx being determined and oside value */
            /* oside value may have been corrected if edge stren reducing */
-           cur_vtxval = (word) __comb_1bitsts(np->ntyp, cur_vtxval, oside_val);
+           cur_vtxval = (word32) __comb_1bitsts(np->ntyp, cur_vtxval, oside_val);
   
            /* if cur (new) value changed (oside at last partially won), */  
            /* need to combine to produce actual cur (new) val */
@@ -3230,7 +3231,7 @@ static void stchan_trif_relax(void)
             {
              /* combine the cur (latest) val with last relax latest */
              /* this handles stren ranges */
-             cur_vtxval = (word) __comb_1bitsts(np->ntyp, cur_vtxval,
+             cur_vtxval = (word32) __comb_1bitsts(np->ntyp, cur_vtxval,
               vtxp->new_vtxval);
              /* use cur (new) as vtx val from now on, rest can all lose */ 
              vtxp->new_vtxval = cur_vtxval;
@@ -3340,7 +3341,7 @@ static void stchan_trif_relax(void)
  * put on store when done list - only called if not already on list
  * does not need itree context 
  */
-static void add_to_chg_vtx_list(struct vtxlst_t *vtxlp, int si)
+static void add_to_chg_vtx_list(struct vtxlst_t *vtxlp, int32 si)
 {
  struct vtx_t *vtxp;
  struct vtxlst_t *chg_vtxlp;
@@ -3377,7 +3378,7 @@ static void add_to_chg_vtx_list(struct vtxlst_t *vtxlp, int si)
  */
 static void dmp_perturb_list(void)
 {
- register int si;
+ register int32 si;
  register struct vtxlst_t *vtxlp;
  char s1[RECLEN];
 
@@ -3422,10 +3423,10 @@ static char *to_vtx_info(char *s, struct vtx_t *vtxp, struct itree_t *itp)
  * returns conducting value if not 0 sets oside_val to reduced val
  * SJM 04/23/01 - also if tranif and conducting x/z (3), value is H or L
  */
-static int try_reduce_tranif_stren(word *oside_val, struct gate_t *gp)
+static int32 try_reduce_tranif_stren(word32 *oside_val, struct gate_t *gp)
 {
- int conducting, is_resist, gid;
- word sb2, sb3, st1, st0;
+ int32 conducting, is_resist, gid;
+ word32 sb2, sb3, st1, st0;
  
  gid = gp->gmsym->el.eprimp->gateid;
  conducting = get_switch_tranif_onoff(gp, gid);
@@ -3443,7 +3444,7 @@ static int try_reduce_tranif_stren(word *oside_val, struct gate_t *gp)
  /* if off, no contribution */
  if (conducting == 0) return(0);
 
- /* LOOKATME - maybe should use g_gone or other bit - but adds whole word */
+ /* LOOKATME - maybe should use g_gone or other bit - but adds whole word32 */
  if (gid == G_RTRANIF0 || gid == G_RTRANIF1) is_resist = TRUE;
  else is_resist = FALSE;
 
@@ -3487,12 +3488,12 @@ static int try_reduce_tranif_stren(word *oside_val, struct gate_t *gp)
  * returns conducting value if not 0 sets oside_val to reduced val
  * SJM 04/23/01 - also if tranif and conducting x/z (3), value is H or L
  */
-static void try_reduce_tran_stren(word *oside_val, int gid)
+static void try_reduce_tran_stren(word32 *oside_val, int32 gid)
 {
- int is_resist;
- word sb2, st1, st0;
+ int32 is_resist;
+ word32 sb2, st1, st0;
  
- /* LOOKATME - maybe should use g_gone or other bit - but adds whole word */
+ /* LOOKATME - maybe should use g_gone or other bit - but adds whole word32 */
  if (gid == G_RTRAN) is_resist = TRUE; else is_resist = FALSE;
 
  sb2 = *oside_val;
@@ -3520,12 +3521,12 @@ static void try_reduce_tran_stren(word *oside_val, int gid)
  *
  * LOOKATME - could use state unless in same switch channel
  */
-static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
+static int32 get_switch_tranif_onoff(struct gate_t *gp, int32 gid)
 { 
  register struct expr_t *termxp;
  register struct net_t *np2;
- register int val, bi;
- int ibi;
+ register int32 val, bi;
+ int32 ibi;
  struct vbinfo_t *vbip;
  struct chanrec_t *chanp;
 
@@ -3544,7 +3545,7 @@ static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
    chanp = &(__chantab[vbip->chan_id]);
    /* SJM 10/29/01 - need to access var value for inout chans, no vtx state */ 
    if (chanp->chan_no_vtxs) val = get_bidchan_val(chanp, np2, ibi, 0); 
-   else val = (int) vbip->vivxp->new_vtxval;
+   else val = (int32) vbip->vivxp->new_vtxval;
    break;
   case GLBREF:
    __xmrpush_refgrp_to_targ(termxp->ru.grp);
@@ -3554,7 +3555,7 @@ static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
 
    chanp = &(__chantab[vbip->chan_id]);
    if (chanp->chan_no_vtxs) val = get_bidchan_val(chanp, np2, ibi, 0); 
-   else val = (int) vbip->vivxp->new_vtxval;
+   else val = (int32) vbip->vivxp->new_vtxval;
    __pop_itstk();
    break;
   case LSB:
@@ -3567,7 +3568,7 @@ static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
      if ((vbip = np2->ntraux->vbitchans[ibi + bi]) == NULL) goto no_traux;
      chanp = &(__chantab[vbip->chan_id]);
      if (chanp->chan_no_vtxs) val = get_bidchan_val(chanp, np2, ibi, bi); 
-     else val = (int) vbip->vivxp->new_vtxval;
+     else val = (int32) vbip->vivxp->new_vtxval;
      break;
     }
    __xmrpush_refgrp_to_targ(termxp->lu.x->ru.grp);
@@ -3576,7 +3577,7 @@ static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
     { __pop_itstk(); goto no_traux; }
    chanp = &(__chantab[vbip->chan_id]);
    if (chanp->chan_no_vtxs) val = get_bidchan_val(chanp, np2, ibi, bi); 
-   else val = (int) vbip->vivxp->new_vtxval;
+   else val = (int32) vbip->vivxp->new_vtxval;
    __pop_itstk();
    break;
   default: goto no_traux;
@@ -3592,7 +3593,7 @@ static int get_switch_tranif_onoff(struct gate_t *gp, int gid)
 
 no_traux:
  /* notice state is stored as conducting after correct for tranif0 gates */
- return((int) get_tranif_onoff_(gp));
+ return((int32) get_tranif_onoff_(gp));
 }
 
 /*
@@ -3601,11 +3602,11 @@ no_traux:
  *
  * SJM 10/29/01 - need to access var value for inout chans, no vtx state
  */
-static int get_bidchan_val(struct chanrec_t *chanp, register struct net_t *np,
- int ibi, int bi)
+static int32 get_bidchan_val(struct chanrec_t *chanp, register struct net_t *np,
+ int32 ibi, int32 bi)
 {
- register int val, chtyp;
- word nav, nbv;
+ register int32 val, chtyp;
+ word32 nav, nbv;
 
  if ((chtyp = chanp->chtyp) == TRPROC_STBID) val = np->nva.bp[ibi + bi];
  else if (chtyp == TRPROC_BID) 
@@ -3632,7 +3633,7 @@ static int get_bidchan_val(struct chanrec_t *chanp, register struct net_t *np,
  */
 extern void __immed_eval_trifchan(struct gate_t *gp)
 {
- int nd_itpop, bi;
+ int32 nd_itpop, bi;
  struct net_t *np;
  struct traux_t *trap;
  struct expr_t *xp, *idndp;
@@ -3707,9 +3708,9 @@ extern void __immed_eval_trifchan(struct gate_t *gp)
  */
 extern void __dmp_modtrans(struct mod_t *mdp)
 {
- register int ni, ii;
+ register int32 ni, ii;
  register struct net_t *np;
- int insts, bi2;
+ int32 insts, bi2;
  struct traux_t *trap;
  struct vbinfo_t *vbip;
  struct vtx_t *vtxp;
@@ -3752,7 +3753,7 @@ extern void __dmp_modtrans(struct mod_t *mdp)
 extern void __dmp_trchan(struct vtx_t *vtxp)
 {
  register struct edge_t *ep;
- int bi, chanid, base, ei;
+ int32 bi, chanid, base, ei;
  struct net_t *np;
  struct chanrec_t *chanp;
 
@@ -3787,7 +3788,7 @@ extern void __dmp_trchan(struct vtx_t *vtxp)
 extern void __dmp_bidchan(struct chanrec_t *chanp)
 {
  register struct bidvtxlst_t *bidvtxlp;
- int chanid;
+ int32 chanid;
  char s1[RECLEN];
 
  chanid = chanp - __chantab;
@@ -3855,7 +3856,7 @@ static void dmp_vtx_edges(struct vtx_t *vtxp, struct itree_t *vt1_itp)
 static void dmp_vtx_and_out_edges(struct vtx_t *vtxp,
  struct itree_t *oside_itp)
 {
- register int ei;
+ register int32 ei;
  register struct edge_t *ep;
 
  if (vtxp->vtx_mark)
@@ -3880,7 +3881,7 @@ static void dmp_vtx_and_out_edges(struct vtx_t *vtxp,
 /*
  * print edge - itree version (expects start to be on itree stack) 
  */
-static void prt_edge(struct vtx_t *vtxp, struct edge_t *ep, int ei)
+static void prt_edge(struct vtx_t *vtxp, struct edge_t *ep, int32 ei)
 {
  struct itree_t *eitp, *v2itp;
  char s1[RECLEN], s2[RECLEN], s3[RECLEN];
@@ -3911,7 +3912,7 @@ static char *to_vtx(char *s, struct vtx_t *vp)
 static void getv2_itp(struct edge_t *ep, struct itree_t *vitp, 
  struct itree_t **eitp, struct itree_t **v2itp)
 {
- int num_itpops;
+ int32 num_itpops;
 
  if (ep->ev2 == NULL) __arg_terr(__FILE__, __LINE__);
  /* move forward - vitp is first */
@@ -3948,7 +3949,7 @@ static void getv2_itp(struct edge_t *ep, struct itree_t *vitp,
 extern void __dmp_bidnet_drvs(struct net_t *np, struct mod_t *mdp)
 {
  register struct edge_t *ep;
- register int ei;
+ register int32 ei;
  struct traux_t *trap;
  struct vbinfo_t *vbip;
  struct vtx_t *vtxp;
@@ -3979,17 +3980,17 @@ extern void __dmp_bidnet_drvs(struct net_t *np, struct mod_t *mdp)
  *
  * LOOKATME - trying to mimic xl style flattening for loads here
  */
-extern int __bld_xl_drvld_vtxtab(struct net_t *np, int bi,
- struct itree_t *itp, int is_load)
+extern int32 __bld_xl_drvld_vtxtab(struct net_t *np, int32 bi,
+ struct itree_t *itp, int32 is_load)
 {
  register struct net_pin_t *npp;
- int ix_insert, vi, osbi;
+ int32 ix_insert, vi, osbi, fromr_bi, catel_bi;
  struct xldlnpp_t *xldlp, *xldlp2;
  struct itree_t *ositp;
  struct mod_t *osmdp;
  struct mod_pin_t *mpp;
  struct net_t *osnp;
- struct expr_t *xp;
+ struct expr_t *xp, *catxp;
 
  __xldl_hdr = __last_xldl = NULL;
 
@@ -4060,22 +4061,26 @@ extern int __bld_xl_drvld_vtxtab(struct net_t *np, int bi,
      goto nxt_xlld_npp;
    }
    /* add other side npp to end of list - expr, net, bit set */
-   if (xp->optyp == ID)
-    {
-     osnp = xp->lu.sy->el.enp;
-     if (np->n_isavec) goto nxt_xlld_npp;
-     osbi = -1;
+   catel_bi = -1;
+   if (npp->npaux == NULL) fromr_bi = bi;
+   else
+    { 
+     if (npp->npaux->nbi1 == -1) fromr_bi = bi;
+     /* ??? LOOKATME - why is npp low psel bit subtracted off */  
+     else fromr_bi = bi - npp->npaux->nbi2.i;
+
+     /* in case this side expr in concat need low of where in concat */
+     /* so can add to otherside index to get matching oside bit */
+     if (npp->npaux->lcbi1 != -1)
+      { 
+       fromr_bi = bi + npp->npaux->lcbi1;
+       catxp = xp;
+       xp = find_cat_oside_xp(catxp, fromr_bi, &(catel_bi));
+      }
     }
-   else if (xp->optyp == LSB)
-    {
-     osnp = xp->lu.x->lu.sy->el.enp;
-     /* only constant bit selects cross */
-     if (xp->ru.x->optyp != NUMBER && xp->ru.x->optyp != ISNUMBER)
-      goto nxt_xlld_npp;
-     osbi = __comp_ndx(np, xp->ru.x);
-    }
-   /* LOOKATME - what about XMRs on other side ?? */
-   else goto nxt_xlld_npp;
+   osnp = xldrvld_to_netbit(xp, ((catel_bi == -1) ? fromr_bi : catel_bi),
+    &(osbi), ositp); 
+   if (osbi == -2) goto nxt_xlld_npp;
 
    /* try to add net vertex - added unless already in table */
    if ((vi = get_xldl_vtx(ositp, osnp, osbi, &ix_insert)) != -1)
@@ -4105,12 +4110,56 @@ nxt_xlld_npp:
 }
 
 /*
+ * get net and bit from expr for buildin
+ * given an driv tran channel lhs non concatenate expression get net and bit
+ *
+ * almost same as tranx to net bit
+ * sets bi to -2 for other side out of this side range or not constant ndx
+ */
+static struct net_t *xldrvld_to_netbit(register struct expr_t *xp,
+ int32 fromr_bi, int32 *bi, struct itree_t *oside_itp)
+{
+ register struct net_t *np;
+ int32 ri1, ri2;
+
+ np = __find_tran_conn_np(xp);
+ if (xp->optyp == LSB)
+ {
+   __push_itstk(oside_itp);
+   if (xp->ru.x->optyp != NUMBER && xp->ru.x->optyp != ISNUMBER) *bi = -2;
+   else
+    {
+     *bi = __get_const_bselndx(xp);
+     if (fromr_bi > 0) *bi = -2;
+    }
+   __pop_itstk();
+   return(np);
+  }
+ if (xp->optyp == PARTSEL)
+  {
+   ri1 = __contab[xp->ru.x->lu.x->ru.xvi];
+   ri2 = __contab[xp->ru.x->ru.x->ru.xvi];
+   if (fromr_bi == -1) *bi = ri2;
+   else { *bi = ri2 + fromr_bi; if (*bi > ri1) *bi = -2;  }
+   return(np);
+  }
+ /* this side is 1 bit scalar */
+ if (!np->n_isavec)
+  {
+   *bi = -1;
+   if (fromr_bi > 0) *bi = -2;
+  }
+ else { if (fromr_bi >= np->nwid) *bi = -2; else *bi = fromr_bi;  }
+ return(np);
+}
+
+/*
  * add mod port and iconn edges (npps) connecting to net or net bit to list
  *
  * this include all npp's that are one bit and match bit if bit select
  * filtering out other type (non load or non driver) done elsewhere
  */
-static void fill_port_npps(struct net_t *np, int bi, struct itree_t *itp)
+static void fill_port_npps(struct net_t *np, int32 bi, struct itree_t *itp)
 {
  register struct net_pin_t *npp;
  
@@ -4157,9 +4206,9 @@ done:
 /*
  * add right inst and right bit npps to port vertex list
  */
-static void add_match_vtxs(struct net_t *np, struct net_pin_t *npp, int bi)  
+static void add_match_vtxs(struct net_t *np, struct net_pin_t *npp, int32 bi)  
 {
- int ri1, ri2;
+ int32 ri1, ri2;
  struct xldlnpp_t *xldlp;
 
  /* filter out per inst. that is not this instance */
@@ -4180,9 +4229,9 @@ static void add_match_vtxs(struct net_t *np, struct net_pin_t *npp, int bi)
    /* --- */
    goto got_match;
   }
- /* entire vector or part select stops xl style drive/load connections */
- if (ri1 != ri2) return;
- if (bi != ri1) return;
+ /* SJM 01/28/05 - old algorithm that stop on entire vector or psel */
+ /* wrong - must match as usual */
+ if (bi > ri1 || bi < ri2) return;
 
 got_match:
   xldlp = (struct xldlnpp_t *) __my_malloc(sizeof(struct xldlnpp_t));
@@ -4201,11 +4250,11 @@ got_match:
  * sets ix_insert index if not found 
  * binary search better even for small table
  */
-static int get_xldl_vtx(struct itree_t *itp, struct net_t *np, int bi,
- int *ix_insert)
+static int32 get_xldl_vtx(struct itree_t *itp, struct net_t *np, int32 bi,
+ int32 *ix_insert)
 {
- register int m, cv;
- int l, h;
+ register int32 m, cv;
+ int32 l, h;
  register struct xldlvtx_t *xldlvp;
 
  if (__num_xldlvtxs <= 0) { *ix_insert = 0; return(-1); }
@@ -4239,11 +4288,11 @@ static int get_xldl_vtx(struct itree_t *itp, struct net_t *np, int bi,
  * know now in table and ix_insert set to place to insert or not called 
  * must call get xldl vtx before calling this to set ix_insert
  */
-static int add_xldl_vtx(struct itree_t *itp, struct net_t *np, int bi,
- int ix_insert)
+static int32 add_xldl_vtx(struct itree_t *itp, struct net_t *np, int32 bi,
+ int32 ix_insert)
 {
- register int ki;
- int osize, nsize;
+ register int32 ki;
+ int32 osize, nsize;
  struct xldlvtx_t *xldlvp;
 
  if (++__num_xldlvtxs > __siz_xldlvtxtab)
@@ -4291,11 +4340,11 @@ static int add_xldl_vtx(struct itree_t *itp, struct net_t *np, int bi,
  * this is called in stmt itree context but if lhs xmr, itp passed
  * and returns also in stmt itree context - called proc handle push/pop
  */
-extern void __qc_tran_wireforce(struct net_t *np, int biti, int bitj,
- int rhsbi, struct itree_t *itp, struct st_t *qcfstp)
+extern void __qc_tran_wireforce(struct net_t *np, int32 biti, int32 bitj,
+ int32 rhsbi, struct itree_t *itp, struct st_t *qcfstp)
 {
- register int bi;
- word aval, bval;
+ register int32 bi;
+ word32 aval, bval;
  struct xstk_t *xsp;
  struct expr_t *rhsx;
 
@@ -4335,11 +4384,11 @@ extern void __qc_tran_wireforce(struct net_t *np, int biti, int bitj,
 /*
  * do force for one net-bit or scalar in tran channel 
  */
-static void do_qc_wire_intran_force(struct net_t *np, int biti, word aval,
- word bval, struct itree_t *lhs_itp)
+static void do_qc_wire_intran_force(struct net_t *np, int32 biti, word32 aval,
+ word32 bval, struct itree_t *lhs_itp)
 {
- register int ibase;
- int nd_itpop;
+ register int32 ibase;
+ int32 nd_itpop;
 
  /* debug message must use statment not lhs itree context */
  if (__debug_flg && __ev_tracing)
@@ -4351,7 +4400,7 @@ static void do_qc_wire_intran_force(struct net_t *np, int biti, word aval,
    __tr_msg(
     ":: quasi-continuous force of switch channel wire %s in %s from force at %s now %s\n",
     s1, __msg2_blditree(__xs2, __inst_ptr),
-     __bld_lineloc(__xs, (unsigned) __sfnam_ind, __slin_cnt),
+     __bld_lineloc(__xs, (word32) __sfnam_ind, __slin_cnt),
     __to_timstr(s2, &__simtime));
   }
 
@@ -4395,10 +4444,10 @@ static void do_qc_wire_intran_force(struct net_t *np, int biti, word aval,
  * can use lhs expr and net/bit
  * SJM 04/15/01 - need to pass any lhs itree context if lhs xmr
  */
-extern void __qc_tran_wirerelease(struct net_t *np, int biti, int bitj,
+extern void __qc_tran_wirerelease(struct net_t *np, int32 biti, int32 bitj,
  struct itree_t *itp, struct expr_t *lhsx)
 {
- register int bi;
+ register int32 bi;
 
  if (!np->n_isavec)
   {
@@ -4420,11 +4469,11 @@ extern void __qc_tran_wirerelease(struct net_t *np, int biti, int bitj,
  * this must push lhs xmr itree loc that it is passed if needed 
  * this handles release PLI callbacks if needed
  */
-static void do_qc_wire_intran_release(struct net_t *np, int biti,
+static void do_qc_wire_intran_release(struct net_t *np, int32 biti,
  struct expr_t *lhsx, struct itree_t *itp)
 {
- register int bi, ibase;
- int bit_forced, nd_itpop;
+ register int32 bi, ibase;
+ int32 bit_forced, nd_itpop;
  struct qcval_t *frc_qcp;
  char s1[RECLEN];
 
@@ -4451,7 +4500,7 @@ some_bit_forced:
    __tr_msg(
     ":: quasi-continuous release of switch channel wire %s in %s from release at %s now %s\n",
     s1, __msg2_blditree(__xs, __inst_ptr),
-    __bld_lineloc(__xs2, (unsigned) __sfnam_ind, __slin_cnt),
+    __bld_lineloc(__xs2, (word32) __sfnam_ind, __slin_cnt),
     __to_timstr(s2, &__simtime));
   }
 
@@ -4496,10 +4545,10 @@ some_bit_forced:
  * result is that for every bit a switch channel is forced
  * here since comes from vpi passed right force itree context
  */
-extern void __tran_wire_vpi_force(struct net_t *np, word *ap, word *bp,
- int ndx) 
+extern void __tran_wire_vpi_force(struct net_t *np, word32 *ap, word32 *bp,
+ int32 ndx) 
 {
- register int bi;
+ register int32 bi;
 
  if (ndx == -1 && np->n_isavec)
   {
@@ -4516,10 +4565,10 @@ extern void __tran_wire_vpi_force(struct net_t *np, word *ap, word *bp,
  * never a need for separate rhs vpi force since user sets and passes value
  * also do not need dces for these
  */
-static void do_vpi_wire_intran_force(struct net_t *np, int ndx,
- word *ap, word *bp)
+static void do_vpi_wire_intran_force(struct net_t *np, int32 ndx,
+ word32 *ap, word32 *bp)
 {
- register int ibase;
+ register int32 ibase;
  char s3[RECLEN]; 
 
  /* make sure assign/force table exists - know vpi itree context set */ 
@@ -4537,19 +4586,14 @@ static void do_vpi_wire_intran_force(struct net_t *np, int ndx,
  ibase = __inum*np->nwid;
  if (!np->n_isavec)
   {
-   /* DBG remove -- */
-   if (ndx != -1) __misc_terr(__FILE__, __LINE__);
-   /* --- */
-
+   /* SJM 02/23/05 - since scalar do not need ndx check */
    /* SJM 11/14/00 - must also check cbs for scalar case */
    __bit1_vpi_or_tran_wireforce(np, ap, bp, ibase, 0, 0,
     "switch channel vpi_put_value");
    ndx = -1;
    goto chk_cbs;
   }
- /* DBG remove -- */
- if (ndx != -1) __misc_terr(__FILE__, __LINE__);
- /* --- */
+ /* SJM 02/23/05 - it is legal to force bit selects too */ 
  __bit1_vpi_or_tran_wireforce(np, ap, bp, ibase, ndx, ndx,
   "switch channel vpi_put_value");
 
@@ -4566,9 +4610,9 @@ chk_cbs:
  * never a need for separate rhs vpi force since user sets and passes value
  * here since comes from vpi passed right force itree context
  */
-extern void __tran_wire_vpi_release(struct net_t *np, int ndx) 
+extern void __tran_wire_vpi_release(struct net_t *np, int32 ndx) 
 {
- register int bi;
+ register int32 bi;
 
  if (ndx == -1 && np->n_isavec)
   {
@@ -4593,10 +4637,10 @@ extern void __tran_wire_vpi_release(struct net_t *np, int ndx)
  * do vpi release for one net-bit or scalar in tran channel 
  * know itree change already made if needed
  */
-static void do_vpi_wire_intran_release(struct net_t *np, int ndx)
+static void do_vpi_wire_intran_release(struct net_t *np, int32 ndx)
 {
- register int bi, ibase;
- int bit_forced;
+ register int32 bi, ibase;
+ int32 bit_forced;
  struct qcval_t *frc_qcp;
  char s3[RECLEN];
  
@@ -4645,10 +4689,10 @@ done:
  * vpi force wrapper than decomposes vector net object into bit selects
  * result is that for every bit a switch channel is forced
  */
-extern void __tran_exec_putv_wire_softforce(struct net_t *np, word *ap,
- word *bp, int ndx) 
+extern void __tran_exec_putv_wire_softforce(struct net_t *np, word32 *ap,
+ word32 *bp, int32 ndx) 
 {
- register int bi;
+ register int32 bi;
 
  if (ndx == -1 && np->n_isavec)
   {
@@ -4662,8 +4706,8 @@ extern void __tran_exec_putv_wire_softforce(struct net_t *np, word *ap,
  * do vpi force for one net-bit or scalar in tran channel 
  * know itree change already made if needed
  */
-static void do_putv_wire_intran_softforce(struct net_t *np, int ndx,
- word *ap, word *bp)
+static void do_putv_wire_intran_softforce(struct net_t *np, int32 ndx,
+ word32 *ap, word32 *bp)
 {
  struct qcval_t *frc_qcp;
  /* case 1: scalar */

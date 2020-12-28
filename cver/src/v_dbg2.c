@@ -1,4 +1,4 @@
-/* Copyright (c) 1993-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1993-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -45,80 +45,80 @@
 
 /* REMOVEME - no longer supporting SunOS - maybe needed for hpux? */
 #if defined(__sparc) && !defined(__SVR4)  
-extern int tolower(int);
-extern int sscanf(char *, char *, ...); 
+extern int32 tolower(int32);
+extern int32 sscanf(char *, char *, ...); 
 #endif
 
 #include "v.h"
 #include "cvmacros.h"
 
 /* local prototypes */
-static void get_middle_linrng(int, int *, int *);
-static struct incloc_t *find_incloc(register int);
-static int change_srcfile(int);
-static int get_lastfillin(int);
-static int bld_filpostab(int);
+static void get_middle_linrng(int32, int32 *, int32 *);
+static struct incloc_t *find_incloc(register int32);
+static int32 change_srcfile(int32);
+static int32 get_lastfillin(int32);
+static int32 bld_filpostab(int32);
 static void prt_brkpts(void);
-static char *to_brkptnam(char *, unsigned);
-static char *to_basename(char *, int);
+static char *to_brkptnam(char *, word32);
+static char *to_basename(char *, int32);
 static void dbg_info_disp(void);
-static int parse_scope_ref(struct itree_t **, struct task_t **, int *,
- int *, int *);
-static int try_get_fillin_ref(char *, int *, int *, char **, char **);
-static int local_scope_ref(char *, struct itree_t **, struct task_t **);
-static int find_infil_ind(char *);
-static int fil_lin_toscope(int, int, struct itree_t **, struct task_t **);
-static int scope_lini_inrng(int, int, int, int, int, int);
-static struct incloc_t *find2_incloc(int);
-static void set_scope_loc(struct itree_t *, struct task_t *, int *, int *);
-static int get_ibrk_linref(struct itree_t *, struct task_t *, int *, int *);
+static int32 parse_scope_ref(struct itree_t **, struct task_t **, int32 *,
+ int32 *, int32 *);
+static int32 try_get_fillin_ref(char *, int32 *, int32 *, char **, char **);
+static int32 local_scope_ref(char *, struct itree_t **, struct task_t **);
+static int32 find_infil_ind(char *);
+static int32 fil_lin_toscope(int32, int32, struct itree_t **, struct task_t **);
+static int32 scope_lini_inrng(int32, int32, int32, int32, int32, int32);
+static struct incloc_t *find2_incloc(int32);
+static void set_scope_loc(struct itree_t *, struct task_t *, int32 *, int32 *);
+static int32 get_ibrk_linref(struct itree_t *, struct task_t *, int32 *, int32 *);
 static void init_brkpt(struct brkpt_t *);
 static void insert_brkpt(struct brkpt_t *);
-static struct st_t *conv_line_tostmt(struct mod_t *, struct task_t *, int,
- int);
-static struct st_t *find_nxtstp(struct st_t *, int, int);
-static struct st_t *find_lstofsts_stp(struct st_t *, int, int);
-static struct incloc_t *find3_incloc(int, int);
-static struct st_t *find_case_stp(struct st_t *, int, int);
+static struct st_t *conv_line_tostmt(struct mod_t *, struct task_t *, int32,
+ int32);
+static struct st_t *find_nxtstp(struct st_t *, int32, int32);
+static struct st_t *find_lstofsts_stp(struct st_t *, int32, int32);
+static struct incloc_t *find3_incloc(int32, int32);
+static struct st_t *find_case_stp(struct st_t *, int32, int32);
 static struct st_t *find_afterdflt(struct csitem_t *);
 static void del_all_brkpts(void);
-static void del_brkpt_num(int);
-static int cnt_same_brkpts(int, int, struct brkpt_t **);
+static void del_brkpt_num(int32);
+static int32 cnt_same_brkpts(int32, int32, struct brkpt_t **);
 static void del_all_disps(void);
 static void del_disp_num(void);
-static struct brkpt_t *rd_brkpt_num(char *, int);
-static struct brkpt_t *find_bpp(int);
-static int elim_brkpt_fromcond(struct brkpt_t *);
+static struct brkpt_t *rd_brkpt_num(char *, int32);
+static struct brkpt_t *find_bpp(int32);
+static int32 elim_brkpt_fromcond(struct brkpt_t *);
 static void reinit_vars_and_state(void);
-static void wr_1ev_trace(int, i_tev_ndx);
-static void fill_near_evtab(int, int);
+static void wr_1ev_trace(int32, i_tev_ndx);
+static void fill_near_evtab(int32, int32);
 static struct telhdr_t *tfind_btnode_after(struct bt_t *, word64);
-static int try_add_wrkevtab(i_tev_ndx, int, int *, int);
-static int get_var_scope(struct itree_t **, struct task_t **, int *);
+static int32 try_add_wrkevtab(i_tev_ndx, int32, int32 *, int32);
+static int32 get_var_scope(struct itree_t **, struct task_t **, int32 *);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __do_scope_list(void);
 extern void __do_dbg_list(void);
-extern void __prt_src_lines(int, int, int);
+extern void __prt_src_lines(int32, int32, int32);
 extern void __do_dbg_set(void);
-extern int __get_dbg_val(void);
+extern int32 __get_dbg_val(void);
 extern void __do_dbg_info(void);
 extern void __do_dbg_scope(void);
 extern void __set_dbentry_listline(void);
 extern void __set_scopchg_listline(void);
 extern void __do_dbg_history(void);
 extern void __do_dbg_emptyhistory(void);
-extern int __do_dbg_nextb(void);
-extern void __do_dbg_brkpt(int);
-extern void __do_dbg_ibrkpt(int);
+extern int32 __do_dbg_nextb(void);
+extern void __do_dbg_brkpt(int32);
+extern void __do_dbg_ibrkpt(int32);
 extern void __do_dbg_delbrkdis(void);
 extern void __dbg_undisplay(void);
-extern void __do_dbg_dis_enable(int);
+extern void __do_dbg_dis_enable(int32);
 extern void __dbg_brk_ignore(void);
 extern void __dbg_brk_cond(void);
-extern int __process_brkpt(struct st_t *);
+extern int32 __process_brkpt(struct st_t *);
 extern void __reset_to_time0(void);
-extern void __write_snapshot(int);
+extern void __write_snapshot(int32);
 extern void __prt_where_msg(register struct thread_t *);
 extern void __dmp_tskthrds(void);
 extern void __dmp_tskthd(struct task_t *, struct mod_t *);
@@ -130,86 +130,86 @@ extern void __dmp_all_thrds(void);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
 extern void __get_vtok(void);
 extern char *__prt_vtok(void);
-extern int __chk_extra_atend(int);
-extern int __tilde_open(char *, int);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int, int);
-extern int __get_dbcmdnum(char *, struct namlst_t *, int);
-extern char *__bld_ambiguous_list(char *, char *, struct namlst_t *, int);
+extern int32 __chk_extra_atend(int32);
+extern int32 __tilde_open(char *, int32);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32, int32);
+extern int32 __get_dbcmdnum(char *, struct namlst_t *, int32);
+extern char *__bld_ambiguous_list(char *, char *, struct namlst_t *, int32);
 extern char *__schop(char *, char *);
-extern char *__to_tsktyp(char *, unsigned);
+extern char *__to_tsktyp(char *, word32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern void __call_misctfs_scope(void);
 extern void __vpi_iactscopechg_trycall(void);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern int __is_scope_sym(struct sy_t *);
+extern int32 __is_scope_sym(struct sy_t *);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
-extern void __exec_history_list(int);
+extern void __exec_history_list(int32);
 extern struct task_t *__find_thrdtsk(struct thread_t *);
-extern char *__bld_lineloc(char *, unsigned, int);
+extern char *__bld_lineloc(char *, word32, int32);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern struct expr_t *__rd_iact_expr(void);
-extern int __colto_eol(void);
-extern void __bld_xtree(int);
+extern int32 __colto_eol(void);
+extern void __bld_xtree(int32);
 extern void __free_xtree(struct expr_t *);
 extern char *__to_timstr(char *, word64 *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern int __cvt_lngbool(word *, word *, int); 
+extern int32 __cvt_lngbool(word32 *, word32 *, int32); 
 extern void __free_thd_list(struct thread_t *);
 extern void __free_1thd(struct thread_t *);
-extern void __do_iact_disable(struct hctrl_t *, int);
+extern void __do_iact_disable(struct hctrl_t *, int32);
 extern void __free_telhdr_tevs(register struct telhdr_t *);
 extern void __free_btree(struct bt_t *);
 extern void __free_1tev(i_tev_ndx);
 extern char *__pv_stralloc(char *);
 extern void __my_fclose(FILE *);
-extern void __my_close(int);
+extern void __my_close(int32);
 extern void __reinit_tfrecs(void);
 extern void __reinit_vpi(void);
 extern void __reinit_sim(void);
 extern void __reinitialize_vars(struct mod_t *);
 extern void __reinitialize_dces(struct mod_t *);
-extern void __set_init_gstate(struct gate_t *, int, int);
+extern void __set_init_gstate(struct gate_t *, int32, int32);
 extern void __set_nchgaction_bits(void);
-extern void __set_init_udpstate(struct gate_t *, int, int);
-extern void __allocinit_perival(union pck_u *, int, int, int);
+extern void __set_init_udpstate(struct gate_t *, int32, int32);
+extern void __allocinit_perival(union pck_u *, int32, int32, int32);
 extern void __reinit_mipd(struct mod_pin_t *, struct mod_t *);
-extern char *__gstate_tostr(char *, struct gate_t *, int);
+extern char *__gstate_tostr(char *, struct gate_t *, int32);
 extern char *__to_evtrcanam(char *, struct conta_t *, struct itree_t *);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern void __ld_perinst_val(register word *, register word *, union pck_u,
- int);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern void __ld_perinst_val(register word32 *, register word32 *, union pck_u,
+ int32);
 extern void __st_standval(register byte *, register struct xstk_t *, byte);
-extern char *__st_regab_tostr(char *, byte *, int);
-extern char *__regab_tostr(char *, word *, word *, int, int, int);
+extern char *__st_regab_tostr(char *, byte *, int32);
+extern char *__regab_tostr(char *, word32 *, word32 *, int32, int32, int32);
 extern char *__bld_valofsched(char *, struct tev_t *);
-extern char *__to_evtrwnam(char *, struct net_t *, int, int, struct itree_t *);
-extern char *__to_vvstnam(char *, word);
-extern void __ld_bit(register word *, register word *,
- register struct net_t *, int);
-extern char *__to_vvnam(char *, word);
+extern char *__to_evtrwnam(char *, struct net_t *, int32, int32, struct itree_t *);
+extern char *__to_vvstnam(char *, word32);
+extern void __ld_bit(register word32 *, register word32 *,
+ register struct net_t *, int32);
+extern char *__to_vvnam(char *, word32);
 extern char *__to_mpnam(char *, char *);
-extern char *__xregab_tostr(char *, word *, word *, int, struct expr_t *);
+extern char *__xregab_tostr(char *, word32 *, word32 *, int32, struct expr_t *);
 extern char *__get_tfcellnam(struct tfrec_t *);
-extern char *__to_tetyp(char *, unsigned);
-extern char *__to_dcenam(char *, unsigned);
-extern char *__to_sytyp(char *, unsigned);
+extern char *__to_tetyp(char *, word32);
+extern char *__to_dcenam(char *, word32);
+extern char *__to_sytyp(char *, word32);
 extern void __init_mod(struct mod_t *, struct sy_t *);
 extern void __free_1glb_flds(struct gref_t *);
-extern void __push_wrkitstk(struct mod_t *, int);
+extern void __push_wrkitstk(struct mod_t *, int32);
 extern void __pop_wrkitstk(void);
-extern char *__to_ptnam(char *, unsigned);
+extern char *__to_ptnam(char *, word32);
 
 extern void __cv_msg(char *, ...);
 extern void __cvsim_msg(char *, ...);
 extern void __cvsim2_msg(char *, ...);
 extern void __dbg_msg(char *, ...);
-extern void __arg_terr(char *, int);
-extern void __case_terr(char *, int);
-extern void __misc_terr(char *, int);
-extern void __ia_err(int id_num, char *s, ...);
+extern void __arg_terr(char *, int32);
+extern void __case_terr(char *, int32);
+extern void __misc_terr(char *, int32);
+extern void __ia_err(int32 id_num, char *s, ...);
 
 extern char __pv_ctab[];
 
@@ -225,13 +225,13 @@ extern char __pv_ctab[];
  */
 extern void __do_scope_list(void)
 {
- register int ifi;
- int fr_ifi, to_ifi, fr_lini, to_lini, maxlini;
+ register int32 ifi;
+ int32 fr_ifi, to_ifi, fr_lini, to_lini, maxlini;
  struct mod_t *mdp;
 
  if (__scope_tskp != NULL)
   {
-   fr_ifi = (int) __scope_tskp->tsksyp->syfnam_ind;
+   fr_ifi = (int32) __scope_tskp->tsksyp->syfnam_ind;
    fr_lini = __scope_tskp->tsksyp->sylin_cnt;
    to_ifi = __scope_tskp->tsk_last_ifi;
    to_lini =  __scope_tskp->tsk_last_lini;
@@ -239,7 +239,7 @@ extern void __do_scope_list(void)
  else
   {
    mdp = __scope_ptr->itip->imsym->el.emdp;
-   fr_ifi = (int) mdp->msym->syfnam_ind;
+   fr_ifi = (int32) mdp->msym->syfnam_ind;
    fr_lini = mdp->msym->sylin_cnt;
    to_ifi = mdp->mod_last_ifi;
    to_lini = mdp->mod_last_lini;
@@ -289,7 +289,7 @@ extern void __do_scope_list(void)
  */
 extern void __do_dbg_list(void)
 {
- int ltmp, lno1, lno2, rel_val, maxifi, maxlini, ifi, lini;
+ int32 ltmp, lno1, lno2, rel_val, maxifi, maxlini, ifi, lini;
  struct task_t *tskp;
  struct itree_t *itp;
  struct sy_t *syp;
@@ -342,7 +342,7 @@ do_l:
    if (!get_var_scope(&itp, &tskp, &ltmp)) return;
 
    if (tskp != NULL) syp = tskp->tsksyp; else syp = itp->itip->imsym;
-   ifi = (int) syp->syfnam_ind;
+   ifi = (int32) syp->syfnam_ind;
    lno1 = syp->sylin_cnt; 
    __list_arg_lini = lno1;
    __prt_src_lines(ifi, lno1, lno1 + __list_cur_listnum + 1); 
@@ -530,9 +530,9 @@ done:
 /*
  * compute range given line in middle and global number to list
  */
-static void get_middle_linrng(int mid, int *rng1, int *rng2)
+static void get_middle_linrng(int32 mid, int32 *rng1, int32 *rng2)
 {
- int ltmp;
+ int32 ltmp;
 
  if ((__list_cur_listnum % 2) == 0) ltmp = mid - __list_cur_listnum/2;
  else ltmp = mid - __list_cur_listnum/2 - 1;
@@ -544,7 +544,7 @@ static void get_middle_linrng(int mid, int *rng1, int *rng2)
  * given an in_fils index that may be included find included loc record
  * returns nil if not included file
  */
-static struct incloc_t *find_incloc(register int ifi)
+static struct incloc_t *find_incloc(register int32 ifi)
 {
  register struct incloc_t *ilp;
 
@@ -561,10 +561,10 @@ static struct incloc_t *find_incloc(register int ifi)
  * for listing of multiple files, caller must decompose 
  * FIXME - need to output OS returned message
  */
-extern void __prt_src_lines(int ifi, int frlini, int stoplini)
+extern void __prt_src_lines(int32 ifi, int32 frlini, int32 stoplini)
 {
- register int c;
- int ctrlc_stop, nlines, cnt;
+ register int32 c;
+ int32 ctrlc_stop, nlines, cnt;
  char ctab[8];
  struct filpos_t *fposp;
 
@@ -637,9 +637,9 @@ extern void __prt_src_lines(int ifi, int frlini, int stoplini)
  * only called if new_ifi different from current
  * know there will always be current source file in fils index
  */
-static int change_srcfile(int new_ifi)
+static int32 change_srcfile(int32 new_ifi)
 {
- int fd;
+ int32 fd;
  struct filpos_t *fposp;
  struct stat st;
 
@@ -686,7 +686,7 @@ good_end:
  * get last line in file
  * this uses file position table - file can remain closed
  */
-static int get_lastfillin(int ifi)
+static int32 get_lastfillin(int32 ifi)
 {
  struct filpos_t *fposp;
 
@@ -712,12 +712,12 @@ static int get_lastfillin(int ifi)
  * could free other linpostab when this built but now leaving all
  * know file not open
  */
-static int bld_filpostab(int ifi)
+static int32 bld_filpostab(int32 ifi)
 {
- register int i, buf_base, buf_size, fsize, nlines; 
- int fd, bytes, alloc_lines;
- int osize, nsize;
- int *linpostab;
+ register int32 i, buf_base, buf_size, fsize, nlines; 
+ int32 fd, bytes, alloc_lines;
+ int32 osize, nsize;
+ int32 *linpostab;
  struct stat st;
  char buf[RDBUFSIZ];
 
@@ -731,7 +731,7 @@ op_err:
  if (fstat(fd, &st) < 0) goto op_err;
  if (__start_time <= st.st_mtime)
   __ia_err(1429, "source file %s changed after simulation started", __in_fils[ifi]);
- fsize = (int) st.st_size;
+ fsize = (int32) st.st_size;
  linpostab = NULL;
  for (buf_base = 0, alloc_lines = 0, nlines = 0;;)
   {
@@ -744,7 +744,7 @@ op_err:
       "error reading source file %s when building line position table",
       __in_fils[ifi]);
      if (alloc_lines != 0) __my_free((char *) linpostab,
-      sizeof(int)*alloc_lines);
+      sizeof(int32)*alloc_lines);
      if (close(fd) != 0) 
       __ia_err(1458, "unable to close source file %s after read error",
        __in_fils[ifi]);
@@ -753,7 +753,7 @@ op_err:
    if (alloc_lines == 0)
     {
      alloc_lines = 1000;
-     linpostab = (int *) __my_malloc(alloc_lines*sizeof(int));
+     linpostab = (int32 *) __my_malloc(alloc_lines*sizeof(int32));
      linpostab[0] = 0;
      nlines = 1;
     }
@@ -764,10 +764,10 @@ op_err:
       {
        if (nlines == alloc_lines)
         {
-         osize = (unsigned) alloc_lines*sizeof(int);
+         osize = (word32) alloc_lines*sizeof(int32);
          alloc_lines *= 2;
-         linpostab = (int *) __my_realloc((char *) linpostab, osize, 
-          alloc_lines*sizeof(int)); 
+         linpostab = (int32 *) __my_realloc((char *) linpostab, osize, 
+          alloc_lines*sizeof(int32)); 
         } 
        linpostab[nlines++] = buf_base + i;
       }
@@ -792,9 +792,9 @@ op_err:
  /* must adjust allocated line table down to right size if needed */
  if (nlines != alloc_lines)
   {
-   osize = (unsigned) (alloc_lines*sizeof(int));
-   nsize = (unsigned) (nlines*sizeof(int));
-   linpostab = (int *) __my_realloc((char *) linpostab, osize, nsize);
+   osize = (word32) (alloc_lines*sizeof(int32));
+   nsize = (word32) (nlines*sizeof(int32));
+   linpostab = (int32 *) __my_realloc((char *) linpostab, osize, nsize);
   }
  __filpostab[ifi].lpostab = linpostab; 
  __filpostab[ifi].nlines = nlines; 
@@ -831,7 +831,7 @@ static struct namlst_t setargs[] = {
 extern void __do_dbg_set(void)
 {
  char blet;
- int rv, lines;
+ int32 rv, lines;
 
  __get_vtok();
  if (__toktyp != ID)
@@ -903,12 +903,12 @@ bad_base:
  *
  * LOOKATME - notice slight memory link if error is string will not be freed
  */
-extern int __get_dbg_val(void)
+extern int32 __get_dbg_val(void)
 {
- int val;
+ int32 val;
 
  if (__toktyp != NUMBER || __itoklen > WBITS || __bcwrk[0] != 0L) return(-1);  
- val = (int) __acwrk[0];
+ val = (int32) __acwrk[0];
  if (val < -1) return(-1);  
  return(val);
 }
@@ -941,7 +941,7 @@ static struct namlst_t infoargs[] = {
  */
 extern void __do_dbg_info(void)
 {
- int rv;
+ int32 rv;
  char s1[RECLEN];
  
  __get_vtok();
@@ -1015,7 +1015,7 @@ static void prt_brkpts(void)
    __cvsim_msg("%-6d  %-4s  %-5s", bpp->bp_num, s1,
     to_brkptnam(s2, bpp->bp_type));
    __cvsim_msg("  %-s:%d", __schop(s1,
-     __in_fils[bpp->bp_stp->stfnam_ind]), (int) bpp->bp_stp->stlin_cnt);
+     __in_fils[bpp->bp_stp->stfnam_ind]), (int32) bpp->bp_stp->stlin_cnt);
    /* form is :[file]:[line]([inst or type]) */
    if (bpp->bp_itp == NULL) __arg_terr(__FILE__, __LINE__); 
    
@@ -1043,7 +1043,7 @@ static void prt_brkpts(void)
 /*
  * convert breakpoint type value to its name
  */
-static char *to_brkptnam(char *s, unsigned bptyp)
+static char *to_brkptnam(char *s, word32 bptyp)
 {
  switch ((byte) bptyp) {
   case BP_INST: strcpy(s, "Inst"); break; 
@@ -1055,7 +1055,7 @@ static char *to_brkptnam(char *s, unsigned bptyp)
 /*
  * convert base code to letter
  */
-static char *to_basename(char *s, int base)
+static char *to_basename(char *s, int32 base)
 {
  switch ((byte) base) {
   case BBIN: strcpy(s, "binary"); break;
@@ -1107,7 +1107,7 @@ static void dbg_info_disp(void)
  */
 extern void __do_dbg_scope(void)
 {
- int ifi, lini, iref;
+ int32 ifi, lini, iref;
  struct itree_t *in_itp; 
  struct task_t *in_tskp;
 
@@ -1144,11 +1144,11 @@ extern void __do_dbg_scope(void)
  *
  * notice no spaces allowed in reference
  */
-static int parse_scope_ref(struct itree_t **ref_itp, struct task_t **ref_tskp,
- int *ref_ifi, int *ref_lini, int *iref)
+static int32 parse_scope_ref(struct itree_t **ref_itp, struct task_t **ref_tskp,
+ int32 *ref_ifi, int32 *ref_lini, int32 *iref)
 {
  register char *chp;
- int ifi, lini, maxlini;
+ int32 ifi, lini, maxlini;
  struct itree_t *itp;
  struct task_t *tskp;
  char *savchp, *endchp, sref[RECLEN];
@@ -1244,11 +1244,11 @@ bad_lin:
  * set ifi to -1 if turns out not to be [file]:[line] form
  * lini and endchp only good if ifi not -1
  */
-static int try_get_fillin_ref(char *st_chp, int *ifi, int *lini,
+static int32 try_get_fillin_ref(char *st_chp, int32 *ifi, int32 *lini,
  char **sav_chp, char **endchp)
 {
  register char *chp;
- int rlen, arglen, rv;
+ int32 rlen, arglen, rv;
  char *chp1, *sref, *argref;
  char s1[RECLEN];
 
@@ -1324,10 +1324,10 @@ done:
  * need to run with current module for counting any allocated globals
  * may alloc some globals in grwrk tab - need to free fields and empty tab
  */
-static int get_var_scope(struct itree_t **itpp, struct task_t **tskpp,
- int *iref)
+static int32 get_var_scope(struct itree_t **itpp, struct task_t **tskpp,
+ int32 *iref)
 {
- int gri, rv, sav_ecnt;
+ int32 gri, rv, sav_ecnt;
  struct sy_t *syp;
  struct gref_t *grp;
  struct expr_t *glbndp;
@@ -1441,7 +1441,7 @@ done:
  * get a local form scope reference
  * know 1st token read
  */
-static int local_scope_ref(char *refnam, struct itree_t **ref_itp,
+static int32 local_scope_ref(char *refnam, struct itree_t **ref_itp,
  struct task_t **ref_tskp)
 {
  struct itree_t *itp;
@@ -1507,9 +1507,9 @@ do_change:
  * given a file name or path, convert to in_fils index number
  * return -1 if no match
  */
-static int find_infil_ind(char *nam)
+static int32 find_infil_ind(char *nam)
 {
- register int i;
+ register int32 i;
  char *chp;
  
  /* file spec. if path - must match path exactly */
@@ -1536,7 +1536,7 @@ static int find_infil_ind(char *nam)
  * find scope from line number
  * do not need file pos. table for this
  */
-static int fil_lin_toscope(int ifi, int lini, struct itree_t **in_itp,
+static int32 fil_lin_toscope(int32 ifi, int32 lini, struct itree_t **in_itp,
  struct task_t **in_tskp)
 {
  register struct mod_t *mdp; 
@@ -1547,7 +1547,7 @@ static int fil_lin_toscope(int ifi, int lini, struct itree_t **in_itp,
  for (in_mdp = NULL, mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
    if (scope_lini_inrng(lini, ifi, mdp->msym->sylin_cnt,
-    (int) mdp->msym->syfnam_ind, mdp->mod_last_lini, mdp->mod_last_ifi))
+    (int32) mdp->msym->syfnam_ind, mdp->mod_last_lini, mdp->mod_last_ifi))
     {
      in_mdp = mdp;
      break;
@@ -1562,7 +1562,7 @@ static int fil_lin_toscope(int ifi, int lini, struct itree_t **in_itp,
   {
    /* notice must include named blocks as well as task/funcs in scope */
    if (scope_lini_inrng(lini, ifi, tskp->tsksyp->sylin_cnt,
-    (int) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
+    (int32) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
     { *in_tskp = tskp; break; }
   } 
  return(TRUE);
@@ -1574,8 +1574,8 @@ static int fil_lin_toscope(int ifi, int lini, struct itree_t **in_itp,
  * here line can be anywhere in module scope providing followed by procedural
  * statement
  */
-static int scope_lini_inrng(int lini, int ifi, int st_lini, int st_ifi,
- int last_lini, int last_ifi)
+static int32 scope_lini_inrng(int32 lini, int32 ifi, int32 st_lini, int32 st_ifi,
+ int32 last_lini, int32 last_ifi)
 {
  struct incloc_t *ilp;
 
@@ -1604,7 +1604,7 @@ static int scope_lini_inrng(int lini, int ifi, int st_lini, int st_ifi,
  * find incloc that is non included file
  * for multiply included this returns location of outermost
  */
-static struct incloc_t *find2_incloc(int ifi)
+static struct incloc_t *find2_incloc(int32 ifi)
 {
  struct incloc_t *ilp, *ilp2; 
 
@@ -1626,7 +1626,7 @@ static struct incloc_t *find2_incloc(int ifi)
  */
 extern void __set_dbentry_listline(void)
 {
- int lini, ifi;
+ int32 lini, ifi;
  struct st_t *stp;
 
  if (__suspended_thd == NULL || __suspended_thd->thnxtstp == NULL)
@@ -1636,7 +1636,7 @@ extern void __set_dbentry_listline(void)
   }
 
  stp = __suspended_thd->thnxtstp;
- ifi = (int) stp->stfnam_ind;
+ ifi = (int32) stp->stfnam_ind;
  /* never change dbg list line to interactive history */
  if (ifi == __cmd_ifi) goto done;
  lini = stp->stlin_cnt;
@@ -1651,7 +1651,7 @@ extern void __set_dbentry_listline(void)
   if (__debug_flg)
    {
    __dbg_msg("=== IACT entry at %s scope %s\n",
-    __bld_lineloc(__xs, (unsigned) __list_cur_ifi, __list_cur_lini), 
+    __bld_lineloc(__xs, (word32) __list_cur_ifi, __list_cur_lini), 
     __msg_blditree(__xs2, __scope_ptr, __scope_tskp));
    }
  --- */
@@ -1662,13 +1662,13 @@ extern void __set_dbentry_listline(void)
  */
 extern void __set_scopchg_listline(void)
 {
- int lini, ifi;
+ int32 lini, ifi;
  struct sy_t *syp;
 
  /* no suspended thread use first line of scope */
  if (__scope_tskp != NULL) syp = __scope_tskp->tsksyp;
  else syp = __scope_ptr->itip->imsym;
- ifi = (int) syp->syfnam_ind;
+ ifi = (int32) syp->syfnam_ind;
  /* start with list arg same as scope */
  lini = syp->sylin_cnt;
  __list_arg_lini = __list_cur_lini = lini;
@@ -1681,7 +1681,7 @@ extern void __set_scopchg_listline(void)
  */
 extern void __do_dbg_history(void)
 {
- int hnum;
+ int32 hnum;
 
  __get_vtok(); 
  if (__toktyp == TEOF) { __exec_history_list(__hist_cur_listnum); return; }
@@ -1697,9 +1697,9 @@ extern void __do_dbg_history(void)
  */
 extern void __do_dbg_emptyhistory(void)
 {
- register int iahi;
+ register int32 iahi;
  struct iahist_t *iahp;
- int llen;
+ int32 llen;
 
  /* first check to make sure nothing pending */ 
  for (iahi = 1; iahi <= __iah_lasti; iahi++) 
@@ -1737,7 +1737,7 @@ extern void __do_dbg_emptyhistory(void)
  * : debugger command to stop over current statement
  * abbreviation for :tibreak [next line] if exists, '.'
  */
-extern int __do_dbg_nextb(void)
+extern int32 __do_dbg_nextb(void)
 {
  struct thread_t *thp;
  struct st_t *stp;
@@ -1781,9 +1781,9 @@ extern int __do_dbg_nextb(void)
 /*
  * : debugger command to set a breakpoint that applies to all insts of type
  */
-extern void __do_dbg_brkpt(int is_tmp)
+extern void __do_dbg_brkpt(int32 is_tmp)
 {
- int ifi, lini, iref;
+ int32 ifi, lini, iref;
  struct brkpt_t *bpp;
  struct itree_t *in_itp; 
  struct task_t *in_tskp;
@@ -1874,13 +1874,13 @@ extern void __do_dbg_brkpt(int is_tmp)
  * takes itp and tskp inputs, and sets addrs ref_ifi and ref_lini
  */
 static void set_scope_loc(struct itree_t *itp, struct task_t *tskp, 
- int *ref_ifi, int *ref_lini)
+ int32 *ref_ifi, int32 *ref_lini)
 {
  struct mod_t *mdp;
 
  if (tskp != NULL)
   {
-   *ref_ifi = (int) tskp->tskst->stfnam_ind;
+   *ref_ifi = (int32) tskp->tskst->stfnam_ind;
    *ref_lini = tskp->tskst->stlin_cnt;
    return;
   }
@@ -1891,7 +1891,7 @@ static void set_scope_loc(struct itree_t *itp, struct task_t *tskp,
     "scope %s module %s no initial always blocks - no procedural location",
     __msg2_blditree(__xs, itp), mdp->msym->synam);
    /* must use first line of scope - probably later another error */
-   *ref_ifi = (int) itp->itip->imsym->syfnam_ind; 
+   *ref_ifi = (int32) itp->itip->imsym->syfnam_ind; 
    *ref_lini = itp->itip->imsym->sylin_cnt; 
    return;
   }
@@ -1902,9 +1902,9 @@ static void set_scope_loc(struct itree_t *itp, struct task_t *tskp,
 /*
  * : debugger command to set a breakpoint that applies to all insts of type
  */
-extern void __do_dbg_ibrkpt(int is_tmp)
+extern void __do_dbg_ibrkpt(int32 is_tmp)
 {
- int ifi, lini, iref;
+ int32 ifi, lini, iref;
  struct brkpt_t *bpp;
  struct itree_t *in_itp; 
  struct task_t *in_tskp;
@@ -1952,7 +1952,7 @@ extern void __do_dbg_ibrkpt(int is_tmp)
     {
      if (__scope_tskp != NULL) syp = __scope_tskp->tsksyp;
      else syp = __scope_ptr->itip->imsym;
-     ifi = (int) syp->syfnam_ind;
+     ifi = (int32) syp->syfnam_ind;
      lini = syp->sylin_cnt; 
      in_itp = __scope_ptr;
      in_tskp = __scope_tskp;
@@ -2034,8 +2034,8 @@ got_comma:
  * know , read and reads end of [line] or [file]:[line] reference
  * return F on error
  */
-static int get_ibrk_linref(struct itree_t *itp, struct task_t *tskp,
- int *ifi, int *lini) 
+static int32 get_ibrk_linref(struct itree_t *itp, struct task_t *tskp,
+ int32 *ifi, int32 *lini) 
 {
  register char *chp;
  struct sy_t *syp;
@@ -2066,13 +2066,13 @@ bad_lin_num:
    if (sscanf(sref, "%d", lini) != 1) goto bad_lin_num; 
    if (tskp != NULL) syp = tskp->tsksyp; else syp = itp->itip->imsym;
     /* have [line] form - file is first in scope */
-   *ifi = (int) syp->syfnam_ind;
+   *ifi = (int32) syp->syfnam_ind;
   }
  /* make sure in range */
  if (tskp != NULL)
   {
    if (!scope_lini_inrng(*lini, *ifi, tskp->tsksyp->sylin_cnt,
-    (int) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
+    (int32) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
     {
 out_of_rng:
      __ia_err(1482, ":ibreakpoint %s:%d not before statement in scope %s",
@@ -2084,7 +2084,7 @@ out_of_rng:
  /* must be in scope with initial/always and before last */
  mdp = itp->itip->imsym->el.emdp;
  if (!scope_lini_inrng(*lini, *ifi, mdp->msym->sylin_cnt,
-  (int) mdp->msym->syfnam_ind, mdp->mod_last_lini, mdp->mod_last_ifi))
+  (int32) mdp->msym->syfnam_ind, mdp->mod_last_lini, mdp->mod_last_ifi))
   goto out_of_rng;
  if (mdp->ialst == NULL) goto out_of_rng;
  /* if after last - error later */
@@ -2121,7 +2121,7 @@ static void insert_brkpt(struct brkpt_t *bpp)
 {
  register struct brkpt_t *bpp2;
  struct brkpt_t *bpp_last;
- int seen_same_line;
+ int32 seen_same_line;
 
  seen_same_line = FALSE;
  for (bpp_last = NULL, bpp2 = __bphdr; bpp2 != NULL; bpp2 = bpp2->bpnxt) 
@@ -2164,12 +2164,12 @@ static void insert_brkpt(struct brkpt_t *bpp)
  * tricky because scope can extend across multiple files
  */
 static struct st_t *conv_line_tostmt(struct mod_t *in_mdp,
- struct task_t *in_tskp, int ifi, int lini)
+ struct task_t *in_tskp, int32 ifi, int32 lini)
 {
  register struct ialst_t *ialp; 
  struct st_t *stp, *stp2;
  struct incloc_t *ilp;
- int st_ifi, st_lini, ifi2, lini2;
+ int32 st_ifi, st_lini, ifi2, lini2;
 
  /* if in included file, must use line included form in range tests */ 
  if ((ilp = find2_incloc(ifi)) != NULL) 
@@ -2182,7 +2182,7 @@ static struct st_t *conv_line_tostmt(struct mod_t *in_mdp,
    stp = in_tskp->tskst; 
    /* know will always be at least an NONE - ; by itself */
    if (stp == NULL) __misc_terr(__FILE__, __LINE__);
-   st_ifi = (int) stp->stfnam_ind;
+   st_ifi = (int32) stp->stfnam_ind;
    st_lini = stp->stlin_cnt;
    /* if location in task and before first statement - use first statement */
    if (ifi2 <= st_ifi && lini2 <= st_lini) return(stp);
@@ -2203,7 +2203,7 @@ static struct st_t *conv_line_tostmt(struct mod_t *in_mdp,
    if (ifi2 < ialp->ia_first_ifi || (ifi2 == ialp->ia_first_ifi
     && lini2 < ialp->ia_first_lini)) continue;
    /* if location after, end of initial/always skip */
-   if (ifi2 > (int) ialp->ia_last_ifi || (ifi2 == ialp->ia_last_ifi
+   if (ifi2 > (int32) ialp->ia_last_ifi || (ifi2 == ialp->ia_last_ifi
     && lini2 > ialp->ia_last_lini)) continue;
 
    /* here must match include line */
@@ -2223,11 +2223,11 @@ static struct st_t *conv_line_tostmt(struct mod_t *in_mdp,
  * know line after last_stp and before next statement
  * look inside statement if possible
  */
-static struct st_t *find_nxtstp(struct st_t *last_stp, int ifi, int lini)
+static struct st_t *find_nxtstp(struct st_t *last_stp, int32 ifi, int32 lini)
 {
- int fji;
+ int32 fji;
  byte styp; 
- int st_ifi, st_lini, has_else;
+ int32 st_ifi, st_lini, has_else;
  struct st_t *tmpstp, *stp2, *fjstp;
  struct task_t *tskp;
  
@@ -2249,8 +2249,8 @@ try_then:
     }
    /* has else */
    tmpstp = last_stp->st.sif.elsest;
-   st_ifi = (int) tmpstp->stfnam_ind;
-   st_lini = (int) tmpstp->stlin_cnt;
+   st_ifi = (int32) tmpstp->stfnam_ind;
+   st_lini = (int32) tmpstp->stlin_cnt;
    /* if match else statement, return it */
    if (ifi == st_ifi && lini == st_lini) return(tmpstp);
    if (ifi < st_ifi || (ifi == st_ifi && lini < st_lini))
@@ -2280,11 +2280,11 @@ try_then:
    /* if inside name block must succeed */
    tskp = last_stp->st.snbtsk;
    if (scope_lini_inrng(lini, ifi, tskp->tsksyp->sylin_cnt,
-    (int) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
+    (int32) tskp->tsksyp->syfnam_ind, tskp->tsk_last_lini, tskp->tsk_last_ifi))
     {
      tmpstp = tskp->tskst; 
      /* if location in task and before first sttt - use first statement */
-     if (ifi <= (int) tmpstp->stfnam_ind && lini <= tmpstp->stlin_cnt)
+     if (ifi <= (int32) tmpstp->stfnam_ind && lini <= tmpstp->stlin_cnt)
       return(tmpstp);
 
      /* this will set last if past last in block statement */
@@ -2332,18 +2332,18 @@ try_then:
  * find next statement in list 
  * can be before first in which case return first, if after last, return nil
  */
-static struct st_t *find_lstofsts_stp(struct st_t *hdrstp, int ifi, int lini)
+static struct st_t *find_lstofsts_stp(struct st_t *hdrstp, int32 ifi, int32 lini)
 {
  register struct st_t *stp; 
- int st_ifi, st_lini, ifi2, lini2; 
+ int32 st_ifi, st_lini, ifi2, lini2; 
  struct st_t *stp2;
  struct incloc_t *ilp;
 
  for (__blklast_stp = NULL, stp = hdrstp; stp != NULL; stp = stp->stnxt)
   {
    /* know does not match header */
-   st_ifi = (int) stp->stfnam_ind;
-   st_lini = (int) stp->stlin_cnt;
+   st_ifi = (int32) stp->stfnam_ind;
+   st_lini = (int32) stp->stlin_cnt;
    /* if line and statement in same file use if before or at */ 
    if (ifi == st_ifi && lini <= st_lini) return(stp);
 
@@ -2376,7 +2376,7 @@ static struct st_t *find_lstofsts_stp(struct st_t *hdrstp, int ifi, int lini)
  * for multiply included this returns location of outermost or caller if
  * caller is itself an included file 
  */
-static struct incloc_t *find3_incloc(int ifi, int call_ifi)
+static struct incloc_t *find3_incloc(int32 ifi, int32 call_ifi)
 {
  struct incloc_t *ilp, *ilp2; 
 
@@ -2398,7 +2398,7 @@ static struct incloc_t *find3_incloc(int ifi, int call_ifi)
  * know after case header and can have default case somwwhere
  * each case statement or default can be list (begin elided)
  */
-static struct st_t *find_case_stp(struct st_t *last_stp, int ifi, int lini)
+static struct st_t *find_case_stp(struct st_t *last_stp, int32 ifi, int32 lini)
 {
  register struct csitem_t *csip;
  struct st_t *stp, *tmpstp, *stp_after_dflt;
@@ -2436,11 +2436,11 @@ static struct st_t *find_case_stp(struct st_t *last_stp, int ifi, int lini)
 static struct st_t *find_afterdflt(struct csitem_t *dflt_csip)
 {
  register struct csitem_t *csip;
- int st_ifi, st_lini, dflt_ifi, dflt_lini;
+ int32 st_ifi, st_lini, dflt_ifi, dflt_lini;
  struct st_t *dfltstp, *stp;
 
  dfltstp = dflt_csip->csist;
- dflt_ifi = (int) dfltstp->stfnam_ind;
+ dflt_ifi = (int32) dfltstp->stfnam_ind;
  dflt_lini = dfltstp->stlin_cnt;
  
  /* key is that know all case items except default in source order */
@@ -2448,7 +2448,7 @@ static struct st_t *find_afterdflt(struct csitem_t *dflt_csip)
  for (csip = dflt_csip->csinxt; csip != NULL; csip = csip->csinxt)
   {
    stp = csip->csist;
-   st_ifi = (int) stp->stfnam_ind;
+   st_ifi = (int32) stp->stfnam_ind;
    st_lini = stp->stlin_cnt;
    if (st_ifi > dflt_ifi || (st_ifi == dflt_ifi && st_lini >= dflt_lini))
     return(stp);
@@ -2467,11 +2467,11 @@ static struct namlst_t dtyparg[] = {
 #define NTYPARGS (sizeof(dtyparg) / sizeof(struct namlst_t))
 
 /*
- * : debugger breakpint delete command
+ * : debugger breakpint32 delete command
  */
 extern void __do_dbg_delbrkdis(void)
 {
- int bpnum, deltyp;
+ int32 bpnum, deltyp;
 
  __get_vtok();
  if (__toktyp == ID)
@@ -2529,11 +2529,11 @@ static void del_all_brkpts(void)
 /*
  * delete break in globals tok typ and token
  */
-static void del_brkpt_num(int bpnum)
+static void del_brkpt_num(int32 bpnum)
 {
  register struct brkpt_t *bpp;
  struct brkpt_t *last_bpp, *bpp2;
- int bpcnt;
+ int32 bpcnt;
 
  /* delete break numbered bpnum */
  for (last_bpp = NULL, bpp = __bphdr; bpp != NULL; bpp = bpp->bpnxt)
@@ -2548,7 +2548,7 @@ static void del_brkpt_num(int bpnum)
       { if (bpp->bp_num == __nxt_bpnum - 1) __nxt_bpnum--; } 
 
      /* notice by here one to delete removed from list */
-     bpcnt = cnt_same_brkpts((int) bpp->bp_stp->stfnam_ind,
+     bpcnt = cnt_same_brkpts((int32) bpp->bp_stp->stfnam_ind,
       bpp->bp_stp->stlin_cnt, &bpp2);
      /* if no more at this location and triggered, untrigger */
      if (bpcnt == 0 && bpp->bp_stp->stmttyp == S_BRKPT)
@@ -2567,16 +2567,16 @@ static void del_brkpt_num(int bpnum)
 /*
  * count number of breakpoints at same location
  */
-static int cnt_same_brkpts(int ifi, int lini, struct brkpt_t **last_bpp)
+static int32 cnt_same_brkpts(int32 ifi, int32 lini, struct brkpt_t **last_bpp)
 {
- int cnt;
+ int32 cnt;
  register struct brkpt_t *bpp;
  
  cnt = 0;
  *last_bpp = NULL;
  for (bpp = __bphdr; bpp != NULL; bpp = bpp->bpnxt) 
   {
-   if (ifi == (int) bpp->bp_stp->stfnam_ind && lini == bpp->bp_stp->stlin_cnt)
+   if (ifi == (int32) bpp->bp_stp->stfnam_ind && lini == bpp->bp_stp->stlin_cnt)
     {
      cnt++;
      *last_bpp = bpp;
@@ -2625,7 +2625,7 @@ static void del_disp_num(void)
 {
  register struct dispx_t *dxp;
  struct dispx_t *last_dxp;
- int disnum;
+ int32 disnum;
 
  if ((disnum = __get_dbg_val()) == -1 || disnum < 1)
   {
@@ -2653,11 +2653,11 @@ static void del_disp_num(void)
 /*
  * disable or enable a breakpoint or display
  */
-extern void __do_dbg_dis_enable(int do_enable)
+extern void __do_dbg_dis_enable(int32 do_enable)
 {
  register struct brkpt_t *bpp;
  register struct dispx_t *dxp;
- int denum, disentyp;
+ int32 denum, disentyp;
  char s1[RECLEN];
 
  if (do_enable) strcpy(s1, "enable"); else strcpy(s1, "disable");
@@ -2732,7 +2732,7 @@ done:
  */
 extern void __dbg_brk_ignore(void)
 {
- int icnt;
+ int32 icnt;
  struct brkpt_t *bpp;
 
  __get_vtok();
@@ -2767,9 +2767,9 @@ extern void __dbg_brk_ignore(void)
  * returns nil on error
  * expects number token to have been read and reads no more
  */
-static struct brkpt_t *rd_brkpt_num(char *cmdnam, int argnum)
+static struct brkpt_t *rd_brkpt_num(char *cmdnam, int32 argnum)
 {
- int bpnum;
+ int32 bpnum;
  struct brkpt_t *bpp;
 
  if (__toktyp == TEOF)
@@ -2835,7 +2835,7 @@ extern void __dbg_brk_cond(void)
 /*
  * find a break point given its number 
  */
-static struct brkpt_t *find_bpp(int bpnum)
+static struct brkpt_t *find_bpp(int32 bpnum)
 {
  register struct brkpt_t *bpp;
 
@@ -2855,10 +2855,10 @@ static struct brkpt_t *find_bpp(int bpnum)
  * complicated breakpoint logic - every hit stmt breakpoint must change to
  * can not halt so will be execed 
  */
-extern int __process_brkpt(struct st_t *stp)
+extern int32 __process_brkpt(struct st_t *stp)
 {
  register struct brkpt_t *bpp;
- int stop_from_dup;
+ int32 stop_from_dup;
  struct brkpt_t *brk_bpp, *bpp2, *first_hitbpp;
 
  /* always find first in list */
@@ -2931,7 +2931,7 @@ found_stmt_match:
   }
  /* need to indicate at this line in case step since have hit this line */
  __step_lini = stp->stlin_cnt;
- __step_ifi = (int) stp->stfnam_ind;
+ __step_ifi = (int32) stp->stfnam_ind;
 
  /* hit breakpoint - write message and setup suspend into interactive dbger */
  __cvsim_msg("\nBreakpoint %d scope %s", first_hitbpp->bp_num,
@@ -2943,7 +2943,7 @@ found_stmt_match:
    __last_brktime = __simtime;
   }
  else __cvsim_msg("\n");
- __prt_src_lines((int) stp->stfnam_ind, stp->stlin_cnt, stp->stlin_cnt);
+ __prt_src_lines((int32) stp->stfnam_ind, stp->stlin_cnt, stp->stlin_cnt);
 
  /* remove all temp (t) breaks at this statement */
  /* know break always put on first statement of line */
@@ -2974,10 +2974,10 @@ found_stmt_match:
  * returns T if break point eliminated (i.e. not stopped at)
  * F => break hit need to enter iact mode
  */
-static int elim_brkpt_fromcond(struct brkpt_t *bpp)
+static int32 elim_brkpt_fromcond(struct brkpt_t *bpp)
 {
  struct xstk_t *xsp;
- word tmp;
+ word32 tmp;
 
  /* handle all not dup cases */
  if (!bpp->bp_enable || (bpp->bp_type == BP_INST
@@ -3033,7 +3033,7 @@ static int elim_brkpt_fromcond(struct brkpt_t *bpp)
  */
 extern void __reset_to_time0(void)
 {
- register int i;
+ register int32 i;
  register struct thread_t *thp;
  char *chp;
  struct telhdr_t *telp;
@@ -3266,11 +3266,11 @@ extern void __reset_to_time0(void)
  */
 static void reinit_vars_and_state(void)
 {
- register int gi, i, bi;
+ register int32 gi, i, bi;
  register struct conta_t *cap, *pbcap;
  register struct mod_pin_t *mpp;
  register struct mod_t *mdp;
- int insts;
+ int32 cai, insts;
  struct gate_t *gp;
  i_tev_ndx *itevpp;
 
@@ -3309,7 +3309,7 @@ static void reinit_vars_and_state(void)
        __set_init_gstate(gp, insts, FALSE);
       }
     }
-   for (cap = mdp->mcas; cap != NULL; cap = cap->canxt)
+   for (cai = 0, cap = &(mdp->mcas[0]); cai < mdp->mcanum; cai++, cap++)
     {
      if (!cap->ca_pb_sim)
       {
@@ -3373,9 +3373,9 @@ nxt_mod:
  * for active thread could actually give trace back of enables
  * may be no scope here
  */
-extern void __write_snapshot(int pend_num)
+extern void __write_snapshot(int32 pend_num)
 {
- int i;
+ int32 i;
  i_tev_ndx tevpi;
  struct thread_t *thp;
 
@@ -3391,7 +3391,7 @@ extern void __write_snapshot(int pend_num)
       __xs);
    else __cvsim_msg(
     "Current event: <none> last scope %s - last statement %s\n", __xs,
-    __bld_lineloc(__xs2, (unsigned) __sfnam_ind, __slin_cnt));
+    __bld_lineloc(__xs2, (word32) __sfnam_ind, __slin_cnt));
    if (__suspended_thd != NULL)
     {
      __cvsim_msg("Trace back of just suspended statements:\n");  
@@ -3441,7 +3441,7 @@ extern void __write_snapshot(int pend_num)
  */
 extern void __prt_where_msg(register struct thread_t *thp)
 {
- register int i;
+ register int32 i;
  struct st_t *stp;
  struct task_t *tskp;
  struct thread_t *down_thp;
@@ -3452,7 +3452,7 @@ extern void __prt_where_msg(register struct thread_t *thp)
  else tskp = thp->assoc_tsk;
 
  if ((stp = thp->thnxtstp) == NULL) strcpy(s1, "**END**"); 
- else __bld_lineloc(s1, (unsigned) stp->stfnam_ind, stp->stlin_cnt);
+ else __bld_lineloc(s1, (word32) stp->stfnam_ind, stp->stlin_cnt);
  __cvsim_msg("In scope %s next statement at %s\n",
   __msg_blditree(s2, thp->th_itp, tskp), s1);
 
@@ -3495,11 +3495,11 @@ extern void __prt_where_msg(register struct thread_t *thp)
  * write trace of 1 thread event
  * for procedural scheduled but not active
  */
-static void wr_1ev_trace(int i, i_tev_ndx tevpi)
+static void wr_1ev_trace(int32 i, i_tev_ndx tevpi)
 {
- int lhslen, bi, wlen;
+ int32 lhslen, bi, wlen;
  byte *sbp;
- word *wp, av, bv;
+ word32 *wp, av, bv;
  struct tev_t *tevp;
  struct conta_t *cap;
  struct gate_t *gp;
@@ -3579,9 +3579,9 @@ static void wr_1ev_trace(int i, i_tev_ndx tevpi)
     __to_evtrwnam(__xs, np, bi, bi, __inst_ptr), s2,
     __bld_lineloc(__xs2, np->nsym->syfnam_ind, np->nsym->sylin_cnt));
    if (np->n_stren)
-    { get_stwire_addr_(sbp, np); __to_vvstnam(s1, (word) sbp[bi]); }
+    { get_stwire_addr_(sbp, np); __to_vvstnam(s1, (word32) sbp[bi]); }
    else
-    { __ld_bit(&av, &bv, np, bi); __to_vvnam(s1, (word) (av | (bv << 1))); }
+    { __ld_bit(&av, &bv, np, bi); __to_vvnam(s1, (word32) (av | (bv << 1))); }
    __cvsim_msg("       value %s %s\n", s1, __bld_valofsched(__xs2, tevp));
    break;
   case TE_MIPD_NCHG: 
@@ -3653,10 +3653,10 @@ static void wr_1ev_trace(int i, i_tev_ndx tevpi)
  * puts in global table __wrkevtab index __last_wevti size __size_wrkevtab
  * this must skip current event
  */
-static void fill_near_evtab(int ntevs, int tefilt)
+static void fill_near_evtab(int32 ntevs, int32 tefilt)
 {
  register i_tev_ndx tevpi; 
- int evnum, osize, twi;
+ int32 evnum, osize, twi;
  word64 t1, t2;
  struct telhdr_t *ovfl_telp, *twp;
 
@@ -3790,8 +3790,8 @@ static struct telhdr_t *tfind_btnode_after(struct bt_t *btphdr, word64 tim)
  * filter is threads only or all but thread
  * this return FALSE when table full
  */
-static int try_add_wrkevtab(i_tev_ndx tevpi, int ntevs, int *evnum,
- int tefilt)
+static int32 try_add_wrkevtab(i_tev_ndx tevpi, int32 ntevs, int32 *evnum,
+ int32 tefilt)
 {
  struct tev_t *tevp;
 
@@ -3822,7 +3822,7 @@ extern void __dmp_tskthrds(void)
 {
  register struct mod_t *mdp;
  register struct task_t *tskp;
- int first_time = TRUE;
+ int32 first_time = TRUE;
 
  for (mdp = __modhdr; mdp != NULL; mdp = mdp->mnxt)
   {
@@ -3843,7 +3843,7 @@ extern void __dmp_tskthrds(void)
  */
 extern void __dmp_tskthd(struct task_t *tskp, struct mod_t *mdp)
 {
- register int i;
+ register int32 i;
  register struct tskthrd_t *ttp;
 
  if (tskp->tsktyp == FUNCTION) 

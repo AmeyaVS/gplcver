@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -45,58 +45,58 @@
 #include "cv_vpi_user.h"
 
 /* local prototypes */
-static int lbnam_so_suffix(char *);
-static int check_systf(p_vpi_systf_data, int *);
-static int chk_idnam_systfs(char *);
+static int32 lbnam_so_suffix(char *);
+static int32 check_systf(p_vpi_systf_data, int32 *);
+static int32 chk_idnam_systfs(char *);
 static void exec_vpisysfunc_compiletf(struct vpisystf_t *);
 static void exec_vpisystask_compiletf(struct vpisystf_t *);
-static struct sy_t *task_add_vpi_systf(char *, int);
-static struct sy_t *func_add_vpi_systf(char *, int);
+static struct sy_t *task_add_vpi_systf(char *, int32);
+static struct sy_t *func_add_vpi_systf(char *, int32);
 static vpiHandle valchg_cb_register(p_cb_data);
-static int chk_valchg_cb(p_cb_data, struct h_t *);
-static vpiHandle bld_cbrec(p_cb_data, unsigned);
+static int32 chk_valchg_cb(p_cb_data, struct h_t *);
+static vpiHandle bld_cbrec(p_cb_data, word32);
 static void bld_cbvc_dces(struct expr_t *, struct cbrec_t *);
-static void linkon_cb_dce(struct net_t *, int, int, struct gref_t *,
- struct cbrec_t *, int);
+static void linkon_cb_dce(struct net_t *, int32, int32, struct gref_t *,
+ struct cbrec_t *, int32);
 static vpiHandle gateout_valchg_register(struct h_t *, struct t_cb_data *);
 static void set_dce_strenchg_on(struct dceauxlst_t *);
-static vpiHandle rf_cb_register(p_cb_data, int);
-static int chk_rf_cb(p_cb_data, struct h_t *, char *);
-static vpiHandle rf_all_register_cb(p_cb_data, int);
+static vpiHandle rf_cb_register(p_cb_data, int32);
+static int32 chk_rf_cb(p_cb_data, struct h_t *, char *);
+static vpiHandle rf_all_register_cb(p_cb_data, int32);
 static vpiHandle delay_cb_register(register p_cb_data);
-static int chk_delay_cb(p_cb_data, struct h_t *);
-static void exec_vpi_delaycbs(int);
+static int32 chk_delay_cb(p_cb_data, struct h_t *);
+static void exec_vpi_delaycbs(int32);
 static void free_cbrec(struct cbrec_t *);
 static vpiHandle action_cb_register(register p_cb_data);
-static void linkout_allcb(struct cbrec_t *, int);
+static void linkout_allcb(struct cbrec_t *, int32);
 static void linkout_gateout_cb(struct cbrec_t *); 
 static void linkout_action_cb(struct cbrec_t *);
-static char *to_cbtypnam(char *, int);
+static char *to_cbtypnam(char *, int32);
 static vpiHandle get_cursystfcall(struct h_t *);
 static vpiHandle get_inmod_itp(struct h_t *);
 static vpiHandle get_obj_index(struct h_t *);
-static vpiHandle get_obj_range(struct h_t *, int);
+static vpiHandle get_obj_range(struct h_t *, int32);
 static vpiHandle get_obj_parent(struct h_t *);
 static void exprobj_to_itreeloc(struct itree_t **, struct task_t **, 
  struct expr_t *, struct itree_t *, struct task_t *);
-static vpiHandle get_obj_side(struct h_t *, int);
+static vpiHandle get_obj_side(struct h_t *, int32);
 static vpiHandle bld_scope_par(struct h_t *, struct task_t *);
 static vpiHandle getbit_lowconn(struct h_t *);
 static vpiHandle getexpr_lowconn(struct h_t *);
 static vpiHandle getbit_highconn(struct h_t *);
-static struct expr_t *find_catxp_frombit(struct expr_t *, int, int *);
+static struct expr_t *find_catxp_frombit(struct expr_t *, int32, int32 *);
 static vpiHandle getexpr_highconn(struct h_t *);
-static void no1_1to1h_err(unsigned, unsigned, struct h_t *);
-static void no_1to1h_err(int, struct h_t *);
-static vpiHandle get_tchk_term(unsigned, struct h_t *);
+static void no1_1to1h_err(word32, word32, struct h_t *);
+static void no_1to1h_err(int32, struct h_t *);
+static vpiHandle get_tchk_term(word32, struct h_t *);
 static vpiHandle get_cond(struct h_t *);
 static vpiHandle bld_1to1_exprclass_handle(struct h_t *);
-static vpiHandle mk_pthterm_exprclass_handle(struct net_t *, int, int,
+static vpiHandle mk_pthterm_exprclass_handle(struct net_t *, int32, int32,
  struct itree_t *); 
 static vpiHandle get_obj_scope(struct h_t *);
 static vpiHandle get_disable_scope(struct h_t *);
 static vpiHandle get_contained_stmt(struct h_t *);
-static vpiHandle get_dctrl_stmt(struct h_t *, int);
+static vpiHandle get_dctrl_stmt(struct h_t *, int32);
 static vpiHandle get_udpdef_from_inobj(struct h_t *);
 static vpiHandle get_contained_udp_init(struct h_t *);
 static vpiHandle get_up_poundparam_expr(struct h_t *);
@@ -104,14 +104,14 @@ static vpiHandle bld_itree_iterator(struct h_t *);
 static vpiHandle bld_type_iterator(struct h_t *);
 static vpiHandle bld_inst_iterator(struct h_t *);
 static vpiHandle bld_udpdef_iterator(struct h_t *);
-static void mustbe_inmoditer_err(unsigned, struct h_t *);
+static void mustbe_inmoditer_err(word32, struct h_t *);
 static vpiHandle bld_scope_iterator(register struct h_t *);
 static vpiHandle bld_symtabs_iterator(struct symtab_t *, struct itree_t *);
 static void fill_scopehandle(struct hrec_t *, struct symtab_t *);
-static vpiHandle bld_net_iterator(struct h_t *, unsigned);
-static vpiHandle bld_listofnets_iter(struct net_t *, int, struct itree_t *,
- unsigned, struct task_t *);
-static int cnt_typnetnum(register struct net_t *, int, unsigned);
+static vpiHandle bld_net_iterator(struct h_t *, word32);
+static vpiHandle bld_listofnets_iter(struct net_t *, int32, struct itree_t *,
+ word32, struct task_t *);
+static int32 cnt_typnetnum(register struct net_t *, int32, word32);
 
 
 static vpiHandle bld_initalw_iterator(struct h_t *);
@@ -119,16 +119,16 @@ static vpiHandle bld_conta_iterator(struct h_t *);
 static vpiHandle bld_gate_iterator(struct h_t *);
 static vpiHandle bld_modpth_iterator(struct h_t *);
 static vpiHandle bld_tchk_iterator(struct h_t *);
-static vpiHandle bld_param_iterator(struct h_t *, int);
-static vpiHandle bld_listofparams_iter(struct net_t *, int, struct itree_t *,
- struct task_t *, int);
-static vpiHandle bld_paramarr_iterator(struct h_t *, int);
+static vpiHandle bld_param_iterator(struct h_t *, int32);
+static vpiHandle bld_listofparams_iter(struct net_t *, int32, struct itree_t *,
+ struct task_t *, int32);
+static vpiHandle bld_paramarr_iterator(struct h_t *, int32);
 static vpiHandle bld_specparam_iterator(struct h_t *);
 static vpiHandle bld_defparam_stmt_iterator(struct h_t *);
 
 /* NEED? static void shrink_systfdata_tab(void); */
-static void exec_vpi_actioncbs(int);
-static void exec_vpi_tchkerr(int, struct tchk_t *, struct itree_t *);
+static void exec_vpi_actioncbs(int32);
+static void exec_vpi_tchkerr(int32, struct tchk_t *, struct itree_t *);
 
 /* extern prototypes (maybe defined in this module) */
 extern void __call_vlog_startup_procs(void);
@@ -136,11 +136,11 @@ extern void __chkbld_vpi_systf_func(struct expr_t *);
 extern void __chkbld_vpi_systf_task(struct st_t *);
 extern void __vpi_sysf_calltf(struct expr_t *);
 extern void __vpi_syst_calltf(struct st_t *);
-extern char *__cb_reason_to_nam(char *, int);
-extern int __expr_is_vpiconst(struct expr_t *);
-extern void __find_call_force_cbs(struct net_t *, int);
-extern void __find_call_rel_cbs(struct net_t *, int);
-extern void __cb_all_rfs(struct net_t *, int, int);
+extern char *__cb_reason_to_nam(char *, int32);
+extern int32 __expr_is_vpiconst(struct expr_t *);
+extern void __find_call_force_cbs(struct net_t *, int32);
+extern void __find_call_rel_cbs(struct net_t *, int32);
+extern void __cb_all_rfs(struct net_t *, int32, int32);
 extern void __cbvc_callback(struct cbrec_t *, struct h_t *);
 extern void __delay_callback(i_tev_ndx);
 extern void __vpi_startreset_trycall(void);
@@ -159,32 +159,32 @@ extern struct task_t *__find_qualnam_task(char *, struct mod_t *,
  struct task_t *);
 extern vpiHandle __mk_exprclass_handle(struct expr_t *, struct itree_t *,
  struct task_t *);
-extern vpiHandle __mk_handle(unsigned, void *, struct itree_t *,
+extern vpiHandle __mk_handle(word32, void *, struct itree_t *,
  struct task_t *);
-extern vpiHandle __mk_stmt_handle(unsigned, struct st_t *, struct itree_t *,
+extern vpiHandle __mk_stmt_handle(word32, struct st_t *, struct itree_t *,
  struct task_t *);
-extern unsigned __to_vpi_tasktyp(unsigned);
-extern unsigned __gate_to_vpiprimtyp(struct gate_t *);
+extern word32 __to_vpi_tasktyp(word32);
+extern word32 __gate_to_vpiprimtyp(struct gate_t *);
 extern void __init_hrec(struct hrec_t *);
 extern struct thread_t *__alloc_thrd(void);
-extern vpiHandle __nil_iter_err(unsigned);
-extern struct pviter_t *__alloc_iter(int, vpiHandle *);
-extern unsigned __to_vpi_stmttyp(struct st_t **);
+extern vpiHandle __nil_iter_err(word32);
+extern struct pviter_t *__alloc_iter(int32, vpiHandle *);
+extern word32 __to_vpi_stmttyp(struct st_t **);
 extern vpiHandle __bld_port_iterator(struct h_t *);
 extern vpiHandle __bld_neticonn_iter(struct h_t *);
 extern vpiHandle __bld_paramassign_stmt_iter(struct h_t *);
 extern vpiHandle __bld_udpline_iter(struct h_t *);
 extern vpiHandle __bld_primterm_iterator(struct h_t *);
-extern vpiHandle __bld_loc_lds_iterator(struct h_t *, int);
-extern vpiHandle __bld_lds_iterator(struct h_t *, int);
-extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int);
-extern vpiHandle __bld_drvs_iterator(struct h_t *, int);
+extern vpiHandle __bld_loc_lds_iterator(struct h_t *, int32);
+extern vpiHandle __bld_lds_iterator(struct h_t *, int32);
+extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int32);
+extern vpiHandle __bld_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_arrwrd_iterator(struct h_t *);
 extern vpiHandle __bld_paramwrd_iterator(struct h_t *);
 extern vpiHandle __bld_bitof_iterator(struct h_t *);
 extern vpiHandle __bld_systf_iterator(struct h_t *);
 extern vpiHandle __bld_tfargexpr_iterator(struct h_t *);
-extern vpiHandle __bld_pthterm_iterator(struct h_t *, unsigned);
+extern vpiHandle __bld_pthterm_iterator(struct h_t *, word32);
 extern vpiHandle __bld_stmt_iterator(struct h_t *);
 extern vpiHandle __bld_netin_tchkterms(struct h_t *);
 extern vpiHandle __bld_netin_pthterms(struct h_t *);
@@ -197,60 +197,60 @@ extern vpiHandle __bld_dig_attr_iter(struct h_t *);
 extern vpiHandle __bld_iodecl_stmt_iter(struct h_t *);
 extern vpiHandle __get_digattr_parent(struct h_t *);
 
-extern char *__my_realloc(char *, int, int);
+extern char *__my_realloc(char *, int32, int32);
 extern struct systsk_t *__alloc_systsk(void);
 extern struct tnode_t *__vtfind(char *, struct symtab_t *);
 extern void __add_sym(char *, struct tnode_t *);
 extern struct sysfunc_t *__alloc_sysfunc(void);
-extern int __validate_handle(char *, struct h_t *);
-extern int __validate_nonit_handle(char *, struct h_t *); 
-extern void __chg_xstk_width(struct xstk_t *, int);
+extern int32 __validate_handle(char *, struct h_t *);
+extern int32 __validate_nonit_handle(char *, struct h_t *); 
+extern void __chg_xstk_width(struct xstk_t *, int32);
 extern void __grow_xstk(void);
-extern int __wide_vval_is0(register word *, int);
+extern int32 __wide_vval_is0(register word32 *, int32);
 extern void __grow_tevtab(void);
 extern void __sim_notbegun_err(char *);
-extern int __validate_time_type(char *, int);
-extern int __validate_value_fmt(char *, int);
-extern char *__to_vpiopnam(char *, int);
+extern int32 __validate_time_type(char *, int32);
+extern int32 __validate_value_fmt(char *, int32);
+extern char *__to_vpiopnam(char *, int32);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
 extern struct dcevnt_t *__alloc_dcevnt(struct net_t *);
 extern void __alloc_1intdce_prevval(struct dcevnt_t *);
 extern void __init_1instdce_prevval(struct dcevnt_t *);
 extern struct task_t *__getcur_scope_tsk(void);
-extern void __set_vpi_time(struct t_vpi_time *, word64 *, int, struct mod_t *);
+extern void __set_vpi_time(struct t_vpi_time *, word64 *, int32, struct mod_t *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern int __vpitime_to_ticks(word64 *, p_vpi_time, struct mod_t *);
+extern int32 __vpitime_to_ticks(word64 *, p_vpi_time, struct mod_t *);
 extern void __bad_rosync_err(char *);
 extern void __insert_event(register i_tev_ndx);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
 extern char *__pv_stralloc(char *);
-extern void __free_dceauxlst(struct dceauxlst_t *, int);
+extern void __free_dceauxlst(struct dceauxlst_t *, int32);
 extern void __free_xtree(struct expr_t *);
 extern void __free_hp(struct h_t *); 
 extern void __still_comp_err(char *);
-extern int __validate_accessm(char *, int, char *);
-extern int __unnormalize_ndx(struct net_t *, int);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
-extern int __exprtype_get(struct expr_t *);
-extern char *__to_vpionam(char *, unsigned);
-extern void __getwir_range(struct net_t *, int *, int *);
-extern void __getarr_range(struct net_t *, int *, int *, int *);
+extern int32 __validate_accessm(char *, int32, char *);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
+extern int32 __exprtype_get(struct expr_t *);
+extern char *__to_vpionam(char *, word32);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
 extern char *__to_mpnam(char *, char *);
-extern int __expr_optype_get(struct expr_t *);
+extern int32 __expr_optype_get(struct expr_t *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern int __is_scope_sym(struct sy_t *);
+extern int32 __is_scope_sym(struct sy_t *);
 extern struct expr_t *__sim_alloc_newxnd(void);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
-extern unsigned __from_vpi_vartyp(unsigned);
-extern unsigned __ntyp_to_vpivarhtyp(struct net_t *);
-extern unsigned __to_vpinetbithtyp(unsigned);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
+extern word32 __from_vpi_vartyp(word32);
+extern word32 __ntyp_to_vpivarhtyp(struct net_t *);
+extern word32 __to_vpinetbithtyp(word32);
 extern struct expr_t *__glbnam_to_expr(char *);
 extern struct expr_t *__sim_copy_expr(struct expr_t *);
 extern char *__to_timstr(char *, word64 *);
 extern void __logic_acc_off(struct gate_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
-extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int);  
+extern void __dce_turn_chg_store_on(struct mod_t *, struct dcevnt_t *, int32);  
 extern void __dcelst_off(struct dceauxlst_t *);
 extern void __alloc_1instdce_prevval(struct dcevnt_t *);
 extern void __init_1instdce_prevval(struct dcevnt_t *);
@@ -258,15 +258,15 @@ extern void __init_1instdce_prevval(struct dcevnt_t *);
 
 extern void __cv_msg(char *, ...);
 extern void __tr_msg(char *, ...);
-extern void __pv_err(int, char *, ...);
-extern void __pv_warn(int, char *, ...);
-extern void __pv_vpi_terr(int, char *, ...);
-extern void __inform(int, char *, ...);
+extern void __pv_err(int32, char *, ...);
+extern void __pv_warn(int32, char *, ...);
+extern void __pv_vpi_terr(int32, char *, ...);
+extern void __inform(int32, char *, ...);
 
-extern void __vpi_err(int, int, char *, ...);
-extern void __vpi_terr(char *, int);
+extern void __vpi_err(int32, int32, char *, ...);
+extern void __vpi_terr(char *, int32);
 
-extern word __masktab[];
+extern word32 __masktab[];
 
 /* vpi only storage */
 extern struct t_vpi_error_info *__last_eip;/* if err, ptr to wrk eifo or nil */
@@ -291,7 +291,7 @@ extern void __process_pli_dynamic_libs(struct loadpli_t *ldp_hd)
 {
  register struct loadpli_t *ldp;
  register struct dynboot_t *dnbp;
- int slen;
+ int32 slen;
  void *handle;
  void *boot_rout;
  char s1[RECLEN], onam[RECLEN];
@@ -340,7 +340,7 @@ extern void __process_pli_dynamic_libs(struct loadpli_t *ldp_hd)
    /* because dynblst empty */
    for (dnbp = ldp->dynblst; dnbp != NULL; dnbp = dnbp->dynbootnxt)
     {
-#ifdef __APPLE__
+#if defined(__APPLE_CC__) && (__APPLE_CC__ < 1495)
      /* for Mach (Mac OSX) need to prepend a '_' - old BSD convention */
      /* LOOKATME - what happens if name already has '_'? */
      strcpy(s1, "_");
@@ -363,9 +363,9 @@ extern void __process_pli_dynamic_libs(struct loadpli_t *ldp_hd)
 /*
  * return T if name has .so suffix (may differ on some systems)
  */
-static int lbnam_so_suffix(char *lbnam)
+static int32 lbnam_so_suffix(char *lbnam)
 {
- int suflen;
+ int32 suflen;
  char *cp;
 
  if ((cp = rindex(lbnam, '.')) == NULL) return(FALSE);
@@ -387,7 +387,7 @@ extern void __call_vlog_startup_procs(void)
  __vpi_vlog_start_done = FALSE;
 #ifdef __STATIC_PLI__
  {
-  register int i; 
+  register int32 i; 
 
   for (i = 0;; i++) 
    {
@@ -423,7 +423,7 @@ extern void __call_vlog_startup_procs(void)
  */
 extern vpiHandle vpi_register_systf(p_vpi_systf_data systf_data_p)
 {
- int stf_ind, systf_typ;
+ int32 stf_ind, systf_typ;
  p_vpi_systf_data in_systfdatp;
  struct systftab_t *stftabp;
  struct systsk_t *stbp;
@@ -465,7 +465,7 @@ extern vpiHandle vpi_register_systf(p_vpi_systf_data systf_data_p)
  /* grow the vpi_ systf table if at end */
  if ((__last_systf - __last_veriusertf) >= __size_systftab)
   {  
-   int osize;
+   int32 osize;
 
    osize = __size_systftab*sizeof(struct systftab_t);
    __size_systftab = 3*(__size_systftab/2);
@@ -516,7 +516,7 @@ extern vpiHandle vpi_register_systf(p_vpi_systf_data systf_data_p)
  * here error message is not vpi_ error since impossible to se
  *
  */
-static int check_systf(p_vpi_systf_data systfp, int *stftyp)
+static int32 check_systf(p_vpi_systf_data systfp, int32 *stftyp)
 {
  *stftyp = SYSF_VPI;
  if (!chk_idnam_systfs(systfp->tfname)) return(FALSE);
@@ -590,10 +590,10 @@ static int check_systf(p_vpi_systf_data systfp, int *stftyp)
  * check for legal vpi systf task or function name
  * version supporting vpi style errors 
  */
-static int chk_idnam_systfs(char *tfnam)
+static int32 chk_idnam_systfs(char *tfnam)
 {
  register char *chp;
- int len;
+ int32 len;
 
  chp = tfnam;
  if (chp == NULL || *chp == '\0' || *chp != '$') 
@@ -642,7 +642,7 @@ static int chk_idnam_systfs(char *tfnam)
 /*
  * add a vpi_ systf pli system task - handles vpi style errors 
  */
-static struct sy_t *task_add_vpi_systf(char *tnam, int tnum)
+static struct sy_t *task_add_vpi_systf(char *tnam, int32 tnum)
 {
  struct systsk_t *stbp;
  struct tnode_t *tnp;
@@ -682,7 +682,7 @@ static struct sy_t *task_add_vpi_systf(char *tnam, int tnum)
 /*
  * add a vpi systf task symbol table for registering new systf task
  */
-static struct sy_t *func_add_vpi_systf(char *fnam, int fnum)
+static struct sy_t *func_add_vpi_systf(char *fnam, int32 fnum)
 {
  struct tnode_t *tnp;
  struct sy_t *syp;
@@ -725,7 +725,7 @@ static struct sy_t *func_add_vpi_systf(char *fnam, int fnum)
 extern void vpi_get_systf_info(vpiHandle object,
  p_vpi_systf_data systf_data_p)
 {
- int stf_ind;
+ int32 stf_ind;
  struct h_t *hp;
  struct hrec_t *hrp;
  p_vpi_systf_data tfdatp;
@@ -754,7 +754,7 @@ extern void vpi_get_systf_info(vpiHandle object,
 /* --- LOOKATME - think can not use this
 static void shrink_systfdata_tab(void)
 {
- int num_systfs, osize, nsize;
+ int32 num_systfs, osize, nsize;
 
  -* maybe none *-
  if (__last_systf == -1) return;
@@ -786,13 +786,13 @@ static void shrink_systfdata_tab(void)
  */
 extern void __chkbld_vpi_systf_func(struct expr_t *fcallx)
 {
- int stf_ind;
+ int32 stf_ind;
  struct sy_t *syp;
  struct sysfunc_t *syfp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
  struct vpisystf_t *vstfp;
- int (*sizetf_func)();
+ int32 (*sizetf_func)();
 
  syp = fcallx->lu.x->lu.sy;
  syfp = syp->el.esyftbp;
@@ -869,7 +869,7 @@ extern void __chkbld_vpi_systf_func(struct expr_t *fcallx)
  */
 extern void __chkbld_vpi_systf_task(struct st_t *stp)
 {
- int stf_ind;
+ int32 stf_ind;
  struct systsk_t *stbp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
@@ -938,12 +938,12 @@ extern void __exec_all_compiletf_routines(void)
  */
 static void exec_vpisysfunc_compiletf(struct vpisystf_t *vstfp)
 {
- int stf_ind;
+ int32 stf_ind;
  struct sysfunc_t *sfbp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
  struct thread_t *thp, *sav_cur_thd;
- int (*vpicomptf_func)();
+ int32 (*vpicomptf_func)();
       
  sfbp = vstfp->vsystfu.sysfcallx->lu.x->lu.sy->el.esyftbp;
  stf_ind = sfbp->syfnum - (__last_veriusertf + 1); 
@@ -997,13 +997,13 @@ static void exec_vpisysfunc_compiletf(struct vpisystf_t *vstfp)
  */
 static void exec_vpisystask_compiletf(struct vpisystf_t *vstfp)
 {
- int stf_ind;
+ int32 stf_ind;
  struct systsk_t *stbp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
  struct thread_t *thp, *sav_cur_thd;
  struct st_t *stp;
- int (*vpicomptf_tsk)();
+ int32 (*vpicomptf_tsk)();
 
  stp = vstfp->vsystfu.syststp;
  stbp = stp->st.stkc.tsksyx->lu.sy->el.esytbp;
@@ -1062,12 +1062,12 @@ static void exec_vpisystask_compiletf(struct vpisystf_t *vstfp)
  */
 extern void __vpi_sysf_calltf(struct expr_t *fcallx)
 {
- int stf_ind;
+ int32 stf_ind;
  struct sysfunc_t *sfbp;
  struct xstk_t *xsp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
- int (*vpicalltf_func)();
+ int32 (*vpicalltf_func)();
       
  sfbp = fcallx->lu.x->lu.sy->el.esyftbp;
  stf_ind = sfbp->syfnum - (__last_veriusertf + 1); 
@@ -1100,11 +1100,11 @@ extern void __vpi_sysf_calltf(struct expr_t *fcallx)
  */
 extern void __vpi_syst_calltf(struct st_t *stp)
 {
- int stf_ind;
+ int32 stf_ind;
  struct systsk_t *stbp;
  struct systftab_t *stftabp;
  p_vpi_systf_data stfdp;
- int (*vpicalltf_tsk)();
+ int32 (*vpicalltf_tsk)();
 
  stbp = stp->st.stkc.tsksyx->lu.sy->el.esytbp;
  stf_ind = stbp->stsknum - (__last_veriusertf + 1); 
@@ -1199,7 +1199,7 @@ no_sim:
 /*
  * convert a callback reason to a name
  */
-extern char *__cb_reason_to_nam(char *s, int reason)
+extern char *__cb_reason_to_nam(char *s, int32 reason)
 {
  switch (reason) {
   case cbValueChange: strcpy(s, "cbValueChange"); break;
@@ -1251,7 +1251,7 @@ extern char *__cb_reason_to_nam(char *s, int reason)
  */
 static vpiHandle valchg_cb_register(p_cb_data cb_data_p) 
 {
- int biti;
+ int32 biti;
  vpiHandle cbref, ihref;
  struct h_t *hp, *hp2;
  struct hrec_t *hrp;
@@ -1302,7 +1302,7 @@ static vpiHandle valchg_cb_register(p_cb_data cb_data_p)
    linkon_cb_dce(np, biti, biti, NULL, hp2->hrec->hu.hcbp, DCE_CBVC);
    break;
   case vpiRealVar: case vpiConstant: 
-   /* no call back allowed on real varaible or constant */
+   /* no call back allowed on real variable or constant */
    __vpi_err(1836, vpiError,
     "vpi_register_cb real value change object %s illegal",
     __to_vpionam(__wrks1, hrp->htyp));
@@ -1393,7 +1393,7 @@ bit_expr_form:
 /*
  * check value change callback passed cb_data record
  */
-static int chk_valchg_cb(p_cb_data cb_data_p, struct h_t *hp)
+static int32 chk_valchg_cb(p_cb_data cb_data_p, struct h_t *hp)
 {
  if (!__validate_nonit_handle("vpi_register_cb (value change obj)", hp))
   return(FALSE);
@@ -1426,7 +1426,7 @@ static int chk_valchg_cb(p_cb_data cb_data_p, struct h_t *hp)
  *
  * know value and time fields point to records or will not get here
  */
-static vpiHandle bld_cbrec(p_cb_data cb_data_p, unsigned cbclass)
+static vpiHandle bld_cbrec(p_cb_data cb_data_p, word32 cbclass)
 {
  vpiHandle cbref;
  struct cbrec_t *cbp;
@@ -1463,11 +1463,11 @@ static vpiHandle bld_cbrec(p_cb_data cb_data_p, unsigned cbclass)
  cbp->cb_user_data = cb_data_p->user_data;
 
  if (cb_data_p->time != NULL)
-  cbp->cb_rettimtyp = (unsigned) cb_data_p->time->type; 
+  cbp->cb_rettimtyp = (word32) cb_data_p->time->type; 
  else cbp->cb_rettimtyp = vpiSuppressTime;
  
  if (cb_data_p->value != NULL)
-  cbp->cb_retvalfmt = (unsigned) cb_data_p->value->format; 
+  cbp->cb_retvalfmt = (word32) cb_data_p->value->format; 
  else cbp->cb_retvalfmt = vpiSuppressVal;
  cbp->cbdcep = NULL;
  cbp->cbtevpi = -1;
@@ -1511,8 +1511,8 @@ static vpiHandle bld_cbrec(p_cb_data cb_data_p, unsigned cbclass)
 static void bld_cbvc_dces(struct expr_t *xp, struct cbrec_t *cbp)
 {
  struct net_t *np;
- int biti, bitj;
- word *wp;
+ int32 biti, bitj;
+ word32 *wp;
  struct expr_t *idndp, *ndx;
  struct expr_t *fax;
  
@@ -1540,7 +1540,7 @@ glb_dce:
    if (ndx->optyp == NUMBER)
     {
      wp = &(__contab[ndx->ru.xvi]);
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else if (ndx->optyp == ISNUMBER)
     {
@@ -1549,7 +1549,7 @@ glb_dce:
      wp = &(__contab[ndx->ru.xvi]);
      wp = &(wp[2*__inum]);
      /* need length for IS number because can be wider - but get low */
-     if (wp[1] != 0L) biti = -1; else biti = (int) wp[0];
+     if (wp[1] != 0L) biti = -1; else biti = (int32) wp[0];
     }
    else
     {
@@ -1569,8 +1569,8 @@ glb_dce:
    np = idndp->lu.sy->el.enp;
    ndx = xp->ru.x;
    /* know part select never IS and normalized during fixup */
-   biti = (int) __contab[ndx->lu.x->ru.xvi];
-   bitj = (int) __contab[ndx->ru.x->ru.xvi];
+   biti = (int32) __contab[ndx->lu.x->ru.xvi];
+   bitj = (int32) __contab[ndx->ru.x->ru.xvi];
    if (!np->vec_scalared) biti = bitj = -1;
    if (idndp->optyp == GLBREF) goto glb_dce;
    linkon_cb_dce(np, biti, bitj, NULL, cbp, DCE_CBVC);
@@ -1600,11 +1600,11 @@ glb_dce:
  *
  * passed biti and bitj must be normalized to internal h:0
  */
-static void linkon_cb_dce(struct net_t *np, int biti, int bitj,
- struct gref_t *grp, struct cbrec_t *cbp, int dcetyp)
+static void linkon_cb_dce(struct net_t *np, int32 biti, int32 bitj,
+ struct gref_t *grp, struct cbrec_t *cbp, int32 dcetyp)
 {
  register struct dcevnt_t *dcep;
- int nd_itpop;
+ int32 nd_itpop;
  struct itree_t *ref_itp;
  struct dceauxlst_t *dclp;
 
@@ -1686,9 +1686,9 @@ static void set_dce_strenchg_on(struct dceauxlst_t *dceaux_hd)
 static vpiHandle gateout_valchg_register(struct h_t *hp,
  struct t_cb_data *datp)
 {
- register int i, last_i;
+ register int32 i, last_i;
  register struct mod_t *mdp;
- int gi, tevpi;
+ int32 gi, tevpi;
  word64 timval;
  struct gate_t *gp;
  vpiHandle cbref;
@@ -1708,7 +1708,7 @@ static vpiHandle gateout_valchg_register(struct h_t *hp,
  if (mdp->mgateout_cbs[gi] == NULL)
   {
    mdp->mgateout_cbs[gi] = (i_tev_ndx *)
-    __my_malloc(mdp->flatinum*sizeof(int));
+    __my_malloc(mdp->flatinum*sizeof(int32));
    for (i = 0; i < mdp->flatinum; i++) mdp->mgateout_cbs[gi][i] = -1;
   }
  __have_vpi_gateout_cbs = TRUE;
@@ -1753,9 +1753,9 @@ static vpiHandle gateout_valchg_register(struct h_t *hp,
  * force and release can only be entire reg (but not real or array)
  * or wire or bit select of wire but not non lvalue expression
  */
-static vpiHandle rf_cb_register(p_cb_data cb_data_p, int qctyp)
+static vpiHandle rf_cb_register(p_cb_data cb_data_p, int32 qctyp)
 {
- int rftyp, biti;
+ int32 rftyp, biti;
  vpiHandle cbref;
  struct h_t *hp, *hp2;
  struct net_t *np;
@@ -1829,7 +1829,7 @@ bad_bsel:
 /*
  * check force/release callback passed cb_data record
  */
-static int chk_rf_cb(p_cb_data cb_data_p, struct h_t *hp, char *rfnam)
+static int32 chk_rf_cb(p_cb_data cb_data_p, struct h_t *hp, char *rfnam)
 {
  /* if obj nil, legal means all forces/release form */
  if (hp != NULL)
@@ -1860,7 +1860,7 @@ static int chk_rf_cb(p_cb_data cb_data_p, struct h_t *hp, char *rfnam)
 /*
  * return T if expression will be converted to vpiConst
  */
-extern int __expr_is_vpiconst(struct expr_t *xp)
+extern int32 __expr_is_vpiconst(struct expr_t *xp)
 {
  switch ((byte) xp->optyp) {
   case NUMBER: case ISNUMBER: case REALNUM: case ISREALNUM: case OPEMPTY:
@@ -1878,7 +1878,7 @@ extern int __expr_is_vpiconst(struct expr_t *xp)
  * all registered all changes cbs (can be many) and exec routine
  * before cb, build and sets handle (handle can must be copied by user)
  */
-static vpiHandle rf_all_register_cb(p_cb_data cb_data_p, int qctyp)
+static vpiHandle rf_all_register_cb(p_cb_data cb_data_p, int32 qctyp)
 {
  vpiHandle cbref;
  struct h_t *hp;
@@ -1914,7 +1914,7 @@ static vpiHandle rf_all_register_cb(p_cb_data cb_data_p, int qctyp)
 /*
  * from force - go thru net dces looking for force cb 
  */
-extern void __find_call_force_cbs(struct net_t *np, int i1)
+extern void __find_call_force_cbs(struct net_t *np, int32 i1)
 {
  register struct dcevnt_t *dcep;
  register struct cbrec_t *cbp;
@@ -1957,7 +1957,7 @@ try_non_rng:
 /*
  * from release - go thru net dces looking for release cb 
  */
-extern void __find_call_rel_cbs(struct net_t *np, int i1)
+extern void __find_call_rel_cbs(struct net_t *np, int32 i1)
 {
  register struct dcevnt_t *dcep;
  register struct cbrec_t *cbp;
@@ -2004,10 +2004,10 @@ try_non_rng:
  * this works for all case because no instance specific filtering 
  * so just use itree loc for one changed
  */
-extern void __cb_all_rfs(struct net_t *np, int bi, int is_force)
+extern void __cb_all_rfs(struct net_t *np, int32 bi, int32 is_force)
 {
  register struct rfcblst_t *rfp; 
- unsigned sav_cb_ndxobj;
+ word32 sav_cb_ndxobj;
  struct cbrec_t *cbp;
  struct h_t *hp;
  struct task_t *tskp;
@@ -2082,7 +2082,7 @@ extern void __cb_all_rfs(struct net_t *np, int bi, int is_force)
  */
 extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
 {
- int biti, ndx;
+ int32 biti, ndx;
  struct t_cb_data wrk_cbdata, *datp;
  struct t_vpi_time wrk_time;
  struct t_vpi_value wrk_val;
@@ -2106,18 +2106,18 @@ extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
 
  if (cbp->cb_retvalfmt != vpiSuppressVal)
   {
-   datp->value->format = (int) cbp->cb_retvalfmt;
+   datp->value->format = (int32) cbp->cb_retvalfmt;
    vpi_get_value(datp->obj, datp->value);  
   }
  else datp->value->format = vpiSuppressVal;
  if (cbp->cb_rettimtyp != vpiSuppressTime)
   {
-   datp->time->type = (int) cbp->cb_rettimtyp;
+   datp->time->type = (int32) cbp->cb_rettimtyp;
    __set_vpi_time(datp->time, &__simtime, datp->time->type, __inst_mod); 
   }
  else datp->time->type = vpiSuppressTime;
 
- /* if bit handle or bit select or array word select handle set index field */
+ /* if bit handle or bit select or array word32 select handle set index field */
  if (cbp->cb_ndxobj)
   {  
    /* cb object is object not index */
@@ -2141,7 +2141,7 @@ extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
      if (xsp->bp[0] != 0) datp->index = 0;
      else
       {
-       ndx = (int) xsp->ap[0];
+       ndx = (int32) xsp->ap[0];
        /* constants must be unnormalized - non constant not normalized so */
        /* no need to unnormalize */
        if (__expr_is_vpiconst(hp2->hrec->hu.hxp->ru.x))
@@ -2178,7 +2178,7 @@ extern void __cbvc_callback(struct cbrec_t *cbp, struct h_t *hp)
  *
  * these can only be freed by cb remove
  */
-extern void __exec_vpi_gateoutcbs(register int tevpi)
+extern void __exec_vpi_gateoutcbs(register int32 tevpi)
 {
  struct cbrec_t *cbp;
 
@@ -2322,7 +2322,7 @@ static vpiHandle delay_cb_register(register p_cb_data datp)
 /*
  * check force/release callback passed cb_data record
  */
-static int chk_delay_cb(p_cb_data datp, struct h_t *hp)
+static int32 chk_delay_cb(p_cb_data datp, struct h_t *hp)
 {
  /* if optional obj present, it must be valid and a scope object */
  if (hp != NULL)
@@ -2362,7 +2362,7 @@ static int chk_delay_cb(p_cb_data datp, struct h_t *hp)
  *
  * SJM 07/24/00 - delay call backs can't be turned off by user
  */
-static void exec_vpi_delaycbs(int cbtyp)
+static void exec_vpi_delaycbs(int32 cbtyp)
 {
  register i_tev_ndx tevpi;
 
@@ -2404,7 +2404,7 @@ static void exec_vpi_delaycbs(int cbtyp)
  */
 extern void __delay_callback(i_tev_ndx tevpi)
 {
- int tevp2i;
+ int32 tevp2i;
  struct t_cb_data wrk_cbdata, *datp;
  struct t_vpi_time wrk_time;
  struct cbrec_t *cbp;
@@ -2472,7 +2472,7 @@ extern void __delay_callback(i_tev_ndx tevpi)
  /* assign time */  
  if (cbp->cb_rettimtyp != vpiSuppressTime)
   {
-   datp->time->type = (int) cbp->cb_rettimtyp;
+   datp->time->type = (int32) cbp->cb_rettimtyp;
    if (cbp->cb_hp != NULL) mdp = cbp->cb_hp->hin_itp->itip->imsym->el.emdp;
    else mdp = NULL;  
    __set_vpi_time(datp->time, &__simtime, datp->time->type, mdp); 
@@ -2652,7 +2652,7 @@ extern void __vpi_exitiact_trycall(void)
  */
 extern void __vpi_iactscopechg_trycall(void)
 {
- unsigned parhtyp;
+ word32 parhtyp;
  vpiHandle scopobj;
  struct t_cb_data wrk_cbdata, *datp;
  struct cbrec_t *cbp;
@@ -2808,7 +2808,7 @@ extern void __vpi_error_trycall(void)
  *
  * these can only be freed by cb remove
  */
-static void exec_vpi_actioncbs(int cbtyp)
+static void exec_vpi_actioncbs(int32 cbtyp)
 {
  register i_tev_ndx tevpi;
  struct cbrec_t *cbp;
@@ -2844,7 +2844,7 @@ static void exec_vpi_actioncbs(int cbtyp)
  * execute a timing check feature call back list
  * these can only be freed by cb remove (or reset)
  */
-static void exec_vpi_tchkerr(int cbtyp, struct tchk_t *tcp,
+static void exec_vpi_tchkerr(int32 cbtyp, struct tchk_t *tcp,
  struct itree_t *itp)
 {
  register i_tev_ndx tevpi;
@@ -2885,7 +2885,7 @@ static void exec_vpi_tchkerr(int cbtyp, struct tchk_t *tcp,
  *
  * this fills value record misc field with ptr to line record
  */
-extern void __exec_vpi_langlinecbs(char *lp, char *fnam, int lno)
+extern void __exec_vpi_langlinecbs(char *lp, char *fnam, int32 lno)
 {
  register i_tev_ndx tevpi;
  struct t_vpi_value wrk_val;
@@ -3083,7 +3083,7 @@ in_nonschd_list:
  *
  * this also frees cbrec and allocated copy of cb_data record 
  */
-static void linkout_allcb(struct cbrec_t *cbp, int is_force)
+static void linkout_allcb(struct cbrec_t *cbp, int32 is_force)
 {
  register struct rfcblst_t *rfp, *last_rfp; 
  
@@ -3172,7 +3172,7 @@ got_rel_cbp:
 static void linkout_gateout_cb(struct cbrec_t *cbp) 
 {
  register i_tev_ndx tevpi, last_tevpi;
- int gi, ii;
+ int32 gi, ii;
  struct h_t *ghp;
  struct gate_t *gp;
  struct mod_t *mdp;
@@ -3279,7 +3279,7 @@ static void linkout_action_cb(struct cbrec_t *cbp)
 /*
  * convert a call back value to its name
  */
-static char *to_cbtypnam(char *s, int reason)
+static char *to_cbtypnam(char *s, int32 reason)
 {
  switch (reason) {
   case cbValueChange: strcpy(s, "cbValueChange"); break;
@@ -3336,9 +3336,9 @@ extern void vpi_get_cb_info(vpiHandle object, p_cb_data cb_data_p)
  cb_data_p->reason = cbp->cb_reason;
  cb_data_p->cb_rtn = cbp->cb_rtn;
  cb_data_p->obj = (vpiHandle) cbp->cb_hp; 
- if (cb_data_p->time != NULL) cb_data_p->time->type = (int) cbp->cb_rettimtyp;
+ if (cb_data_p->time != NULL) cb_data_p->time->type = (int32) cbp->cb_rettimtyp;
  if (cb_data_p->value != NULL)
-  cb_data_p->value->format = (int) cbp->cb_retvalfmt;
+  cb_data_p->value->format = (int32) cbp->cb_retvalfmt;
  cb_data_p->index = 0;
  cb_data_p->user_data = cbp->cb_user_data;
 }
@@ -3361,8 +3361,8 @@ extern vpiHandle vpi_handle(PLI_INT32 type, vpiHandle referenceHandle)
 {
  register struct h_t *rhp;
  register struct hrec_t *rhrp;
- int sf_ind;
- unsigned sttyp, primtyp;
+ int32 sf_ind;
+ word32 sttyp, primtyp;
  struct sy_t *syp;
  struct st_t *stp;
  struct expr_t *xp;
@@ -3437,7 +3437,7 @@ do_usersystf:
    goto bad_args;
   /* notifier returns reg handle, others tchk term */
   case vpiTchkRefTerm: case vpiTchkDataTerm: case vpiTchkNotifier: 
-   return(get_tchk_term((unsigned) type, rhp));
+   return(get_tchk_term((word32) type, rhp));
   case vpiTchk:
    /* LOOKATME - LRM says no connection back from notifier */
    if (rhrp->htyp != vpiTchkRefTerm && rhrp->htyp != vpiTchkDataTerm
@@ -3519,7 +3519,7 @@ do_usersystf:
 bad_args:
    __vpi_err(1827, vpiError,
     "there is no 1-to-1 relationships of type %s from reference handle %s", 
-    __to_vpionam(__wrks1, (unsigned) type), __to_vpionam(__wrks2, rhrp->htyp));
+    __to_vpionam(__wrks1, (word32) type), __to_vpionam(__wrks2, rhrp->htyp));
  }
  return(NULL);
 }
@@ -3539,7 +3539,7 @@ extern vpiHandle vpi_handle_multi(PLI_INT32 type, vpiHandle refHandle1,
  *
  * handles name block (fj or begin) except where contents is task not stp
  */
-extern vpiHandle __mk_stmt_handle(unsigned sttyp, struct st_t *stp,
+extern vpiHandle __mk_stmt_handle(word32 sttyp, struct st_t *stp,
  struct itree_t *itp, struct task_t *tskp)
 {
  if (sttyp == vpiNamedBegin || sttyp == vpiNamedFork)
@@ -3630,10 +3630,10 @@ static vpiHandle get_inmod_itp(struct h_t *hp)
  * build a handle from malloced array - user must handle freeing
  * this should probably be macro
  */
-extern vpiHandle __mk_handle(unsigned typ, void *h_unp, struct itree_t *itp,
+extern vpiHandle __mk_handle(word32 typ, void *h_unp, struct itree_t *itp,
  struct task_t *tskp) 
 {
- register int hi;
+ register int32 hi;
  register struct h_t *hp, *hparr;
  register struct hrec_t *hrp, *hrarr;
 
@@ -3700,7 +3700,7 @@ extern void __init_hrec(struct hrec_t *hrp)
  */
 static vpiHandle get_obj_index(struct h_t *hp)
 {
- register word av;
+ register word32 av;
  register struct hrec_t *hrp;
  vpiHandle ihref;
  struct h_t *rhp;
@@ -3713,7 +3713,7 @@ static vpiHandle get_obj_index(struct h_t *hp)
    if (hrp->bith_ndx)
     {
      /* index hi is fixed index - know in range */
-     av = (word) __unnormalize_ndx(hrp->hu.hnp, hrp->hi);
+     av = (word32) __unnormalize_ndx(hrp->hu.hnp, hrp->hi);
      /* this is expr. separate from bsel so must be unnormalized value */
      /* because not connected to bsel constant can be unnormalized */
 bld_const_obj:
@@ -3732,7 +3732,7 @@ bld_const_obj:
    break;
   case vpiPortBit:
    /* no ned to normalize since port bits virtual range always h:0 */
-   av = (word) hrp->hi;
+   av = (word32) hrp->hi;
    goto bld_const_obj;
   default: no_1to1h_err(vpiIndex, hp); return(NULL);
  }
@@ -3742,12 +3742,12 @@ bld_const_obj:
 /*
  * build an index expression handle for an object 
  */
-static vpiHandle get_obj_range(struct h_t *hp, int lrtyp)
+static vpiHandle get_obj_range(struct h_t *hp, int32 lrtyp)
 {
  register struct hrec_t *hrp;
- int r1, r2, wid;
+ int32 r1, r2, wid;
  vpiHandle ihref;
- word rngv;
+ word32 rngv;
  struct h_t *rhp;
  struct expr_t *xp;
  struct task_t *tskp;
@@ -3762,7 +3762,7 @@ static vpiHandle get_obj_range(struct h_t *hp, int lrtyp)
   case vpiIntegerVar: case vpiTimeVar:
 get_rng:
    __getwir_range(hrp->hu.hnp, &r1, &r2);
-   if (lrtyp == vpiLeftRange) rngv = (word) r1; else rngv = (word) r2;
+   if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
 set_val:
    ihref = __mk_handle(vpiConstant, NULL, hp->hin_itp, hrp->hin_tskp);
    rhp = (struct h_t *) ihref;
@@ -3781,7 +3781,7 @@ set_val:
     }
    if (!np->n_isavec || np->ntyp == N_REAL) return(NULL);
    __getwir_range(np, &r1, &r2);
-   if (lrtyp == vpiLeftRange) rngv = (word) r1; else rngv = (word) r2;
+   if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
    goto set_val;
   case vpiFunction:
    /* this if function declaration - only reg ret. funcs have range */
@@ -3789,11 +3789,11 @@ set_val:
    np = tskp->tskpins->tpsy->el.enp;
    if (!np->n_isavec) return(NULL);
    __getwir_range(np, &r1, &r2);
-   if (lrtyp == vpiLeftRange) rngv = (word) r1; else rngv = (word) r2;
+   if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
    goto set_val;
   case vpiMemory: case vpiParamArray:
    __getarr_range(hrp->hu.hnp, &r1, &r2, &wid);
-   if (lrtyp == vpiLeftRange) rngv = (word) r1; else rngv = (word) r2;
+   if (lrtyp == vpiLeftRange) rngv = (word32) r1; else rngv = (word32) r2;
    goto set_val;
   /* expr that is part select has ranges */
   case vpiPartSelect:
@@ -3831,7 +3831,7 @@ set_val:
 static vpiHandle get_obj_parent(struct h_t *hp)
 {
  register struct hrec_t *hrp;
- unsigned hotyp;
+ word32 hotyp;
  vpiHandle ihref;
  struct expr_t *idndp;
  struct net_t *np;
@@ -3955,10 +3955,10 @@ static void exprobj_to_itreeloc(struct itree_t **itpp, struct task_t **tskpp,
 /*
  * get all 1-to-1 relationships that are on a vpi_ rhs or lhs
  */
-static vpiHandle get_obj_side(struct h_t *rhp, int type)
+static vpiHandle get_obj_side(struct h_t *rhp, int32 type)
 {
  register struct hrec_t *rhrp;
- int hotyp;
+ int32 hotyp;
  vpiHandle ihref;
  struct expr_t *xp;
  struct st_t *stp;
@@ -4055,7 +4055,7 @@ static vpiHandle get_obj_side(struct h_t *rhp, int type)
  */
 static vpiHandle bld_scope_par(struct h_t *hp, struct task_t *tskp)
 {
- unsigned parhtyp;
+ word32 parhtyp;
  vpiHandle ihref;
  struct task_t *up_tskp;
  struct symtab_t *sytp, *sytp2;
@@ -4081,7 +4081,7 @@ static vpiHandle bld_scope_par(struct h_t *hp, struct task_t *tskp)
 /*
  * convert from v.h task type to handle constant
  */
-extern unsigned __to_vpi_tasktyp(unsigned tsktyp)
+extern word32 __to_vpi_tasktyp(word32 tsktyp)
 {
  switch (tsktyp) {
   case TASK: return(vpiTask);
@@ -4106,8 +4106,8 @@ extern unsigned __to_vpi_tasktyp(unsigned tsktyp)
  */
 static vpiHandle getbit_lowconn(struct h_t *hp)
 {
- int ndx, new_ndx;
- unsigned hotyp;
+ int32 ndx, new_ndx;
+ word32 hotyp;
  vpiHandle href;
  struct mod_t *mdp;
  struct mod_pin_t *mpp;
@@ -4216,8 +4216,8 @@ static vpiHandle getexpr_lowconn(struct h_t *hp)
  */
 static vpiHandle getbit_highconn(struct h_t *hp)
 {
- int ndx, new_ndx;
- unsigned xtyp, otyp, hotyp;
+ int32 ndx, new_ndx;
+ word32 xtyp, otyp, hotyp;
  vpiHandle href;
  struct inst_t *ip;
  struct itree_t *up_itp, *itp;
@@ -4245,17 +4245,17 @@ new_expr:
  /* unc - no warning because otherwise no way to tell unc. */
  if (ndx >= xp->szu.xclen) return(NULL);
 
- xtyp = (unsigned) __exprtype_get(xp);
+ xtyp = (word32) __exprtype_get(xp);
  if (xtyp == vpiOperation)
   {
    /* know concatenates reduced to one level always */
-   if ((otyp = (unsigned) __expr_optype_get(xp)) == vpiConcatOp) 
+   if ((otyp = (word32) __expr_optype_get(xp)) == vpiConcatOp) 
     {
      xp = find_catxp_frombit(xp, ndx, &new_ndx);
      ndx = new_ndx;
      goto new_expr;
     }
-   __to_vpiopnam(__wrks2, (int) otyp);
+   __to_vpiopnam(__wrks2, (int32) otyp);
 no_iconnbit:
    /* xtyp is an object */
    __vpi_err(2014, vpiWarning,
@@ -4361,11 +4361,11 @@ make_grp_var:
  * this works on Cver expr_t not handles
  * know in range
  */
-static struct expr_t *find_catxp_frombit(struct expr_t *catxp, int bi,
- int *newbi)
+static struct expr_t *find_catxp_frombit(struct expr_t *catxp, int32 bi,
+ int32 *newbi)
 {
  register struct expr_t *xp;
- register int catbi;
+ register int32 catbi;
  
  xp = catxp->ru.x;
  for (catbi = catxp->szu.xclen; xp != NULL; xp = xp->ru.x)
@@ -4463,7 +4463,7 @@ static vpiHandle getexpr_highconn(struct h_t *hp)
 /*
  * no 1-to-1 connection error with 1 expected handle
  */
-static void no1_1to1h_err(unsigned typ1to1, unsigned exptyp, struct h_t *hp)
+static void no1_1to1h_err(word32 typ1to1, word32 exptyp, struct h_t *hp)
 {
  char s1[RECLEN];
 
@@ -4476,18 +4476,18 @@ static void no1_1to1h_err(unsigned typ1to1, unsigned exptyp, struct h_t *hp)
 /*
  * no 1-to-1 connection error with no one expected handle type
  */
-static void no_1to1h_err(int typ1to1, struct h_t *hp)
+static void no_1to1h_err(int32 typ1to1, struct h_t *hp)
 {
  __vpi_err(1887, vpiError,
   "vpi_handle: handle %s does not have a 1-to-1 connection for type %s", 
   __to_vpionam(__wrks2, hp->hrec->htyp), __to_vpionam(__wrks1,
-  (unsigned) typ1to1));
+  (word32) typ1to1));
 }
 
 /*
  * build an tchk term handle from a tchk - 2 different no iterator 
  */
-static vpiHandle get_tchk_term(unsigned termtyp, struct h_t *hp)
+static vpiHandle get_tchk_term(word32 termtyp, struct h_t *hp)
 {
  vpiHandle ihref;
  struct tchk_t *tcp;
@@ -4508,7 +4508,7 @@ static vpiHandle get_tchk_term(unsigned termtyp, struct h_t *hp)
    ihref = __mk_handle(vpiTchkTerm, (void *) tcp, hp->hin_itp, NULL);
    hp2 = (struct h_t *) ihref;
    /* term type determines since each terminal of tchk different */
-   hp2->hrec->htyp2 = (unsigned) termtyp;
+   hp2->hrec->htyp2 = (word32) termtyp;
   }
  return(ihref);
 }
@@ -4595,9 +4595,9 @@ static vpiHandle get_cond(struct h_t *hp)
  */
 static vpiHandle bld_1to1_exprclass_handle(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct hrec_t *hrp;
- unsigned hotyp;
+ word32 hotyp;
  struct spcpth_t *pthp;
  struct tchk_t *tcp;
  struct gate_t *gp;
@@ -4710,9 +4710,9 @@ static vpiHandle bld_1to1_exprclass_handle(struct h_t *hp)
  * builds vpiNetBit index form for bit select
  */
 static vpiHandle mk_pthterm_exprclass_handle(struct net_t *np,
- int i1, int i2, struct itree_t *in_itp) 
+ int32 i1, int32 i2, struct itree_t *in_itp) 
 {
- unsigned hotyp;
+ word32 hotyp;
  vpiHandle href;
  struct expr_t *xp, *xpcol, *xpid, *xp1, *xp2;
  struct h_t *hp;
@@ -4738,8 +4738,8 @@ static vpiHandle mk_pthterm_exprclass_handle(struct net_t *np,
  xpid = __sim_alloc_newxnd();
  xpid->optyp = ID; 
  xpid->lu.sy = np->nsym;
- xp1 = __bld_rng_numxpr((word) i1, 0L, WBITS);
- xp2 = __bld_rng_numxpr((word) i2, 0L, WBITS);
+ xp1 = __bld_rng_numxpr((word32) i1, 0L, WBITS);
+ xp2 = __bld_rng_numxpr((word32) i2, 0L, WBITS);
  /* root of part select */
  xp = __sim_alloc_newxnd();
  xp->optyp = PARTSEL;
@@ -4763,7 +4763,7 @@ static vpiHandle mk_pthterm_exprclass_handle(struct net_t *np,
  */
 static vpiHandle get_obj_scope(struct h_t *hp)
 {
- int ttyp;
+ int32 ttyp;
  vpiHandle ihref;
  struct mod_t *mdp;
  struct symtab_t *sytp;
@@ -4837,7 +4837,7 @@ static vpiHandle get_obj_scope(struct h_t *hp)
  */
 static vpiHandle get_disable_scope(struct h_t *rhp)
 {
- int ttyp;
+ int32 ttyp;
  struct st_t *stp;
  struct expr_t *xp;
  struct itree_t *itp;
@@ -4877,7 +4877,7 @@ static vpiHandle get_disable_scope(struct h_t *rhp)
 static vpiHandle get_contained_stmt(struct h_t *rhp)
 {
  register struct hrec_t *rhrp;
- unsigned sttyp;
+ word32 sttyp;
  vpiHandle ihref;
  struct st_t *ifstp, *thenstp, *dcstp, *stp;
  struct csitem_t *csip;
@@ -4955,7 +4955,7 @@ loop_sthandle:
  * get a vpi delay control statement from an vpi assignment statement
  * this is tricky because for rhs dctrls DELCTRL is stmt not actionst assign
  */
-static vpiHandle get_dctrl_stmt(struct h_t *rhp, int dctype)
+static vpiHandle get_dctrl_stmt(struct h_t *rhp, int32 dctype)
 {
  struct st_t *stp;
  struct delctrl_t *dctp;
@@ -5049,7 +5049,7 @@ static vpiHandle get_contained_udp_init(struct h_t *rhp)
  */
 static vpiHandle get_up_poundparam_expr(struct h_t *rhp)
 {
- int pi;
+ int32 pi;
  vpiHandle href;
  struct inst_t *ip;
  struct mod_t *mdp;
@@ -5130,7 +5130,7 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
   case vpiNet: case vpiReg: case vpiNamedEvent: case vpiMemory:
   case vpiVariables:
    /* vpiVariables for all of integer, time, real - not separated */  
-   return(bld_net_iterator(hp, (unsigned) itype));
+   return(bld_net_iterator(hp, (word32) itype));
   case vpiProcess:
    /* list of initial - always statements in module - only access from mod */
    return(bld_initalw_iterator(hp));
@@ -5163,7 +5163,7 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
   case vpiUserSystf: return(__bld_systf_iterator(hp));
   case vpiArgument: return(__bld_tfargexpr_iterator(hp));
   case vpiModPathIn: case vpiModPathOut: case vpiModDataPathIn:
-   return(__bld_pthterm_iterator(hp, (unsigned) itype));
+   return(__bld_pthterm_iterator(hp, (word32) itype));
   case vpiStmt: return(__bld_stmt_iterator(hp));
   case vpiTchkTerm: return(__bld_netin_tchkterms(hp));
   case vpiPathTerm: return(__bld_netin_pthterms(hp));
@@ -5180,7 +5180,7 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
    else __to_vpionam(__wrks2, hp->hrec->htyp);
    __vpi_err(1838, vpiError,
     "method %s not a 1-to-many (iterator) object for %s handle",
-    __to_vpionam(__wrks1, (unsigned) itype), __wrks2);
+    __to_vpionam(__wrks1, (word32) itype), __wrks2);
  }
  return(NULL);
 }
@@ -5190,7 +5190,7 @@ extern vpiHandle vpi_iterate(PLI_INT32 itype, vpiHandle referenceHandle)
  */
 static vpiHandle bld_itree_iterator(struct h_t *hp)
 {
- register int ii;
+ register int32 ii;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
  vpiHandle ihref;
@@ -5227,11 +5227,11 @@ static vpiHandle bld_itree_iterator(struct h_t *hp)
  */
 static vpiHandle bld_type_iterator(struct h_t *hp)
 {
- register int ti;
+ register int32 ti;
  register struct mod_t *mdp;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
- int numtypes;
+ int32 numtypes;
  vpiHandle ihref;
  struct itree_t *itp;
  struct pviter_t *iterp;
@@ -5268,9 +5268,9 @@ static vpiHandle bld_type_iterator(struct h_t *hp)
 /*
  * allocate an iterator 
  */
-extern struct pviter_t *__alloc_iter(int nels, vpiHandle *ihrefp)
+extern struct pviter_t *__alloc_iter(int32 nels, vpiHandle *ihrefp)
 {
- register int iti;
+ register int32 iti;
  register struct h_t *hp;
  register struct hrec_t *hrarr;
  struct pviter_t *iterp;
@@ -5303,7 +5303,7 @@ extern struct pviter_t *__alloc_iter(int nels, vpiHandle *ihrefp)
  */
 static vpiHandle bld_inst_iterator(struct h_t *hp)
 {
- register int ii;
+ register int32 ii;
  register struct hrec_t *hrp2;
  register struct h_t *hp2;
  struct mod_t *mdp;
@@ -5332,7 +5332,7 @@ static vpiHandle bld_inst_iterator(struct h_t *hp)
 /*
  * error for iterator that only exists in module but handle is other
  */
-static void mustbe_inmoditer_err(unsigned ityp, struct h_t *hp)
+static void mustbe_inmoditer_err(word32 ityp, struct h_t *hp)
 {
  __vpi_err(1841, vpiError,
   "%s 1-to-many iterator from object %s illegal - only allowed for vpiModule",
@@ -5346,11 +5346,11 @@ static void mustbe_inmoditer_err(unsigned ityp, struct h_t *hp)
  */
 static vpiHandle bld_udpdef_iterator(struct h_t *rhp)
 {
- register int ui;
+ register int32 ui;
  register struct udp_t *udpp;
  register struct hrec_t *hrp;
  register struct h_t *hp; 
- int nudps;
+ int32 nudps;
  vpiHandle ihref;
  struct pviter_t *iterp;
 
@@ -5416,7 +5416,7 @@ static vpiHandle bld_scope_iterator(register struct h_t *hp)
  *
  * needed because many design lists accessed from nil handle
  */
-extern vpiHandle __nil_iter_err(unsigned otyp)
+extern vpiHandle __nil_iter_err(word32 otyp)
 {
  __vpi_err(1854, vpiError, "vpi_iterate type %s passed illegal NULL handle",
   __to_vpionam(__wrks1, otyp));
@@ -5425,16 +5425,16 @@ extern vpiHandle __nil_iter_err(unsigned otyp)
 
 /*
  * build an iterator for a list of scopes - works from symbol table
- * know passed left most symbol table for multiple disjoint scopes
+ * know passed left most symbol table for multiple disjoint32 scopes
  */
 static vpiHandle bld_symtabs_iterator(struct symtab_t *sytp,
  struct itree_t *itp)
 {
- register int ii;
+ register int32 ii;
  register struct symtab_t *sytp2;
  register struct h_t *hp;
  register struct hrec_t *hrp;
- int numtabs;
+ int32 numtabs;
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct task_t *up_tskp;
@@ -5496,14 +5496,14 @@ static void fill_scopehandle(struct hrec_t *hrp, struct symtab_t *sytp)
  *
  * otype is vpi_ type of net 
  */
-static vpiHandle bld_net_iterator(struct h_t *hp, unsigned otype)
+static vpiHandle bld_net_iterator(struct h_t *hp, word32 otype)
 {
  register struct hrec_t *hrp;
  struct mod_t *mdp;
  struct task_t *tskp;
  struct itree_t *itp; 
  struct net_t *np;
- unsigned ntyp;
+ word32 ntyp;
 
  if (hp == NULL) return(__nil_iter_err(otype));
  itp = hp->hin_itp;
@@ -5546,15 +5546,15 @@ static vpiHandle bld_net_iterator(struct h_t *hp, unsigned otype)
  *
  * know at least one net or will not be called but maybe none of type
  */
-static vpiHandle bld_listofnets_iter(struct net_t *np, int onnum,
- struct itree_t *itp, unsigned otype, struct task_t *tskp)
+static vpiHandle bld_listofnets_iter(struct net_t *np, int32 onnum,
+ struct itree_t *itp, word32 otype, struct task_t *tskp)
 {
- register int ni, ni2;
+ register int32 ni, ni2;
  register struct net_t *np2;
  register struct h_t *hp;
  register struct hrec_t *hrp;
- int nnum;
- unsigned ntyp, vpityp;
+ int32 nnum;
+ word32 ntyp, vpityp;
  vpiHandle ihref;
  struct pviter_t *iterp;
 
@@ -5640,12 +5640,12 @@ static vpiHandle bld_listofnets_iter(struct net_t *np, int onnum,
  * needed because all wires stored in one list in Cver
  * possibilities are array, net (and wire) or match N_ internal type
  */
-static int cnt_typnetnum(register struct net_t *np, int onnum,
- unsigned typ)
+static int32 cnt_typnetnum(register struct net_t *np, int32 onnum,
+ word32 typ)
 {
- register int ni;
- unsigned nnum;
- unsigned ntyp;
+ register int32 ni;
+ word32 nnum;
+ word32 ntyp;
 
  nnum = 0;
  if (typ == vpiMemory)
@@ -5691,9 +5691,9 @@ static int cnt_typnetnum(register struct net_t *np, int onnum,
 static vpiHandle bld_initalw_iterator(struct h_t *hp)
 {
  register struct ialst_t *ialp;
- register int iai;
+ register int32 iai;
  register struct hrec_t *hrp2;
- int ianum;
+ int32 ianum;
  vpiHandle ihref;
  struct h_t *hp2;
  struct mod_t *mdp;
@@ -5730,10 +5730,10 @@ static vpiHandle bld_initalw_iterator(struct h_t *hp)
  */
 static vpiHandle bld_conta_iterator(struct h_t *hp)
 {
- register int cai, gi;
+ register int32 cai, gi;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
- int numcas, num1bcas;
+ int32 numcas, num1bcas;
  vpiHandle ihref;
  struct conta_t *cap;
  struct gate_t *gp;
@@ -5747,7 +5747,8 @@ static vpiHandle bld_conta_iterator(struct h_t *hp)
  mdp = hp->hin_itp->itip->imsym->el.emdp;
 
  itp = hp->hin_itp;
- for (numcas = 0, cap = mdp->mcas; cap != NULL; cap = cap->canxt) numcas++;
+ /* contas in table - does not include 1 bit cas treated as gate */
+ numcas = mdp->mcanum;
  num1bcas = 0;
  if (mdp->mod_1bcas)
   {
@@ -5759,7 +5760,7 @@ static vpiHandle bld_conta_iterator(struct h_t *hp)
   }
  if (numcas + num1bcas <= 0) return(NULL);
  iterp = __alloc_iter(numcas + num1bcas, &ihref);
- for (cai = 0, cap = mdp->mcas; cai < numcas; cai++, cap = cap->canxt)
+ for (cai = 0, cap = &(mdp->mcas[0]); cai < numcas; cai++, cap++)
   {
    hp2 = &(iterp->scanhtab[cai]);
    hrp2 = hp2->hrec;
@@ -5797,7 +5798,7 @@ static vpiHandle bld_gate_iterator(struct h_t *hp)
  register struct gate_t *gp;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
- int numgs, gi, hi;
+ int32 numgs, gi, hi;
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct mod_t *mdp;
@@ -5833,9 +5834,9 @@ static vpiHandle bld_gate_iterator(struct h_t *hp)
 /*
  * map from a gate_t to a vpi primitive type (i.e. vpi Switch)
  */
-extern unsigned __gate_to_vpiprimtyp(struct gate_t *gp)
+extern word32 __gate_to_vpiprimtyp(struct gate_t *gp)
 {
- int ptyp;
+ int32 ptyp;
 
  switch ((byte) gp->g_class) {
   /* LOOKATME - is pull possible here (think so) */  
@@ -5855,10 +5856,10 @@ extern unsigned __gate_to_vpiprimtyp(struct gate_t *gp)
  */
 static vpiHandle bld_modpth_iterator(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct spcpth_t *pthp;
  register struct hrec_t *hrp2;
- int mpths; 
+ int32 mpths; 
  vpiHandle ihref;
  struct h_t *hp2;
  struct mod_t *mdp;
@@ -5897,11 +5898,11 @@ static vpiHandle bld_modpth_iterator(struct h_t *hp)
  */
 static vpiHandle bld_tchk_iterator(struct h_t *hp)
 {
- register int tci;
+ register int32 tci;
  register struct h_t *hp2;
  register struct tchk_t *tcp;
  register struct hrec_t *hrp2;
- int ntchks; 
+ int32 ntchks; 
  vpiHandle ihref;
  struct mod_t *mdp;
  struct pviter_t *iterp;
@@ -5941,7 +5942,7 @@ static vpiHandle bld_tchk_iterator(struct h_t *hp)
  *
  * otype is vpi_ type of net 
  */
-static vpiHandle bld_param_iterator(struct h_t *hp, int otype)
+static vpiHandle bld_param_iterator(struct h_t *hp, int32 otype)
 {
  register struct hrec_t *hrp;
  struct mod_t *mdp;
@@ -5972,7 +5973,7 @@ bld_tskprms:
   default:
    __vpi_err(1851, vpiError,
     "unable to construct iterator of contained %s for %s object",
-    __to_vpionam(__wrks1, (unsigned) otype), __to_vpionam(__wrks2, hrp->htyp));
+    __to_vpionam(__wrks1, (word32) otype), __to_vpionam(__wrks2, hrp->htyp));
  }
  return(NULL);
 }
@@ -5982,12 +5983,12 @@ bld_tskprms:
  *
  * LOOKATME - why was mprms not freed? - needed for here
  */
-static vpiHandle bld_listofparams_iter(struct net_t *nptab, int nparams,
- struct itree_t *itp, struct task_t *tskp, int sel_parrays)
+static vpiHandle bld_listofparams_iter(struct net_t *nptab, int32 nparams,
+ struct itree_t *itp, struct task_t *tskp, int32 sel_parrays)
 {
- register int pi, iti;
+ register int32 pi, iti;
  register struct hrec_t *hrp;
- int pitersiz;
+ int32 pitersiz;
  vpiHandle ihref;
  struct h_t *hp;
  struct net_t *np;
@@ -6025,7 +6026,7 @@ static vpiHandle bld_listofparams_iter(struct net_t *nptab, int nparams,
  *
  * otype is vpi_ type of containing scope
  */
-static vpiHandle bld_paramarr_iterator(struct h_t *hp, int otype)
+static vpiHandle bld_paramarr_iterator(struct h_t *hp, int32 otype)
 {
  struct mod_t *mdp;
  struct task_t *tskp;
@@ -6052,7 +6053,7 @@ bld_tskprms:
   default:
    __vpi_err(1851, vpiError,
     "unable to construct iterator of contained %s for %s object",
-    __to_vpionam(__wrks1, (unsigned) otype), __to_vpionam(__wrks2, hrp->htyp));
+    __to_vpionam(__wrks1, (word32) otype), __to_vpionam(__wrks2, hrp->htyp));
  }
  return(NULL);
 }
@@ -6065,10 +6066,10 @@ bld_tskprms:
  */
 static vpiHandle bld_specparam_iterator(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
- int nsparams; 
+ int32 nsparams; 
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct mod_t *mdp;
@@ -6105,11 +6106,11 @@ static vpiHandle bld_specparam_iterator(struct h_t *hp)
  */
 static vpiHandle bld_defparam_stmt_iterator(struct h_t *hp)
 {
- register int dfi;
+ register int32 dfi;
  register struct h_t *hp2;
  register struct hrec_t *hrp2;
  register struct dfparam_t *dfp;
- int ndfps; 
+ int32 ndfps; 
  vpiHandle ihref;
  struct pviter_t *iterp;
 

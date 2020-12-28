@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1998-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -67,13 +67,13 @@
 #define ACCTOHIZ_FROMUSER 3
 
 struct vpi_to_acc_t {
- int vpiotyp;
- int acc_otyp;
+ int32 vpiotyp;
+ int32 acc_otyp;
 };
 
 struct accnam_t {
  char *accnam;
- int accval;
+ int32 accval;
 };
 
 /* two way list (so can release) of active acc iterators */
@@ -89,24 +89,24 @@ struct vclrec_t {
  unsigned vcl_oldstval : 8;   /* old stren val not vpi for chg of val only */
  unsigned vcl_reason : 8;     /* object determined change reason */
  handle vclobj;               /* acc_ handle of object vcl on */
- int (*vcl_cb_rtn)();         /* acc_ vcl call back routine */
+ int32 (*vcl_cb_rtn)();         /* acc_ vcl call back routine */
  char *vcl_udata;             /* user's user data (not vpi_ cb) */
  struct cbrec_t *vclcbp;      /* internal cver cbrec */
 };
 
 /* internal acc varaible declarations */ 
 char *__acc_strbuf;           /* ptr to reused acc_ str buf */ 
-int __acc_strbuf_nxti;        /* next free ndx - gets rewound */
-int __acc_open;               /* T => acc initialize routine called */
-int __acc_scope_set;          /* T => acc scope changed from call tf inst */
+int32 __acc_strbuf_nxti;        /* next free ndx - gets rewound */
+int32 __acc_open;               /* T => acc initialize routine called */
+int32 __acc_scope_set;          /* T => acc scope changed from call tf inst */
 vpiHandle __acc_scope_vpiobj; /* currently set acc_ scope as vpi objec */
 
 /* need separate work tables for acc_ since sometimes call vpi iterators */
-/* that may reuse normal ith word tables */ 
-int __aithtsiz;               /* size of acc work handle table */
+/* that may reuse normal ith word32 tables */ 
+int32 __aithtsiz;               /* size of acc work handle table */
 struct h_t *__aithtab;        /* and the work handle table */
 struct hrec_t *__aithrectab;  /* and hrec contents of it */
-int __aithtsiz2;             /* size of acc 2nd work handle table */
+int32 __aithtsiz2;             /* size of acc 2nd work handle table */
 struct h_t *__aithtab2;      /* 2nd work for in subtree handles */
 struct hrec_t *__aithrectab2;/* and hrec contents of it */
 
@@ -117,18 +117,18 @@ struct acciter_t *__aiter_freelst;
 struct acciter_t *__aiter_accnxt_list; /* list for all acc next (no type) */
 
 /* configure parameter variables - see P1364 acc LRM chapter */
-int __acc_pathdelaycount;
+int32 __acc_pathdelaycount;
 char *__acc_pathdelimstr;
-int __acc_displayerrors;
-int __acc_defaultattr0;
-int __acc_tohizdelay;
-int __acc_enableargs_pth;
-int __acc_enableargs_tchk;
-int __acc_enableargs_setscope;
-int __acc_displaywarnings;
+int32 __acc_displayerrors;
+int32 __acc_defaultattr0;
+int32 __acc_tohizdelay;
+int32 __acc_enableargs_pth;
+int32 __acc_enableargs_tchk;
+int32 __acc_enableargs_setscope;
+int32 __acc_displaywarnings;
 char *__acc_developmentversion;
-int __acc_maptomipd;
-int __acc_mintypmaxdelays;
+int32 __acc_maptomipd;
+int32 __acc_mintypmaxdelays;
 
 /* declaration (definition) of acc_user variables */
 bool acc_error_flag;
@@ -138,43 +138,43 @@ extern bool acc_append_delays(handle object, ...);
 extern bool acc_append_pulsere(handle object, double val1, double val1x, ...);
 extern void acc_close(void);
 extern handle *acc_collect(handle (*p_next_routine)(), handle scope_object,
- int *aof_count);
+ int32 *aof_count);
 extern bool acc_compare_handles(handle h1, handle h2);
-extern int acc_count(handle (*next_function)(), handle object_handle);
-extern bool acc_configure(int item, char *value);
-extern int acc_fetch_argc(void);
+extern int32 acc_count(handle (*next_function)(), handle object_handle);
+extern bool acc_configure(int32 item, char *value);
+extern int32 acc_fetch_argc(void);
 extern void **acc_fetch_argv(void);
 extern double acc_fetch_attribute(handle object, ...);
-extern int acc_fetch_attribute_int(handle object, ...);
+extern int32 acc_fetch_attribute_int(handle object, ...);
 extern char *acc_fetch_attribute_str(handle object, ...);
 extern char *acc_fetch_defname(handle object_handle);
-extern int acc_fetch_delay_mode(handle object_p);
+extern int32 acc_fetch_delay_mode(handle object_p);
 extern bool acc_fetch_delays(handle object, ...);
-extern int acc_fetch_direction(handle object_handle);
-extern int acc_fetch_edge(handle acc_object);
+extern int32 acc_fetch_direction(handle object_handle);
+extern int32 acc_fetch_edge(handle acc_object);
 extern char *acc_fetch_fullname(handle object_handle);
-extern int acc_fetch_fulltype(handle object_h);
-extern int acc_fetch_index(handle object_handle);
-extern double acc_fetch_itfarg(int n, handle tfinst);
-extern int acc_fetch_itfarg_int(int n, handle tfinst);
-extern char *acc_fetch_itfarg_str(int n, handle tfinst);
-extern int acc_fetch_location(p_location location_p, handle object);
+extern int32 acc_fetch_fulltype(handle object_h);
+extern int32 acc_fetch_index(handle object_handle);
+extern double acc_fetch_itfarg(int32 n, handle tfinst);
+extern int32 acc_fetch_itfarg_int(int32 n, handle tfinst);
+extern char *acc_fetch_itfarg_str(int32 n, handle tfinst);
+extern int32 acc_fetch_location(p_location location_p, handle object);
 extern char *acc_fetch_name(handle object_handle);
-extern int acc_fetch_paramtype(handle param_p);
+extern int32 acc_fetch_paramtype(handle param_p);
 extern double acc_fetch_paramval(handle param);
-extern int acc_fetch_polarity(handle path);
-extern int acc_fetch_precision(void);
+extern int32 acc_fetch_polarity(handle path);
+extern int32 acc_fetch_precision(void);
 extern bool acc_fetch_pulsere(handle path_p, double *val1r,
  double *val1e, ...);
-extern int acc_fetch_range(handle node, int *msb, int *lsb);
-extern int acc_fetch_size(handle obj_h);
-extern double acc_fetch_tfarg(int n);
-extern int acc_fetch_tfarg_int(int n);
-extern char *acc_fetch_tfarg_str(int n);
+extern int32 acc_fetch_range(handle node, int32 *msb, int32 *lsb);
+extern int32 acc_fetch_size(handle obj_h);
+extern double acc_fetch_tfarg(int32 n);
+extern int32 acc_fetch_tfarg_int(int32 n);
+extern char *acc_fetch_tfarg_str(int32 n);
 extern void acc_fetch_timescale_info(handle obj,
  p_timescale_info aof_timescale_info);
-extern int acc_fetch_type(handle object_handle);
-extern char *acc_fetch_type_str(int type);
+extern int32 acc_fetch_type(handle object_handle);
+extern char *acc_fetch_type_str(int32 type);
 extern char *acc_fetch_value(handle object_handle, char *format_str,
  p_acc_value acc_value_p);
 extern void acc_free(handle *array_ptr);
@@ -184,7 +184,7 @@ extern handle acc_handle_conn(handle term_p);
 extern handle acc_handle_datapath(handle path);
 extern handle acc_handle_hiconn(handle port_ref);
 extern handle acc_handle_interactive_scope(void);
-extern handle acc_handle_itfarg(int n, handle tfinst);
+extern handle acc_handle_itfarg(int32 n, handle tfinst);
 extern handle acc_handle_loconn(handle port_ref);
 extern handle acc_handle_modpath(handle mod_p, char *pathin_name,
  char *pathout_name, ...);
@@ -194,18 +194,18 @@ extern handle acc_handle_parent(handle object_p);
 extern handle acc_handle_path(handle source, handle destination);
 extern handle acc_handle_pathin(handle path_p);
 extern handle acc_handle_pathout(handle path_p);
-extern handle acc_handle_port(handle mod_handle, int port_num);
+extern handle acc_handle_port(handle mod_handle, int32 port_num);
 extern handle acc_handle_scope(handle object);
 extern handle acc_handle_simulated_net(handle net_h);
-extern handle acc_handle_tchk(handle mod_p, int tchk_type,
- char *arg1_conn_name, int arg1_edgetype, ...);
+extern handle acc_handle_tchk(handle mod_p, int32 tchk_type,
+ char *arg1_conn_name, int32 arg1_edgetype, ...);
 extern handle acc_handle_tchkarg1(handle tchk);
 extern handle acc_handle_tchkarg2(handle tchk);
-extern handle acc_handle_terminal(handle gate_handle, int terminal_index);
-extern handle acc_handle_tfarg(int n);
+extern handle acc_handle_terminal(handle gate_handle, int32 terminal_index);
+extern handle acc_handle_tfarg(int32 n);
 extern handle acc_handle_tfinst(void);
 extern bool acc_initialize(void);
-extern handle acc_next(int *type_list, handle h_scope, handle h_object);
+extern handle acc_next(int32 *type_list, handle h_scope, handle h_object);
 extern handle acc_next_bit(handle vector, handle bit);
 extern handle acc_next_cell(handle scope, handle cell);
 extern handle acc_next_cell_load(handle net_handle, handle load);
@@ -227,146 +227,146 @@ extern handle acc_next_specparam(handle module_p, handle sparam);
 extern handle acc_next_tchk(handle mod_p, handle tchk);
 extern handle acc_next_terminal(handle gate_handle, handle term);
 extern handle acc_next_topmod(handle topmod);
-extern bool acc_object_of_type(handle object, int type);
-extern bool acc_object_in_typelist(handle object, int *type_list);
-extern int acc_product_type(void);
+extern bool acc_object_of_type(handle object, int32 type);
+extern bool acc_object_in_typelist(handle object, int32 *type_list);
+extern int32 acc_product_type(void);
 extern char *acc_product_version(void);
-extern int acc_release_object(handle obj);
+extern int32 acc_release_object(handle obj);
 extern bool acc_replace_delays(handle object, ...);
 extern bool acc_replace_pulsere(handle object, double val1r,
  double val1x, ...);
 extern void acc_reset_buffer(void);
-extern bool acc_set_interactive_scope(handle scope, int callback_flag);
+extern bool acc_set_interactive_scope(handle scope, int32 callback_flag);
 extern bool acc_set_pulsere(handle path_p, double val1r, double val1e);
 extern char *acc_set_scope(handle object, ...);
-extern int acc_set_value(handle obj, p_setval_value setval_p,
+extern int32 acc_set_value(handle obj, p_setval_value setval_p,
  p_setval_delay delay_p);
-extern void acc_vcl_add(handle object_p, int (*consumer)(), char *user_data,
- int vcl_flags);
-extern void acc_vcl_delete(handle object_p, int (*consumer)(),
- char *user_data, int vcl_flags);
+extern void acc_vcl_add(handle object_p, int32 (*consumer)(), char *user_data,
+ int32 vcl_flags);
+extern void acc_vcl_delete(handle object_p, int32 (*consumer)(),
+ char *user_data, int32 vcl_flags);
 extern char *acc_version(void);
-extern int __primtermprop_vpiget(struct h_t *, int);
-extern char *__to_sytyp(char *, unsigned);
+extern int32 __primtermprop_vpiget(struct h_t *, int32);
+extern char *__to_sytyp(char *, word32);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
-extern char * __get_eval_cstr(struct expr_t *, int *);
+extern char * __get_eval_cstr(struct expr_t *, int32 *);
 
 /* local prototypes */
-static int str_truefalse(char *);
-static int legal_delimstr(char *);
+static int32 str_truefalse(char *);
+static int32 legal_delimstr(char *);
 static struct h_t *find_acc_attr_param(struct h_t *, char *, char *);
 static struct net_t *tryfnd_param(char *, struct symtab_t *, char *, char *); 
 static void init_acc_config(void);
-static int bld_accnext_iter(int *, handle);
-static int nd_modscope(struct h_t *);
-static int nd_anyscope(struct h_t *);
-static int cellinst_addto_iter(vpiHandle, int, int);
+static int32 bld_accnext_iter(int32 *, handle);
+static int32 nd_modscope(struct h_t *);
+static int32 nd_anyscope(struct h_t *);
+static int32 cellinst_addto_iter(vpiHandle, int32, int32);
 static void acc_internal_itfree(struct h_t *);
-static int var_addto_iter(vpiHandle, int, int);
-static int param_addto_iter(vpiHandle, int, int);
-static int prim_addto_iter(vpiHandle, int, int, int);
+static int32 var_addto_iter(vpiHandle, int32, int32);
+static int32 param_addto_iter(vpiHandle, int32, int32);
+static int32 prim_addto_iter(vpiHandle, int32, int32, int32);
 static handle portbit_accnext(handle, handle);
-static void linkout_aiter(struct acciter_t *, int, int);
+static void linkout_aiter(struct acciter_t *, int32, int32);
 static void linkout_accnext_aiter(struct acciter_t *);
 static handle netbit_accnext(handle, handle);
 static struct acciter_t *find_aiter_rec(register struct acciter_t *,
  struct h_t *); 
 static vpiHandle bld_acc_cells_iter(struct h_t *);
-static int collect_loc_insts(struct h_t *);
-static int addto_acc_cells_iter(struct h_t *, int, int);
+static int32 collect_loc_insts(struct h_t *);
+static int32 addto_acc_cells_iter(struct h_t *, int32, int32);
 static handle do_acc_next_ld_drv(char *, handle, handle);
-static int map_acc_delaymode_to_vpi(int);
-static char *get_acc_delmode_nam(char *, int);
-static int fill_vpival_fromacc(struct t_vpi_value *, struct t_setval_value *);
-static int chk_add_del_vclobj(char *, struct h_t **, int (*)(), char *);
-static int set_vcl_reason(struct net_t *, int);
-static struct vclrec_t *findmatch_net_vcl_dce(struct h_t *, int (*)(), char *);
-static struct vclrec_t *findmatch_term_vcl_dce(struct h_t *, int (*)(),
+static int32 map_acc_delaymode_to_vpi(int32);
+static char *get_acc_delmode_nam(char *, int32);
+static int32 fill_vpival_fromacc(struct t_vpi_value *, struct t_setval_value *);
+static int32 chk_add_del_vclobj(char *, struct h_t **, int32 (*)(), char *);
+static int32 set_vcl_reason(struct net_t *, int32);
+static struct vclrec_t *findmatch_net_vcl_dce(struct h_t *, int32 (*)(), char *);
+static struct vclrec_t *findmatch_term_vcl_dce(struct h_t *, int32 (*)(),
  char *);
-static int exec_acc_vclcb(struct t_cb_data *);
-static int exec_acc_gateout_vclcb(struct t_cb_data *);
-static int map_to_accvclval(unsigned);
-static int map_vpi_to_accvclval(unsigned);
-static int map_vpi_to_accval(unsigned);
-static int map_acc_to_vpival(unsigned);
-static int map_vpi_to_accstren(unsigned);
+static int32 exec_acc_vclcb(struct t_cb_data *);
+static int32 exec_acc_gateout_vclcb(struct t_cb_data *);
+static int32 map_to_accvclval(word32);
+static int32 map_vpi_to_accvclval(word32);
+static int32 map_vpi_to_accval(word32);
+static int32 map_acc_to_vpival(word32);
+static int32 map_vpi_to_accstren(word32);
 static vpiHandle bld_cell_load_iter(struct h_t *);
 static vpiHandle bld_driver_iter(struct h_t *);
-static handle do_acc_next_hilo_conn(char *, handle, handle, int);
+static handle do_acc_next_hilo_conn(char *, handle, handle, int32);
 static vpiHandle bld_load_iter(struct h_t *);
 
 
 static vpiHandle rem_ins_from_iter(struct mod_t *, vpiHandle); 
 
 static char *add_accstrbuf(char *);
-static char *get_cfgconst_nam(char *, int);
+static char *get_cfgconst_nam(char *, int32);
 static struct vpi_to_acc_t *get_acc_typerec(struct h_t *);
 static vpiHandle get_acc_current_systf(char *);
-static int get_systf_acc_expr_val(int, struct expr_t *, s_vpi_value *,
+static int32 get_systf_acc_expr_val(int32, struct expr_t *, s_vpi_value *,
  struct h_t *, char *);
-static int fr_accfmt_to_vpifmt(int);
-static char *to_accfmtnam(char *, int);
-static int copy_vpival_to_accval(s_setval_value *, s_vpi_value *, int);
-static handle get_systf_accargobj(struct h_t *, int, struct expr_t *, char *);
-static int get_acc_fulltype(vpiHandle, struct vpi_to_acc_t *);
-static char *get_accnam(int);
+static int32 fr_accfmt_to_vpifmt(int32);
+static char *to_accfmtnam(char *, int32);
+static int32 copy_vpival_to_accval(s_setval_value *, s_vpi_value *, int32);
+static handle get_systf_accargobj(struct h_t *, int32, struct expr_t *, char *);
+static int32 get_acc_fulltype(vpiHandle, struct vpi_to_acc_t *);
+static char *get_accnam(int32);
 static void acc_not_sim_err(char *);
-static int validate_acc_handle(char *, struct h_t *); 
-extern int __validate_otyp(unsigned);
-static char *to_acc_onam(char *, unsigned);
-static void wrong_nxtobj_error(char *, int, int);
+static int32 validate_acc_handle(char *, struct h_t *); 
+extern int32 __validate_otyp(word32);
+static char *to_acc_onam(char *, word32);
+static void wrong_nxtobj_error(char *, int32, int32);
 static struct acciter_t *alloc_aiter(void);
 static void init_aiter(struct acciter_t *);
 static handle do_acc_child_topmod(char *, handle);
-static int exec_acc_set_delays(struct h_t *, int, va_list);
+static int32 exec_acc_set_delays(struct h_t *, int32, va_list);
 
 /* extern prototypes (maybe defined in this module) */
-extern char *__my_malloc(int);
-extern char *__my_realloc(char *, int, int);
-extern void __my_free(char *, int);
-extern char *__to_vpionam(char *, unsigned);
+extern char *__my_malloc(int32);
+extern char *__my_realloc(char *, int32, int32);
+extern void __my_free(char *, int32);
+extern char *__to_vpionam(char *, word32);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern vpiHandle __mk_exprclass_handle(struct expr_t *, struct itree_t *,
  struct task_t *);
-extern char *__to_vvstnam(char *, word);
-extern int __map_frvpi_stren(int);
-extern int __name_vpi_hasdot(char *);
-extern vpiHandle __mk_handle(unsigned, void *, struct itree_t *,
+extern char *__to_vvstnam(char *, word32);
+extern int32 __map_frvpi_stren(int32);
+extern int32 __name_vpi_hasdot(char *);
+extern vpiHandle __mk_handle(word32, void *, struct itree_t *,
  struct task_t *);
 extern void __free_iterator(vpiHandle);
-extern unsigned __to_vpi_tasktyp(unsigned);
-extern unsigned __gate_to_vpiprimtyp(struct gate_t *);
+extern word32 __to_vpi_tasktyp(word32);
+extern word32 __gate_to_vpiprimtyp(struct gate_t *);
 extern void __bld_vpi_argv(void);
 extern void __init_hrec(struct hrec_t *);
-extern void __grow_acc_htab(int);
-extern void __grow_acc_htab2(int);
+extern void __grow_acc_htab(int32);
+extern void __grow_acc_htab2(int32);
 extern char *__to_timstr(char *, word64 *);
-extern struct pviter_t *__alloc_iter(int, vpiHandle *);
-extern void __cberror_fill_einfo(int, int, char *, char *, int);
+extern struct pviter_t *__alloc_iter(int32, vpiHandle *);
+extern void __cberror_fill_einfo(int32, int32, char *, char *, int32);
 extern void __vpi_error_trycall(void);
-extern unsigned __map_tovpi_stren(unsigned);
-extern int __v64_to_real(double *, word64 *);
+extern word32 __map_tovpi_stren(word32);
+extern int32 __v64_to_real(double *, word64 *);
 extern void __free_hp(struct h_t *); 
 extern void __call_misctfs_scope(void);
-extern int __my_vpi_chk_error(void);
-extern int __chk_showobj(struct h_t *, int *, int *);
+extern int32 __my_vpi_chk_error(void);
+extern int32 __chk_showobj(struct h_t *, int32 *, int32 *);
 
 /* misc extern prototypes */
-extern void __pv_terr(int, char *, ...);
+extern void __pv_terr(int32, char *, ...);
 extern void __my_fprintf(FILE *, char *, ...);
 extern void __my_vfprintf(FILE *, char *, va_list, va_list);
 
-extern void __acc_err(int, char *fmt, ...);
-extern void __acc_sferr(int, char *fmt, ...);
-extern void __acc_warn(int, char *fmt, ...);
-extern void __acc_sfwarn(int, char *, ...);
-extern void __acc_terr(char *, int);
-extern void __acc_vpi_terr(char *, int);
+extern void __acc_err(int32, char *fmt, ...);
+extern void __acc_sferr(int32, char *fmt, ...);
+extern void __acc_warn(int32, char *fmt, ...);
+extern void __acc_sfwarn(int32, char *, ...);
+extern void __acc_terr(char *, int32);
+extern void __acc_vpi_terr(char *, int32);
 
 static struct vpi_to_acc_t vpi_to_acc[];
 
-/* extern word __masktab[]; */
+/* extern word32 __masktab[]; */
 
 /*
  * EXTRA ACC INTIALIZATION ROUTINES
@@ -382,7 +382,7 @@ static struct vpi_to_acc_t vpi_to_acc[];
  */
 extern void __init_acc(void)
 {
- register int aii;
+ register int32 aii;
 
  __acc_open = FALSE;
  acc_error_flag = FALSE;
@@ -423,7 +423,7 @@ extern void __init_acc(void)
 /*VARARGS*/
 extern bool acc_append_delays(handle object, ...)
 {
- int rv;
+ int32 rv;
  va_list va;
 
  va_start(va, object);
@@ -494,10 +494,10 @@ extern void acc_close(void)
  * array of handles has no place to store size
  */
 extern handle *acc_collect(handle (*p_next_routine)(), handle scope_object,
- int *aof_count)
+ int32 *aof_count)
 {
- register int hi;
- int isize;
+ register int32 hi;
+ int32 isize;
  struct h_t *hp, *hp2, *hp3, *hp4;
  struct acciter_t *aip;
  struct pviter_t *iterp; 
@@ -558,7 +558,7 @@ do_free:
  */
 extern bool acc_compare_handles(handle h1, handle h2)
 {
- int rv;
+ int32 rv;
  struct h_t *hp1, *hp2; 
 
  acc_error_flag = FALSE;
@@ -588,9 +588,9 @@ extern bool acc_compare_handles(handle h1, handle h2)
 /*
  * configure acc configureation parameter to value value 
  */
-extern bool acc_configure(int item, char *value)
+extern bool acc_configure(int32 item, char *value)
 {
- int boolval, dnum;
+ int32 boolval, dnum;
 
  acc_error_flag = FALSE;
  switch (item) {
@@ -708,7 +708,7 @@ bad_delcnt:
 /*
  * check a string true/false value (returns -1 on error)
  */
-static int str_truefalse(char *s)
+static int32 str_truefalse(char *s)
 {
  if (strcmp(s, "true") == 0 || strcmp(s, "TRUE") == 0) return(TRUE);
  else if (strcmp(s, "false") == 0 || strcmp(s, "FALSE") == 0) return(FALSE);
@@ -718,7 +718,7 @@ static int str_truefalse(char *s)
 /*
  * return T if path delimiter string legal - else F
  */
-static int legal_delimstr(char *s)
+static int32 legal_delimstr(char *s)
 {
  register char *chp;
 
@@ -735,9 +735,9 @@ static int legal_delimstr(char *s)
  *
  * same as acc_collect but no allocating and copying of handle array 
  */
-extern int acc_count(handle (*next_function)(), handle object_handle)
+extern int32 acc_count(handle (*next_function)(), handle object_handle)
 {
- int isize;
+ int32 isize;
  struct acciter_t *aip;
  struct pviter_t *iterp;
  struct h_t *hp, *hp2, *hp3;
@@ -779,7 +779,7 @@ extern int acc_count(handle (*next_function)(), handle object_handle)
 /*
  * get processed (-f are ** argv) argument count
  */
-extern int acc_fetch_argc(void)
+extern int32 acc_fetch_argc(void)
 {
  acc_error_flag = FALSE;
  /* know error can't happen here */
@@ -852,7 +852,7 @@ ret_def:
  */
 static struct h_t *find_acc_attr_param(struct h_t *hp, char *anam, char *rtnam)
 {
- int sav_acc_disperrs;
+ int32 sav_acc_disperrs;
  struct mod_t *mdp;
  struct net_t *np;
  struct h_t *rhp;
@@ -946,13 +946,13 @@ static struct net_t *tryfnd_param(char *anam, struct symtab_t *sytp,
 }
 
 /*
- * acc fetch attribute - return as int variant
+ * acc fetch attribute - return as int32 variant
  */
 /*VARARGS*/
-extern int acc_fetch_attribute_int(handle object, ...)
+extern int32 acc_fetch_attribute_int(handle object, ...)
 {
  struct h_t *hp, *rhp;
- int i1;
+ int32 i1;
  va_list va;
  s_vpi_value tmpval;
  char *attrstr;
@@ -972,7 +972,7 @@ ret_def:
    /* T return 0 - ignore any possible pass default value */
    if (__acc_defaultattr0) return(0);
    /* F return user passed default attribute value */
-   i1 = va_arg(va, int);
+   i1 = va_arg(va, int32);
    va_end(va);
    return(i1);
   }
@@ -983,7 +983,7 @@ ret_def:
  if (__my_vpi_chk_error())
   {
    __acc_err(1956,
-    "acc_fetch_attribute_int: error accessing int value for attribute %s",
+    "acc_fetch_attribute_int: error accessing int32 value for attribute %s",
     rhp->hrec->hu.hnp->nsym->synam);
    goto ret_def;
   }
@@ -1028,7 +1028,7 @@ ret_def:
  if (__my_vpi_chk_error())
   {
    __acc_err(1956,
-    "acc_fetch_attribute_int: error accessing int value for attribute %s",
+    "acc_fetch_attribute_int: error accessing int32 value for attribute %s",
     rhp->hrec->hu.hnp->nsym->synam);
    goto ret_def;
   }
@@ -1071,7 +1071,7 @@ extern char *acc_fetch_defname(handle object_handle)
  */
 static char *add_accstrbuf(char *s)
 {
- int slen;
+ int32 slen;
  char *chp;
 
  slen = strlen(s);
@@ -1099,7 +1099,7 @@ static char *add_accstrbuf(char *s)
  * Cver tool does not store 3 values for MTM delays because it is a
  * simulator
  */
-extern int acc_fetch_delay_mode(handle object_p)
+extern int32 acc_fetch_delay_mode(handle object_p)
 {
  struct h_t *hp; 
 
@@ -1127,7 +1127,7 @@ extern int acc_fetch_delay_mode(handle object_p)
 /*VARARGS*/
 extern bool acc_fetch_delays(handle object, ...)
 {
- register int i, j;
+ register int32 i, j;
  double *d1p, *d2p, *d3p, *da;
  va_list va;
  struct h_t *hp; 
@@ -1312,9 +1312,9 @@ extern bool acc_fetch_delays(handle object, ...)
  * LOOKATME - does acc support timing check terminal directions?
  * this returns 0 on error
  */
-extern int acc_fetch_direction(handle object_handle)
+extern int32 acc_fetch_direction(handle object_handle)
 {
- int rv;
+ int32 rv;
  struct h_t *hp;
  struct hrec_t *hrp;
 
@@ -1365,9 +1365,9 @@ extern int acc_fetch_direction(handle object_handle)
  * FIXME - although acc and vpi edge values same need routine to convert
  * LOOKATME - is returning 0 on error correct? 
  */
-extern int acc_fetch_edge(handle acc_object)
+extern int32 acc_fetch_edge(handle acc_object)
 {
- int rv;
+ int32 rv;
  struct h_t *hp;
 
  acc_error_flag = FALSE;
@@ -1455,7 +1455,7 @@ add_str:
 /*
  * get acc full type (usually same as type)
  */
-extern int acc_fetch_fulltype(handle object_h)
+extern int32 acc_fetch_fulltype(handle object_h)
 {
  struct h_t *hp;
  struct vpi_to_acc_t *accvpip;
@@ -1474,9 +1474,9 @@ extern int acc_fetch_fulltype(handle object_h)
  *
  * LOOKATME - does acc port index also start at 0
  */
-extern int acc_fetch_index(handle object_handle)
+extern int32 acc_fetch_index(handle object_handle)
 {
- int rv;
+ int32 rv;
  struct h_t *hp;
 
  acc_error_flag = FALSE;
@@ -1507,9 +1507,9 @@ bad_arg:
 /*
  * fetch line number and file name location of acc object
  */
-extern int acc_fetch_location(p_location location_p, handle object)
+extern int32 acc_fetch_location(p_location location_p, handle object)
 {
- int lineno;
+ int32 lineno;
  struct h_t *hp;
  char *chp;
 
@@ -1601,9 +1601,9 @@ add_str:
 /*
  * get declaration type of parameter
  *
- * LOOKATME is non string and non real always int algorithm right? 
+ * LOOKATME is non string and non real always int32 algorithm right? 
  */
-extern int acc_fetch_paramtype(handle param_p)
+extern int32 acc_fetch_paramtype(handle param_p)
 {
  struct h_t *hp;
  struct net_t *np;
@@ -1626,13 +1626,13 @@ extern int acc_fetch_paramtype(handle param_p)
 /*
  * fetch value of a parameter (def or spec) in a double
  *
- * caller can convert int back to int by cast
+ * caller can convert int32 back to int32 by cast
  * for string parameter double is really ptr to char * that user
- * must cast double back to char * by first casting to int then to char *
+ * must cast double back to char * by first casting to int32 then to char *
  */
 extern double acc_fetch_paramval(handle param)
 {
- word w;
+ word32 w;
  double d1;
  struct h_t *hp;
  struct net_t *np;
@@ -1670,7 +1670,7 @@ bad_getval:
    if (__my_vpi_chk_error()) goto bad_getval;
    /* PORTABILITY - acc standard here requires strange cast */ 
    chp = add_accstrbuf(tmpval.value.str);
-   w = (word) chp;
+   w = (word32) chp;
    d1 = (double) w;
   }
  else
@@ -1690,9 +1690,9 @@ bad_getval:
  *
  * LOOKATME - what about data path polarity
  */
-extern int acc_fetch_polarity(handle path)
+extern int32 acc_fetch_polarity(handle path)
 {
- int rv;
+ int32 rv;
  struct h_t *hp;
  struct hrec_t *hrp;
 
@@ -1729,7 +1729,7 @@ extern int acc_fetch_polarity(handle path)
 /*
  * get design wide precicison (minimum time scale)
  */
-extern int acc_fetch_precision(void)
+extern int32 acc_fetch_precision(void)
 {
  acc_error_flag = FALSE;
 
@@ -1739,7 +1739,7 @@ extern int acc_fetch_precision(void)
     "acc_fetch_precision meaningless - design contains no `timescale directives");
    return(0);
   }
- return(-((int) __des_timeprec));
+ return(-((int32) __des_timeprec));
 }
 
 /*
@@ -1756,8 +1756,8 @@ extern int acc_fetch_precision(void)
 /*VARARGS*/
 extern bool acc_fetch_pulsere(handle path_p, double *val1r, double *val1e, ...)
 {
- register int i;
- int sav_acc_mintypmaxdelays, rv;
+ register int32 i;
+ int32 sav_acc_mintypmaxdelays, rv;
  double *rp, *ep;
  va_list va;
  struct h_t *hp; 
@@ -1870,10 +1870,10 @@ done:
  * notice msb is first range although may be less than lsb
  * LOOKATME - what are objects for this (allowing vpiMemoryWord)
  */
-extern int acc_fetch_range(handle node, int *msb, int *lsb)
+extern int32 acc_fetch_range(handle node, int32 *msb, int32 *lsb)
 {
  register struct hrec_t *hrp;
- int r1, r2;
+ int32 r1, r2;
  struct h_t *hp;
  vpiHandle rrng, lrng;
  s_vpi_value tmpval;
@@ -1928,7 +1928,7 @@ bad_rng:
  *
  * LOOKATME - what are objects allowed for this
  */
-extern int acc_fetch_size(handle obj_h)
+extern int32 acc_fetch_size(handle obj_h)
 {
  register struct hrec_t *hrp;
  struct h_t *hp;
@@ -1970,10 +1970,10 @@ extern int acc_fetch_size(handle obj_h)
  * special handling of string values (constants) required where value
  * returned is pointer cast to double
  */
-extern double acc_fetch_tfarg(int n)
+extern double acc_fetch_tfarg(int32 n)
 {
  register struct hrec_t *shrp;
- word w;
+ word32 w;
  vpiHandle systfp;
  struct h_t *shp;
  struct tskcall_t *tkcp;
@@ -2005,7 +2005,7 @@ extern double acc_fetch_tfarg(int n)
   {
    /* string value returned as pointer to string converted to double */
    chp = add_accstrbuf(tmpval.value.str);
-   w = (word) chp;
+   w = (word32) chp;
    return((double) w);
   }
  return(tmpval.value.real);
@@ -2042,10 +2042,10 @@ static vpiHandle get_acc_current_systf(char *rnam)
  *
  * FIXME - what happen when argument is instance form (no value?)
  */
-static int get_systf_acc_expr_val(int n, struct expr_t *argxp,
+static int32 get_systf_acc_expr_val(int32 n, struct expr_t *argxp,
  s_vpi_value *valp, struct h_t *shp, char *rnam)
 {
- register int argi;
+ register int32 argi;
  register struct expr_t *xp2;
  vpiHandle arghp;
 
@@ -2091,10 +2091,10 @@ found_it:
  *
  * FIXME - need special case for ports where expression is low conn
  */
-extern double acc_fetch_itfarg(int n, handle tfinst)
+extern double acc_fetch_itfarg(int32 n, handle tfinst)
 {
  register struct hrec_t *shrp;
- word w;
+ word32 w;
  struct h_t *shp;
  struct tskcall_t *tkcp;
  struct expr_t *argxp;
@@ -2138,20 +2138,20 @@ extern double acc_fetch_itfarg(int n, handle tfinst)
    chp = add_accstrbuf(tmpval.value.str);
 
    /* LOOKATME - this cast looks wrong and unportable ?? */
-   w = (word) chp;
+   w = (word32) chp;
    return((double) w);
   }
  else return(tmpval.value.real);
 }
 
 /*
- * fetch nth tf arg for current tf object as int 
+ * fetch nth tf arg for current tf object as int32 
  */
-extern int acc_fetch_tfarg_int(int n)
+extern int32 acc_fetch_tfarg_int(int32 n)
 {
  register struct hrec_t *shrp;
  vpiHandle systfp;
- word w;
+ word32 w;
  struct h_t *shp;
  struct tskcall_t *tkcp;
  struct expr_t *argxp;
@@ -2184,8 +2184,8 @@ extern int acc_fetch_tfarg_int(int n)
    /* string value returned as pointer to string converted to double */
    chp = add_accstrbuf(tmpval.value.str);
    /* FIXME ??? - NOT 64 bit portable */
-   w = (word) chp;
-   return((int) w);
+   w = (word32) chp;
+   return((int32) w);
   }
 
  return(tmpval.value.integer);
@@ -2194,10 +2194,10 @@ extern int acc_fetch_tfarg_int(int n)
 /*
  * fetch nth tf arg for task function object tfinst as int
  */
-extern int acc_fetch_itfarg_int(int n, handle tfinst)
+extern int32 acc_fetch_itfarg_int(int32 n, handle tfinst)
 {
  register struct hrec_t *shrp;
- word w;
+ word32 w;
  struct h_t *shp;
  struct tskcall_t *tkcp;
  struct expr_t *argxp;
@@ -2239,8 +2239,8 @@ extern int acc_fetch_itfarg_int(int n, handle tfinst)
    /* string value returned as pointer to string converted to double */
    chp = add_accstrbuf(tmpval.value.str);
    /* FIXME ??? - NOT 64 bit portable */
-   w = (word) chp;
-   return((int) w);
+   w = (word32) chp;
+   return((int32) w);
   }
  return(tmpval.value.integer);
 }
@@ -2251,7 +2251,7 @@ extern int acc_fetch_itfarg_int(int n, handle tfinst)
  *
  * following LRM interpret value as string no matter what it is
  */
-extern char *acc_fetch_tfarg_str(int n)
+extern char *acc_fetch_tfarg_str(int32 n)
 {
  register struct hrec_t *shrp;
  vpiHandle systfp;
@@ -2291,7 +2291,7 @@ extern char *acc_fetch_tfarg_str(int n)
  *
  * following LRM interpret value as string no matter what it is
  */
-extern char *acc_fetch_itfarg_str(int n, handle tfinst)
+extern char *acc_fetch_itfarg_str(int32 n, handle tfinst)
 {
  register struct hrec_t *shrp;
  struct h_t *shp;
@@ -2348,7 +2348,7 @@ extern void acc_fetch_timescale_info(handle obj,
  /* case 1: get active timeformat info */
  if (hp == NULL)
   {
-   aof_timescale_info->unit = -((int) __tfmt_units);
+   aof_timescale_info->unit = -((int32) __tfmt_units);
    aof_timescale_info->precision = __tfmt_precunits; 
    return;
   }
@@ -2369,15 +2369,15 @@ extern void acc_fetch_timescale_info(handle obj,
     -((short int) (mdp->mtime_units + mdp->mtime_prec));
   }
  /* SJM 09/01/00 - this is wrong since over-writes --- 
- REMOVED - aof_timescale_info->unit = -((int) mdp->mtime_units);
- REMOVED - aof_timescale_info->precision = -((int) mdp->mtime_prec); 
+ REMOVED - aof_timescale_info->unit = -((int32) mdp->mtime_units);
+ REMOVED - aof_timescale_info->precision = -((int32) mdp->mtime_prec); 
  --- */
 }
 
 /*
  * get type of object
  */
-extern int acc_fetch_type(handle object_handle)
+extern int32 acc_fetch_type(handle object_handle)
 {
  struct h_t *hp;
  struct vpi_to_acc_t *accvpip;
@@ -2426,7 +2426,7 @@ extern int acc_fetch_type(handle object_handle)
 /*
  * access type as string name (not constant value)
  */
-extern char *acc_fetch_type_str(int type)
+extern char *acc_fetch_type_str(int32 type)
 {
  char *chp;
 
@@ -2451,8 +2451,8 @@ extern char *acc_fetch_type_str(int type)
 extern char *acc_fetch_value(handle object_handle, char *format_str,
  p_acc_value acc_value_p)
 {
- int fvfmt, owid;
- word wval, s0val, s1val;
+ int32 fvfmt, owid;
+ word32 wval, s0val, s1val;
  struct h_t *hp;
  s_vpi_value tmpval;
  char s1[RECLEN];
@@ -2532,8 +2532,8 @@ extern char *acc_fetch_value(handle object_handle, char *format_str,
  if (fvfmt == vpiStrengthVal)
   {
    /* LOOKATME - what happens if value is non strength? */
-   /* build 1 byte internal Cver strength value in word form vpi_ */
-   wval = (word) tmpval.value.strength->logic;
+   /* build 1 byte internal Cver strength value in word32 form vpi_ */
+   wval = (word32) tmpval.value.strength->logic;
    if (wval != 2) 
     {
      s0val = __map_frvpi_stren(tmpval.value.strength->s0);
@@ -2549,7 +2549,7 @@ extern char *acc_fetch_value(handle object_handle, char *format_str,
 /*
  * map from a acc format constant to a vpi_ format constant 
  */
-static int fr_accfmt_to_vpifmt(int accfmt)
+static int32 fr_accfmt_to_vpifmt(int32 accfmt)
 {
  switch (accfmt) {
   case accBinStrVal: return(vpiBinStrVal);
@@ -2569,7 +2569,7 @@ static int fr_accfmt_to_vpifmt(int accfmt)
 /*
  * map from acc format constant to its name
  */
-static char *to_accfmtnam(char *s, int accfmt)
+static char *to_accfmtnam(char *s, int32 accfmt)
 {
  switch (accfmt) {
   case accBinStrVal: strcpy(s, "accBinStrVal"); break;
@@ -2593,10 +2593,10 @@ static char *to_accfmtnam(char *s, int accfmt)
  *
  * caller must have allocated any needed fields in acc value record
  */
-static int copy_vpival_to_accval(s_setval_value *avp, s_vpi_value *vvp,
- int owid)
+static int32 copy_vpival_to_accval(s_setval_value *avp, s_vpi_value *vvp,
+ int32 owid)
 {
- int wlen;
+ int32 wlen;
  char *chp;
 
  /* SJM 12/17/02 - selection was from wrong vpi but almost worked */
@@ -2615,7 +2615,7 @@ static int copy_vpival_to_accval(s_setval_value *avp, s_vpi_value *vvp,
    avp->value.integer = vvp->value.integer;
    break;
   case accRealVal:
-   /* SJM 11/19/02 - this must copy real not int - need 8 byte copy */
+   /* SJM 11/19/02 - this must copy real not int32 - need 8 byte copy */
    avp->value.real = vvp->value.real;
    break;
   case accVectorVal:
@@ -2635,7 +2635,7 @@ static int copy_vpival_to_accval(s_setval_value *avp, s_vpi_value *vvp,
  */
 extern void acc_free(handle *array_ptr)
 {
- register int htabsiz;
+ register int32 htabsiz;
  struct h_t *hp;
 
  acc_error_flag = FALSE;
@@ -2807,7 +2807,7 @@ extern handle acc_handle_datapath(handle path)
  */
 extern handle acc_handle_hiconn(handle port_ref)
 {
- int bithtyp;
+ int32 bithtyp;
  vpiHandle expr;
  struct h_t *hp, *hp2, *hp3;
  struct hrec_t *hrp;
@@ -2850,7 +2850,7 @@ extern handle acc_handle_hiconn(handle port_ref)
   case vpiReg: case vpiIntegerVar: case vpiTimeVar:
    bithtyp = vpiRegBit;
 bld_hiconn:
-   /*for int or time, know this will always be T */
+   /*for int32 or time, know this will always be T */
    if (hp2->hrec->hu.hnp->nwid != 1)
     {
      /* here need to construct accBit handle of low bit */
@@ -2881,7 +2881,7 @@ bld_hiconn:
  */
 extern handle acc_handle_interactive_scope(void)
 {
- int typ;
+ int32 typ;
  struct mod_t *mdp;
 
  acc_error_flag = FALSE;
@@ -3058,7 +3058,7 @@ bad_vpi:
 extern handle acc_handle_parent(handle object_p)
 {
  register struct hrec_t *hrp;
- int typ;
+ int32 typ;
  struct h_t *hp;
  struct itree_t *itp;
 
@@ -3176,7 +3176,7 @@ extern handle acc_handle_pathout(handle path_p)
  * access a module port handle using port index (order pos.) 
  */
 /*VARARGS*/
-extern handle acc_handle_port(handle port, int port_num)
+extern handle acc_handle_port(handle port, int32 port_num)
 {
  struct h_t *hp, *hp2;
  struct mod_t *mdp;
@@ -3268,8 +3268,8 @@ extern handle acc_handle_simulated_net(handle net_h)
  * WRITEME
  */
 /*VARARGS*/
-extern handle acc_handle_tchk(handle mod_p, int tchk_type,
- char *arg1_conn_name, int arg1_edgetype, ...)
+extern handle acc_handle_tchk(handle mod_p, int32 tchk_type,
+ char *arg1_conn_name, int32 arg1_edgetype, ...)
 {
  /* va_list va; */
  __acc_err(1941, "acc_handle_tchk not yet implemented");
@@ -3298,7 +3298,7 @@ extern handle acc_handle_tchkarg2(handle tchk)
 /*
  * access acc primitive (gate/switch/udp) terminal by index (out is 0)
  */
-extern handle acc_handle_terminal(handle gate_handle, int terminal_index)
+extern handle acc_handle_terminal(handle gate_handle, int32 terminal_index)
 {
  register struct hrec_t *hrp;
  struct h_t *hp, *hp2;
@@ -3340,7 +3340,7 @@ extern handle acc_handle_terminal(handle gate_handle, int terminal_index)
  * must be either variable (lhs) or quoted string where look up
  * using acc_handle_object rules
  */
-extern handle acc_handle_tfarg(int n)
+extern handle acc_handle_tfarg(int32 n)
 {
  register struct hrec_t *shrp;
  vpiHandle systfp;
@@ -3378,7 +3378,7 @@ extern handle acc_handle_tfarg(int n)
  * must be either variable (lhs) or quoted string where look up
  * using acc_handle_object rules
  */
-extern handle acc_handle_itfarg(int n, handle tfinst)
+extern handle acc_handle_itfarg(int32 n, handle tfinst)
 {
  register struct hrec_t *shrp;
  struct h_t *shp;
@@ -3420,12 +3420,12 @@ extern handle acc_handle_itfarg(int n, handle tfinst)
  * FIXME - what happen when argument is instance form (no value?)
  * FIXME - must treat literal string as argument to look up handle of
  */
-static handle get_systf_accargobj(struct h_t *shp, int n,
+static handle get_systf_accargobj(struct h_t *shp, int32 n,
  struct expr_t *argxp, char *rnam)
 {
- register int argi;
+ register int32 argi;
  register struct expr_t *xp2;
- int arglen, free_shp3;
+ int32 arglen, free_shp3;
  vpiHandle arghp, objp;
  struct h_t *shp2, *shp3;
  struct mod_t *mdp;
@@ -3616,12 +3616,12 @@ static void init_acc_config(void)
  *
  * FIXME - why is accSpecParam not in this list?
  * LOOKATME - assuming for cells only cells in given cell or module scope
- * LOOKATME - for parameters assuming reg is acc int param type
+ * LOOKATME - for parameters assuming reg is acc int32 param type
  */
-extern handle acc_next(int *type_list, handle h_scope, handle h_object)
+extern handle acc_next(int32 *type_list, handle h_scope, handle h_object)
 {
- register int iti; 
- int itsiz;
+ register int32 iti; 
+ int32 itsiz;
  struct h_t *hp, *hp2;
  vpiHandle ihref, nxth;
  struct pviter_t *iterp;
@@ -3694,10 +3694,10 @@ extern handle acc_next(int *type_list, handle h_scope, handle h_object)
  *
  * this allocates iterator first time then adds to one passed
  */
-static int bld_accnext_iter(int *atyp_list, handle scope_h)
+static int32 bld_accnext_iter(int32 *atyp_list, handle scope_h)
 {
- register int iti2, hi;
- int oi, accnum, has_err, rm_cells, itsiz, vntyp, vpiotyp, gclass, gtyp;
+ register int32 iti2, hi;
+ int32 oi, accnum, has_err, rm_cells, itsiz, vntyp, vpiotyp, gclass, gtyp;
  vpiHandle ihref;
  struct h_t *scope_hp, *ihp; 
  struct pviter_t *iterp;
@@ -3982,7 +3982,7 @@ do_primnxt:
 /*
  * check for scope that must be module
  */
-static int nd_modscope(struct h_t *hp)
+static int32 nd_modscope(struct h_t *hp)
 {
  if (hp->hrec->htyp != vpiModule)
   {
@@ -3996,7 +3996,7 @@ static int nd_modscope(struct h_t *hp)
 /*
  * check for scope that must be module
  */
-static int nd_anyscope(struct h_t *hp)
+static int32 nd_anyscope(struct h_t *hp)
 {
  switch (hp->hrec->htyp) {
   case vpiModule: case vpiTask: case vpiFunction:
@@ -4017,9 +4017,9 @@ static int nd_anyscope(struct h_t *hp)
  * know iterator contains at least one element but may not add any
  * area inserted is from passed iti2 to iti2 + num hs in new iterator
  */
-static int cellinst_addto_iter(vpiHandle ihref, int iti2, int rm_cells)
+static int32 cellinst_addto_iter(vpiHandle ihref, int32 iti2, int32 rm_cells)
 {
- register int iti;
+ register int32 iti;
  register struct h_t *hp2;
  register struct pviter_t *iterp;
  struct mod_t *mdp;
@@ -4035,7 +4035,9 @@ static int cellinst_addto_iter(vpiHandle ihref, int iti2, int rm_cells)
    if (rm_cells) { if (mdp->m_iscell) continue; }
    else { if (!mdp->m_iscell) continue; }
 
+   /* SJM 11/02/04 - previous fix was wrong - this must be htat size not 2 */
    if (iti2 >= __aithtsiz) __grow_acc_htab(1);
+
    /* know no malloced expr to deal with - but must copy 2 parts */
    __aithrectab[iti2] = *(hp2->hrec);   
    __aithtab[iti2] = *hp2;
@@ -4071,14 +4073,14 @@ static void acc_internal_itfree(struct h_t *ihp)
  * add to accumlator iterator with filtered net type for variables
  * returns new size of accumulator iterator table
  *
- * 2 uses: separates variable (real, time, int) and separate nets
+ * 2 uses: separates variable (real, time, int32) and separate nets
  * into subtype
  *
  * know iterator contains at least one element but may not add any
  */
-static int var_addto_iter(vpiHandle ihref, int iti2, int vntyp)
+static int32 var_addto_iter(vpiHandle ihref, int32 iti2, int32 vntyp)
 {
- register int iti;
+ register int32 iti;
  register struct h_t *hp2;
  register struct pviter_t *iterp;
  struct net_t *np;
@@ -4114,9 +4116,9 @@ static int var_addto_iter(vpiHandle ihref, int iti2, int vntyp)
  *
  * know iterator contains at least one element but may not add any
  */
-static int param_addto_iter(vpiHandle ihref, int iti2, int aotyp)
+static int32 param_addto_iter(vpiHandle ihref, int32 iti2, int32 aotyp)
 {
- register int iti;
+ register int32 iti;
  register struct h_t *hp2;
  register struct pviter_t *iterp;
  struct h_t *ihp;
@@ -4166,12 +4168,12 @@ static int param_addto_iter(vpiHandle ihref, int iti2, int aotyp)
  *
  * know iterator contains at least one element but may not add any
  */
-static int prim_addto_iter(vpiHandle ihref, int iti2, int gclass, int gtyp)
+static int32 prim_addto_iter(vpiHandle ihref, int32 iti2, int32 gclass, int32 gtyp)
 {
- register int iti;
+ register int32 iti;
  register struct h_t *hp2;
  register struct pviter_t *iterp;
- int pclasstyp;
+ int32 pclasstyp;
  struct primtab_t *ptp;
  struct h_t *ihp;
  struct gate_t *gp;
@@ -4221,10 +4223,10 @@ static int prim_addto_iter(vpiHandle ihref, int iti2, int gclass, int gtyp)
  *
  * whenever size expanded must reset cross links - only acc world ptrs
  */
-extern void __grow_acc_htab(int addnum)
+extern void __grow_acc_htab(int32 addnum)
 {
- register int iti;
- int old_aithtsiz, nnum, osize, nsize, ohrsize, nhrsize;
+ register int32 iti;
+ int32 old_aithtsiz, nnum, osize, nsize, ohrsize, nhrsize;
 
  /* only allocate if accessing driver/load style handles at all */ 
  if (__aithtsiz == 0)
@@ -4256,10 +4258,10 @@ extern void __grow_acc_htab(int addnum)
 /*
  * grow 2nd for subtree processing  global work handle table
  */
-extern void __grow_acc_htab2(int addnum)
+extern void __grow_acc_htab2(int32 addnum)
 {
- register int iti;
- int old_aithtsiz2, nnum, osize, nsize, ohrsize, nhrsize;
+ register int32 iti;
+ int32 old_aithtsiz2, nnum, osize, nsize, ohrsize, nhrsize;
 
  /* only allocate if accessing driver/load style handles at all */ 
  if (__aithtsiz2 == 0)
@@ -4308,7 +4310,7 @@ extern handle acc_next_bit(handle vector, handle bit)
   
   if (hrp->htyp == vpiPort) return(portbit_accnext(vector, bit));
   
-  /* LOOKATME - are bits of int and time var accessible - think yes */
+  /* LOOKATME - are bits of int32 and time var accessible - think yes */
   if (hrp->htyp == vpiNet || hrp->htyp == vpiReg || hrp->htyp == vpiIntegerVar
    || hrp->htyp == vpiTimeVar) 
    {
@@ -4387,7 +4389,7 @@ static handle portbit_accnext(handle port, handle bit)
  */
 static handle netbit_accnext(handle vector, handle bit)
 {
- int vpibtyp;
+ int32 vpibtyp;
  struct h_t *hp, *hp2; 
  struct net_t *np;
  vpiHandle ihref, nxth;
@@ -4591,8 +4593,8 @@ extern handle acc_next_cell(handle scope, handle cell)
  */
 static vpiHandle bld_acc_cells_iter(struct h_t *hp)
 {
- register int iti;
- int num, cnum;
+ register int32 iti;
+ int32 num, cnum;
  vpiHandle ihref;
  struct pviter_t *iterp;
 
@@ -4622,9 +4624,9 @@ static vpiHandle bld_acc_cells_iter(struct h_t *hp)
  *
  * places cells into work ith tab that is over-written
  */
-static int collect_loc_insts(struct h_t *hp)
+static int32 collect_loc_insts(struct h_t *hp)
 {
- register int ii;
+ register int32 ii;
  register struct hrec_t *hrp2;
  struct itree_t *itp, *itp2;
  struct h_t *hp2;
@@ -4659,10 +4661,10 @@ static int collect_loc_insts(struct h_t *hp)
  *
  * FIXME why is hp not used
  */
-static int addto_acc_cells_iter(struct h_t *hp, int locnum, int cnum)
+static int32 addto_acc_cells_iter(struct h_t *hp, int32 locnum, int32 cnum)
 {
- register int ii;
- int newcnum;
+ register int32 ii;
+ int32 newcnum;
  struct h_t *hp2;
  struct mod_t *mdp;
 
@@ -4806,8 +4808,8 @@ static handle do_acc_next_ld_drv(char *rtnnam, handle net_handle,
  */
 static vpiHandle bld_cell_load_iter(struct h_t *hp)
 {
- register int iti;
- int iti2, iti3, *ndcptab;
+ register int32 iti;
+ int32 iti2, iti3, *ndcptab;
  struct h_t *hp2, *hp3, *ihp;
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -4833,6 +4835,7 @@ static vpiHandle bld_cell_load_iter(struct h_t *hp)
    hp2 = &(iterp->scanhtab[iti]);
    mdp = hp2->hin_itp->itip->imsym->el.emdp;
    if (!mdp->m_iscell) continue;
+   /* SJM 11/02/04 - ### ??? does this need to be removed not match PLI book */
    if (hp2->hrec->htyp != vpiPrimTerm) continue;
 
    if (iti2 >= __aithtsiz) __grow_acc_htab(1);
@@ -4849,7 +4852,7 @@ static vpiHandle bld_cell_load_iter(struct h_t *hp)
  /* FIXME - this is slow (n**2) - should build array and sort for next */
  /* marking needed because must always return first in cell */
 
- ndcptab = (int *) __my_malloc(iti2*sizeof(int));
+ ndcptab = (int32 *) __my_malloc(iti2*sizeof(int32));
  /* assume all are copied */
  for (iti = 0; iti < iti2; iti++) ndcptab[iti] = TRUE; 
 
@@ -4876,7 +4879,8 @@ static vpiHandle bld_cell_load_iter(struct h_t *hp)
   {
    if (ndcptab[iti])
     {
-     if (iti3 >= __aithtsiz) __grow_acc_htab2(1);
+     /* SJM 11/30/04 - since growning htab2 must test against htab2 size */
+     if (iti3 >= __aithtsiz2) __grow_acc_htab2(1);
      /* can copy guts because know these are prim terms with no ptrs */
      __aithtab2[iti3] = __aithtab[iti];
      __aithrectab2[iti3] = *(__aithtab[iti].hrec);
@@ -4885,7 +4889,7 @@ static vpiHandle bld_cell_load_iter(struct h_t *hp)
      iti3++;
     }
   }
- __my_free((char *) ndcptab, iti2*sizeof(int));
+ __my_free((char *) ndcptab, iti2*sizeof(int32));
  /* final step is to free old iterator and build new one */
  acc_internal_itfree(ihp);
  iterp = __alloc_iter(iti3, &ihref);
@@ -5001,8 +5005,8 @@ extern handle acc_next_driver(handle net, handle driver)
  */
 static vpiHandle bld_driver_iter(struct h_t *hp)
 {
- register int iti;
- int iti2;
+ register int32 iti;
+ int32 iti2;
  struct h_t *hp2, *ihp;
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -5082,10 +5086,10 @@ extern handle acc_next_hiconn(handle port, handle hiconn)
  * with this
  */
 static handle do_acc_next_hilo_conn(char *rtnnam, handle port, handle conn,
- int is_hiconn)
+ int32 is_hiconn)
 {
- register int iti;
- int nbits;
+ register int32 iti;
+ int32 nbits;
  struct h_t *hp, *hp2, *hp3, *ihp;
  vpiHandle ihref, nxth;
  struct acciter_t *aip;
@@ -5244,8 +5248,8 @@ extern handle acc_next_load(handle net, handle load)
  */
 static vpiHandle bld_load_iter(struct h_t *hp)
 {
- register int iti;
- int iti2;
+ register int32 iti;
+ int32 iti2;
  struct h_t *ihp, *hp2;
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -5449,7 +5453,7 @@ extern handle acc_next_net(handle mod_handle, handle net)
  * SJM 10/11/99 - scan frees iterator when nil reached so do not do here
  * unless free iter flag true
  */
-static void linkout_aiter(struct acciter_t *aip, int otyp, int iter_free)
+static void linkout_aiter(struct acciter_t *aip, int32 otyp, int32 iter_free)
 {
  if (iter_free) __free_iterator((vpiHandle) aip->aiter); 
 
@@ -5703,7 +5707,7 @@ extern handle acc_next_portout(handle mod_p, handle port)
  */
 static vpiHandle rem_ins_from_iter(struct mod_t *mdp, vpiHandle ihref) 
 {
- register int iti, iti2;
+ register int32 iti, iti2;
  struct h_t *hp2, *ihp; 
  struct pviter_t *iterp;
  struct mod_pin_t *mpp;
@@ -5817,7 +5821,7 @@ extern handle acc_next_primitive(handle mod_handle, handle prim)
 /*
  * emit current handle wrong type error
  */
-static void wrong_nxtobj_error(char *nxtrtnam, int htyp, int ndacctyp)
+static void wrong_nxtobj_error(char *nxtrtnam, int32 htyp, int32 ndacctyp)
 {
  char *chp, s1[RECLEN];
 
@@ -6206,9 +6210,9 @@ static handle do_acc_child_topmod(char *rtnnam, handle child)
  * type can be any type, full type, or special property 
  * (see case for special object properties)
  */
-extern bool acc_object_of_type(handle object, int type)
+extern bool acc_object_of_type(handle object, int32 type)
 {
- int objtyp, objfulltyp;
+ int32 objtyp, objfulltyp;
  struct h_t *hp;
 
  acc_error_flag = FALSE;
@@ -6267,9 +6271,9 @@ extern bool acc_object_of_type(handle object, int type)
 /*
  * version of object of type that works with list (T if on 1st match)
  */
-extern bool acc_object_in_typelist(handle object, int *type_list)
+extern bool acc_object_in_typelist(handle object, int32 *type_list)
 {
- register int li;
+ register int32 li;
  struct h_t *hp;
 
  acc_error_flag = FALSE;
@@ -6288,7 +6292,7 @@ extern bool acc_object_in_typelist(handle object, int *type_list)
 /*
  * return predefined acc constant for tool type
  */
-extern int acc_product_type(void)
+extern int32 acc_product_type(void)
 {
  return(accSimulator);
 }
@@ -6311,7 +6315,7 @@ extern char *acc_product_version(void)
  * does nothing in Cver since no extra storage
  * LOOKATME - is there something that can be freed
  */
-extern int acc_release_object(handle obj)
+extern int32 acc_release_object(handle obj)
 {
  return(1);
 }
@@ -6322,7 +6326,7 @@ extern int acc_release_object(handle obj)
 /*VARARGS*/
 extern bool acc_replace_delays(handle object, ...)
 {
- int rv;
+ int32 rv;
  va_list va;
 
  va_start(va, object);
@@ -6337,9 +6341,9 @@ extern bool acc_replace_delays(handle object, ...)
  * caller calls va_start and va_end
  * LOOKATME - is this use of varargs Posix compatible?
  */
-static int exec_acc_set_delays(struct h_t *hp, int is_append, va_list va)
+static int32 exec_acc_set_delays(struct h_t *hp, int32 is_append, va_list va)
 {
- register int i;
+ register int32 i;
  double *d1p, *d2p, *d3p, *da;
  double mintoz, typtoz, maxtoz; 
  struct hrec_t *hrp;
@@ -6589,7 +6593,7 @@ extern void acc_reset_buffer(void)
  * set interactive scope
  * call all misctfs with reason reason_scope if flag T
  */
-extern bool acc_set_interactive_scope(handle scope, int callback_flag)
+extern bool acc_set_interactive_scope(handle scope, int32 callback_flag)
 {
  struct h_t *hp;
  
@@ -6737,10 +6741,10 @@ bld_path:
  * SJM 12/17/02 - this is exception to rest of acc_ - return 0 on success
  * and 1 on error
  */
-extern int acc_set_value(handle obj, p_setval_value setval_p,
+extern int32 acc_set_value(handle obj, p_setval_value setval_p,
  p_setval_delay delay_p)
 {
- int vpi_delflag;
+ int32 vpi_delflag;
  struct t_vpi_time tmptim; 
  struct t_vpi_value tmpval;
  struct h_t *hp;
@@ -6788,8 +6792,8 @@ extern int acc_set_value(handle obj, p_setval_value setval_p,
    /* this is 64 bit scaled (containing module of object) time */
    /* no matching vpi_ time type */
    /* use vpi real - think 52 bits of time is enough for scaled */
-   timv = ((word64) ((word) delay_p->time.low))
-    | (((word64) ((word) delay_p->time.high)) << 32);
+   timv = ((word64) ((word32) delay_p->time.low))
+    | (((word64) ((word32) delay_p->time.high)) << 32);
    if (!__v64_to_real(&d1, &timv))
     {
      __acc_warn(2049,
@@ -6857,9 +6861,9 @@ extern int acc_set_value(handle obj, p_setval_value setval_p,
  * one-to-one except need to add assign/deassign for Verilog 99 vpi_
  * return -1 on error
  */
-static int map_acc_delaymode_to_vpi(int accdmode)
+static int32 map_acc_delaymode_to_vpi(int32 accdmode)
 {
- int vpidmode;
+ int32 vpidmode;
 
  /* extract delay type from acc_ setval_delay value */ 
  switch (accdmode) {
@@ -6886,7 +6890,7 @@ static int map_acc_delaymode_to_vpi(int accdmode)
 /*
  * convert acc delay mode value to string
  */
-static char *get_acc_delmode_nam(char *s, int accdmode)
+static char *get_acc_delmode_nam(char *s, int32 accdmode)
 {
  switch (accdmode) {
   case accNoDelay: strcpy(s, "accNoDelay"); break;
@@ -6912,7 +6916,7 @@ static char *get_acc_delmode_nam(char *s, int accdmode)
  * this works because both use same vector aval/bval format
  * and acc value types are subset of vpi_ 
  */
-static int fill_vpival_fromacc(struct t_vpi_value *vpivalp,
+static int32 fill_vpival_fromacc(struct t_vpi_value *vpivalp,
  struct t_setval_value *accvalp)
 {
  switch (accvalp->format) {
@@ -6975,8 +6979,8 @@ static int fill_vpival_fromacc(struct t_vpi_value *vpivalp,
  * Cver allows any vector reg/net (not just unexpanded)
  * FIXME - allow vpi_ cbs and therefore also acc_ vcls on declared events
  */
-extern void acc_vcl_add(handle object_p, int (*consumer)(), char *user_data,
- int vcl_flags)
+extern void acc_vcl_add(handle object_p, int32 (*consumer)(), char *user_data,
+ int32 vcl_flags)
 {
  struct h_t *hp, *hp2, *hp3;
  struct net_t *np;
@@ -7102,8 +7106,8 @@ extern void acc_vcl_add(handle object_p, int (*consumer)(), char *user_data,
  * check vcl add and vcl object handle
  * return F is error or already added0
  */
-static int chk_add_del_vclobj(char *rtnnam, struct h_t **hpp,
- int (*consumer)(), char *user_data)
+static int32 chk_add_del_vclobj(char *rtnnam, struct h_t **hpp,
+ int32 (*consumer)(), char *user_data)
 {
  vpiHandle loconn, hiconn;
  struct h_t *hp;
@@ -7198,9 +7202,9 @@ static int chk_add_del_vclobj(char *rtnnam, struct h_t **hpp,
 /*
  * routine to set vcl call back reason field from net and vcl flag
  */
-static int set_vcl_reason(struct net_t *np, int vclflg)
+static int32 set_vcl_reason(struct net_t *np, int32 vclflg)
 {
- int reason;
+ int32 reason;
 
  if (np->nwid == 1)
   {
@@ -7229,12 +7233,12 @@ static int set_vcl_reason(struct net_t *np, int vclflg)
  *
  * know dce's here are either entire net/reg or one bit
  */
-static struct vclrec_t *findmatch_net_vcl_dce(struct h_t *hp, int (*consumer)(),
+static struct vclrec_t *findmatch_net_vcl_dce(struct h_t *hp, int32 (*consumer)(),
  char *user_data)
 {
  register struct dcevnt_t *dcep;
  register struct hrec_t *hrp;
- int cv;
+ int32 cv;
  struct net_t *np; 
  struct vclrec_t *vclp;
  struct h_t *hp2;
@@ -7288,10 +7292,10 @@ static struct vclrec_t *findmatch_net_vcl_dce(struct h_t *hp, int (*consumer)(),
  * find matching gate output terminal vcl triple to see if registered
  */
 static struct vclrec_t *findmatch_term_vcl_dce(struct h_t *hp,
- int (*consumer)(), char *user_data)
+ int32 (*consumer)(), char *user_data)
 {
- register int tevpi;
- int gi, cv;
+ register int32 tevpi;
+ int32 gi, cv;
  struct gate_t *gp;
  struct mod_t *mdp;
  struct cbrec_t *cbp; 
@@ -7350,11 +7354,11 @@ static struct vclrec_t *findmatch_term_vcl_dce(struct h_t *hp,
  *
  * this is routine executed by vpi_ cb mechanism when variable changed
  */
-static int exec_acc_vclcb(struct t_cb_data *cbp)
+static int32 exec_acc_vclcb(struct t_cb_data *cbp)
 {
- int bi;
+ int32 bi;
  byte sbv;
- unsigned st0, st1;
+ word32 st0, st1;
  struct vclrec_t *vclp;
  struct h_t *hp;
  struct net_t *np;
@@ -7385,7 +7389,7 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
      if ((vclp->vcl_oldstval & 3) == (sbv & 3))
       { vclp->vcl_oldstval = sbv; return(FALSE); }
      vclp->vcl_oldstval = sbv;
-     wrkvcl.out_value.logic_value = map_to_accvclval((unsigned) (sbv & 3));
+     wrkvcl.out_value.logic_value = map_to_accvclval((word32) (sbv & 3));
     }
    else
     {
@@ -7400,7 +7404,7 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
        return(FALSE);
       }
      wrkvcl.out_value.logic_value
-      = map_vpi_to_accvclval((unsigned) tmpval.value.scalar);   
+      = map_vpi_to_accvclval((word32) tmpval.value.scalar);   
     }
    break;
   case strength_value_change:
@@ -7410,11 +7414,11 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
      /* BEWARE - strength internal storage byte vector dependent */
      sbv = np->nva.bp[np->nwid*hp->hin_itp->itinum + bi];
 
-     wrkstval.logic_value = map_vpi_to_accvclval((unsigned) (sbv & 3));
-     st0 = __map_tovpi_stren(((((unsigned) sbv) >> 5) & 7));
-     st1 = __map_tovpi_stren(((((unsigned) sbv) >> 2) & 7));
-     wrkstval.strength1 = (int) map_vpi_to_accstren(st0);
-     wrkstval.strength2 = (int) map_vpi_to_accstren(st1);
+     wrkstval.logic_value = map_vpi_to_accvclval((word32) (sbv & 3));
+     st0 = __map_tovpi_stren(((((word32) sbv) >> 5) & 7));
+     st1 = __map_tovpi_stren(((((word32) sbv) >> 2) & 7));
+     wrkstval.strength1 = (int32) map_vpi_to_accstren(st0);
+     wrkstval.strength2 = (int32) map_vpi_to_accstren(st1);
     }
    else  
     {
@@ -7429,7 +7433,7 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
        return(FALSE);
       }
      wrkstval.logic_value 
-      = map_vpi_to_accvclval((unsigned) tmpval.value.scalar);   
+      = map_vpi_to_accvclval((word32) tmpval.value.scalar);   
      wrkstval.strength1 = vclStrong; 
      wrkstval.strength2 = vclStrong;
     }
@@ -7447,8 +7451,8 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
  }
  /* fill rest of vc record */
  wrkvcl.vc_reason = vclp->vcl_reason; 
- wrkvcl.vc_hightime = (int) ((__simtime >> 32) & WORDMASK_ULL);
- wrkvcl.vc_lowtime = (int) (__simtime & WORDMASK_ULL);
+ wrkvcl.vc_hightime = (int32) ((__simtime >> 32) & WORDMASK_ULL);
+ wrkvcl.vc_lowtime = (int32) (__simtime & WORDMASK_ULL);
  wrkvcl.user_data = vclp->vcl_udata;
 
  /* final step exec acc vcl consumer routine */
@@ -7463,7 +7467,7 @@ static int exec_acc_vclcb(struct t_cb_data *cbp)
  * this is routine executed by vpi_ cb mechanism when gate output driver
  * changes
  */
-static int exec_acc_gateout_vclcb(struct t_cb_data *cbp)
+static int32 exec_acc_gateout_vclcb(struct t_cb_data *cbp)
 {
  struct vclrec_t *vclp;
  struct h_t *hp;
@@ -7502,7 +7506,7 @@ static int exec_acc_gateout_vclcb(struct t_cb_data *cbp)
      return(FALSE);
     }
    wrkvcl.out_value.logic_value
-    = map_vpi_to_accvclval((unsigned) tmpval.value.scalar);   
+    = map_vpi_to_accvclval((word32) tmpval.value.scalar);   
    break;
   case strength_value_change:
    __acc_vpi_erroff = TRUE;
@@ -7516,8 +7520,8 @@ static int exec_acc_gateout_vclcb(struct t_cb_data *cbp)
      return(FALSE);
     }
    wrkstval.logic_value = map_vpi_to_accvclval(tmpval.value.strength->logic);
-   wrkstval.strength1 = (int) map_vpi_to_accstren(tmpval.value.strength->s0);
-   wrkstval.strength2 = (int) map_vpi_to_accstren(tmpval.value.strength->s1);
+   wrkstval.strength1 = (int32) map_vpi_to_accstren(tmpval.value.strength->s0);
+   wrkstval.strength2 = (int32) map_vpi_to_accstren(tmpval.value.strength->s1);
    /* notice in acc_ struct is record not ptr */
    wrkvcl.out_value.strengths_s = wrkstval;
    break;
@@ -7525,8 +7529,8 @@ static int exec_acc_gateout_vclcb(struct t_cb_data *cbp)
  }
  /* fill rest of vc record */
  wrkvcl.vc_reason = vclp->vcl_reason; 
- wrkvcl.vc_hightime = (int) ((__simtime >> 32) & WORDMASK_ULL);
- wrkvcl.vc_lowtime = (int) (__simtime & WORDMASK_ULL);
+ wrkvcl.vc_hightime = (int32) ((__simtime >> 32) & WORDMASK_ULL);
+ wrkvcl.vc_lowtime = (int32) (__simtime & WORDMASK_ULL);
  wrkvcl.user_data = vclp->vcl_udata;
 
  /* final step exec acc vcl consumer routine */
@@ -7538,7 +7542,7 @@ static int exec_acc_gateout_vclcb(struct t_cb_data *cbp)
 /*
  * convert internal cver value to acc vcl value
  */
-static int map_to_accvclval(unsigned ival)
+static int32 map_to_accvclval(word32 ival)
 {
  switch ((byte) ival) {
   case 0: return(vcl0);
@@ -7556,7 +7560,7 @@ static int map_to_accvclval(unsigned ival)
 /*
  * convert vpi value to acc vcl value
  */
-static int map_vpi_to_accvclval(unsigned vpival)
+static int32 map_vpi_to_accvclval(word32 vpival)
 {
  switch ((byte) vpival) {
   case vpi0: return(vcl0);
@@ -7575,7 +7579,7 @@ static int map_vpi_to_accvclval(unsigned vpival)
  * convert vpi value to acc value
  * LOOKATME - why is this not used
  */
-static int map_vpi_to_accval(unsigned vpival)
+static int32 map_vpi_to_accval(word32 vpival)
 {
  switch ((byte) vpival) {
   case vpi0: return(acc0);
@@ -7593,7 +7597,7 @@ static int map_vpi_to_accval(unsigned vpival)
 /*
  * convert acc value to vpi value
  */
-static int map_acc_to_vpival(unsigned accval)
+static int32 map_acc_to_vpival(word32 accval)
 {
  switch ((byte) accval) {
   case acc0: return(vpi0);
@@ -7611,9 +7615,9 @@ static int map_acc_to_vpival(unsigned accval)
 /*
  * map from vpi strength values to acc strength
  */
-static int map_vpi_to_accstren(unsigned stval)
+static int32 map_vpi_to_accstren(word32 stval)
 {
- unsigned accstval;
+ word32 accstval;
 
  switch ((byte) stval) {
   case vpiSupplyDrive: accstval = vclSupply; break;
@@ -7636,8 +7640,8 @@ static int map_vpi_to_accstren(unsigned stval)
 /*
  * find and remove previously added vcl callback
  */
-extern void acc_vcl_delete(handle object_p, int (*consumer)(),
- char *user_data, int vcl_flags)
+extern void acc_vcl_delete(handle object_p, int32 (*consumer)(),
+ char *user_data, int32 vcl_flags)
 {
  struct h_t *hp, *hp2;
  struct gate_t *gp;
@@ -7826,9 +7830,9 @@ static struct vpi_to_acc_t *get_acc_typerec(struct h_t *hp)
  *
  * for most fulltype is same as type
  */
-static int get_acc_fulltype(vpiHandle vpiop, struct vpi_to_acc_t *accvpip)
+static int32 get_acc_fulltype(vpiHandle vpiop, struct vpi_to_acc_t *accvpip)
 {
- int rv;
+ int32 rv;
  struct h_t *hp; 
  s_vpi_systf_data systfdat;
  struct net_t *np;
@@ -8027,9 +8031,9 @@ static struct pnamvpi_t accconfig_names[] = {
  * names sorted but not contiguous values
  * LOOKATME - using vpi_ tables so maybe should make acc duplicates
  */
-static char *get_cfgconst_nam(char *s, int cfg_connum)
+static char *get_cfgconst_nam(char *s, int32 cfg_connum)
 {
- register int i;
+ register int32 i;
 
  for (i = 0; i < NCGFCONS; i++)
   {
@@ -8176,9 +8180,9 @@ struct accnam_t accnamtab[] = {
  *
  * LOOKATME - could use binary search but should be rare
  */
-static char *get_accnam(int accnum)
+static char *get_accnam(int32 accnum)
 {
- register int i;
+ register int32 i;
 
  for (i = 0; i < NACC_CONS; i++) 
   { if (accnamtab[i].accval == accnum) return(accnamtab[i].accnam); }
@@ -8196,9 +8200,9 @@ static char *get_accnam(int accnum)
  * LOOKATME - maybe should dump more information for some object types 
  * LOOKATME - not portable because of addr cast
  */
-extern int __acc_show_object(handle obj)
+extern int32 __acc_show_object(handle obj)
 {
- int bad_inst, bad_tsk, first_time, ttyp, tryget_name;
+ int32 bad_inst, bad_tsk, first_time, ttyp, tryget_name;
  struct h_t *hp;
  struct hrec_t *hrp;
  struct vpi_to_acc_t *accvpip;
@@ -8229,7 +8233,7 @@ extern int __acc_show_object(handle obj)
  else
   {
    __my_fprintf(stdout, "Object type: %s (addr %lx)",
-    __to_vpionam(s1, hrp->htyp), (unsigned) hp);
+    __to_vpionam(s1, hrp->htyp), (word32) hp);
   }
  if (hrp->htyp2 != 0) 
   {
@@ -8354,14 +8358,14 @@ static void acc_not_sim_err(char *rnam)
 /*
  * validate vpi_ handle underneath acc handle
  */
-static int validate_acc_handle(char *rnam, struct h_t *hp) 
+static int32 validate_acc_handle(char *rnam, struct h_t *hp) 
 {
  struct vpi_to_acc_t *accvpip;
  register struct hrec_t *hrp;
 
  /* if low value bad since ptr */
  /* SJM 07/08/01 - high bit can be on and 4 64 bit ptr just look at low 32 */
- if (hp == NULL || ((unsigned int) hp) < 256)
+ if (hp == NULL || ((word32) hp) < 256)
   {
    strcpy(__wrks1, "** NULL OR LOW NUMBER **");
 bad_acc_handle:
@@ -8371,7 +8375,7 @@ bad_acc_handle:
    return(FALSE);
   }
  hrp = hp->hrec;
- if (hrp == NULL || ((unsigned int) hrp) < 256 || hrp->h_magic != PVH_MAGIC)
+ if (hrp == NULL || ((word32) hrp) < 256 || hrp->h_magic != PVH_MAGIC)
   {
    strcpy(__wrks1, "** PTR INTO DATA BASE ILLEGAL **");
    goto bad_acc_handle;
@@ -8395,14 +8399,14 @@ bad_acc_handle:
 /*
  * convert acc object to its type name
  */
-static char *to_acc_onam(char *s, unsigned vpioval)
+static char *to_acc_onam(char *s, word32 vpioval)
 {
- int accoval;
+ int32 accoval;
 
  if (vpioval < 1 || vpioval > LAST_VPIOBJTYP)
   {
 out_of_rng:
-   sprintf(s, "**out of range or invalid (vpi_ type %d)", vpioval);
+   sprintf(s, "**out of range or invalid (vpi_ type %lu)", vpioval);
    return(s);
   }
  if ((accoval = vpi_to_acc[vpioval].acc_otyp) == -1) goto out_of_rng;
@@ -8422,7 +8426,7 @@ out_of_rng:
  * must die on fatal error
  * this resets vpi error indicator in case acc_ and vpi_ mixed
  */
-extern int __my_vpi_chk_error(void)
+extern int32 __my_vpi_chk_error(void)
 {
  struct t_vpi_error_info einfotab;
  struct t_vpi_error_info *einfop;
@@ -8453,7 +8457,7 @@ extern int __my_vpi_chk_error(void)
  * notice user errors emitted with tf_err or tf_warning
  */
 /*VARARGS*/
-extern void __acc_sferr(int id_num, char *fmt, ...)
+extern void __acc_sferr(int32 id_num, char *fmt, ...)
 {
  char s1[RECLEN], s2[RECLEN];
  va_list va, va2, va3;
@@ -8468,7 +8472,7 @@ extern void __acc_sferr(int id_num, char *fmt, ...)
 
  if (__vpierr_cb_active && !__iact_state)
   {
-   int slen;
+   int32 slen;
    char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
    /* reset in case user called sim control operation from wrong place */
@@ -8514,7 +8518,7 @@ extern void __acc_sferr(int id_num, char *fmt, ...)
  * notice user errors emitted with tf_error or tf_warning
  */
 /*VARARGS*/
-extern void __acc_err(int id_num, char *fmt, ...)
+extern void __acc_err(int32 id_num, char *fmt, ...)
 {
  va_list va, va2, va3;
  char s1[RECLEN], s2[RECLEN];
@@ -8529,7 +8533,7 @@ extern void __acc_err(int id_num, char *fmt, ...)
 
  if (__vpierr_cb_active && !__iact_state)
   {
-   int slen;
+   int32 slen;
    char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
    /* reset in case user called sim control operation from wrong place */
@@ -8572,7 +8576,7 @@ extern void __acc_err(int id_num, char *fmt, ...)
  * notice user errors emitted with tf_err or tf_warn
  */
 /*VARARGS*/
-extern void __acc_sfwarn(int id_num, char *fmt, ...)
+extern void __acc_sfwarn(int32 id_num, char *fmt, ...)
 {
  va_list va, va2, va3;
  char s1[RECLEN], s2[RECLEN];
@@ -8586,7 +8590,7 @@ extern void __acc_sfwarn(int id_num, char *fmt, ...)
 
  if (__vpierr_cb_active && !__iact_state)
   {
-   int slen;
+   int32 slen;
    char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
    /* reset in case user called sim control operation from wrong place */
@@ -8632,7 +8636,7 @@ extern void __acc_sfwarn(int id_num, char *fmt, ...)
  * notice user errors emitted with tf_err or tf_warn
  */
 /*VARARGS*/
-extern void __acc_warn(int id_num, char *fmt, ...)
+extern void __acc_warn(int32 id_num, char *fmt, ...)
 {
  va_list va, va2, va3;
  char s1[RECLEN], s2[RECLEN];
@@ -8646,7 +8650,7 @@ extern void __acc_warn(int id_num, char *fmt, ...)
 
  if (__vpierr_cb_active && !__iact_state)
   {
-   int slen;
+   int32 slen;
    char vpis1[IDLEN], vpis2[4*IDLEN], *vpichp; 
 
    /* reset in case user called sim control operation from wrong place */
@@ -8687,7 +8691,7 @@ extern void __acc_warn(int id_num, char *fmt, ...)
 /*
  * acc internal fatal error 
  */
-extern void __acc_terr(char *fnam, int lno)
+extern void __acc_terr(char *fnam, int32 lno)
 {
  __pv_terr(331,
   "ACC PLI INTERNAL - source line **%s(%d) - maybe at **%s(%d)\n",
@@ -8697,7 +8701,7 @@ extern void __acc_terr(char *fnam, int lno)
 /*
  * acc internal fatal error occurring in vpi_ routine 
  */
-extern void __acc_vpi_terr(char *fnam, int lno)
+extern void __acc_vpi_terr(char *fnam, int32 lno)
 {
  __pv_terr(332,
   "ACC PLI INTERNAL (IN VPI) - source line **%s(%d) - maybe at **%s(%d)\n",

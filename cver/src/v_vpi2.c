@@ -1,4 +1,4 @@
-/* Copyright (c) 1995-2004 Pragmatic C Software Corp. */
+/* Copyright (c) 1995-2005 Pragmatic C Software Corp. */
 
 /*
    This program is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@
 /* local prototypes */
 static void mk2_exprclass_handle(struct h_t *, struct expr_t *,
  struct itree_t *, struct task_t *);
-static int iconnbit_lvalue(struct mod_pin_t *, struct net_pin_t *,
+static int32 iconnbit_lvalue(struct mod_pin_t *, struct net_pin_t *,
  struct itree_t *);
 static vpiHandle bld_inmod_port_iter(struct h_t *);
 static vpiHandle bld_fjlist_iter(struct st_t *, struct itree_t *,
@@ -55,115 +55,115 @@ static vpiHandle bld_listofstmts_iter(struct st_t *, struct itree_t *,
  struct task_t *);
 static vpiHandle bld_listofexprs_iter(struct expr_t *, struct itree_t *,
  struct task_t *);
-static int termexpr_matches(struct expr_t *, struct net_t *, int);
-static int bld_net_tchkterms(struct net_t *, struct itree_t *, int);
-static int bld_net_pathterms(struct net_t *, struct itree_t *, int);
-static int bld_delay_iter(union del_u, unsigned, struct itree_t *,
+static int32 termexpr_matches(struct expr_t *, struct net_t *, int32);
+static int32 bld_net_tchkterms(struct net_t *, struct itree_t *, int32);
+static int32 bld_net_pathterms(struct net_t *, struct itree_t *, int32);
+static int32 bld_delay_iter(union del_u, word32, struct itree_t *,
  struct task_t *);
 static vpiHandle bld_dig_attrlist_iter(struct h_t *, struct attr_t *);
 static vpiHandle bld_netmdport_iter(struct h_t *);
-static int bld_net_mdpins(struct net_t *, struct mod_t *, struct itree_t *);
+static int32 bld_net_mdpins(struct net_t *, struct mod_t *, struct itree_t *);
 static vpiHandle bld_netbitmdport_iter(struct h_t *);
-static int cmp_drvld_bitndx(struct net_t **, struct h_t *, char *);
-static int bld_netbit_mdpins(struct net_t *, int, struct mod_t *,
+static int32 cmp_drvld_bitndx(struct net_t **, struct h_t *, char *);
+static int32 bld_netbit_mdpins(struct net_t *, int32, struct mod_t *,
  struct itree_t *);
 static vpiHandle bld_neticonnport_iter(struct h_t *);
-static int bld_net_iconns(struct net_t *, struct itree_t *);
-static int same_vpi_handle(struct h_t *, int, int, struct h_t *,
+static int32 bld_net_iconns(struct net_t *, struct itree_t *);
+static int32 same_vpi_handle(struct h_t *, int32, int32, struct h_t *,
  struct hrec_t *);
 static vpiHandle bld_netbiticonnport_iter(struct h_t *);
-static int bld_netbit_iconns(struct net_t *, int, struct itree_t *);
+static int32 bld_netbit_iconns(struct net_t *, int32, struct itree_t *);
 static vpiHandle net_lds_iter(struct h_t *);
-static int bld_net_lds(struct net_t *, struct itree_t *);
-static int fill_ld_handle(struct h_t *, struct hrec_t *, struct net_pin_t *);
+static int32 bld_net_lds(struct net_t *, struct itree_t *);
+static int32 fill_ld_handle(struct h_t *, struct hrec_t *, struct net_pin_t *);
 static vpiHandle bit_lds_iter(struct h_t *);
-static int bld_bit_lds(struct net_t *, int, struct itree_t *, int);
-static int fill_bit_ld_handle(struct h_t *, struct hrec_t *, int, int, int,
+static int32 bld_bit_lds(struct net_t *, int32, struct itree_t *, int32);
+static int32 fill_bit_ld_handle(struct h_t *, struct hrec_t *, int32, int32, int32,
  struct net_pin_t *);
-static vpiHandle bit_xl_ldsdrvs_iter(struct h_t *, int);
+static vpiHandle bit_xl_ldsdrvs_iter(struct h_t *, int32);
 static vpiHandle net_drvs_iter(struct h_t *);
-static int bld_net_drvs(struct net_t *, struct itree_t *);
-static int fill_drv_handle(struct h_t *, struct hrec_t *, struct net_pin_t *);
+static int32 bld_net_drvs(struct net_t *, struct itree_t *);
+static int32 fill_drv_handle(struct h_t *, struct hrec_t *, struct net_pin_t *);
 static vpiHandle bit_drvs_iter(struct h_t *hp);
-static int bld_bit_drvs(struct net_t *, int, struct itree_t *, int);
-static int fill_bit_drv_handle(struct h_t *, struct hrec_t *, int, int, int,
+static int32 bld_bit_drvs(struct net_t *, int32, struct itree_t *, int32);
+static int32 fill_bit_drv_handle(struct h_t *, struct hrec_t *, int32, int32, int32,
  struct net_pin_t *);
 static vpiHandle reg_drvs_iter(struct h_t *);
 static vpiHandle cnvt_name_to_handle(char *, struct symtab_t *,
  struct itree_t *);
 static vpiHandle bld_symhandle(char *, struct sy_t *, struct symtab_t *,
  struct itree_t *);
-static int validate_property(char *, int);
-static int modprop_vpiget(struct h_t *, int);
-static void notpropof_err(unsigned, int);
-static unsigned to_vpi_reghtyp(unsigned);
-static int netprop_vpiget(struct h_t *, int);
-static int regprop_vpiget(struct h_t *, int);
-static int arrprop_vpiget(struct h_t *, int);
-static int arrwrdprop_vpiget(struct h_t *, int);
-static int paramprop_vpiget(struct h_t *, int);
-static int portprop_vpiget(struct h_t *, int);
-static int get_param_constyp(struct net_t *);
-static int gateprop_vpiget(struct h_t *, int);
-static int tcallprop_vpiget(struct h_t *, int);
-static int funcdefprop_vpiget(struct h_t *, int);
-static int contaprop_vpiget(struct h_t *, int);
-static int fcallprop_vpiget(struct h_t *, int);
-static int tchkprop_vpiget(struct h_t *, int);
-static int to_vpi_tchktyp(unsigned);
-static int tchktermprop_vpiget(struct h_t *, int);
-static int to_vpi_edgeval(unsigned);
-static int pthprop_vpiget(struct h_t *, int);
-static int pthtermprop_vpiget(struct h_t *, int);
-static int exprclass_prop_vpiget(struct h_t *, int);
-static int get_vpi_const_typ(struct expr_t *);
-static int iodecl_prop_vpiget(struct h_t *, int);
-static int udpiodecl_get(struct h_t *, int);
-static int udpdefnprop_vpiget(struct h_t *, int);
-static int udptabentryprop_vpiget(struct h_t *, int);
-static int dig_attrprop_vpiget(struct h_t *, int);
-static char *modstrprop_vpiget(struct h_t *, int);
-static char *netstrprop_vpiget(struct h_t *, int);
-static char *portstrprop_vpiget(struct h_t *, int);
-static char *gatestrprop_vpiget(struct h_t *, int);
-static char *tcallstrprop_vpiget(struct h_t *, int);
-static char *fcallstrprop_vpiget(struct h_t *, int);
-static char *taskstrprop_vpiget(struct h_t *, int);
-static char *iodeclstrprop_vpiget(struct h_t *, int);
-static char *dig_attrstrpop_vpiget(struct h_t *, int);
+static int32 validate_property(char *, int32);
+static int32 modprop_vpiget(struct h_t *, int32);
+static void notpropof_err(word32, int32);
+static word32 to_vpi_reghtyp(word32);
+static int32 netprop_vpiget(struct h_t *, int32);
+static int32 regprop_vpiget(struct h_t *, int32);
+static int32 arrprop_vpiget(struct h_t *, int32);
+static int32 arrwrdprop_vpiget(struct h_t *, int32);
+static int32 paramprop_vpiget(struct h_t *, int32);
+static int32 portprop_vpiget(struct h_t *, int32);
+static int32 get_param_constyp(struct net_t *);
+static int32 gateprop_vpiget(struct h_t *, int32);
+static int32 tcallprop_vpiget(struct h_t *, int32);
+static int32 funcdefprop_vpiget(struct h_t *, int32);
+static int32 contaprop_vpiget(struct h_t *, int32);
+static int32 fcallprop_vpiget(struct h_t *, int32);
+static int32 tchkprop_vpiget(struct h_t *, int32);
+static int32 to_vpi_tchktyp(word32);
+static int32 tchktermprop_vpiget(struct h_t *, int32);
+static int32 to_vpi_edgeval(word32);
+static int32 pthprop_vpiget(struct h_t *, int32);
+static int32 pthtermprop_vpiget(struct h_t *, int32);
+static int32 exprclass_prop_vpiget(struct h_t *, int32);
+static int32 get_vpi_const_typ(struct expr_t *);
+static int32 iodecl_prop_vpiget(struct h_t *, int32);
+static int32 udpiodecl_get(struct h_t *, int32);
+static int32 udpdefnprop_vpiget(struct h_t *, int32);
+static int32 udptabentryprop_vpiget(struct h_t *, int32);
+static int32 dig_attrprop_vpiget(struct h_t *, int32);
+static char *modstrprop_vpiget(struct h_t *, int32);
+static char *netstrprop_vpiget(struct h_t *, int32);
+static char *portstrprop_vpiget(struct h_t *, int32);
+static char *gatestrprop_vpiget(struct h_t *, int32);
+static char *tcallstrprop_vpiget(struct h_t *, int32);
+static char *fcallstrprop_vpiget(struct h_t *, int32);
+static char *taskstrprop_vpiget(struct h_t *, int32);
+static char *iodeclstrprop_vpiget(struct h_t *, int32);
+static char *dig_attrstrpop_vpiget(struct h_t *, int32);
 
 
 /* extern prototypes (maybe defined in this module) */
 extern vpiHandle vpi_handle_by_name(char *, vpiHandle);
 extern vpiHandle vpi_handle_by_index(vpiHandle, PLI_INT32);
-extern int vpi_get(PLI_INT32, vpiHandle);
-extern unsigned __ntyp_to_vpivarhtyp(struct net_t *);
-extern unsigned __to_vpinetbithtyp(unsigned);
-extern unsigned __from_vpi_vartyp(unsigned);
-extern int __expr_optype_get(struct expr_t *);
-extern char *vpi_get_str(int, vpiHandle);
-extern char *__to_vpionam(char *, unsigned);
-extern char *__to_vpiopchar(char *, int);
+extern int32 vpi_get(PLI_INT32, vpiHandle);
+extern word32 __ntyp_to_vpivarhtyp(struct net_t *);
+extern word32 __to_vpinetbithtyp(word32);
+extern word32 __from_vpi_vartyp(word32);
+extern int32 __expr_optype_get(struct expr_t *);
+extern char *vpi_get_str(int32, vpiHandle);
+extern char *__to_vpionam(char *, word32);
+extern char *__to_vpiopchar(char *, int32);
 extern void __still_comp_err(char *);
-extern int __validate_handle(char *, struct h_t *);
-extern int __get_vpinet_index(struct net_t **, struct h_t *);
+extern int32 __validate_handle(char *, struct h_t *);
+extern int32 __get_vpinet_index(struct net_t **, struct h_t *);
 
 extern vpiHandle __bld_port_iterator(struct h_t *);
 extern vpiHandle __bld_neticonn_iter(struct h_t *);
 extern vpiHandle __bld_paramassign_stmt_iter(struct h_t *);
 extern vpiHandle __bld_udpline_iter(struct h_t *);
 extern vpiHandle __bld_primterm_iterator(struct h_t *);
-extern vpiHandle __bld_loc_lds_iterator(struct h_t *, int);
-extern vpiHandle __bld_lds_iterator(struct h_t *, int);
-extern int __bld_xl_drvld_vtxtab(struct net_t *, int, struct itree_t *, int);
-extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int);
-extern vpiHandle __bld_drvs_iterator(struct h_t *, int);
+extern vpiHandle __bld_loc_lds_iterator(struct h_t *, int32);
+extern vpiHandle __bld_lds_iterator(struct h_t *, int32);
+extern int32 __bld_xl_drvld_vtxtab(struct net_t *, int32, struct itree_t *, int32);
+extern vpiHandle __bld_loc_drvs_iterator(struct h_t *, int32);
+extern vpiHandle __bld_drvs_iterator(struct h_t *, int32);
 extern vpiHandle __bld_arrwrd_iterator(struct h_t *);
 extern vpiHandle __bld_paramwrd_iterator(struct h_t *);
 extern vpiHandle __bld_bitof_iterator(struct h_t *);
 extern vpiHandle __bld_systf_iterator(struct h_t *);
 extern vpiHandle __bld_tfargexpr_iterator(struct h_t *);
-extern vpiHandle __bld_pthterm_iterator(struct h_t *, unsigned);
+extern vpiHandle __bld_pthterm_iterator(struct h_t *, word32);
 extern vpiHandle __bld_stmt_iterator(struct h_t *);
 extern vpiHandle __bld_netin_tchkterms(struct h_t *);
 extern vpiHandle __bld_netin_pthterms(struct h_t *);
@@ -176,65 +176,65 @@ extern vpiHandle __bld_iodecl_stmt_iter(struct h_t *);
 extern struct task_t *__find_qualnam_task(char *, struct mod_t *,
  struct task_t *);
 extern void __xmrpush_refgrp_to_targ(struct gref_t *);
-extern int __move_to_npprefloc(struct net_pin_t *);
-extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int *,
- int *);
-extern int __exprtype_get(struct expr_t *);
+extern int32 __move_to_npprefloc(struct net_pin_t *);
+extern void __get_bidnpp_sect(struct net_t *, struct net_pin_t *, int32 *,
+ int32 *);
+extern int32 __exprtype_get(struct expr_t *);
 extern struct xstk_t *__eval2_xpr(register struct expr_t *);
-extern vpiHandle __nil_iter_err(unsigned);
-extern void __notstrpropof_err(unsigned, int);
-extern struct pviter_t *__alloc_iter(int, vpiHandle *);
+extern vpiHandle __nil_iter_err(word32);
+extern void __notstrpropof_err(word32, int32);
+extern struct pviter_t *__alloc_iter(int32, vpiHandle *);
 extern void __init_hrec(struct hrec_t *);
-extern void __grow_htab(int);
-extern void __grow_htab2(int);
-extern unsigned __to_vpi_stmttyp(struct st_t **);
-extern int __ip_indsrch(char *);
+extern void __grow_htab(int32);
+extern void __grow_htab2(int32);
+extern word32 __to_vpi_stmttyp(struct st_t **);
+extern int32 __ip_indsrch(char *);
 extern struct sy_t *__get_sym(char *, struct symtab_t *);
 extern struct sy_t *__get_nongia_sym(char *, struct symtab_t *);
-extern vpiHandle __mk_handle(unsigned, void *, struct itree_t *,
+extern vpiHandle __mk_handle(word32, void *, struct itree_t *,
  struct task_t *);
-extern int __is_scope_sym(struct sy_t *);
-extern unsigned __to_vpi_tasktyp(unsigned);
-extern unsigned __gate_to_vpiprimtyp(struct gate_t *);
-extern int __to_vpi_primtyp(struct gate_t *);
-extern int __primtermprop_vpiget(struct h_t *, int);
+extern int32 __is_scope_sym(struct sy_t *);
+extern word32 __to_vpi_tasktyp(word32);
+extern word32 __gate_to_vpiprimtyp(struct gate_t *);
+extern int32 __to_vpi_primtyp(struct gate_t *);
+extern int32 __primtermprop_vpiget(struct h_t *, int32);
 
-extern void __getarr_range(struct net_t *, int *, int *, int *);
-extern void __getwir_range(struct net_t *, int *, int *);
-extern int __get_arrwide(struct net_t *);
-extern int __wide_vval_is0(register word *, int);
+extern void __getarr_range(struct net_t *, int32 *, int32 *, int32 *);
+extern void __getwir_range(struct net_t *, int32 *, int32 *);
+extern int32 __get_arrwide(struct net_t *);
+extern int32 __wide_vval_is0(register word32 *, int32);
 extern char *__msgexpr_tostr(char *, struct expr_t *);
 extern char *__msg2_blditree(char *, struct itree_t *);
 extern char *__msg_blditree(char *, struct itree_t *, struct task_t *);
-extern void __extract_delval(word64 *, int *, union del_u, unsigned);
+extern void __extract_delval(word64 *, int32 *, union del_u, word32);
 extern void __cnv_ticks_tonum64(word64 *, word64, struct mod_t *);
 extern void __grow_xstk(void);
-extern void __chg_xstk_width(struct xstk_t *, int);
-extern void __ld_arr_val(register word *, register word *, union pck_u,
- int, int, int);
-extern struct expr_t *__bld_rng_numxpr(word, word, int);
-extern char *__my_realloc(char *, int, int);
-extern void __my_free(char *, int);
-extern char *__my_malloc(int);
-extern int __unnormalize_ndx(struct net_t *, int);
-extern int __to_vpi_netproptyp(unsigned ntyp);
+extern void __chg_xstk_width(struct xstk_t *, int32);
+extern void __ld_arr_val(register word32 *, register word32 *, union pck_u,
+ int32, int32, int32);
+extern struct expr_t *__bld_rng_numxpr(word32, word32, int32);
+extern char *__my_realloc(char *, int32, int32);
+extern void __my_free(char *, int32);
+extern char *__my_malloc(int32);
+extern int32 __unnormalize_ndx(struct net_t *, int32);
+extern int32 __to_vpi_netproptyp(word32 ntyp);
 extern struct expr_t *__glbnam_to_expr(char *);
 extern char *__to_glbcmp_nam(struct expr_t *);
-extern int __comp_ndx(register struct net_t *, register struct expr_t *);
+extern int32 __comp_ndx(register struct net_t *, register struct expr_t *);
 extern struct expr_t *__sim_alloc_newxnd(void);
-extern int __expr_is_vpiconst(struct expr_t *);
-extern char *__to_vpipnam(char *, int);
-extern unsigned __map_tovpi_stren(unsigned);
-extern char *__strab2_tostr(char *, word *, int, int, int);
-extern int __name_vpi_hasdot(char *);
+extern int32 __expr_is_vpiconst(struct expr_t *);
+extern char *__to_vpipnam(char *, int32);
+extern word32 __map_tovpi_stren(word32);
+extern char *__strab2_tostr(char *, word32 *, int32, int32, int32);
+extern int32 __name_vpi_hasdot(char *);
 extern void __free_iterator(vpiHandle);
 extern void __free_xtree(struct expr_t *);
-extern int __alloc_cval(int);
+extern int32 __allocfill_cval_new(word32 *, word32 *, int32);
 extern struct attr_t *__find_attrspec(struct h_t *);
 
-extern void __arg_terr(char *, int);
-extern void __vpi_terr(char *, int);
-extern void __vpi_err(int, int, char *, ...);
+extern void __arg_terr(char *, int32);
+extern void __vpi_terr(char *, int32);
+extern void __vpi_err(int32, int32, char *, ...);
 
 /* vpi only storage */
 extern struct t_vpi_error_info *__last_eip;/* if err, ptr to wrk eifo or nil */
@@ -279,7 +279,7 @@ static void mk2_exprclass_handle(struct h_t *hp,
  struct expr_t *xp, struct itree_t *xin_itp, struct task_t *xin_tskp)
 {
  register struct hrec_t *hrp;
- int otyp, biti;
+ int32 otyp, biti;
  struct itree_t *xitp;
  struct task_t *xtskp;
  struct net_t *np;
@@ -344,7 +344,7 @@ static void mk2_exprclass_handle(struct h_t *hp,
    }
 
 fill_id_handle:
-   /* this is both net/reg and variable (int,real.time) but not bit select */
+   /* this is both net/reg and variable (int32,real.time) but not bit select */
    np = xp->lu.sy->el.enp;
    otyp = __ntyp_to_vpivarhtyp(np);
    hrp->htyp = otyp;
@@ -449,10 +449,10 @@ fill_itloc:
  */
 extern vpiHandle __bld_paramassign_stmt_iter(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct h_t *hp2;
  register struct hrec_t *hrp2, *hrp;
- int nparams; 
+ int32 nparams; 
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct mod_t *mdp;
@@ -513,7 +513,7 @@ bld_tskiter:
  */
 extern vpiHandle __bld_iodecl_stmt_iter(struct h_t *hp)
 {
- register int ni, nports; 
+ register int32 ni, nports; 
  register struct h_t *hp2;
  register struct net_t *np;
  register struct hrec_t *hrp2; 
@@ -625,10 +625,10 @@ bld_tsk_iodecls:
  */
 extern vpiHandle __bld_udpline_iter(struct h_t *rhp)
 {
- register int uli;
+ register int32 uli;
  register struct utline_t *utlp;
  register struct hrec_t *hrp; 
- int nulines;
+ int32 nulines;
  vpiHandle ihref;
  struct udp_t *udpp;
  struct h_t *hp; 
@@ -663,9 +663,9 @@ extern vpiHandle __bld_udpline_iter(struct h_t *rhp)
 }
 
 /*
- * build an iterator for every word in array
+ * build an iterator for every word32 in array
  *
- * notice this builds a handle for every word better for large
+ * notice this builds a handle for every word32 better for large
  * few bit (1) arrays to use vpi_handle_by_index
  *
  * in order to get parent of this handle, need to look at handle in 
@@ -673,9 +673,9 @@ extern vpiHandle __bld_udpline_iter(struct h_t *rhp)
  */
 extern vpiHandle __bld_arrwrd_iterator(struct h_t *hp)
 {
- register int ai, iti;
+ register int32 ai, iti;
  register struct hrec_t *hrp2; 
- int awid;
+ int32 awid;
  vpiHandle ihref;
  struct net_t *np;
  struct h_t *hp2;
@@ -689,7 +689,7 @@ extern vpiHandle __bld_arrwrd_iterator(struct h_t *hp)
     __to_vpionam(__wrks1, hp->hrec->htyp));
    return(NULL);
   }
- /* know hp is array (not array word) handle */  
+ /* know hp is array (not array word32) handle */  
  np = hp->hrec->hu.hnp;
  awid = __get_arrwide(np);
  /* DBG remove --- */
@@ -711,13 +711,13 @@ extern vpiHandle __bld_arrwrd_iterator(struct h_t *hp)
 }
 
 /*
- * build an iterator for every word (cell) in parameter array
+ * build an iterator for every word32 (cell) in parameter array
  */
 extern vpiHandle __bld_paramwrd_iterator(struct h_t *hp)
 {
- register int ai, iti;
+ register int32 ai, iti;
  register struct hrec_t *hrp2; 
- int awid;
+ int32 awid;
  vpiHandle ihref;
  struct net_t *np;
  struct h_t *hp2;
@@ -731,7 +731,7 @@ extern vpiHandle __bld_paramwrd_iterator(struct h_t *hp)
     __to_vpionam(__wrks1, hp->hrec->htyp));
    return(NULL);
   }
- /* know hp is array (not array word) handle */  
+ /* know hp is array (not array word32) handle */  
  np = hp->hrec->hu.hnp;
  awid = __get_arrwide(np);
  /* DBG remove --- */
@@ -762,7 +762,7 @@ extern vpiHandle __bld_paramwrd_iterator(struct h_t *hp)
  */
 extern vpiHandle __bld_bitof_iterator(struct h_t *hp)
 {
- register int i, iti;
+ register int32 i, iti;
  register struct hrec_t *hrp2; 
  vpiHandle ihref;
  struct net_t *np;
@@ -827,7 +827,7 @@ extern vpiHandle __bld_bitof_iterator(struct h_t *hp)
  */
 extern vpiHandle __bld_primterm_iterator(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct hrec_t *hrp2; 
  vpiHandle ihref;
  struct gate_t *gp;
@@ -850,8 +850,8 @@ extern vpiHandle __bld_primterm_iterator(struct h_t *hp)
  /* DBG remove --- */
  if (gp->gpnum == 0) __vpi_terr(__FILE__, __LINE__);
  /* --- */
- iterp = __alloc_iter((int) gp->gpnum, &ihref);
- for (pi = 0; pi < (int) gp->gpnum; pi++) 
+ iterp = __alloc_iter((int32) gp->gpnum, &ihref);
+ for (pi = 0; pi < (int32) gp->gpnum; pi++) 
   {
    hp2 = &(iterp->scanhtab[pi]);
    hrp2 = hp2->hrec;
@@ -896,7 +896,7 @@ extern vpiHandle __bld_port_iterator(struct h_t *hp)
  */
 static vpiHandle bld_inmod_port_iter(struct h_t *hp)
 {
- register int pi;
+ register int32 pi;
  register struct h_t *hp2;
  register struct hrec_t *hrp2; 
  struct mod_t *mdp;
@@ -973,9 +973,9 @@ extern vpiHandle __bld_stmt_iterator(struct h_t *hp)
 static vpiHandle bld_fjlist_iter(struct st_t *stp, struct itree_t *itp,
  struct task_t *tskp)
 {
- register int si, fji;
+ register int32 si, fji;
  register struct st_t *fjstp;
- int snum;
+ int32 snum;
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct h_t *hp;
@@ -1032,10 +1032,10 @@ static vpiHandle bld_fjlist_iter(struct st_t *stp, struct itree_t *itp,
 static vpiHandle bld_listofstmts_iter(struct st_t *stp, struct itree_t *itp,
  struct task_t *in_tskp)
 {
- register int si;
+ register int32 si;
  register struct st_t *stp2;
  register struct hrec_t *hrp; 
- int snum;
+ int32 snum;
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct h_t *hp;
@@ -1087,7 +1087,7 @@ static vpiHandle bld_listofstmts_iter(struct st_t *stp, struct itree_t *itp,
  *
  * here ignore unnamed block header since know only called for block contents
  */
-extern unsigned __to_vpi_stmttyp(struct st_t **stpp)
+extern word32 __to_vpi_stmttyp(struct st_t **stpp)
 {
  struct task_t *tskp;
  struct st_t *stp;
@@ -1186,9 +1186,9 @@ extern unsigned __to_vpi_stmttyp(struct st_t **stpp)
  */
 extern vpiHandle __bld_systf_iterator(struct h_t *hp)
 {
- register int ti; 
+ register int32 ti; 
  register struct hrec_t *hrp2; 
- int num_vpi_systfs;
+ int32 num_vpi_systfs;
  vpiHandle ihref;
  struct pviter_t *iterp;
  struct h_t *hp2;
@@ -1251,7 +1251,7 @@ extern vpiHandle __bld_tfargexpr_iterator(struct h_t *hp)
 static vpiHandle bld_listofexprs_iter(struct expr_t *argx, struct itree_t *itp,
  struct task_t *tskp)
 {
- register int xi, numxps;
+ register int32 xi, numxps;
  register struct expr_t *xp2;
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -1277,11 +1277,11 @@ static vpiHandle bld_listofexprs_iter(struct expr_t *argx, struct itree_t *itp,
 /*
  * build a module specify path iterator (indices and three types)
  */
-extern vpiHandle __bld_pthterm_iterator(struct h_t *hp, unsigned itype)
+extern vpiHandle __bld_pthterm_iterator(struct h_t *hp, word32 itype)
 {
- register int pi;
+ register int32 pi;
  register struct hrec_t *hrp2; 
- int numpes;
+ int32 numpes;
  struct spcpth_t *pthp;
  vpiHandle ihref;
  struct pviter_t *iterp;
@@ -1341,9 +1341,9 @@ bld_iter:
  */
 extern vpiHandle __bld_netin_tchkterms(struct h_t *hp)
 {
- register int hi;
+ register int32 hi;
  register struct hrec_t *hrp;
- int ndx, nterms;
+ int32 ndx, nterms;
  vpiHandle ihref;
  struct net_t *np;
  struct pviter_t *iterp;
@@ -1385,9 +1385,9 @@ bad_bit:
  *
  * -1 for all of wire
  */
-static int bld_net_tchkterms(struct net_t *np, struct itree_t *itp, int ndx)
+static int32 bld_net_tchkterms(struct net_t *np, struct itree_t *itp, int32 ndx)
 {
- register int cnt;
+ register int32 cnt;
  register struct net_pin_t *npp; 
  register struct h_t *hp2;
  register struct hrec_t *hrp2; 
@@ -1447,9 +1447,9 @@ static int bld_net_tchkterms(struct net_t *np, struct itree_t *itp, int ndx)
  *
  * this require itree context to be pushed onto itstk
  */
-static int termexpr_matches(struct expr_t *xp, struct net_t *np, int ndx)
+static int32 termexpr_matches(struct expr_t *xp, struct net_t *np, int32 ndx)
 {
- int bi1, bi2;
+ int32 bi1, bi2;
  struct net_t *np2;
 
  if (xp == NULL) return(FALSE);
@@ -1472,8 +1472,8 @@ static int termexpr_matches(struct expr_t *xp, struct net_t *np, int ndx)
    np2 = xp->lu.x->lu.sy->el.enp;
    if (np != np2) return(FALSE);
    if (ndx == -1) return(TRUE);
-   bi1 = (int) __contab[xp->ru.x->lu.x->ru.xvi];
-   bi2 = (int) __contab[xp->ru.x->ru.x->ru.xvi];
+   bi1 = (int32) __contab[xp->ru.x->lu.x->ru.xvi];
+   bi2 = (int32) __contab[xp->ru.x->ru.x->ru.xvi];
    if (ndx > bi1 || ndx < bi2) return(FALSE);
    return(TRUE);
   }
@@ -1484,10 +1484,10 @@ static int termexpr_matches(struct expr_t *xp, struct net_t *np, int ndx)
 /*
  * grow global work handle table (must add at least addnum)
  */
-extern void __grow_htab(int addnum)
+extern void __grow_htab(int32 addnum)
 {
- register int iti;
- int old_ithtsiz, nnum, osize, nsize, ohrsize, nhrsize;
+ register int32 iti;
+ int32 old_ithtsiz, nnum, osize, nsize, ohrsize, nhrsize;
 
  /* only allocate if accessing driver/load style handles at all */ 
  if (__ithtsiz == 0)
@@ -1517,10 +1517,10 @@ extern void __grow_htab(int addnum)
 /*
  * grow 2nd for subtree processing  global work handle table
  */
-extern void __grow_htab2(int addnum)
+extern void __grow_htab2(int32 addnum)
 {
- register int iti;
- int old_ithtsiz2, nnum, osize, nsize, ohrsize, nhrsize;
+ register int32 iti;
+ int32 old_ithtsiz2, nnum, osize, nsize, ohrsize, nhrsize;
 
  /* only allocate if accessing driver/load style handles at all */ 
  if (__ithtsiz2 == 0)
@@ -1558,9 +1558,9 @@ extern void __grow_htab2(int addnum)
  */
 extern vpiHandle __bld_netin_pthterms(struct h_t *hp)
 {
- register int hi;
+ register int32 hi;
  register struct hrec_t *hrp; 
- int ndx, nterms;
+ int32 ndx, nterms;
  vpiHandle ihref;
  struct net_t *np;
  struct pviter_t *iterp;
@@ -1604,13 +1604,13 @@ bad_bit:
  * ndx -1 for all of wire
  * on path sources and destinations here 
  */
-static int bld_net_pathterms(struct net_t *np, struct itree_t *itp, int ndx)
+static int32 bld_net_pathterms(struct net_t *np, struct itree_t *itp, int32 ndx)
 {
- register int bi, pei;
+ register int32 bi, pei;
  register struct net_pin_t *npp; 
  register struct pthdst_t *pdp;
  register struct hrec_t *hrp2; 
- int cnt, fr, to;
+ int32 cnt, fr, to;
  struct h_t *hp2;
  struct h_t tmph;
  struct hrec_t tmphrec;
@@ -1704,8 +1704,8 @@ static int bld_net_pathterms(struct net_t *np, struct itree_t *itp, int ndx)
 extern vpiHandle __bld_delay_expr_iter(struct h_t *rhp)
 {
  register struct hrec_t *rhrp;
- register int hi;
- int ndels, ndels2;
+ register int32 hi;
+ int32 ndels, ndels2;
  vpiHandle ihref;
  struct h_t tmph;
  struct gate_t *gp;
@@ -1782,18 +1782,18 @@ extern vpiHandle __bld_delay_expr_iter(struct h_t *rhp)
  *
  * not called for DT_NONE
  */
-static int bld_delay_iter(union del_u du, unsigned drep, struct itree_t *itp,
+static int32 bld_delay_iter(union del_u du, word32 drep, struct itree_t *itp,
  struct task_t *tskp)
 {
- register int i;
- int ndels;
- word *wp;
+ register int32 i;
+ int32 ndels;
  word64 tim[12], timval;
  struct mod_t *mdp;
  struct h_t tmph;
  struct hrec_t tmphrec, *hrp2;
  struct h_t *hp2;
  struct expr_t *xp;
+ struct xstk_t *xsp;
 
  /* for expressions, value is same as source (not ticks) */
  if (drep == DT_1X)
@@ -1870,12 +1870,13 @@ static int bld_delay_iter(union del_u du, unsigned drep, struct itree_t *itp,
    xp->szu.xclen = TIMEBITS;
    xp->optyp = NUMBER;
 
-   xp->ru.xvi = __alloc_cval(4);
-   wp = &(__contab[xp->ru.xvi]);
-   wp[0] = (word) (tim[i] & WORDMASK_ULL);
-   wp[1] = (word) ((tim[i] >> 32) & WORDMASK_ULL);
-   wp[2] = 0L;
-   wp[3] = 0L;
+   push_xstk_(xsp, 2);
+   xsp->ap[0] = (word32) (tim[i] & WORDMASK_ULL);
+   xsp->ap[1] = (word32) ((tim[i] >> 32) & WORDMASK_ULL);
+   xsp->bp[0] = 0L;
+   xsp->bp[1] = 0L;
+   xp->ru.xvi = __allocfill_cval_new(xsp->ap, xsp->bp, 2);
+   __pop_xstk();
 
    hp2 = &(__ithtab[i]);
    hrp2 = &(__ithrectab[i]);
@@ -1972,9 +1973,9 @@ extern vpiHandle __get_digattr_parent(struct h_t *hp)
  */
 static vpiHandle bld_dig_attrlist_iter(struct h_t *hp, struct attr_t *attrp)
 {
- register int ai;
+ register int32 ai;
  register struct attr_t *attrp2; 
- int atnum;
+ int32 atnum;
  struct hrec_t *hrp, *hrp2;
  struct h_t *hp2;
  vpiHandle ihref;
@@ -2009,10 +2010,10 @@ static vpiHandle bld_dig_attrlist_iter(struct h_t *hp, struct attr_t *attrp)
  */
 extern vpiHandle __bld_caseitems_iter(struct h_t *hp)
 {
- register int cii;
+ register int32 cii;
  register struct csitem_t *csip2;
  register struct hrec_t *hrp2;
- int numcis;
+ int32 numcis;
  vpiHandle ihref;
  struct csitem_t *dfltcsip;
  struct h_t *hp2;
@@ -2072,9 +2073,9 @@ extern vpiHandle __bld_caseitems_iter(struct h_t *hp)
  */
 extern vpiHandle __bld_casi_exprs_iter(struct h_t *hp)
 {
- register int xi;
+ register int32 xi;
  register struct exprlst_t *xplst;
- int numxps;
+ int32 numxps;
  vpiHandle ihref;
  struct csitem_t *csip;
  struct h_t *hp2;
@@ -2112,9 +2113,9 @@ extern vpiHandle __bld_casi_exprs_iter(struct h_t *hp)
  */
 extern vpiHandle __bld_operands_iter(struct h_t *hp)
 {
- register int xi;
+ register int32 xi;
  register struct expr_t *xp, *catxp;
- int xtyp, otyp, numxps;
+ int32 xtyp, otyp, numxps;
  vpiHandle ihref;
  struct expr_t *xp2;
  struct h_t *hp2;
@@ -2134,7 +2135,7 @@ bad_handle:
  xp = hrp->hu.hxp;
  xtyp = __exprtype_get(xp);
  if (xtyp != vpiOperation)
-  { __to_vpionam(__wrks2, (unsigned) xtyp); goto bad_handle; }
+  { __to_vpionam(__wrks2, (word32) xtyp); goto bad_handle; }
 
  otyp = __expr_optype_get(xp);
 
@@ -2200,7 +2201,7 @@ bad_handle:
  */
 extern vpiHandle __bld_allcbs_iter(struct h_t *hp)
 {
- register int cbi, numcbs;
+ register int32 cbi, numcbs;
  register struct cbrec_t *cbp;
  register struct hrec_t *hrp2;
  vpiHandle ihref;
@@ -2249,8 +2250,8 @@ extern vpiHandle __bld_allcbs_iter(struct h_t *hp)
  */
 static vpiHandle bld_netmdport_iter(struct h_t *hp)
 {
- register int hi;
- int numprts;
+ register int32 hi;
+ int32 numprts;
  vpiHandle ihref;
  struct net_t *np;
  struct mod_t *mdp;
@@ -2289,12 +2290,12 @@ static vpiHandle bld_netmdport_iter(struct h_t *hp)
  * port iterator get highconn and lowconn connection and then write program
  * to match
  */
-static int bld_net_mdpins(struct net_t *np, struct mod_t *mdp,
+static int32 bld_net_mdpins(struct net_t *np, struct mod_t *mdp,
  struct itree_t *itp)
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int cnt;
+ int32 cnt;
  byte *prtconn;
  struct h_t *hp2;
  struct mod_pin_t *mpp;
@@ -2419,8 +2420,8 @@ done:
  */
 static vpiHandle bld_netbitmdport_iter(struct h_t *hp)
 {
- register int hi;
- int bi, numprts;
+ register int32 hi;
+ int32 bi, numprts;
  vpiHandle ihref;
  struct net_t *np;
  struct mod_t *mdp;
@@ -2451,9 +2452,9 @@ static vpiHandle bld_netbitmdport_iter(struct h_t *hp)
  * ??? FIXME - think this is wrong needs to use current value 
  * but then can't call during vpiEndOfCompile?
  */
-static int cmp_drvld_bitndx(struct net_t **nnp, struct h_t *hp, char *objnam)
+static int32 cmp_drvld_bitndx(struct net_t **nnp, struct h_t *hp, char *objnam)
 {
- register int bi;
+ register int32 bi;
  register struct net_t *np;
  register struct hrec_t *hrp;
 
@@ -2499,12 +2500,12 @@ static int cmp_drvld_bitndx(struct net_t **nnp, struct h_t *hp, char *objnam)
  *
  * LOOKATME - all 3 cases have mostly same code - could make one func call
  */
-static int bld_netbit_mdpins(struct net_t *np, int bi, struct mod_t *mdp,
+static int32 bld_netbit_mdpins(struct net_t *np, int32 bi, struct mod_t *mdp,
  struct itree_t *itp)
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int ri1, ri2, cnt;
+ int32 ri1, ri2, cnt;
  struct mod_pin_t *mpp;
  struct h_t *hp2;
  
@@ -2688,8 +2689,8 @@ extern vpiHandle __bld_neticonn_iter(struct h_t *hp)
  */
 static vpiHandle bld_neticonnport_iter(struct h_t *hp)
 {
- register int hi;
- int numprts;
+ register int32 hi;
+ int32 numprts;
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp; 
@@ -2730,11 +2731,11 @@ static vpiHandle bld_neticonnport_iter(struct h_t *hp)
  * SJM 09/20/02 - because this is vectored and only entire ports in   
  * iterator filter to only one of iconn high conn concat works
  */
-static int bld_net_iconns(struct net_t *np, struct itree_t *itp)
+static int32 bld_net_iconns(struct net_t *np, struct itree_t *itp)
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int cnt;
+ int32 cnt;
  struct h_t *hp2;
  struct itree_t *itp2;
  
@@ -2887,10 +2888,10 @@ done:
  * return T if find tran channel inst-port that matches one already
  * in iterator
  */
-static int same_vpi_handle(struct h_t *htab, int fr, int num, struct h_t *hp2,
+static int32 same_vpi_handle(struct h_t *htab, int32 fr, int32 num, struct h_t *hp2,
  struct hrec_t *hrp2)
 {
- register int hi;
+ register int32 hi;
  register struct h_t *hp;
  register struct hrec_t *hrp;
 
@@ -2951,8 +2952,8 @@ chk_modpath:
  */
 static vpiHandle bld_netbiticonnport_iter(struct h_t *hp)
 {
- register int hi;
- int bi, numprts;
+ register int32 hi;
+ int32 bi, numprts;
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp;
@@ -2990,11 +2991,11 @@ static vpiHandle bld_netbiticonnport_iter(struct h_t *hp)
  *
  * notice nothing on itree stack here?
  */
-static int bld_netbit_iconns(struct net_t *np, int bi, struct itree_t *itp)
+static int32 bld_netbit_iconns(struct net_t *np, int32 bi, struct itree_t *itp)
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int ri1, ri2, cnt, nd_itpop, not_lhs;
+ int32 ri1, ri2, cnt, nd_itpop, not_lhs;
  struct h_t *hp2;
  struct itree_t *itp2;
  struct mod_t *downmdp;
@@ -3207,7 +3208,7 @@ done:
 /*
  * return T if good port and iconn simple (non concat) lvalue
  */
-static int iconnbit_lvalue(struct mod_pin_t *mpp, struct net_pin_t *npp, 
+static int32 iconnbit_lvalue(struct mod_pin_t *mpp, struct net_pin_t *npp, 
  struct itree_t *itp2)
 {
  struct expr_t *xp;
@@ -3232,7 +3233,7 @@ static int iconnbit_lvalue(struct mod_pin_t *mpp, struct net_pin_t *npp,
  * this is local loads including ports and works for vectors
  * local loads give user exact control over connectivity tracing
  */
-extern vpiHandle __bld_loc_lds_iterator(struct h_t *hp, int otype)
+extern vpiHandle __bld_loc_lds_iterator(struct h_t *hp, int32 otype)
 {
  if (hp == NULL) return(__nil_iter_err(otype));
 
@@ -3258,8 +3259,8 @@ extern vpiHandle __bld_loc_lds_iterator(struct h_t *hp, int otype)
  */
 static vpiHandle net_lds_iter(struct h_t *hp)
 {
- register int hi;
- int num; 
+ register int32 hi;
+ int32 num; 
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp; 
@@ -3292,11 +3293,11 @@ static vpiHandle net_lds_iter(struct h_t *hp)
  * notice nothing on itree stack here?
  * also no need to filter bit range and bit counts
  */
-static int bld_net_lds(struct net_t *np, struct itree_t *itp) 
+static int32 bld_net_lds(struct net_t *np, struct itree_t *itp) 
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int cnt, nd_itpop;
+ int32 cnt, nd_itpop;
  struct h_t tmph, *hp2;
  struct hrec_t tmphrec;
  
@@ -3392,7 +3393,7 @@ done:
  * caller must have initialized fields in handle
  * this must be called from ref. (stacked itree loc) for xmr 
  */
-static int fill_ld_handle(struct h_t *hp, struct hrec_t *hrp,
+static int32 fill_ld_handle(struct h_t *hp, struct hrec_t *hrp,
  struct net_pin_t *npp)
 {
  struct itree_t *itp2;
@@ -3445,8 +3446,8 @@ static int fill_ld_handle(struct h_t *hp, struct hrec_t *hrp,
  */
 static vpiHandle bit_lds_iter(struct h_t *hp)
 {
- register int hi;
- int bi, num;
+ register int32 hi;
+ int32 bi, num;
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp;
@@ -3478,12 +3479,12 @@ static vpiHandle bit_lds_iter(struct h_t *hp)
  * passed itp is instance of load npp
  * notice this works for scalar where bi must be -1
  */
-static int bld_bit_lds(struct net_t *np, int bi, struct itree_t *itp,
- int no_ports)
+static int32 bld_bit_lds(struct net_t *np, int32 bi, struct itree_t *itp,
+ int32 no_ports)
 {
  register struct net_pin_t *npp;
  register struct hrec_t *hrp2;
- int ri1, ri2, cnt, nd_itpop;
+ int32 ri1, ri2, cnt, nd_itpop;
  struct h_t tmph, *hp2;
  struct hrec_t tmphrec;
  
@@ -3618,10 +3619,10 @@ done:
  *
  * looking for load of net np bit bi (if scalar not called) 
  */
-static int fill_bit_ld_handle(struct h_t *hp, struct hrec_t *hrp, int bi,
- int ri1, int ri2, struct net_pin_t *npp)
+static int32 fill_bit_ld_handle(struct h_t *hp, struct hrec_t *hrp, int32 bi,
+ int32 ri1, int32 ri2, struct net_pin_t *npp)
 {
- int not_lhs;
+ int32 not_lhs;
  struct itree_t *itp2;
  struct mod_t *downmdp;
  struct mod_pin_t *mpp;
@@ -3720,7 +3721,7 @@ static int fill_bit_ld_handle(struct h_t *hp, struct hrec_t *hrp, int bi,
  *
  * uese local loads but cross ports 
  */
-extern vpiHandle __bld_lds_iterator(struct h_t *hp, int otype)
+extern vpiHandle __bld_lds_iterator(struct h_t *hp, int32 otype)
 {
  struct hrec_t *hrp;
 
@@ -3752,10 +3753,10 @@ bad_obj:
  * differs from acc next load "iterators" because returns contas and
  * does not distinguish cells 
  */
-static vpiHandle bit_xl_ldsdrvs_iter(struct h_t *hp, int do_loads)
+static vpiHandle bit_xl_ldsdrvs_iter(struct h_t *hp, int32 do_loads)
 {
- register int vti, hi;
- int bi, vtxnum, num, xlnum, new2siz;
+ register int32 vti, hi;
+ int32 bi, vtxnum, num, xlnum, new2siz;
  vpiHandle ihref;
  struct hrec_t *hrp;
  struct itree_t *itp;
@@ -3842,7 +3843,7 @@ static vpiHandle bit_xl_ldsdrvs_iter(struct h_t *hp, int do_loads)
  * inout ports and trans are both loads and drivers 
  * user must traverse all of channel to get hard drivers of inout
  */
-extern vpiHandle __bld_loc_drvs_iterator(struct h_t *hp, int otype)
+extern vpiHandle __bld_loc_drvs_iterator(struct h_t *hp, int32 otype)
 {
  if (hp == NULL) return(__nil_iter_err(otype));
 
@@ -3872,8 +3873,8 @@ extern vpiHandle __bld_loc_drvs_iterator(struct h_t *hp, int otype)
  */
 static vpiHandle net_drvs_iter(struct h_t *hp)
 {
- register int hi;
- int num;
+ register int32 hi;
+ int32 num;
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp; 
@@ -3900,11 +3901,11 @@ static vpiHandle net_drvs_iter(struct h_t *hp)
  * entire net drivers are not net bit
  * nothing on itree stack here
  */
-static int bld_net_drvs(struct net_t *np, struct itree_t *itp)
+static int32 bld_net_drvs(struct net_t *np, struct itree_t *itp)
 {
- register int bi;
+ register int32 bi;
  register struct net_pin_t *npp;
- int cnt, cnt2, nd_itpop;
+ int32 cnt, cnt2, nd_itpop;
  struct h_t tmph, *hp2;
  struct hrec_t tmphrec, *hrp2;
  struct qcval_t *frc_qcp; 
@@ -4043,7 +4044,7 @@ done:
  * caller must have initialized fields (for iterator type) 
  * this must be called from ref. (stacked itree loc) for xmr 
  */
-static int fill_drv_handle(struct h_t *hp, struct hrec_t *hrp,
+static int32 fill_drv_handle(struct h_t *hp, struct hrec_t *hrp,
  struct net_pin_t *npp)
 {
  struct itree_t *itp2;
@@ -4110,8 +4111,8 @@ static int fill_drv_handle(struct h_t *hp, struct hrec_t *hrp,
  */
 static vpiHandle bit_drvs_iter(struct h_t *hp)
 {
- register int hi;
- int bi, num;
+ register int32 hi;
+ int32 bi, num;
  vpiHandle ihref;
  struct net_t *np;
  struct itree_t *itp;
@@ -4140,11 +4141,11 @@ static vpiHandle bit_drvs_iter(struct h_t *hp)
  * nothing on itree stack here?
  * since per bit never a need to remove duplicates
  */
-static int bld_bit_drvs(struct net_t *np, int bi, struct itree_t *itp,
- int no_ports)
+static int32 bld_bit_drvs(struct net_t *np, int32 bi, struct itree_t *itp,
+ int32 no_ports)
 {
  register struct net_pin_t *npp;
- int ri1, ri2, cnt, nd_itpop;
+ int32 ri1, ri2, cnt, nd_itpop;
  struct h_t tmph, *hp2;
  struct hrec_t tmphrec, *hrp2;
  struct qcval_t *frc_qcp;
@@ -4303,10 +4304,10 @@ done:
  *
  * LOOKATME - except for pull, same as fill bit ld handle - right?
  */
-static int fill_bit_drv_handle(struct h_t *hp, struct hrec_t *hrp, int bi,
- int ri1, int ri2, struct net_pin_t *npp)
+static int32 fill_bit_drv_handle(struct h_t *hp, struct hrec_t *hrp, int32 bi,
+ int32 ri1, int32 ri2, struct net_pin_t *npp)
 {
- int not_lhs;
+ int32 not_lhs;
  struct itree_t *itp2;
  struct mod_t *downmdp;
  struct mod_pin_t *mpp;
@@ -4461,7 +4462,7 @@ static vpiHandle reg_drvs_iter(struct h_t *hp)
  * algorithm sort of (mostly?) duplicates XL collapsing
  * only makes sense for 1 bit objects
  */
-extern vpiHandle __bld_drvs_iterator(struct h_t *hp, int otype)
+extern vpiHandle __bld_drvs_iterator(struct h_t *hp, int32 otype)
 {
  if (hp == NULL) return(__nil_iter_err(otype));
 
@@ -4552,7 +4553,7 @@ extern vpiHandle vpi_scan(vpiHandle iterator)
  */
 extern vpiHandle vpi_handle_by_name(char *name, vpiHandle scope)
 {
- int sav_ecnt;
+ int32 sav_ecnt;
  vpiHandle href; 
  struct h_t *hp;
  struct symtab_t *sytp;
@@ -4617,7 +4618,7 @@ done:
 static vpiHandle cnvt_name_to_handle(char *nam, struct symtab_t *sytp,
  struct itree_t *scopitp)
 {
- int ii, has_dot;
+ int32 ii, has_dot;
  struct itree_t *itp;
  struct expr_t *glbndp, *gcmp_ndp;
  struct sy_t *syp, *hsyp;
@@ -4748,8 +4749,8 @@ ret_nil:
 static vpiHandle bld_symhandle(char *nam, struct sy_t *syp,
  struct symtab_t *sytp, struct itree_t *itp)
 {
- int ii, ttyp;
- unsigned otyp;
+ int32 ii, ttyp;
+ word32 otyp;
  vpiHandle href;
  struct sy_t *in_tsyp;
  struct task_t *intskp, *tskp;
@@ -4843,7 +4844,7 @@ static vpiHandle bld_symhandle(char *nam, struct sy_t *syp,
  *
  * tricky because last name in xmr path can be escaped
  */
-extern int __name_vpi_hasdot(char *nam)
+extern int32 __name_vpi_hasdot(char *nam)
 {
  register char *chp;
 
@@ -4870,11 +4871,11 @@ nxt_comp:;
  * error and return NULL for non indexable handle
  * this is passed user [i1:i2] range index instead of normalized internal
  */
-extern vpiHandle vpi_handle_by_index(vpiHandle object, int indx)
+extern vpiHandle vpi_handle_by_index(vpiHandle object, int32 indx)
 {  
- int biti, ri1, ri2, wid;
- unsigned ityp;
- word av, bv;
+ int32 biti, ri1, ri2, wid;
+ word32 ityp;
+ word32 av, bv;
  vpiHandle href;
  struct h_t *hp, *hp2;
  struct net_t *np;
@@ -5005,10 +5006,10 @@ extern vpiHandle vpi_handle_by_multi_index(vpiHandle obj, PLI_INT32 num_index,
 /* 
  * get property type property for object object if it exists
  */
-extern int vpi_get(PLI_INT32 property, vpiHandle object)
+extern int32 vpi_get(PLI_INT32 property, vpiHandle object)
 {
  PLI_INT32 pval;
- int casetyp;
+ int32 casetyp;
  struct h_t *hp;
  struct hrec_t *hrp;
 
@@ -5025,9 +5026,9 @@ extern int vpi_get(PLI_INT32 property, vpiHandle object)
    /* design wide these are same - could be timeformat unit */
    /* LOOKATME - acc_ equivalent returns timeformat precision here */ 
    if (property == vpiTimePrecision)
-    { pval = -((int) __des_timeprec); return(pval); } 
+    { pval = -((int32) __des_timeprec); return(pval); } 
    else if (property == vpiTimeUnit)
-    { pval = -((int) __des_timeprec); return(pval); } 
+    { pval = -((int32) __des_timeprec); return(pval); } 
    __vpi_err(1865, vpiError,  
     "property %s illegal for vpi_get with NULL object - only for timescale",
     __to_vpipnam(__wrks1, property));
@@ -5113,7 +5114,7 @@ extern int vpi_get(PLI_INT32 property, vpiHandle object)
    /* table vectored driver form - must re-check for */
    if (hrp->bith_ndx)
     {
-     register int bi;
+     register int32 bi;
      struct net_t *np;
      i_tev_ndx *evtabi, tevpi;
 
@@ -5148,12 +5149,12 @@ try_line_prop:
   case vpiDefParam:
    if (property != vpiLineNo)
     { notpropof_err(vpiDefParam, property); return(vpiUndefined); }
-   pval = (int) hrp->hu.hdfp->dfplin_cnt;
+   pval = (int32) hrp->hu.hdfp->dfplin_cnt;
    break;
   case vpiParamAssign:
    if (property != vpiLineNo)
     { notpropof_err(vpiParamAssign, property); return(vpiUndefined); }
-   pval = (int) hrp->hu.hnp->nsym->sylin_cnt;
+   pval = (int32) hrp->hu.hnp->nsym->sylin_cnt;
    break;
   case vpiAssignment:
    if (property == vpiBlocking)
@@ -5207,7 +5208,7 @@ try_line_prop:
  * validate property
  * returns F on error
  */
-static int validate_property(char *rnam, int proptyp)
+static int32 validate_property(char *rnam, int32 proptyp)
 {
  if (__to_vpipnam(__wrks1, proptyp) == NULL || proptyp == vpiUndefined)
   {
@@ -5219,11 +5220,11 @@ static int validate_property(char *rnam, int proptyp)
 }
 
 /*
- * get int property values for module (inst. itree loc.)
+ * get int32 property values for module (inst. itree loc.)
  */
-static int modprop_vpiget(struct h_t *hp, int prop)
+static int32 modprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct mod_t *mdp;
   
  mdp = hp->hrec->hu.hmdp;
@@ -5237,14 +5238,14 @@ static int modprop_vpiget(struct h_t *hp, int prop)
   case vpiDefLineNo: return(mdp->msym->sylin_cnt);
   case vpiProtected: return(FALSE);
   case vpiTimeUnit:
-   if (!mdp->mno_unitcnv) pval = -((int) mdp->mtime_units);
+   if (!mdp->mno_unitcnv) pval = -((int32) mdp->mtime_units);
    /* if no time scale both precision and units the same */
-   else pval = -((int) __des_timeprec);
+   else pval = -((int32) __des_timeprec);
    return(pval);
   case vpiTimePrecision:
    if (!mdp->mno_unitcnv)
-    pval = -((int) (mdp->mtime_units + mdp->mtime_prec));
-   else pval = -((int) __des_timeprec);
+    pval = -((int32) (mdp->mtime_units + mdp->mtime_prec));
+   else pval = -((int32) __des_timeprec);
    return(pval);
   case vpiDefNetType: return(__to_vpi_netproptyp(mdp->mod_dfltntyp));
   case vpiUnconnDrive:
@@ -5268,7 +5269,7 @@ static int modprop_vpiget(struct h_t *hp, int prop)
  *
  * know hp non nil or will not get here
  */
-static void notpropof_err(unsigned typh, int prop)
+static void notpropof_err(word32 typh, int32 prop)
 {
  __vpi_err(1867, vpiError,  
   "property %s not defined for vpi_get of %s",
@@ -5278,9 +5279,9 @@ static void notpropof_err(unsigned typh, int prop)
 /*
  * get the vpi handle object type for a variable (net_t)
  */
-extern unsigned __ntyp_to_vpivarhtyp(struct net_t *np)
+extern word32 __ntyp_to_vpivarhtyp(struct net_t *np)
 {
- unsigned otyp;
+ word32 otyp;
 
  if (np->n_isaparam)
   {
@@ -5300,7 +5301,7 @@ extern unsigned __ntyp_to_vpivarhtyp(struct net_t *np)
  * SJM 08/11/97 - separated so old one type mapping from ntyp routine
  *                now 3 depending on vpi_ output needed
  */
-static unsigned to_vpi_reghtyp(unsigned ntyp)
+static word32 to_vpi_reghtyp(word32 ntyp)
 {
  switch (ntyp) {
   case N_REG: return(vpiReg);
@@ -5315,7 +5316,7 @@ static unsigned to_vpi_reghtyp(unsigned ntyp)
 /*
  * convert a Cver side net type to vpi_ var bit select type
  */
-extern unsigned __to_vpinetbithtyp(unsigned ntyp)
+extern word32 __to_vpinetbithtyp(word32 ntyp)
 {
  if (ntyp < NONWIRE_ST) return(vpiNetBit);
  switch (ntyp) {
@@ -5328,9 +5329,9 @@ extern unsigned __to_vpinetbithtyp(unsigned ntyp)
 
 /*
  * routine to convert from internal Cver wire type to vpi property value
- * also converts internal net types to variable (reg,int, ...) object types 
+ * also converts internal net types to variable (reg,int32, ...) object types 
  */
-extern int __to_vpi_netproptyp(unsigned ntyp)
+extern int32 __to_vpi_netproptyp(word32 ntyp)
 {
  switch (ntyp) {
   case N_WIRE: return(vpiWire);
@@ -5360,7 +5361,7 @@ extern int __to_vpi_netproptyp(unsigned ntyp)
  * 
  * never called with bit of (vpiNetBit or vpiRegBit) 
  */
-extern unsigned __from_vpi_vartyp(unsigned pval)
+extern word32 __from_vpi_vartyp(word32 pval)
 {
  switch ((byte) pval) {
   case vpiWire: return(N_WIRE);
@@ -5385,11 +5386,11 @@ extern unsigned __from_vpi_vartyp(unsigned pval)
 }
 
 /*
- * get int property values of net for net or net bit (ignore bit)
+ * get int32 property values of net for net or net bit (ignore bit)
  */
-static int netprop_vpiget(struct h_t *hp, int prop) 
+static int32 netprop_vpiget(struct h_t *hp, int32 prop) 
 {
- int biti;
+ int32 biti;
  struct net_t *np;
  struct hrec_t *hrp;
 
@@ -5456,12 +5457,12 @@ bad_prop:
 
 
 /*
- * get int property values for reg or reg bit (includes int and time)
+ * get int32 property values for reg or reg bit (includes int32 and time)
  * all properties same
  */
-static int regprop_vpiget(struct h_t *hp, int prop) 
+static int32 regprop_vpiget(struct h_t *hp, int32 prop) 
 {
- int biti, is_bit;
+ int32 biti, is_bit;
  struct net_t *np;
  struct hrec_t *hrp;
  
@@ -5508,9 +5509,9 @@ bad_prop:
 }
 
 /*
- * get int property values for array (know hp is array handle)
+ * get int32 property values for array (know hp is array handle)
  */
-static int arrprop_vpiget(struct h_t *hp, int prop)
+static int32 arrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct net_t *np;
 
@@ -5528,11 +5529,11 @@ static int arrprop_vpiget(struct h_t *hp, int prop)
 }
 
 /*
- * get int property values for word of array
+ * get int32 property values for word32 of array
  */
-static int arrwrdprop_vpiget(struct h_t *hp, int prop)
+static int32 arrwrdprop_vpiget(struct h_t *hp, int32 prop)
 {
- int biti;
+ int32 biti;
  struct net_t *np;
  struct hrec_t *hrp;
 
@@ -5570,9 +5571,9 @@ static int arrwrdprop_vpiget(struct h_t *hp, int prop)
 }
 
 /*
- * get int property values for param
+ * get int32 property values for param
  */
-static int paramprop_vpiget(struct h_t *hp, int prop)
+static int32 paramprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct net_t *np;
 
@@ -5592,9 +5593,9 @@ static int paramprop_vpiget(struct h_t *hp, int prop)
 /*
  * get param constant type property
  */
-static int get_param_constyp(struct net_t *np)
+static int32 get_param_constyp(struct net_t *np)
 {
- int ctyp;
+ int32 ctyp;
 
  ctyp = 0;
  if (np->ntyp == N_REAL) return(vpiRealConst);
@@ -5611,9 +5612,9 @@ static int get_param_constyp(struct net_t *np)
 }
 
 /*
- * get int property values for port and port bit
+ * get int32 property values for port and port bit
  */
-static int portprop_vpiget(struct h_t *hp, int prop)
+static int32 portprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct mod_t *mdp;
  struct mod_pin_t *mpp;
@@ -5650,11 +5651,11 @@ static int portprop_vpiget(struct h_t *hp, int prop)
 }
 
 /*
- * get int property values for primitives
+ * get int32 property values for primitives
  */
-static int gateprop_vpiget(struct h_t *hp, int prop)
+static int32 gateprop_vpiget(struct h_t *hp, int32 prop)
 {
- unsigned sval;
+ word32 sval;
  struct gate_t *gp;
  struct hrec_t *hrp;
 
@@ -5676,11 +5677,11 @@ static int gateprop_vpiget(struct h_t *hp, int prop)
   case vpiStrength0:
    /* 0 is high 3 bits */
    sval = (gp->g_stval >> 3) & 0x7;
-   return((int) __map_tovpi_stren(sval));
+   return((int32) __map_tovpi_stren(sval));
   case vpiStrength1:
    /* 1 is low 3 bits */
    sval = gp->g_stval & 0x7;
-   return((int) __map_tovpi_stren(sval));
+   return((int32) __map_tovpi_stren(sval));
   default: notpropof_err(hrp->htyp, prop); break;
  }
  return(vpiUndefined);
@@ -5691,7 +5692,7 @@ static int gateprop_vpiget(struct h_t *hp, int prop)
  *
  * i.e. type of udp or particular type of gate (not vpi gate rather vpi Buf)
  */
-extern int __to_vpi_primtyp(struct gate_t *gp)
+extern int32 __to_vpi_primtyp(struct gate_t *gp)
 {
  struct primtab_t *ptp;
  struct udp_t *udpp;
@@ -5734,9 +5735,9 @@ extern int __to_vpi_primtyp(struct gate_t *gp)
 }
 
 /*
- * get int property values for primitive (gate) terminals
+ * get int32 property values for primitive (gate) terminals
  */
-extern int __primtermprop_vpiget(struct h_t *hp, int prop)
+extern int32 __primtermprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct gate_t *gp;
  struct hrec_t *hrp;
@@ -5769,7 +5770,7 @@ extern int __primtermprop_vpiget(struct h_t *hp, int prop)
  * LOOKAT - interpreted LRM to allow vpUserDefn for user system tasks
  * <not clear from even new Verilog 98 LRM page>
  */
-static int tcallprop_vpiget(struct h_t *hp, int prop)
+static int32 tcallprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct tskcall_t *tkcp;
  struct systsk_t *stbp;
@@ -5796,9 +5797,9 @@ static int tcallprop_vpiget(struct h_t *hp, int prop)
  * this is only for user function definitions (vpiFunction) - use
  * vpi get systtf_info for system functions
  */
-static int funcdefprop_vpiget(struct h_t *hp, int prop)
+static int32 funcdefprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct net_t *np;
  struct task_t *tskp;
 
@@ -5829,11 +5830,11 @@ static int funcdefprop_vpiget(struct h_t *hp, int prop)
 }
 
 /*
- * get property values (int) for cont assign
+ * get property values (int32) for cont assign
  */
-static int contaprop_vpiget(struct h_t *hp, int prop)
+static int32 contaprop_vpiget(struct h_t *hp, int32 prop)
 {
- unsigned sval;
+ word32 sval;
  struct conta_t *cap;
  struct gate_t *gp;
  struct hrec_t *hrp;
@@ -5851,11 +5852,11 @@ static int contaprop_vpiget(struct h_t *hp, int prop)
     case vpiStrength0:
      /* 0 is high 3 bits */
      sval = (gp->g_stval >> 3) & 0x7;
-     return((int) __map_tovpi_stren(sval));
+     return((int32) __map_tovpi_stren(sval));
     case vpiStrength1:
      /* 1 is low 3 bits */
      sval = gp->g_stval & 0x7;
-     return((int) __map_tovpi_stren(sval));
+     return((int32) __map_tovpi_stren(sval));
     default: notpropof_err(hrp->htyp, prop); break;
    }
    return(vpiUndefined);
@@ -5867,11 +5868,11 @@ static int contaprop_vpiget(struct h_t *hp, int prop)
   case vpiStrength0:
    /* 0 is high 3 bits */
    sval = (cap->ca_stval >> 3) & 0x7;
-   return((int) __map_tovpi_stren(sval));
+   return((int32) __map_tovpi_stren(sval));
   case vpiStrength1:
    /* 1 is low 3 bits */
    sval = cap->ca_stval & 0x7;
-   return((int) __map_tovpi_stren(sval));
+   return((int32) __map_tovpi_stren(sval));
   default: notpropof_err(hrp->htyp, prop); break;
  }
  return(vpiUndefined);
@@ -5887,9 +5888,9 @@ static int contaprop_vpiget(struct h_t *hp, int prop)
  * contrary to new Veirlog 98 LRM system func calls do not have line location
  * so emitting warning and return 0
  */
-static int fcallprop_vpiget(struct h_t *hp, int prop)
+static int32 fcallprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct sy_t *fsyp;
  struct sysfunc_t *sfbp;
  struct task_t *tskp;
@@ -5970,9 +5971,9 @@ no_prop:
 /*
  * get property values for tchk
  */
-static int tchkprop_vpiget(struct h_t *hp, int prop)
+static int32 tchkprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct tchk_t *tcp;
 
  tcp = hp->hrec->hu.htcp; 
@@ -5991,7 +5992,7 @@ static int tchkprop_vpiget(struct h_t *hp, int prop)
  *
  * notice hold of setup hold separate tchk but will never see
  */
-static int to_vpi_tchktyp(unsigned tctyp)
+static int32 to_vpi_tchktyp(word32 tctyp)
 {
  switch ((byte) tctyp) {
   case TCHK_SETUP: return(vpiSetup);
@@ -6016,9 +6017,9 @@ static int to_vpi_tchktyp(unsigned tctyp)
  * get property values for function call
  * LOOKATME - think reversed 1st and 2nd term for setup already moved?
  */
-static int tchktermprop_vpiget(struct h_t *hp, int prop)
+static int32 tchktermprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct tchk_t *tcp;
 
  tcp = hp->hrec->hu.htcp;
@@ -6042,7 +6043,7 @@ static int tchktermprop_vpiget(struct h_t *hp, int prop)
  * 
  * LOOKATME: could just remove this identity mapping since same
  */
-static int to_vpi_edgeval(unsigned edg)
+static int32 to_vpi_edgeval(word32 edg)
 {
  switch ((byte) edg) {
   case NOEDGE: return(vpiNoEdge);
@@ -6062,9 +6063,9 @@ static int to_vpi_edgeval(unsigned edg)
 /*
  * get property values for function call
  */
-static int pthprop_vpiget(struct h_t *hp, int prop)
+static int32 pthprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct spcpth_t *pthp;
 
  pthp = hp->hrec->hu.hpthp;
@@ -6099,15 +6100,15 @@ static int pthprop_vpiget(struct h_t *hp, int prop)
  * get property values for function call
  * handle is hu pthp, hi - index, htyp2 is list from 
  */
-static int pthtermprop_vpiget(struct h_t *hp, int prop)
+static int32 pthtermprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct spcpth_t *pthp; 
- int pval;
+ int32 pval;
 
  pthp = hp->hrec->hu.hpthp;
  switch (prop) {
   case vpiLineNo: pval = pthp->pthsym->sylin_cnt; break;
-  case vpiDirection: pval = (int) hp->hrec->htyp2; break;
+  case vpiDirection: pval = (int32) hp->hrec->htyp2; break;
   case vpiEdge:
    /* only path in has edge */
    if (hp->hrec->htyp2 != vpiModPathIn) goto no_prop;
@@ -6126,9 +6127,9 @@ no_prop:
  *
  * uses changed semantics because of added vpiExpr object
  */
-static int exprclass_prop_vpiget(struct h_t *hp, int prop)
+static int32 exprclass_prop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct expr_t *xp;
 
  xp = hp->hrec->hu.hxp;
@@ -6169,7 +6170,7 @@ not_prop:
 /*
  * get constant type property from expression
  */
-static int get_vpi_const_typ(struct expr_t *xp)
+static int32 get_vpi_const_typ(struct expr_t *xp)
 {
  if (xp->is_real) return(vpiRealConst); 
  if (xp->is_string) return(vpiStringConst);
@@ -6186,7 +6187,7 @@ static int get_vpi_const_typ(struct expr_t *xp)
  *
  * this gets type, no itree information needed
  */
-extern int __exprtype_get(struct expr_t *ndp)
+extern int32 __exprtype_get(struct expr_t *ndp)
 {
  struct net_t *np;
  struct sy_t *syp;
@@ -6214,7 +6215,7 @@ extern int __exprtype_get(struct expr_t *ndp)
 /*
  * for a binary or unary or ?: expression return the top node operator type
  */
-extern int __expr_optype_get(struct expr_t *xp)
+extern int32 __expr_optype_get(struct expr_t *xp)
 {
  switch ((byte) xp->optyp) { 
   /* unary ops */
@@ -6280,9 +6281,9 @@ extern int __expr_optype_get(struct expr_t *xp)
  * udp io decl indicated by htyp2 type of vpiUdpDefn
  * if any bits of net are in port, entire net is a port (hu hnp field set)
  */
-static int iodecl_prop_vpiget(struct h_t *hp, int prop)
+static int32 iodecl_prop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct net_t *np;
  struct hrec_t *hrp;
 
@@ -6317,9 +6318,9 @@ static int iodecl_prop_vpiget(struct h_t *hp, int prop)
 /*
  * get properties for a udp io decl object (mod pin - not nets)
  */
-static int udpiodecl_get(struct h_t *hp, int prop)
+static int32 udpiodecl_get(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct mod_t *mdp;
  struct mod_pin_t *mpp;
 
@@ -6352,9 +6353,9 @@ static int udpiodecl_get(struct h_t *hp, int prop)
 /*
  * get a upd definition property
  */
-static int udpdefnprop_vpiget(struct h_t *hp, int prop)
+static int32 udpdefnprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct udp_t *udpp;
 
  pval = vpiUndefined;
@@ -6386,9 +6387,9 @@ static int udpdefnprop_vpiget(struct h_t *hp, int prop)
 /*
  * get a upd definition property
  */
-static int udptabentryprop_vpiget(struct h_t *hp, int prop)
+static int32 udptabentryprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  struct udp_t *udpp;
  struct utline_t *utlp;
 
@@ -6398,7 +6399,7 @@ static int udptabentryprop_vpiget(struct h_t *hp, int prop)
 
  switch (prop) {
   case vpiLineNo:
-   pval = (int) utlp->utlin_cnt;
+   pval = (int32) utlp->utlin_cnt;
    break;
   case vpiSize:
    /* value is number of states plus one for out */
@@ -6412,9 +6413,9 @@ static int udptabentryprop_vpiget(struct h_t *hp, int prop)
 /*
  * get property of attribute
  */
-static int dig_attrprop_vpiget(struct h_t *hp, int prop)
+static int32 dig_attrprop_vpiget(struct h_t *hp, int32 prop)
 {
- int pval;
+ int32 pval;
  double d1;
  struct attr_t *attrp;
  struct xstk_t *xsp;
@@ -6458,7 +6459,7 @@ static int dig_attrprop_vpiget(struct h_t *hp, int prop)
  */
 extern struct attr_t *__find_attrspec(struct h_t *hp)
 {
- register int ai;
+ register int32 ai;
  struct attr_t *attrp;
  struct inst_t *ip;
  struct mod_t *mdp;
@@ -6640,7 +6641,7 @@ ret_fnam:
  * get string property values for module (inst. itree loc.)
  * copy to the one work string for these
  */
-static char *modstrprop_vpiget(struct h_t *hp, int prop)
+static char *modstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct mod_t *mdp;
  struct inst_t *ip;
@@ -6671,7 +6672,7 @@ static char *modstrprop_vpiget(struct h_t *hp, int prop)
  *
  * know hp non nil or will not get here
  */
-extern void __notstrpropof_err(unsigned typh, int prop)
+extern void __notstrpropof_err(word32 typh, int32 prop)
 {
  __vpi_err(1875, vpiError, 
   "string property %s not defined for vpi_get_str of %s",
@@ -6685,7 +6686,7 @@ extern void __notstrpropof_err(unsigned typh, int prop)
  *
  * notice although strictly speaking a array is not a net str props the same
  */
-static char *netstrprop_vpiget(struct h_t *hp, int prop)
+static char *netstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct net_t *np;
  struct hrec_t *hrp;
@@ -6723,7 +6724,7 @@ static char *netstrprop_vpiget(struct h_t *hp, int prop)
  *
  * LRM 98 removes vpiFullName property for ports
  */
-static char *portstrprop_vpiget(struct h_t *hp, int prop)
+static char *portstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct mod_t *mdp;
  struct mod_pin_t *mpp;
@@ -6746,7 +6747,7 @@ static char *portstrprop_vpiget(struct h_t *hp, int prop)
  * get string property values for gates
  * copy to the one overwritten work string 
  */
-static char *gatestrprop_vpiget(struct h_t *hp, int prop)
+static char *gatestrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct gate_t *gp;
 
@@ -6772,7 +6773,7 @@ static char *gatestrprop_vpiget(struct h_t *hp, int prop)
  * get string property values for task call
  * copy to the one overwritten work string 
  */
-static char *tcallstrprop_vpiget(struct h_t *hp, int prop)
+static char *tcallstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct st_t *stp;
 
@@ -6795,7 +6796,7 @@ static char *tcallstrprop_vpiget(struct h_t *hp, int prop)
  *
  * LOOKATME - for compatibility making location: unkown 0?
  */
-static char *fcallstrprop_vpiget(struct h_t *hp, int prop)
+static char *fcallstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct hrec_t *hrp;
 
@@ -6820,7 +6821,7 @@ static char *fcallstrprop_vpiget(struct h_t *hp, int prop)
  * copy to the one overwritten work string 
  * also named begin or fork
  */
-static char *taskstrprop_vpiget(struct h_t *hp, int prop)
+static char *taskstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct task_t *tskp;
 
@@ -6845,7 +6846,7 @@ static char *taskstrprop_vpiget(struct h_t *hp, int prop)
  * get string property values for io decl
  * copy to the one overwritten work string 
  */
-static char *iodeclstrprop_vpiget(struct h_t *hp, int prop)
+static char *iodeclstrprop_vpiget(struct h_t *hp, int32 prop)
 {
  struct hrec_t *hrp;
 
@@ -6875,7 +6876,7 @@ static char *iodeclstrprop_vpiget(struct h_t *hp, int prop)
  * get string property values for digital attribute
  * copy to the one overwritten work string 
  */
-static char *dig_attrstrpop_vpiget(struct h_t *hp, int prop)
+static char *dig_attrstrpop_vpiget(struct h_t *hp, int32 prop)
 {
  struct attr_t *attrp;
 

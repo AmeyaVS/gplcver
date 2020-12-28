@@ -13,6 +13,7 @@
 int memsiz, memwid, last_i;
 FILE *memval_s;
 struct t_tfnodeinfo ninfo;
+struct t_tfexprinfo xinfo;
 
 /* static prototypes */
 static int intsize(int, int);
@@ -124,8 +125,9 @@ static void plimemfil2(int data, int reason)
   }
  last_i = i;
 
+ tf_exprinfo(1, &xinfo);
  /* set value  - using 32 bit value else would need string to 0*/
- vecp = ninfo.node_value.vecval_p;
+ vecp = xinfo.expr_value_p;
  vecp[0].avalbits = (int) memval;
  vecp[0].bvalbits = 0;
  /* do assign - notice this forces re-evaluate of argument during assign */
