@@ -1,5 +1,5 @@
 # README
 
-This repo is mostly for archival purpose for the tool cver.
+This repo is mostly for archival purpose for the tool gplcver.
 
 Archived Sources downloaded from link:archive.org[].
